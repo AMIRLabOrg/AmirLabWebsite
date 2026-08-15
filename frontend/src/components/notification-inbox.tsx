@@ -1,0 +1,303 @@
+"use client";
+
+import { cn } from "@/lib/cn";
+import { loadingPlaceholder } from "@/lib/loading-style";
+import { useRouter } from "next/navigation";
+import { ArrowUpRight, Check, RotateCcw } from "lucide-react";
+import { useEffect, useState } from "react";
+import { useNotifications } from "@/components/notification-provider";
+import { PaginationControls } from "@/components/pagination-controls";
+import { DateRangePicker } from "@/components/ui/date-range-picker";
+import { Badge } from "@/components/ui/badge";
+import { SelectControl } from "@/components/ui/select-control";
+import { FormField } from "@/components/ui/form-field";
+import { ButtonControl } from "@/components/ui/button-control";
+import { apiRequest } from "@/lib/client-api";
+import type { NotificationRecord, PaginatedResponse } from "@/lib/types";
+import { StatePanel } from "@/components/state-panel";
+
+interface NotificationPage extends PaginatedResponse<NotificationRecord> {
+  unreadCount: number;
+}
+
+export function NotificationInbox() {
+  const router = useRouter();
+  const { markOneRead, refreshUnreadCount } = useNotifications();
+  const [result, setResult] = useState<NotificationPage>();
+  const [page, setPage] = useState(1);
+  const [read, setRead] = useState("ALL");
+  const [from, setFrom] = useState("");
+  const [to, setTo] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string>();
+  const [markingId, setMarkingId] = useState<string>();
+  const [reload, setReload] = useState(0);
+
+  useEffect(() => {
+    let active = true;
+    const params = new URLSearchParams({ page: String(page), pageSize: "20" });
+    if (read !== "ALL") params.set("read", read);
+    if (from) params.set("from", from);
+    if (to) params.set("to", to);
+
+    void apiRequest<NotificationPage>(`/notifications?${params}`, {
+      method: "GET",
+    })
+      .then((response) => {
+        if (!active) return;
+        setError(undefined);
+        setResult(response);
+      })
+      .catch((caught: unknown) => {
+        if (active) {
+          setError(
+            caught instanceof Error
+              ? caught.message
+              : "Unable to load notifications.",
+          );
+        }
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, [from, page, read, reload, to]);
+
+  function beginReload() {
+    setLoading(true);
+    setError(undefined);
+  }
+
+  async function markRead(notification: NotificationRecord) {
+    if (notification.readAt) return;
+    setMarkingId(notification.id);
+    try {
+      const response = await apiRequest<{ updated: boolean }>(
+        `/notifications/${notification.id}/read`,
+        { method: "PATCH" },
+      );
+      if (response.updated) {
+        setResult((current) =>
+          current
+            ? {
+                ...current,
+                items: current.items.map((item) =>
+                  item.id === notification.id
+                    ? { ...item, readAt: new Date().toISOString() }
+                    : item,
+                ),
+                unreadCount: Math.max(0, current.unreadCount - 1),
+              }
+            : current,
+        );
+        markOneRead();
+        if (read === "UNREAD") {
+          setResult((current) =>
+            current
+              ? {
+                  ...current,
+                  items: current.items.filter(
+                    (item) => item.id !== notification.id,
+                  ),
+                  total: Math.max(0, current.total - 1),
+                  totalPages: Math.ceil(
+                    Math.max(0, current.total - 1) / current.pageSize,
+                  ),
+                }
+              : current,
+          );
+        }
+      }
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "Update failed.");
+      void refreshUnreadCount().catch(() => undefined);
+    } finally {
+      setMarkingId(undefined);
+    }
+  }
+
+  async function markUnread(notification: NotificationRecord) {
+    if (!notification.readAt) return;
+    setMarkingId(notification.id);
+    try {
+      const response = await apiRequest<{ updated: boolean }>(
+        `/notifications/${notification.id}/unread`,
+        { method: "PATCH" },
+      );
+      if (response.updated) {
+        setResult((current) =>
+          current
+            ? {
+                ...current,
+                items: read === "READ"
+                  ? current.items.filter((item) => item.id !== notification.id)
+                  : current.items.map((item) =>
+                      item.id === notification.id
+                        ? { ...item, readAt: null }
+                        : item,
+                    ),
+                total: read === "READ" ? Math.max(0, current.total - 1) : current.total,
+                totalPages: read === "READ"
+                  ? Math.ceil(Math.max(0, current.total - 1) / current.pageSize)
+                  : current.totalPages,
+                unreadCount: current.unreadCount + 1,
+              }
+            : current,
+        );
+        void refreshUnreadCount().catch(() => undefined);
+      }
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "Update failed.");
+      void refreshUnreadCount().catch(() => undefined);
+    } finally {
+      setMarkingId(undefined);
+    }
+  }
+
+  async function openNotification(notification: NotificationRecord) {
+    if (!notification.actionUrl) return;
+    if (!notification.readAt) {
+      await markRead(notification);
+    }
+    router.push(notification.actionUrl);
+  }
+
+  return (
+    <div className="grid min-w-0 gap-4">
+      <div className="grid min-w-0 grid-cols-[minmax(180px,.8fr)_minmax(220px,1fr)_auto] items-end gap-[.8rem] rounded-panel border border-line bg-surface p-4 max-[960px]:grid-cols-2 max-[640px]:grid-cols-1">
+        <FormField htmlFor="notification-status" label="Status">
+          <SelectControl
+            id="notification-status"
+            onValueChange={(value) => {
+              beginReload();
+              setRead(value);
+              setPage(1);
+            }}
+            options={[
+              { label: "All notifications", value: "ALL" },
+              { label: "Unread only", value: "UNREAD" },
+              { label: "Read only", value: "READ" },
+            ]}
+            value={read}
+          />
+        </FormField>
+        <FormField label="Date range">
+          <DateRangePicker
+            from={from}
+            onChange={(range) => {
+              beginReload();
+              setFrom(range.from);
+              setTo(range.to);
+              setPage(1);
+            }}
+            to={to}
+          />
+        </FormField>
+        <ButtonControl
+          disabled={!from && !to && read === "ALL"}
+          onClick={() => {
+            beginReload();
+            setFrom("");
+            setTo("");
+            setRead("ALL");
+            setPage(1);
+          }}
+        >
+          Clear filters
+        </ButtonControl>
+      </div>
+
+      {error && !result ? (
+        <StatePanel
+          action={{ label: "Retry", onClick: () => { beginReload(); setReload((value) => value + 1); } }}
+          body="The connection dropped. Nothing was lost; reconnect to continue."
+          title="Could not load notifications"
+          variant="error"
+        />
+      ) : loading || result?.items.length ? (
+        <>
+          <div className="grid gap-3" aria-live="polite" data-loading={loading || undefined}>
+            {(loading && !result?.items.length
+              ? Array.from({ length: 5 }, () => undefined)
+              : result?.items ?? []
+            ).map((notification, index) => (
+              <article
+                className={`relative grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-6 rounded-panel border bg-surface p-4 [overflow-wrap:anywhere] max-[640px]:grid-cols-1 ${notification?.readAt ? "border-line" : "border-[color-mix(in_srgb,var(--brand)_45%,var(--line))] border-l-[3px] border-l-brand pl-[calc(1rem+3px)]"}`}
+                key={notification?.id ?? `notification-loading-${index}`}
+              >
+                <div>
+                  <div className="flex flex-wrap items-center gap-[.65rem] text-[.72rem] text-ink-muted">
+                    <Badge loading={loading}>{notification?.readAt ? "Read" : "New"}</Badge>
+                    <time
+                      className={loadingPlaceholder(loading, "label", "medium")} data-placeholder="label"
+                      data-placeholder-width="medium"
+                      dateTime={notification?.createdAt}
+                    >
+                      {notification?.createdAt ? new Date(notification.createdAt).toLocaleString() : "Loading date"}
+                    </time>
+                  </div>
+                  <h2 className={cn("mt-[.45rem] text-[1.15rem]", loadingPlaceholder(loading, "text", "long"))} data-placeholder="text" data-placeholder-width="long">{notification?.title ?? "Loading notification title"}</h2>
+                  <p className={cn("mt-[.45rem] leading-[1.55] text-ink-muted", loadingPlaceholder(loading, "text", "full"))} data-placeholder="text" data-placeholder-width="full">{notification?.body ?? "Loading notification details"}</p>
+                </div>
+                <div className="flex items-center gap-2 max-[640px]:items-stretch">
+                  <ButtonControl
+                    disabled={!notification || markingId === notification?.id}
+                    loading={loading}
+                    onClick={() => notification && void (notification.readAt ? markUnread(notification) : markRead(notification))}
+                    variant="secondary"
+                  >
+                    {notification?.readAt ? (
+                      <RotateCcw aria-hidden="true" size={16} />
+                    ) : (
+                      <Check aria-hidden="true" size={16} />
+                    )}
+                    {notification?.readAt ? "Mark unread" : "Mark read"}
+                  </ButtonControl>
+                  {loading || notification?.actionUrl ? (
+                    <ButtonControl
+                      disabled={!notification || markingId === notification?.id}
+                      loading={loading}
+                      onClick={() => notification && void openNotification(notification)}
+                      variant="primary"
+                    >
+                      Open <ArrowUpRight aria-hidden="true" size={16} />
+                    </ButtonControl>
+                  ) : null}
+                </div>
+              </article>
+            ))}
+          </div>
+          <PaginationControls
+            loading={loading}
+            onPageChange={(nextPage) => {
+              beginReload();
+              setPage(nextPage);
+            }}
+            page={result?.page ?? page}
+            pageSize={result?.pageSize ?? 20}
+            total={result?.total ?? 0}
+            totalPages={result?.totalPages ?? 1}
+          />
+        </>
+      ) : (
+        <StatePanel
+          action={from || to || read !== "ALL" ? {
+            label: "Clear filters",
+            onClick: () => {
+              beginReload();
+              setFrom("");
+              setTo("");
+              setRead("ALL");
+              setPage(1);
+            },
+          } : undefined}
+          body={from || to || read !== "ALL" ? "Try a broader date range or clear the active filters." : "Account and research activity will appear here as it happens."}
+          title={from || to || read !== "ALL" ? "No matching notifications" : "No notifications yet"}
+          variant={from || to || read !== "ALL" ? "filtered" : "empty"}
+        />
+      )}
+    </div>
+  );
+}

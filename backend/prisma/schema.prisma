@@ -1,0 +1,1115 @@
+generator client {
+  provider     = "prisma-client"
+  output       = "../generated/prisma"
+  moduleFormat = "cjs"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum PlatformRole {
+  MEMBER
+  MODERATOR
+  ADMIN
+}
+
+enum AccountStatus {
+  PENDING_SETUP
+  ACTIVE
+  SUSPENDED
+  ARCHIVED
+}
+
+enum AcademicRank {
+  RESEARCH_INTERN
+  RESEARCH_ASSISTANT
+  RESEARCHER
+  SENIOR_RESEARCHER
+  LEAD_RESEARCHER
+  DEPARTMENT_HEAD
+  ADVISOR
+}
+
+enum ResearchItemType {
+  PAPER
+  DATASET
+  PROJECT
+}
+
+enum ReviewStatus {
+  DRAFT
+  NEEDS_REVIEW
+  CHANGES_REQUESTED
+  VERIFIED
+  REJECTED
+  PUBLISHED
+  ARCHIVED
+}
+
+enum ProfileReviewStatus {
+  NEEDS_REVIEW
+  APPROVED
+  REJECTED
+}
+
+enum ProjectStatus {
+  PLANNED
+  ACTIVE
+  PAUSED
+  COMPLETED
+}
+
+enum ResearchProgramStatus {
+  PLANNED
+  ACTIVE
+  PAUSED
+  COMPLETED
+  ARCHIVED
+}
+
+enum DepartmentRole {
+  HEAD
+  LEAD
+  MEMBER
+}
+
+enum ProjectMilestoneStatus {
+  PLANNED
+  IN_PROGRESS
+  BLOCKED
+  COMPLETE
+}
+
+enum ProjectTaskStatus {
+  TODO
+  IN_PROGRESS
+  BLOCKED
+  DONE
+}
+
+enum ProjectTaskPriority {
+  LOW
+  NORMAL
+  HIGH
+  URGENT
+}
+
+enum WeeklyReportStatus {
+  DRAFT
+  SUBMITTED
+  CHANGES_REQUESTED
+  REVIEWED
+}
+
+enum ProjectMemberRole {
+  OWNER
+  MANAGER
+  CONTRIBUTOR
+}
+
+enum ProjectAccess {
+  MANAGE
+  POST_UPDATES
+  VIEW
+}
+
+enum ProjectMembershipStatus {
+  PENDING
+  ACTIVE
+  DECLINED
+  REVOKED
+}
+
+enum ProjectInvitationStatus {
+  PENDING
+  ACCEPTED
+  DECLINED
+  REVOKED
+  EXPIRED
+}
+
+enum ProjectUpdateStatus {
+  DRAFT
+  PUBLISHED
+}
+
+enum ProjectChangeKind {
+  DETAILS
+  MILESTONES
+  UPDATE
+  TEAM
+  OUTPUT
+  RESOURCE
+  SETTINGS
+  ARCHIVE
+}
+
+enum ProjectChangeStatus {
+  NEEDS_REVIEW
+  APPROVED
+  REJECTED
+  STALE
+}
+
+enum PositionStatus {
+  DRAFT
+  OPEN
+  CLOSED
+  ARCHIVED
+}
+
+enum PositionType {
+  INTERNSHIP
+  RESEARCH_ASSISTANT
+  PROJECT_ASSISTANT
+  FELLOW
+  STAFF
+  VOLUNTEER
+  OTHER
+}
+
+enum EngagementType {
+  FIXED_TERM
+  OPEN_ENDED
+  FLEXIBLE
+}
+
+enum ApplicationStatus {
+  PARSING
+  PARSE_FAILED
+  NEEDS_REVIEW
+  ACCEPTED
+  REJECTED
+}
+
+enum AssetKind {
+  AVATAR
+  PROJECT_COVER
+  SITE_IMAGE
+  CV
+  UNIVERSITY_LOGO
+}
+
+enum AssetAccess {
+  PUBLIC
+  PRIVATE
+}
+
+enum PersonLinkType {
+  ORCID
+  GOOGLE_SCHOLAR
+  RESEARCH_GATE
+  WEBSITE
+  GITHUB
+  LINKEDIN
+  KAGGLE
+  OTHER
+}
+
+enum PersonSectionType {
+  ACADEMIC_BACKGROUND
+  PROFESSIONAL_EXPERIENCE
+  PUBLICATIONS
+  AWARDS_AND_GRANTS
+  PROFESSIONAL_MEMBERSHIP
+  PROFESSIONAL_COLLABORATION
+  OTHER
+}
+
+enum JobStatus {
+  PENDING
+  RUNNING
+  SUCCEEDED
+  FAILED
+}
+
+enum SourceFetchStatus {
+  PENDING
+  FETCHED
+  UNAVAILABLE
+  FAILED
+}
+
+enum ContributorMatchStatus {
+  PROPOSED
+  VERIFIED
+  REJECTED
+}
+
+enum ContributorMatchSource {
+  SOURCE_METADATA
+  USER_CLAIM
+  ADMIN_MANUAL
+}
+
+enum NotificationType {
+  APPLICATION_RECEIVED
+  APPLICATION_PARSED
+  APPLICATION_REJECTED
+  ACCOUNT_ACTIVATED
+  RESEARCH_SUBMITTED
+  RESEARCH_REVIEWED
+  RELATION_REVIEW_NEEDED
+  RELATION_REVIEWED
+  RANK_CHANGED
+  PROFILE_SUBMITTED
+  PROFILE_REVIEWED
+  PROJECT_INVITED
+  PROJECT_CHANGED
+  PROJECT_REVIEW_NEEDED
+  WEEKLY_REPORT_SUBMITTED
+  WEEKLY_REPORT_REVIEWED
+  SYSTEM
+}
+
+model User {
+  id                          String                 @id @default(uuid()) @db.Uuid
+  email                       String?                @unique
+  role                        PlatformRole           @default(MEMBER)
+  status                      AccountStatus          @default(PENDING_SETUP)
+  passwordHash                String?
+  passwordSetAt               DateTime?
+  setupEmailQueuedAt          DateTime?
+  activatedAt                 DateTime?
+  lastLoginAt                 DateTime?
+  createdAt                   DateTime               @default(now())
+  updatedAt                   DateTime               @updatedAt
+  person                      Person?
+  sessions                    Session[]
+  accountSetupTokens          AccountSetupToken[]
+  notifications               Notification[]
+  submittedItems              ResearchItem[]         @relation("ResearchSubmitter")
+  reviewedItems               ResearchItem[]         @relation("ResearchReviewer")
+  reviewRecords               ReviewRecord[]
+  reviewedApplications        Application[]          @relation("ApplicationReviewer")
+  reviewedProfileEdits        ProfileEditRequest[]   @relation("ProfileEditReviewer")
+  requestedContributorMatches ContributorMatch[]     @relation("ContributorMatchRequester")
+  reviewedContributorMatches  ContributorMatch[]     @relation("ContributorMatchReviewer")
+  createdAssets               Asset[]
+  auditRecords                AuditRecord[]
+  applicationEvents           ApplicationEvent[]
+  authoredProjectUpdates      ProjectUpdate[]        @relation("ProjectUpdateAuthor")
+  createdProjectTasks         ProjectTask[]          @relation("ProjectTaskCreator")
+  projectInvitations          ProjectInvitation[]    @relation("ProjectInvitationSender")
+  submittedProjectChanges     ProjectChangeRequest[] @relation("ProjectChangeSubmitter")
+  reviewedProjectChanges      ProjectChangeRequest[] @relation("ProjectChangeReviewer")
+  conversationMemberships     ConversationMember[]
+  sentMessages                Message[]
+  messageReads                MessageRead[]
+  messageReactions            MessageReaction[]
+  pushSubscriptions           PushSubscription[]
+  authoredWeeklyReports       WeeklyReport[]         @relation("WeeklyReportAuthor")
+  reviewedWeeklyReports       WeeklyReport[]         @relation("WeeklyReportReviewer")
+  createdResearchPrograms     ResearchProgram[]      @relation("ResearchProgramCreator")
+}
+
+model Person {
+  id                  String                 @id @default(uuid()) @db.Uuid
+  slug                String                 @unique
+  fullName            String
+  headline            String?
+  biography           String?                @db.Text
+  publicEmail         String?
+  roleTitle           String?
+  phone               String?
+  contactAddress      String?                @db.Text
+  appointedRank       AcademicRank?          @map("rank")
+  earnedRank          AcademicRank?
+  expertise           String[]
+  isAlumni            Boolean                @default(false)
+  isPublished         Boolean                @default(false)
+  legacyUrl           String?
+  legacySourceId      String?                @unique
+  userId              String?                @unique @db.Uuid
+  avatarId            String?                @unique @db.Uuid
+  createdAt           DateTime               @default(now())
+  updatedAt           DateTime               @updatedAt
+  user                User?                  @relation(fields: [userId], references: [id], onDelete: SetNull)
+  avatar              Asset?                 @relation("PersonAvatar", fields: [avatarId], references: [id], onDelete: SetNull)
+  departments         PersonDepartment[]
+  contributions       ResearchContributor[]
+  contributorMatches  ContributorMatch[]
+  links               PersonLink[]
+  profileSections     PersonProfileSection[]
+  profileEditRequest  ProfileEditRequest?
+  metrics             PersonMetric?
+  projectMemberships  ProjectMembership[]
+  projectMilestones   ProjectMilestone[]
+  projectTasks        ProjectTask[]
+  ledResearchPrograms ResearchProgram[]      @relation("ResearchProgramLead")
+}
+
+model PersonMetric {
+  personId             String             @id @db.Uuid
+  publishedPaperCount  Int                @default(0)
+  scholarCitationCount Int?
+  scholarStatus        SourceFetchStatus?
+  scholarUrl           String?
+  scholarUserId        String?
+  scholarFailureReason String?            @db.Text
+  scholarSyncedAt      DateTime?
+  scholarAttemptedAt   DateTime?
+  scholarNextAttemptAt DateTime?
+  scholarFailureCount  Int                @default(0)
+  createdAt            DateTime           @default(now())
+  updatedAt            DateTime           @updatedAt
+  person               Person             @relation(fields: [personId], references: [id], onDelete: Cascade)
+
+  @@index([scholarNextAttemptAt])
+}
+
+model ProfileEditRequest {
+  id            String              @id @default(uuid()) @db.Uuid
+  payload       Json
+  status        ProfileReviewStatus @default(NEEDS_REVIEW)
+  revision      Int                 @default(1)
+  note          String?             @db.Text
+  submittedAt   DateTime            @default(now())
+  reviewedAt    DateTime?
+  personId      String              @unique @db.Uuid
+  avatarAssetId String?             @unique @db.Uuid
+  reviewedById  String?             @db.Uuid
+  person        Person              @relation(fields: [personId], references: [id], onDelete: Cascade)
+  avatarAsset   Asset?              @relation("ProfileEditAvatar", fields: [avatarAssetId], references: [id], onDelete: SetNull)
+  reviewedBy    User?               @relation("ProfileEditReviewer", fields: [reviewedById], references: [id], onDelete: SetNull)
+
+  @@index([status, submittedAt])
+}
+
+model PersonLink {
+  id        String         @id @default(uuid()) @db.Uuid
+  type      PersonLinkType
+  label     String
+  url       String
+  sortOrder Int
+  personId  String         @db.Uuid
+  person    Person         @relation(fields: [personId], references: [id], onDelete: Cascade)
+
+  @@unique([personId, url])
+  @@unique([personId, sortOrder])
+}
+
+model PersonProfileSection {
+  id          String                    @id @default(uuid()) @db.Uuid
+  type        PersonSectionType
+  title       String
+  subsections PersonProfileSubsection[]
+  sortOrder   Int
+  personId    String                    @db.Uuid
+  person      Person                    @relation(fields: [personId], references: [id], onDelete: Cascade)
+
+  @@unique([personId, sortOrder])
+}
+
+model PersonProfileSubsection {
+  id        String               @id @default(uuid()) @db.Uuid
+  heading   String?
+  entries   String[]
+  sortOrder Int
+  sectionId String               @db.Uuid
+  section   PersonProfileSection @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+
+  @@unique([sectionId, sortOrder])
+}
+
+model Department {
+  id               String                      @id @default(uuid()) @db.Uuid
+  slug             String                      @unique
+  name             String
+  abbreviation     String?
+  description      String?                     @db.Text
+  isPublished      Boolean                     @default(false)
+  legacyUrl        String?
+  legacySourceId   String?                     @unique
+  createdAt        DateTime                    @default(now())
+  updatedAt        DateTime                    @updatedAt
+  people           PersonDepartment[]
+  researchItems    ResearchDepartment[]
+  positions        Position[]
+  applications     Application[]
+  researchPrograms ResearchProgramDepartment[]
+}
+
+model PersonDepartment {
+  personId     String         @db.Uuid
+  departmentId String         @db.Uuid
+  isPrimary    Boolean        @default(false)
+  role         DepartmentRole @default(MEMBER)
+  sortOrder    Int            @default(0)
+  person       Person         @relation(fields: [personId], references: [id], onDelete: Cascade)
+  department   Department     @relation(fields: [departmentId], references: [id], onDelete: Cascade)
+
+  @@id([personId, departmentId])
+  @@index([departmentId, role, sortOrder])
+}
+
+model ResearchItem {
+  id               String                  @id @default(uuid()) @db.Uuid
+  type             ResearchItemType
+  slug             String                  @unique
+  title            String?
+  summary          String?                 @db.Text
+  canonicalUrl     String?                 @unique
+  reviewStatus     ReviewStatus            @default(DRAFT)
+  reviewNote       String?                 @db.Text
+  submittedById    String?                 @db.Uuid
+  reviewedById     String?                 @db.Uuid
+  publishedAt      DateTime?
+  legacyUrl        String?
+  legacySourceId   String?                 @unique
+  createdAt        DateTime                @default(now())
+  updatedAt        DateTime                @updatedAt
+  submittedBy      User?                   @relation("ResearchSubmitter", fields: [submittedById], references: [id], onDelete: SetNull)
+  reviewedBy       User?                   @relation("ResearchReviewer", fields: [reviewedById], references: [id], onDelete: SetNull)
+  paper            Paper?
+  dataset          Dataset?
+  project          Project?
+  contributors     ResearchContributor[]
+  sourceSnapshot   ResearchSourceSnapshot?
+  departments      ResearchDepartment[]
+  reviews          ReviewRecord[]
+  projectOutputs   ProjectOutput[]         @relation("ProjectItem")
+  outputOf         ProjectOutput[]         @relation("OutputItem")
+  linkedUpdates    ProjectUpdate[]         @relation("ProjectUpdateOutput")
+  weeklyReports    WeeklyReportOutput[]
+  researchPrograms ResearchProgramItem[]
+
+  @@index([type, reviewStatus])
+  @@index([publishedAt])
+}
+
+model Paper {
+  researchItemId  String       @id @db.Uuid
+  doi             String?      @unique
+  year            Int?
+  venue           String?
+  publicationType String?
+  citation        String?      @db.Text
+  researchItem    ResearchItem @relation(fields: [researchItemId], references: [id], onDelete: Cascade)
+}
+
+model Dataset {
+  researchItemId String       @id @db.Uuid
+  version        String?
+  license        String?
+  modality       String?
+  accessNotes    String?      @db.Text
+  researchItem   ResearchItem @relation(fields: [researchItemId], references: [id], onDelete: Cascade)
+}
+
+model Project {
+  researchItemId    String                 @id @db.Uuid
+  status            ProjectStatus?
+  objective         String?                @db.Text
+  startsAt          DateTime?
+  endsAt            DateTime?
+  coverAssetId      String?                @unique @db.Uuid
+  publicPageEnabled Boolean                @default(false)
+  version           Int                    @default(1)
+  researchItem      ResearchItem           @relation(fields: [researchItemId], references: [id], onDelete: Cascade)
+  coverAsset        Asset?                 @relation("ProjectCover", fields: [coverAssetId], references: [id], onDelete: SetNull)
+  objectives        ProjectObjective[]
+  milestones        ProjectMilestone[]
+  tasks             ProjectTask[]
+  updates           ProjectUpdate[]
+  memberships       ProjectMembership[]
+  invitations       ProjectInvitation[]
+  resources         ProjectResource[]
+  changeRequests    ProjectChangeRequest[]
+  conversations     Conversation[]
+  weeklyReports     WeeklyReportProject[]
+}
+
+enum ConversationKind {
+  DIRECT
+  PROJECT
+  LAB
+}
+
+enum MessageKind {
+  USER
+  SYSTEM
+}
+
+model Conversation {
+  id        String               @id @default(uuid()) @db.Uuid
+  kind      ConversationKind
+  title     String?
+  projectId String?              @db.Uuid
+  createdAt DateTime             @default(now())
+  updatedAt DateTime             @updatedAt
+  project   Project?             @relation(fields: [projectId], references: [researchItemId], onDelete: Cascade)
+  members   ConversationMember[]
+  messages  Message[]
+
+  @@index([projectId, updatedAt])
+}
+
+model ConversationMember {
+  conversationId String       @db.Uuid
+  userId         String       @db.Uuid
+  joinedAt       DateTime     @default(now())
+  lastReadAt     DateTime?
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([conversationId, userId])
+  @@index([userId, lastReadAt])
+}
+
+model Message {
+  id             String            @id @default(uuid()) @db.Uuid
+  body           String            @db.Text
+  kind           MessageKind       @default(USER)
+  createdAt      DateTime          @default(now())
+  editedAt       DateTime?
+  deletedAt      DateTime?
+  conversationId String            @db.Uuid
+  senderId       String            @db.Uuid
+  replyToId      String?           @db.Uuid
+  conversation   Conversation      @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  sender         User              @relation(fields: [senderId], references: [id], onDelete: Restrict)
+  replyTo        Message?          @relation("MessageReplies", fields: [replyToId], references: [id], onDelete: SetNull)
+  replies        Message[]         @relation("MessageReplies")
+  reads          MessageRead[]
+  reactions      MessageReaction[]
+
+  @@index([conversationId, createdAt])
+}
+
+model MessageReaction {
+  messageId String   @db.Uuid
+  userId    String   @db.Uuid
+  emoji     String
+  createdAt DateTime @default(now())
+  message   Message  @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([messageId, userId, emoji])
+  @@index([messageId, emoji])
+}
+
+model MessageRead {
+  messageId String   @db.Uuid
+  userId    String   @db.Uuid
+  readAt    DateTime @default(now())
+  message   Message  @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([messageId, userId])
+  @@index([userId, readAt])
+}
+
+model PushSubscription {
+  id        String   @id @default(uuid()) @db.Uuid
+  endpoint  String   @unique
+  p256dh    String
+  auth      String
+  userAgent String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  userId    String   @db.Uuid
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, updatedAt])
+}
+
+model ProjectObjective {
+  id          String  @id @default(uuid()) @db.Uuid
+  projectId   String  @db.Uuid
+  title       String
+  description String? @db.Text
+  sortOrder   Int
+  project     Project @relation(fields: [projectId], references: [researchItemId], onDelete: Cascade)
+
+  @@unique([projectId, sortOrder])
+}
+
+model ProjectMilestone {
+  id             String                 @id @default(uuid()) @db.Uuid
+  projectId      String                 @db.Uuid
+  title          String
+  description    String?                @db.Text
+  weight         Int
+  progress       Int                    @default(0)
+  status         ProjectMilestoneStatus @default(PLANNED)
+  dueAt          DateTime?
+  completedAt    DateTime?
+  sortOrder      Int
+  ownerId        String?                @db.Uuid
+  project        Project                @relation(fields: [projectId], references: [researchItemId], onDelete: Cascade)
+  owner          Person?                @relation(fields: [ownerId], references: [id], onDelete: SetNull)
+  projectUpdates ProjectUpdate[]
+
+  @@unique([projectId, sortOrder])
+  @@index([ownerId])
+}
+
+model ProjectTask {
+  id          String              @id @default(uuid()) @db.Uuid
+  projectId   String              @db.Uuid
+  title       String
+  description String?             @db.Text
+  status      ProjectTaskStatus   @default(TODO)
+  priority    ProjectTaskPriority @default(NORMAL)
+  dueAt       DateTime?
+  completedAt DateTime?
+  sortOrder   Int
+  ownerId     String?             @db.Uuid
+  createdById String              @db.Uuid
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
+  project     Project             @relation(fields: [projectId], references: [researchItemId], onDelete: Cascade)
+  owner       Person?             @relation(fields: [ownerId], references: [id], onDelete: SetNull)
+  createdBy   User                @relation("ProjectTaskCreator", fields: [createdById], references: [id], onDelete: Restrict)
+
+  @@unique([projectId, sortOrder])
+  @@index([projectId, status, dueAt])
+  @@index([ownerId, status])
+}
+
+model WeeklyReport {
+  id              String                @id @default(uuid()) @db.Uuid
+  weekStart       DateTime              @db.Date
+  accomplishments String                @db.Text
+  blockers        String?               @db.Text
+  nextWeekPlan    String                @db.Text
+  status          WeeklyReportStatus    @default(DRAFT)
+  reviewNote      String?               @db.Text
+  submittedAt     DateTime?
+  reviewedAt      DateTime?
+  authorId        String                @db.Uuid
+  reviewedById    String?               @db.Uuid
+  createdAt       DateTime              @default(now())
+  updatedAt       DateTime              @updatedAt
+  author          User                  @relation("WeeklyReportAuthor", fields: [authorId], references: [id], onDelete: Cascade)
+  reviewedBy      User?                 @relation("WeeklyReportReviewer", fields: [reviewedById], references: [id], onDelete: SetNull)
+  projects        WeeklyReportProject[]
+  outputs         WeeklyReportOutput[]
+
+  @@unique([authorId, weekStart])
+  @@index([status, weekStart])
+  @@index([reviewedById, reviewedAt])
+}
+
+model WeeklyReportProject {
+  reportId  String       @db.Uuid
+  projectId String       @db.Uuid
+  report    WeeklyReport @relation(fields: [reportId], references: [id], onDelete: Cascade)
+  project   Project      @relation(fields: [projectId], references: [researchItemId], onDelete: Restrict)
+
+  @@id([reportId, projectId])
+  @@index([projectId])
+}
+
+model WeeklyReportOutput {
+  reportId String       @db.Uuid
+  outputId String       @db.Uuid
+  report   WeeklyReport @relation(fields: [reportId], references: [id], onDelete: Cascade)
+  output   ResearchItem @relation(fields: [outputId], references: [id], onDelete: Restrict)
+
+  @@id([reportId, outputId])
+  @@index([outputId])
+}
+
+model ResearchProgram {
+  id                String                      @id @default(uuid()) @db.Uuid
+  slug              String                      @unique
+  name              String
+  summary           String?                     @db.Text
+  objective         String                      @db.Text
+  status            ResearchProgramStatus       @default(PLANNED)
+  startsAt          DateTime?
+  endsAt            DateTime?
+  publicPageEnabled Boolean                     @default(false)
+  leadId            String?                     @db.Uuid
+  createdById       String                      @db.Uuid
+  createdAt         DateTime                    @default(now())
+  updatedAt         DateTime                    @updatedAt
+  lead              Person?                     @relation("ResearchProgramLead", fields: [leadId], references: [id], onDelete: SetNull)
+  createdBy         User                        @relation("ResearchProgramCreator", fields: [createdById], references: [id], onDelete: Restrict)
+  departments       ResearchProgramDepartment[]
+  items             ResearchProgramItem[]
+
+  @@index([status, updatedAt])
+  @@index([leadId, status])
+}
+
+model ResearchProgramDepartment {
+  programId    String          @db.Uuid
+  departmentId String          @db.Uuid
+  program      ResearchProgram @relation(fields: [programId], references: [id], onDelete: Cascade)
+  department   Department      @relation(fields: [departmentId], references: [id], onDelete: Restrict)
+
+  @@id([programId, departmentId])
+  @@index([departmentId])
+}
+
+model ResearchProgramItem {
+  programId      String          @db.Uuid
+  researchItemId String          @db.Uuid
+  program        ResearchProgram @relation(fields: [programId], references: [id], onDelete: Cascade)
+  researchItem   ResearchItem    @relation(fields: [researchItemId], references: [id], onDelete: Restrict)
+
+  @@id([programId, researchItemId])
+  @@index([researchItemId])
+}
+
+model ProjectUpdate {
+  id             String              @id @default(uuid()) @db.Uuid
+  projectId      String              @db.Uuid
+  title          String
+  body           String              @db.Text
+  status         ProjectUpdateStatus @default(DRAFT)
+  milestoneId    String?             @db.Uuid
+  linkedOutputId String?             @db.Uuid
+  authorId       String              @db.Uuid
+  publishedAt    DateTime?
+  createdAt      DateTime            @default(now())
+  updatedAt      DateTime            @updatedAt
+  project        Project             @relation(fields: [projectId], references: [researchItemId], onDelete: Cascade)
+  milestone      ProjectMilestone?   @relation(fields: [milestoneId], references: [id], onDelete: SetNull)
+  linkedOutput   ResearchItem?       @relation("ProjectUpdateOutput", fields: [linkedOutputId], references: [id], onDelete: SetNull)
+  author         User                @relation("ProjectUpdateAuthor", fields: [authorId], references: [id], onDelete: Restrict)
+
+  @@index([projectId, status, publishedAt])
+}
+
+model ProjectMembership {
+  id        String                  @id @default(uuid()) @db.Uuid
+  projectId String                  @db.Uuid
+  personId  String                  @db.Uuid
+  role      ProjectMemberRole
+  access    ProjectAccess
+  status    ProjectMembershipStatus @default(PENDING)
+  createdAt DateTime                @default(now())
+  updatedAt DateTime                @updatedAt
+  project   Project                 @relation(fields: [projectId], references: [researchItemId], onDelete: Cascade)
+  person    Person                  @relation(fields: [personId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, personId])
+  @@index([personId, status])
+}
+
+model ProjectInvitation {
+  id          String                  @id @default(uuid()) @db.Uuid
+  projectId   String                  @db.Uuid
+  email       String
+  tokenHash   String                  @unique
+  role        ProjectMemberRole       @default(CONTRIBUTOR)
+  access      ProjectAccess           @default(VIEW)
+  status      ProjectInvitationStatus @default(PENDING)
+  invitedById String                  @db.Uuid
+  expiresAt   DateTime
+  acceptedAt  DateTime?
+  createdAt   DateTime                @default(now())
+  updatedAt   DateTime                @updatedAt
+  project     Project                 @relation(fields: [projectId], references: [researchItemId], onDelete: Cascade)
+  invitedBy   User                    @relation("ProjectInvitationSender", fields: [invitedById], references: [id], onDelete: Restrict)
+
+  @@index([email, status])
+  @@index([projectId, status])
+}
+
+model ProjectResource {
+  id        String   @id @default(uuid()) @db.Uuid
+  projectId String   @db.Uuid
+  label     String
+  kind      String
+  url       String
+  sortOrder Int
+  createdAt DateTime @default(now())
+  project   Project  @relation(fields: [projectId], references: [researchItemId], onDelete: Cascade)
+
+  @@unique([projectId, sortOrder])
+}
+
+model ProjectChangeRequest {
+  id            String              @id @default(uuid()) @db.Uuid
+  projectId     String              @db.Uuid
+  kind          ProjectChangeKind
+  payload       Json
+  baseVersion   Int
+  status        ProjectChangeStatus @default(NEEDS_REVIEW)
+  note          String?             @db.Text
+  submittedById String              @db.Uuid
+  reviewedById  String?             @db.Uuid
+  submittedAt   DateTime            @default(now())
+  reviewedAt    DateTime?
+  project       Project             @relation(fields: [projectId], references: [researchItemId], onDelete: Cascade)
+  submittedBy   User                @relation("ProjectChangeSubmitter", fields: [submittedById], references: [id], onDelete: Restrict)
+  reviewedBy    User?               @relation("ProjectChangeReviewer", fields: [reviewedById], references: [id], onDelete: SetNull)
+
+  @@index([status, submittedAt])
+  @@index([projectId, status])
+}
+
+model ResearchContributor {
+  researchItemId String             @db.Uuid
+  sortOrder      Int
+  displayName    String
+  personId       String?            @db.Uuid
+  researchItem   ResearchItem       @relation(fields: [researchItemId], references: [id], onDelete: Cascade)
+  person         Person?            @relation(fields: [personId], references: [id], onDelete: SetNull)
+  matches        ContributorMatch[]
+
+  @@id([researchItemId, sortOrder])
+  @@index([personId])
+}
+
+model ResearchSourceSnapshot {
+  researchItemId String            @id @db.Uuid
+  url            String
+  status         SourceFetchStatus @default(PENDING)
+  contentType    String?
+  metadata       Json?
+  failureReason  String?           @db.Text
+  fetchedAt      DateTime?
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+  researchItem   ResearchItem      @relation(fields: [researchItemId], references: [id], onDelete: Cascade)
+
+  @@index([status, updatedAt])
+}
+
+model ContributorMatch {
+  id                   String                 @id @default(uuid()) @db.Uuid
+  researchItemId       String                 @db.Uuid
+  contributorSortOrder Int
+  personId             String                 @db.Uuid
+  status               ContributorMatchStatus @default(PROPOSED)
+  source               ContributorMatchSource
+  confidence           Float?
+  evidence             Json
+  requestedById        String?                @db.Uuid
+  reviewedById         String?                @db.Uuid
+  reviewedAt           DateTime?
+  createdAt            DateTime               @default(now())
+  updatedAt            DateTime               @updatedAt
+  contributor          ResearchContributor    @relation(fields: [researchItemId, contributorSortOrder], references: [researchItemId, sortOrder], onDelete: Cascade)
+  person               Person                 @relation(fields: [personId], references: [id], onDelete: Cascade)
+  requestedBy          User?                  @relation("ContributorMatchRequester", fields: [requestedById], references: [id], onDelete: SetNull)
+  reviewedBy           User?                  @relation("ContributorMatchReviewer", fields: [reviewedById], references: [id], onDelete: SetNull)
+
+  @@unique([researchItemId, contributorSortOrder, personId])
+  @@index([status, createdAt])
+  @@index([personId, status])
+}
+
+model ResearchDepartment {
+  researchItemId String       @db.Uuid
+  departmentId   String       @db.Uuid
+  researchItem   ResearchItem @relation(fields: [researchItemId], references: [id], onDelete: Cascade)
+  department     Department   @relation(fields: [departmentId], references: [id], onDelete: Cascade)
+
+  @@id([researchItemId, departmentId])
+}
+
+model ProjectOutput {
+  projectId String       @db.Uuid
+  outputId  String       @db.Uuid
+  project   ResearchItem @relation("ProjectItem", fields: [projectId], references: [id], onDelete: Cascade)
+  output    ResearchItem @relation("OutputItem", fields: [outputId], references: [id], onDelete: Cascade)
+
+  @@id([projectId, outputId])
+}
+
+model ReviewRecord {
+  id             String       @id @default(uuid()) @db.Uuid
+  researchItemId String       @db.Uuid
+  reviewerId     String       @db.Uuid
+  fromStatus     ReviewStatus
+  toStatus       ReviewStatus
+  note           String?      @db.Text
+  createdAt      DateTime     @default(now())
+  researchItem   ResearchItem @relation(fields: [researchItemId], references: [id], onDelete: Cascade)
+  reviewer       User         @relation(fields: [reviewerId], references: [id], onDelete: Restrict)
+}
+
+model Position {
+  id                      String         @id @default(uuid()) @db.Uuid
+  slug                    String         @unique
+  title                   String
+  summary                 String         @db.Text
+  description             String?        @db.Text
+  responsibilities        String[]
+  requirements            String[]
+  targetRank              AcademicRank?
+  positionType            PositionType   @default(INTERNSHIP)
+  status                  PositionStatus @default(DRAFT)
+  deadline                DateTime?
+  opensAt                 DateTime?
+  closesAt                DateTime?
+  engagementType          EngagementType @default(FIXED_TERM)
+  engagementStartsAt      DateTime?
+  engagementEndsAt        DateTime?
+  engagementDurationLabel String?
+  departmentId            String?        @db.Uuid
+  createdAt               DateTime       @default(now())
+  updatedAt               DateTime       @updatedAt
+  department              Department?    @relation(fields: [departmentId], references: [id], onDelete: SetNull)
+  applications            Application[]
+}
+
+model Application {
+  id                  String             @id @default(uuid()) @db.Uuid
+  fullName            String
+  email               String
+  phone               String?
+  educationSummary    String?            @db.Text
+  relevantLinks       String[]
+  consentedAt         DateTime
+  status              ApplicationStatus  @default(PARSING)
+  extractedText       String?            @db.Text
+  parsedResume        Json?
+  parseFeedback       String?            @db.Text
+  decisionReason      String?            @db.Text
+  positionId          String             @db.Uuid
+  departmentId        String?            @db.Uuid
+  cvAssetId           String             @unique @db.Uuid
+  profileImageAssetId String?            @unique @db.Uuid
+  reviewedById        String?            @db.Uuid
+  reviewedAt          DateTime?
+  createdAt           DateTime           @default(now())
+  updatedAt           DateTime           @updatedAt
+  position            Position           @relation(fields: [positionId], references: [id], onDelete: Restrict)
+  department          Department?        @relation(fields: [departmentId], references: [id], onDelete: SetNull)
+  cvAsset             Asset              @relation("ApplicationCv", fields: [cvAssetId], references: [id], onDelete: Restrict)
+  profileImageAsset   Asset?             @relation("ApplicationProfileImage", fields: [profileImageAssetId], references: [id], onDelete: SetNull)
+  reviewedBy          User?              @relation("ApplicationReviewer", fields: [reviewedById], references: [id], onDelete: SetNull)
+  events              ApplicationEvent[]
+
+  @@index([status, createdAt])
+  @@index([email])
+}
+
+model ApplicationEvent {
+  id            String             @id @default(uuid()) @db.Uuid
+  applicationId String             @db.Uuid
+  actorId       String?            @db.Uuid
+  fromStatus    ApplicationStatus?
+  toStatus      ApplicationStatus
+  note          String?            @db.Text
+  createdAt     DateTime           @default(now())
+  application   Application        @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  actor         User?              @relation(fields: [actorId], references: [id], onDelete: SetNull)
+}
+
+model University {
+  id          String   @id @default(uuid()) @db.Uuid
+  slug        String   @unique
+  name        String
+  websiteUrl  String?
+  logoAssetId String?  @unique @db.Uuid
+  isPublished Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  logoAsset   Asset?   @relation("UniversityLogo", fields: [logoAssetId], references: [id], onDelete: SetNull)
+}
+
+model Asset {
+  id                      String              @id @default(uuid()) @db.Uuid
+  kind                    AssetKind
+  access                  AssetAccess
+  storageKey              String              @unique
+  originalName            String
+  mimeType                String
+  byteSize                Int
+  width                   Int?
+  height                  Int?
+  variants                Json?
+  checksum                String
+  createdById             String?             @db.Uuid
+  createdAt               DateTime            @default(now())
+  createdBy               User?               @relation(fields: [createdById], references: [id], onDelete: SetNull)
+  avatarFor               Person?             @relation("PersonAvatar")
+  profileEdit             ProfileEditRequest? @relation("ProfileEditAvatar")
+  projectCover            Project?            @relation("ProjectCover")
+  applicationCv           Application?        @relation("ApplicationCv")
+  applicationProfileImage Application?        @relation("ApplicationProfileImage")
+  universityLogoFor       University[]        @relation("UniversityLogo")
+}
+
+model Session {
+  id            String    @id @default(uuid()) @db.Uuid
+  tokenHash     String    @unique
+  csrfTokenHash String
+  userAgent     String?
+  ipAddress     String?
+  expiresAt     DateTime
+  lastSeenAt    DateTime  @default(now())
+  revokedAt     DateTime?
+  createdAt     DateTime  @default(now())
+  userId        String    @db.Uuid
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, expiresAt])
+}
+
+model AccountSetupToken {
+  id        String    @id @default(uuid()) @db.Uuid
+  tokenHash String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+  userId    String    @db.Uuid
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, expiresAt])
+}
+
+model Notification {
+  id          String           @id @default(uuid()) @db.Uuid
+  type        NotificationType
+  title       String
+  body        String
+  actionUrl   String?
+  payload     Json?
+  readAt      DateTime?
+  createdAt   DateTime         @default(now())
+  recipientId String           @db.Uuid
+  recipient   User             @relation(fields: [recipientId], references: [id], onDelete: Cascade)
+
+  @@index([recipientId, readAt, createdAt])
+}
+
+model AuditRecord {
+  id         String   @id @default(uuid()) @db.Uuid
+  action     String
+  entityType String
+  entityId   String
+  details    Json?
+  ipAddress  String?
+  createdAt  DateTime @default(now())
+  actorId    String?  @db.Uuid
+  actor      User?    @relation(fields: [actorId], references: [id], onDelete: SetNull)
+
+  @@index([entityType, entityId])
+  @@index([actorId, createdAt])
+}
+
+model Job {
+  id          String    @id @default(uuid()) @db.Uuid
+  type        String
+  payload     Json
+  status      JobStatus @default(PENDING)
+  uniqueKey   String?   @unique
+  attempts    Int       @default(0)
+  maxAttempts Int       @default(5)
+  runAt       DateTime  @default(now())
+  lockedAt    DateTime?
+  lockedBy    String?
+  lastError   String?   @db.Text
+  completedAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([status, runAt])
+}
+
+model SiteSetting {
+  key       String   @id
+  value     Json
+  updatedAt DateTime @updatedAt
+}

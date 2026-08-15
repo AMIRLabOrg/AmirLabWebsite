@@ -1,0 +1,43 @@
+import type { Metadata } from "next";
+import { AuthProvider } from "@/components/auth-provider";
+import { FormValidation } from "@/components/form-validation";
+import { NotificationProvider } from "@/components/notification-provider";
+import { SiteChrome } from "@/components/site-chrome";
+import { NavigationProgress } from "@/components/ui/navigation-progress";
+import "./globals.css";
+
+export const metadata: Metadata = {
+  icons: {
+    icon: [{ type: "image/webp", url: "/amirlab-logo.webp" }],
+    shortcut: "/amirlab-logo.webp",
+  },
+  title: {
+    default: "AmirLab",
+    template: "%s · AmirLab",
+  },
+  description:
+    "Applied Machine Intelligence Research Lab people, papers, datasets, projects, and opportunities.",
+};
+
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  return (
+    <html data-scroll-behavior="smooth" lang="en">
+      <body>
+        <NavigationProgress />
+        <a className="fixed left-4 top-[-5rem] z-[200] bg-ink px-4 py-3 text-white focus:top-4" href="#content">
+          Skip to content
+        </a>
+        <AuthProvider>
+          <NotificationProvider>
+            <FormValidation />
+            <SiteChrome>{children}</SiteChrome>
+          </NotificationProvider>
+        </AuthProvider>
+      </body>
+    </html>
+  );
+}

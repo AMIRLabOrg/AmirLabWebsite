@@ -1,0 +1,31 @@
+{
+  "name": "amirlab",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "db:start": "pnpm --dir backend run db:start",
+    "db:stop": "pnpm --dir backend run db:stop",
+    "db:status": "pnpm --dir backend run db:status",
+    "db:cluster:reset": "pnpm --dir backend run db:cluster:reset",
+    "db:reset": "pnpm --dir backend run db:rebuild",
+    "db:start:docker": "docker compose up -d postgres",
+    "db:stop:docker": "docker compose stop postgres",
+    "db:logs:docker": "docker compose logs -f postgres",
+    "db:generate": "pnpm --dir backend run db:generate",
+    "db:push": "pnpm --dir backend run db:push",
+    "seed:validate": "pnpm --dir backend run seed:validate",
+    "db:seed": "pnpm --dir backend run db:seed",
+    "db:verify": "pnpm --dir backend run db:verify",
+    "db:rebuild": "pnpm --dir backend run db:rebuild",
+    "db:setup": "pnpm run db:rebuild",
+    "backend:dev": "pnpm --dir backend run start:dev",
+    "frontend:dev": "pnpm --dir frontend run dev",
+    "verify:loading": "node frontend/scripts/verify-loading-architecture.mjs",
+    "verify:tailwind": "node frontend/scripts/verify-tailwind-architecture.mjs",
+    "verify": "pnpm --dir frontend run verify",
+    "verify:reuse": "pnpm --dir frontend run verify:reuse",
+    "verify:workflow": "pnpm --dir frontend run verify:workflow",
+    "verify:e2e": "pnpm --dir frontend run verify:e2e",
+    "verify:visual": "pnpm --dir frontend run verify:visual"
+  }
+}

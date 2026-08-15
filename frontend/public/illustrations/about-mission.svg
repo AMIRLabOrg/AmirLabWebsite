@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 20 900 520" role="img" aria-labelledby="title desc">
+  <title id="title">AmirLab research mission</title>
+  <desc id="desc">Evidence, people, and accountability connect through reviewed research to create public value.</desc>
+  <style>
+    :root{--b:#05217b;--i:#171a22;--c:#f8f8f6;--s:#fff;--l:#dcdfe6}
+    text{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;fill:var(--b);letter-spacing:.1em}.k{font-size:11px;opacity:.6}.m{font:500 27px Georgia,serif;fill:var(--i);letter-spacing:-.025em}.ring,.link{fill:none;stroke:var(--b)}.ring{stroke-opacity:.16;stroke-dasharray:5 13;animation:orbit 18s linear infinite;transform-box:fill-box;transform-origin:center}.ring.inner{animation-direction:reverse;animation-duration:12s}.link{stroke-opacity:.3;stroke-width:1.4}.node{fill:var(--c);stroke:var(--b);stroke-width:1.7}.halo{fill:var(--b);fill-opacity:.045;stroke:var(--b);stroke-opacity:.18;animation:breathe 4.8s ease-in-out infinite;transform-box:fill-box;transform-origin:center}.pillar text{font-size:9px;font-weight:700}.core circle{fill:var(--b)}.core text{fill:white;font-size:10px;font-weight:700}.packet{fill:var(--b);filter:drop-shadow(0 0 4px #05217b66)}.value path{fill:none;stroke:var(--b);stroke-linecap:round;stroke-linejoin:round;stroke-width:1.7}.value text{font-size:9px;font-weight:700}.proof text{font-size:8px;opacity:.65}.proof rect{fill:var(--s);stroke:var(--l)}.proof circle{fill:var(--b)}
+    @keyframes orbit{to{transform:rotate(360deg)}}@keyframes breathe{50%{opacity:.5;transform:scale(1.14)}}@media(prefers-reduced-motion:reduce){.ring,.halo{animation:none}.packet{display:none}}
+  </style>
+  <g transform="translate(8)">
+    <text class="k" x="190" y="72">WHY AMIRLAB</text>
+    <g transform="translate(452 324)">
+      <circle class="ring" r="174"/><circle class="ring inner" r="112"/>
+      <path class="link" d="M-190-82 0 0 188-86M-172 116 0 0 195 105"/>
+      <g class="pillar" transform="translate(-190 -82)"><circle class="halo" r="34"/><circle class="node" r="20"/><path class="link" d="M-8-5h16M-8 0h16M-8 5h11"/><text text-anchor="middle" y="51">EVIDENCE</text></g>
+      <g class="pillar" transform="translate(188 -86)"><circle class="halo" r="34" style="animation-delay:-1.2s"/><circle class="node" r="20"/><circle class="link" cx="-6" cy="-3" r="4"/><circle class="link" cx="7" cy="-3" r="4"/><path class="link" d="M-13 9c2-7 12-7 14 0M0 9c2-7 12-7 14 0"/><text text-anchor="middle" y="51">PEOPLE</text></g>
+      <g class="pillar" transform="translate(-172 116)"><circle class="halo" r="34" style="animation-delay:-2.4s"/><circle class="node" r="20"/><path class="link" d="M0-10 10-6v8c0 7-5 11-10 14C-5 13-10 9-10 2v-8zM-5 1l4 4 7-8"/><text text-anchor="middle" y="51">ACCOUNTABILITY</text></g>
+      <g class="core"><circle class="halo" r="70" style="animation-delay:-3.6s"/><circle r="52"/><text text-anchor="middle" y="-4">REVIEWED</text><text text-anchor="middle" y="14">RESEARCH</text></g>
+      <circle class="packet" r="4"><animateMotion dur="5s" path="M-190-82 0 0" repeatCount="indefinite"/></circle>
+      <circle class="packet" r="4"><animateMotion begin="-1.7s" dur="5.5s" path="M188-86 0 0" repeatCount="indefinite"/></circle>
+      <circle class="packet" r="4"><animateMotion begin="-3.4s" dur="6s" path="M-172 116 0 0" repeatCount="indefinite"/></circle>
+      <g class="value" transform="translate(195 105)"><circle class="halo" r="38" style="animation-delay:-1.8s"/><circle class="node" r="22"/><path d="m-9 2 6 6L10-8"/><text text-anchor="middle" y="56">PUBLIC VALUE</text></g>
+      <circle class="packet" r="4"><animateMotion dur="4.6s" path="M0 0 195 105" repeatCount="indefinite"/></circle>
+    </g>
+    <g class="proof" transform="translate(610 478)"><rect width="82" height="25" rx="13"/><circle cx="14" cy="12.5" r="3"/><text x="25" y="16">TRACEABLE</text><g transform="translate(94)"><rect width="82" height="25" rx="13"/><circle cx="14" cy="12.5" r="3"/><text x="25" y="16">HUMAN</text></g></g>
+  </g>
+</svg>
