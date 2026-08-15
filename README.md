@@ -88,7 +88,9 @@ Development-only canonical rebuild credentials:
 - email: `admin@amirl.local`
 - password: `AmirlabLocal2026!`
 
-Change these before any public deployment.
+Change these before any public deployment. Passwords must be at least 8 characters.
+
+The backend `.env` included in this handoff contains the SMTP2GO host/port/TLS settings and non-empty credential placeholders. Replace `SMTP_USER` and `SMTP_PASSWORD` with your SMTP2GO credentials before testing email delivery. Mail delivery remains SMTP-only through Nodemailer.
 
 ## Role and review behavior
 

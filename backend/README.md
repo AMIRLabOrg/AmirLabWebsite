@@ -71,7 +71,23 @@ ADMIN_NAME=AMIRLab Administrator
 ADMIN_PASSWORD=AmirlabLocal2026!
 ```
 
-Change them before any public deployment.
+Change them before any public deployment. Passwords must be at least 8 characters.
+
+### SMTP mail delivery
+
+The backend uses SMTP through Nodemailer. The included `.env` is pre-wired for SMTP2GO; replace only the username/password and use a sender address verified in your SMTP2GO account:
+
+```env
+SMTP_FROM="AMIR Lab <noreply@amirl.org>"
+SMTP_HOST=mail.smtp2go.com
+SMTP_PORT=2525
+SMTP_USER=replace-with-smtp2go-username
+SMTP_PASSWORD=replace-with-smtp2go-password
+SMTP_SECURE=false
+SMTP_REQUIRE_TLS=true
+```
+
+There is no Resend provider path in this build.
 
 ## Runtime storage
 

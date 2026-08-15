@@ -1217,18 +1217,16 @@ export class ProjectsService {
       });
     }
 
-    const unsupported = requests.filter(
-      ({ kind }) =>
-        ![
-          ProjectChangeKind.ARCHIVE,
-          ProjectChangeKind.DETAILS,
-          ProjectChangeKind.MILESTONES,
-          ProjectChangeKind.OUTPUT,
-          ProjectChangeKind.RESOURCE,
-          ProjectChangeKind.TEAM,
-          ProjectChangeKind.UPDATE,
-        ].includes(kind),
-    );
+    const supportedKinds = new Set<ProjectChangeKind>([
+      ProjectChangeKind.ARCHIVE,
+      ProjectChangeKind.DETAILS,
+      ProjectChangeKind.MILESTONES,
+      ProjectChangeKind.OUTPUT,
+      ProjectChangeKind.RESOURCE,
+      ProjectChangeKind.TEAM,
+      ProjectChangeKind.UPDATE,
+    ]);
+    const unsupported = requests.filter(({ kind }) => !supportedKinds.has(kind));
     if (unsupported.length) {
       throw new BadRequestException(
         `Unsupported project change: ${unsupported[0].kind}`,

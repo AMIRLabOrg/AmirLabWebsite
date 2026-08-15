@@ -725,7 +725,7 @@ export class ResearchService {
     }
 
     const reopening = dto.status === ReviewStatus.NEEDS_REVIEW;
-    const validFromStatuses = reopening
+    const validFromStatuses: ReviewStatus[] = reopening
       ? [ReviewStatus.PUBLISHED, ReviewStatus.REJECTED]
       : [ReviewStatus.NEEDS_REVIEW, ReviewStatus.CHANGES_REQUESTED];
     if (items.some(({ reviewStatus }) => !validFromStatuses.includes(reviewStatus))) {

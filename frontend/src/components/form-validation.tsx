@@ -73,7 +73,7 @@ function renderError(control: ValidatedControl) {
   }
 
   const error = existing ?? document.createElement("p");
-  error.className = ERROR_CLASS;
+  error.className = `${ERROR_CLASS} m-0 text-[.78rem] leading-[1.45] text-danger`;
   error.id ||= `${control.id || control.name || "field"}-error-${randomId()}`;
   error.setAttribute("role", "alert");
   error.textContent = message;
