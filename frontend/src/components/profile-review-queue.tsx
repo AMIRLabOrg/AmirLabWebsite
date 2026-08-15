@@ -222,12 +222,14 @@ export function ProfileReviewQueue() {
                       ) : <span className={loadingPlaceholder(true, "control")} data-placeholder="control" />}
                     </DataTableCell>
                     <DataTableCell>
-                      <strong className={cn("block", loadingPlaceholder(loading, "text", "long"))} data-placeholder="text" data-placeholder-width="long">{request?.person.fullName ?? "Loading member"}</strong>
-                      <span className={cn("mt-[.2rem] block text-[.72rem] text-ink-muted", loadingPlaceholder(loading, "label", "medium"))} data-placeholder="label" data-placeholder-width="medium">{request?.person.publicEmail ?? "Loading public email"}</span>
+                      <strong className={cn("block", loadingPlaceholder(!request, "text", "long"))} data-placeholder="text" data-placeholder-width="long">{request?.person.fullName ?? "Loading member"}</strong>
+                      <span className={cn("mt-[.2rem] block text-[.72rem] text-ink-muted", loadingPlaceholder(!request, "label", "medium"))} data-placeholder="label" data-placeholder-width="medium">
+                        {request ? request.person.publicEmail?.trim() || "No public email" : "Loading public email"}
+                      </span>
                     </DataTableCell>
-                    <DataTableCell className={loadingPlaceholder(loading, "value")} data-placeholder="value">{request ? profileChangeCount(request) : 0} fields</DataTableCell>
+                    <DataTableCell className={loadingPlaceholder(!request, "value")} data-placeholder="value">{request ? profileChangeCount(request) : 0} fields</DataTableCell>
                     <DataTableCell className="font-mono text-[.7rem] text-ink-muted">
-                      <time className={loadingPlaceholder(loading, "label", "medium")} data-placeholder="label" data-placeholder-width="medium" dateTime={request?.submittedAt}>
+                      <time className={loadingPlaceholder(!request, "label", "medium")} data-placeholder="label" data-placeholder-width="medium" dateTime={request?.submittedAt}>
                         {request?.submittedAt ? new Date(request.submittedAt).toLocaleDateString() : "Loading date"}
                       </time>
                     </DataTableCell>
