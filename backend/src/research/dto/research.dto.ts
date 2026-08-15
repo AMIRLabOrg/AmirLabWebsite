@@ -140,6 +140,14 @@ export class ReviewResearchDto {
   note?: string;
 }
 
+export class BulkReviewResearchDto extends ReviewResearchDto {
+  @IsArray()
+  @ArrayNotEmpty()
+  @ArrayMaxSize(100)
+  @IsUUID('4', { each: true })
+  ids!: string[];
+}
+
 function AllowedFor(...types: ResearchItemType[]): PropertyDecorator {
   return (target, propertyName) =>
     registerDecorator({

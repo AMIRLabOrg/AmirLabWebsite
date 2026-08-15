@@ -22,6 +22,7 @@ import {
   ProjectResourceDto,
   ProjectUpdateDto,
   ReplaceMilestonesDto,
+  BulkReviewProjectChangesDto,
   ReviewProjectChangeDto,
   UpdateProjectDto,
   UpdateProjectTaskDto,
@@ -166,6 +167,14 @@ export class ProjectChangeReviewsController {
   @Get()
   list() {
     return this.projects.reviewQueue();
+  }
+
+  @Post('bulk-review')
+  bulkReview(
+    @Body() body: BulkReviewProjectChangesDto,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    return this.projects.bulkReview(body, user);
   }
 
   @Post(':id/review')

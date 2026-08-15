@@ -126,6 +126,124 @@ export class RankingsService implements OnModuleInit, OnModuleDestroy {
     }
   }
 
+  async recalculateMany(
+    personIds: readonly string[],
+    actorId?: string,
+  ): Promise<void> {
+    const ids = [...new Set(personIds)];
+    if (!ids.length) return;
+    const people = await this.prisma.person.findMany({
+      where: { id: { in: ids } },
+      include: { metrics: true },
+    });
+    if (!people.length) return;
+
+    const countRows = await this.prisma.$queryRaw<
+      Array<{ personId: string; paperCount: number }>
+    >(
+      Prisma.sql`
+        SELECT
+          contributor."personId" AS "personId",
+          COUNT(DISTINCT contributor."researchItemId")::integer AS "paperCount"
+        FROM "ResearchContributor" AS contributor
+        INNER JOIN "ResearchItem" AS item
+          ON item."id" = contributor."researchItemId"
+        WHERE contributor."personId" IN (${Prisma.join(people.map(({ id }) => id))})
+          AND item."reviewStatus" = 'PUBLISHED'::"ReviewStatus"
+          AND item."type" = 'PAPER'::"ResearchItemType"
+        GROUP BY contributor."personId"
+      `,
+    );
+    const counts = new Map(
+      countRows.map(({ paperCount, personId }) => [personId, paperCount]),
+    );
+    const policy = await this.settings.ranking();
+    const changes = people.map((person) => {
+      const paperCount = counts.get(person.id) ?? 0;
+      const citationCount = person.metrics?.scholarCitationCount ?? null;
+      const nextEarned = earnedRank(paperCount, citationCount, policy);
+      return {
+        citationCount,
+        nextEarned,
+        nextEffective: effectiveRank(person.appointedRank, nextEarned),
+        paperCount,
+        person,
+        previousEffective: effectiveRank(person.appointedRank, person.earnedRank),
+      };
+    });
+
+    await this.prisma.$transaction(async (transaction) => {
+      const metricRows = changes.map(({ paperCount, person }) =>
+        Prisma.sql`(${person.id}::uuid, ${paperCount}::integer, NOW(), NOW())`,
+      );
+      await transaction.$executeRaw(
+        Prisma.sql`
+          INSERT INTO "PersonMetric" (
+            "personId",
+            "publishedPaperCount",
+            "createdAt",
+            "updatedAt"
+          )
+          VALUES ${Prisma.join(metricRows)}
+          ON CONFLICT ("personId") DO UPDATE
+          SET
+            "publishedPaperCount" = EXCLUDED."publishedPaperCount",
+            "updatedAt" = NOW()
+        `,
+      );
+
+      const rankRows = changes.map(({ nextEarned, person }) =>
+        Prisma.sql`(${person.id}::uuid, ${nextEarned}::"AcademicRank")`,
+      );
+      await transaction.$executeRaw(
+        Prisma.sql`
+          UPDATE "Person" AS person
+          SET
+            "earnedRank" = selected.earned_rank,
+            "updatedAt" = NOW()
+          FROM (VALUES ${Prisma.join(rankRows)}) AS selected(person_id, earned_rank)
+          WHERE person."id" = selected.person_id
+        `,
+      );
+
+      await transaction.auditRecord.createMany({
+        data: changes.map(({ citationCount, nextEarned, paperCount, person }) => ({
+          action: 'person.rank-recalculated',
+          actorId,
+          entityId: person.id,
+          entityType: 'Person',
+          details: {
+            appointedRank: person.appointedRank,
+            bulk: true,
+            citationCount,
+            earnedRank: { from: person.earnedRank, to: nextEarned },
+            paperCount,
+          },
+        })),
+      });
+
+    });
+
+    await this.notifications.createMany(
+      changes.flatMap(({ nextEffective, person, previousEffective }) =>
+        person.userId && previousEffective !== nextEffective
+          ? [
+              {
+                actionUrl: '/workspace/profile',
+                body: nextEffective
+                  ? `Your publication record now qualifies for ${nextEffective.replaceAll('_', ' ').toLowerCase()}.`
+                  : 'Your research rank was recalculated.',
+                payload: { personId: person.id },
+                recipientId: person.userId,
+                title: 'Research rank updated',
+                type: NotificationType.RANK_CHANGED,
+              },
+            ]
+          : [],
+      ),
+    );
+  }
+
   async recalculateAll(): Promise<void> {
     const people = await this.prisma.person.findMany({ select: { id: true } });
     for (const { id } of people) await this.recalculate(id);

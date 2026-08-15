@@ -24,7 +24,7 @@ import {
   PublicationQueryDto,
   PublicationSort,
 } from './dto/publication-query.dto';
-import type { ReviewResearchDto, SubmitResearchDto } from './dto/research.dto';
+import type { BulkReviewResearchDto, ReviewResearchDto, SubmitResearchDto } from './dto/research.dto';
 import {
   ResearchReviewQueryDto,
   ResearchReviewSort,
@@ -688,6 +688,169 @@ export class ResearchService {
       jobId,
       status: SourceFetchStatus.PENDING,
     };
+  }
+
+  async bulkReview(
+    dto: BulkReviewResearchDto,
+    reviewer: AuthenticatedUser,
+  ) {
+    const ids = [...new Set(dto.ids)];
+    if (ids.length !== dto.ids.length) {
+      throw new BadRequestException('Duplicate research review IDs are not allowed');
+    }
+    const items = await this.prisma.researchItem.findMany({
+      where: { id: { in: ids } },
+      include: {
+        contributors: {
+          select: {
+            personId: true,
+            matches: { select: { status: true } },
+          },
+        },
+        sourceSnapshot: { select: { status: true } },
+      },
+    });
+    if (items.length !== ids.length) {
+      throw new NotFoundException('One or more research items were not found');
+    }
+    if (
+      items.some(
+        ({ type }) =>
+          type !== ResearchItemType.PAPER && type !== ResearchItemType.DATASET,
+      )
+    ) {
+      throw new BadRequestException(
+        'Paper and dataset review cannot manage project records',
+      );
+    }
+
+    const reopening = dto.status === ReviewStatus.NEEDS_REVIEW;
+    const validFromStatuses = reopening
+      ? [ReviewStatus.PUBLISHED, ReviewStatus.REJECTED]
+      : [ReviewStatus.NEEDS_REVIEW, ReviewStatus.CHANGES_REQUESTED];
+    if (items.some(({ reviewStatus }) => !validFromStatuses.includes(reviewStatus))) {
+      throw new ConflictException(
+        reopening
+          ? 'Only published or rejected records can be reopened together'
+          : 'One or more records must be reopened before another review decision',
+      );
+    }
+    if (
+      dto.status === ReviewStatus.PUBLISHED &&
+      items.some(({ sourceSnapshot }) => sourceSnapshot?.status === SourceFetchStatus.PENDING)
+    ) {
+      throw new ConflictException(
+        'Canonical source discovery is still in progress for one or more selected records',
+      );
+    }
+    if (
+      dto.status === ReviewStatus.PUBLISHED &&
+      items.some(({ contributors }) =>
+        contributors.some(({ matches }) =>
+          matches.some(({ status }) => status === ContributorMatchStatus.PROPOSED),
+        ),
+      )
+    ) {
+      throw new ConflictException(
+        'Resolve every proposed registered-person contributor match before publishing',
+      );
+    }
+
+    const reviewNote =
+      dto.status === ReviewStatus.PUBLISHED ? undefined : dto.note?.trim();
+    if (dto.status !== ReviewStatus.PUBLISHED && !reviewNote) {
+      throw new BadRequestException('A reviewer note is required');
+    }
+
+    const reviewedAt = new Date();
+    await this.prisma.$transaction(async (transaction) => {
+      const rows = items.map(({ id, reviewStatus }) =>
+        Prisma.sql`(${id}::uuid, ${reviewStatus}::"ReviewStatus")`,
+      );
+      const publishGuards =
+        dto.status === ReviewStatus.PUBLISHED
+          ? Prisma.sql`
+              AND NOT EXISTS (
+                SELECT 1
+                FROM "ResearchSourceSnapshot" AS source
+                WHERE source."researchItemId" = item."id"
+                  AND source."status" = 'PENDING'::"SourceFetchStatus"
+              )
+              AND NOT EXISTS (
+                SELECT 1
+                FROM "ContributorMatch" AS match
+                WHERE match."researchItemId" = item."id"
+                  AND match."status" = 'PROPOSED'::"ContributorMatchStatus"
+              )
+            `
+          : Prisma.empty;
+      const updated = await transaction.$queryRaw<Array<{ id: string }>>(
+        Prisma.sql`
+          UPDATE "ResearchItem" AS item
+          SET
+            "publishedAt" = ${
+              dto.status === ReviewStatus.PUBLISHED ? reviewedAt : null
+            },
+            "reviewNote" = ${reviewNote ?? null},
+            "reviewedById" = ${reviewer.id}::uuid,
+            "reviewStatus" = ${dto.status}::"ReviewStatus",
+            "updatedAt" = NOW()
+          FROM (VALUES ${Prisma.join(rows)}) AS selected(id, from_status)
+          WHERE item."id" = selected.id
+            AND item."reviewStatus" = selected.from_status
+            ${publishGuards}
+          RETURNING item."id"
+        `,
+      );
+      if (updated.length !== items.length) {
+        throw new ConflictException(
+          'One or more research records changed or no longer pass review guards; reload the queue',
+        );
+      }
+
+      await transaction.reviewRecord.createMany({
+        data: items.map((item) => ({
+          fromStatus: item.reviewStatus,
+          note: reviewNote ?? null,
+          researchItemId: item.id,
+          reviewerId: reviewer.id,
+          toStatus: dto.status,
+        })),
+      });
+    });
+
+    await this.notifications.createMany(
+      items.flatMap((item) =>
+        item.submittedById
+          ? [
+              {
+                actionUrl: `/workspace/research/${item.id}`,
+                body: `${item.title ?? 'Untitled research item'}: ${dto.status}`,
+                payload: { researchItemId: item.id },
+                recipientId: item.submittedById,
+                title: reopening
+                  ? 'Research record reopened'
+                  : 'Research submission reviewed',
+                type: NotificationType.RESEARCH_REVIEWED,
+              },
+            ]
+          : [],
+      ),
+    );
+
+    if (dto.status === ReviewStatus.PUBLISHED) {
+      const contributorPersonIds = [
+        ...new Set(
+          items
+            .filter(({ type }) => type === ResearchItemType.PAPER)
+            .flatMap(({ contributors }) =>
+              contributors.flatMap(({ personId }) => (personId ? [personId] : [])),
+            ),
+        ),
+      ];
+      await this.rankings.recalculateMany(contributorPersonIds, reviewer.id);
+    }
+    return { count: items.length, ids, status: dto.status };
   }
 
   async review(

@@ -11,6 +11,7 @@ import { PlatformRole } from '../../generated/prisma/client';
 import { CurrentUser, RequireRole } from '../auth/auth.decorators';
 import type { AuthenticatedUser } from '../auth/auth.types';
 import {
+  BulkReviewWeeklyReportsDto,
   ReviewWeeklyReportDto,
   SaveWeeklyReportDto,
 } from './dto/weekly-report.dto';
@@ -47,6 +48,15 @@ export class WeeklyReportsController {
   @RequireRole(PlatformRole.MODERATOR)
   reviewQueue() {
     return this.weeklyReports.reviewQueue();
+  }
+
+  @Post('bulk-review')
+  @RequireRole(PlatformRole.MODERATOR)
+  bulkReview(
+    @Body() body: BulkReviewWeeklyReportsDto,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    return this.weeklyReports.bulkReview(body, user);
   }
 
   @Post(':id/review')

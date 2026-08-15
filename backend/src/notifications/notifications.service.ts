@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { randomUUID } from 'node:crypto';
 import { Observable, Subscriber } from 'rxjs';
 import {
   ApplicationStatus,
@@ -23,6 +24,15 @@ export interface NotificationEvent {
   body: string;
   actionUrl: string | null;
   createdAt: Date;
+}
+
+export interface NotificationCreateInput {
+  recipientId: string;
+  type: NotificationType;
+  title: string;
+  body: string;
+  actionUrl?: string;
+  payload?: Prisma.InputJsonValue;
 }
 
 @Injectable()
@@ -185,6 +195,31 @@ export class NotificationsService {
       select: { id: true },
     });
     await Promise.all(reviewers.map(({ id }) => this.create(id, input)));
+  }
+
+  async createMany(inputs: readonly NotificationCreateInput[]): Promise<void> {
+    if (!inputs.length) return;
+    const createdAt = new Date();
+    const rows = inputs.map((input) => ({
+      ...input,
+      actionUrl: input.actionUrl ?? null,
+      createdAt,
+      id: randomUUID(),
+    }));
+    await this.prisma.notification.createMany({ data: rows });
+    for (const notification of rows) {
+      const event: NotificationEvent = {
+        actionUrl: notification.actionUrl,
+        body: notification.body,
+        createdAt: notification.createdAt,
+        id: notification.id,
+        title: notification.title,
+        type: notification.type,
+      };
+      for (const subscriber of this.subscribers.get(notification.recipientId) ?? []) {
+        subscriber.next({ data: event });
+      }
+    }
   }
 
   async create(

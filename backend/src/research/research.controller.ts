@@ -20,7 +20,7 @@ import {
 } from './dto/contributor-match.dto';
 import { CreatePositionDto, UpdatePositionDto } from './dto/position.dto';
 import { PublicationQueryDto } from './dto/publication-query.dto';
-import { ReviewResearchDto, SubmitResearchDto } from './dto/research.dto';
+import { BulkReviewResearchDto, ReviewResearchDto, SubmitResearchDto } from './dto/research.dto';
 import { ResearchReviewQueryDto } from './dto/research-review-query.dto';
 import { ResearchRelationshipsService } from './research-relationships.service';
 import { ResearchService } from './research.service';
@@ -143,6 +143,15 @@ export class ResearchController {
   @RequireRole(PlatformRole.MODERATOR)
   reviewQueue(@Query() query: ResearchReviewQueryDto) {
     return this.researchService.reviewQueue(query);
+  }
+
+  @Post('research-review/bulk-review')
+  @RequireRole(PlatformRole.MODERATOR)
+  bulkReviewResearch(
+    @Body() body: BulkReviewResearchDto,
+    @CurrentUser() reviewer: AuthenticatedUser,
+  ) {
+    return this.researchService.bulkReview(body, reviewer);
   }
 
   @Get('research-review/:id')

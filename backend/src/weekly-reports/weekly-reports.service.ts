@@ -17,6 +17,7 @@ import { PrismaService } from '../database/prisma.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { accessibleProjectWhere } from '../projects/project-access';
 import type {
+  BulkReviewWeeklyReportsDto,
   ReviewWeeklyReportDto,
   SaveWeeklyReportDto,
 } from './dto/weekly-report.dto';
@@ -276,6 +277,85 @@ export class WeeklyReportsService {
       orderBy: [{ status: 'asc' }, { weekStart: 'desc' }],
       take: 100,
     });
+  }
+
+  async bulkReview(
+    dto: BulkReviewWeeklyReportsDto,
+    user: AuthenticatedUser,
+  ) {
+    const ids = [...new Set(dto.ids)];
+    if (ids.length !== dto.ids.length) {
+      throw new BadRequestException('Duplicate weekly report IDs are not allowed');
+    }
+    const reviewNote = dto.note?.trim() || null;
+    if (
+      dto.status === WeeklyReportStatus.CHANGES_REQUESTED &&
+      !reviewNote
+    ) {
+      throw new BadRequestException(
+        'Explain what must change before returning the reports',
+      );
+    }
+
+    const reports = await this.prisma.weeklyReport.findMany({
+      where: { id: { in: ids } },
+      select: { authorId: true, id: true, status: true },
+    });
+    if (reports.length !== ids.length) {
+      throw new NotFoundException('One or more weekly reports were not found');
+    }
+    if (reports.some(({ status }) => status !== WeeklyReportStatus.SUBMITTED)) {
+      throw new ConflictException(
+        'Only submitted weekly reports can be reviewed in bulk',
+      );
+    }
+
+    const reviewedAt = new Date();
+    await this.prisma.$transaction(async (transaction) => {
+      const updated = await transaction.weeklyReport.updateMany({
+        where: {
+          id: { in: ids },
+          status: WeeklyReportStatus.SUBMITTED,
+        },
+        data: {
+          reviewNote,
+          reviewedAt,
+          reviewedById: user.id,
+          status: dto.status,
+        },
+      });
+      if (updated.count !== ids.length) {
+        throw new ConflictException(
+          'One or more weekly reports changed while the bulk review was being saved',
+        );
+      }
+      await transaction.auditRecord.createMany({
+        data: reports.map(({ id }) => ({
+          action: 'weekly-report.reviewed',
+          actorId: user.id,
+          entityId: id,
+          entityType: 'WeeklyReport',
+          details: { bulk: true, status: dto.status },
+        })),
+      });
+    });
+
+    await this.notifications.createMany(
+      reports.map(({ authorId, id }) => ({
+        actionUrl: '/workspace/weekly-reports',
+        body:
+          reviewNote || 'Your supervisor reviewed the latest weekly report.',
+        payload: { reportId: id },
+        recipientId: authorId,
+        title:
+          dto.status === WeeklyReportStatus.REVIEWED
+            ? 'Weekly report reviewed'
+            : 'Weekly report needs changes',
+        type: NotificationType.WEEKLY_REPORT_REVIEWED,
+      })),
+    );
+
+    return { count: ids.length, ids, status: dto.status };
   }
 
   async review(

@@ -6,10 +6,11 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { createHash, randomBytes } from 'node:crypto';
+import { createHash, randomBytes, randomUUID } from 'node:crypto';
 import {
   AccountStatus,
   ConversationKind,
+  Prisma,
   MessageKind,
   NotificationType,
   PlatformRole,
@@ -33,6 +34,7 @@ import { MailService } from '../mail/mail.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { SettingsService } from '../settings/settings.service';
 import type {
+  BulkReviewProjectChangesDto,
   CreateProjectDto,
   CreateProjectTaskDto,
   ProjectInvitationDto,
@@ -90,6 +92,13 @@ const PROJECT_ACCOUNT_STATUSES: AccountStatus[] = [
   AccountStatus.ACTIVE,
   AccountStatus.PENDING_SETUP,
 ];
+
+type BulkProjectChangeRequest = Prisma.ProjectChangeRequestGetPayload<{
+  include: {
+    project: { include: { researchItem: true } };
+    submittedBy: { include: { person: true } };
+  };
+}>;
 
 @Injectable()
 export class ProjectsService {
@@ -485,6 +494,179 @@ export class ProjectsService {
     });
   }
 
+  async bulkReview(
+    dto: BulkReviewProjectChangesDto,
+    reviewer: AuthenticatedUser,
+  ) {
+    if (
+      dto.status !== ProjectChangeStatus.APPROVED &&
+      dto.status !== ProjectChangeStatus.REJECTED
+    ) {
+      throw new BadRequestException('Decision must be approved or rejected');
+    }
+    const ids = [...new Set(dto.ids)];
+    if (ids.length !== dto.ids.length) {
+      throw new BadRequestException('Duplicate project review IDs are not allowed');
+    }
+    const reviewNote =
+      dto.status === ProjectChangeStatus.REJECTED ? dto.note?.trim() : undefined;
+    if (dto.status === ProjectChangeStatus.REJECTED && !reviewNote) {
+      throw new BadRequestException('A reviewer note is required');
+    }
+
+    const requests = await this.prisma.projectChangeRequest.findMany({
+      where: { id: { in: ids } },
+      include: {
+        project: { include: { researchItem: true } },
+        submittedBy: { include: { person: true } },
+      },
+    });
+    if (requests.length !== ids.length) {
+      throw new NotFoundException('One or more project changes were not found');
+    }
+    if (requests.some(({ status }) => status !== ProjectChangeStatus.NEEDS_REVIEW)) {
+      throw new ConflictException(
+        'One or more project changes are no longer awaiting review',
+      );
+    }
+
+    const reviewedAt = new Date();
+    if (dto.status === ProjectChangeStatus.REJECTED) {
+      await this.prisma.$transaction(async (transaction) => {
+        const updated = await transaction.projectChangeRequest.updateMany({
+          where: { id: { in: ids }, status: ProjectChangeStatus.NEEDS_REVIEW },
+          data: {
+            note: reviewNote,
+            reviewedAt,
+            reviewedById: reviewer.id,
+            status: ProjectChangeStatus.REJECTED,
+          },
+        });
+        if (updated.count !== requests.length) {
+          throw new ConflictException(
+            'One or more project changes changed while the bulk review was being saved',
+          );
+        }
+      });
+      await this.notifications.createMany(
+        requests.map((request) => ({
+          actionUrl: `/workspace/projects/${request.projectId}`,
+          body: reviewNote!,
+          payload: { projectChangeRequestId: request.id },
+          recipientId: request.submittedById,
+          title: 'Project change rejected',
+          type: NotificationType.PROJECT_CHANGED,
+        })),
+      );
+      return { count: requests.length, ids, status: dto.status };
+    }
+
+    const projectIds = requests.map(({ projectId }) => projectId);
+    if (new Set(projectIds).size !== projectIds.length) {
+      throw new BadRequestException(
+        'Bulk approval can include only one pending change per project at a time',
+      );
+    }
+    const stale = requests.filter(
+      (request) => request.project.version !== request.baseVersion,
+    );
+    if (stale.length) {
+      await this.prisma.projectChangeRequest.updateMany({
+        where: {
+          id: { in: stale.map(({ id }) => id) },
+          status: ProjectChangeStatus.NEEDS_REVIEW,
+        },
+        data: {
+          note: 'Project changed after this request was submitted',
+          reviewedAt,
+          reviewedById: reviewer.id,
+          status: ProjectChangeStatus.STALE,
+        },
+      });
+      throw new ConflictException(
+        'One or more selected project changes are stale; the queue was updated',
+      );
+    }
+
+    let activityMessageIds: string[] = [];
+    await this.prisma.$transaction(async (transaction) => {
+      const lockedProjects = await transaction.$queryRaw<
+        Array<{ projectId: string; version: number }>
+      >(
+        Prisma.sql`
+          SELECT
+            project."researchItemId" AS "projectId",
+            project."version"
+          FROM "Project" AS project
+          WHERE project."researchItemId" IN (${Prisma.join(projectIds)})
+          FOR UPDATE
+        `,
+      );
+      const versions = new Map(
+        lockedProjects.map(({ projectId, version }) => [projectId, version]),
+      );
+      if (
+        lockedProjects.length !== requests.length ||
+        requests.some(
+          (request) => versions.get(request.projectId) !== request.baseVersion,
+        )
+      ) {
+        throw new ConflictException(
+          'One or more projects changed while the bulk review was being saved',
+        );
+      }
+
+      const claimed = await transaction.projectChangeRequest.updateMany({
+        where: { id: { in: ids }, status: ProjectChangeStatus.NEEDS_REVIEW },
+        data: {
+          note: null,
+          reviewedAt,
+          reviewedById: reviewer.id,
+          status: ProjectChangeStatus.APPROVED,
+        },
+      });
+      if (claimed.count !== requests.length) {
+        throw new ConflictException(
+          'One or more project changes changed while the bulk review was being saved',
+        );
+      }
+
+      activityMessageIds = await this.applyBulkChanges(
+        transaction,
+        requests,
+        reviewedAt,
+      );
+    });
+
+    if (activityMessageIds.length) {
+      const messages = await this.prisma.message.findMany({
+        where: { id: { in: activityMessageIds } },
+        include: {
+          sender: {
+            select: {
+              id: true,
+              person: {
+                select: { fullName: true, avatar: { select: { id: true } } },
+              },
+            },
+          },
+        },
+      });
+      await this.collaboration.broadcastMessages(messages);
+    }
+    await this.notifications.createMany(
+      requests.map((request) => ({
+        actionUrl: `/workspace/projects/${request.projectId}`,
+        body: `Your ${request.kind.toLowerCase()} change was reviewed.`,
+        payload: { projectChangeRequestId: request.id },
+        recipientId: request.submittedById,
+        title: 'Project change approved',
+        type: NotificationType.PROJECT_CHANGED,
+      })),
+    );
+    return { count: requests.length, ids, status: dto.status };
+  }
+
   async review(
     id: string,
     dto: ReviewProjectChangeDto,
@@ -596,6 +778,508 @@ export class ProjectsService {
       payload: { projectChangeRequestId: request.id },
     });
     return { direct: false, request };
+  }
+
+  private async applyBulkChanges(
+    transaction: Prisma.TransactionClient,
+    requests: BulkProjectChangeRequest[],
+    now: Date,
+  ): Promise<string[]> {
+    const byKind = <T extends ProjectChangeKind>(kind: T) =>
+      requests.filter((request) => request.kind === kind);
+
+    const details = byKind(ProjectChangeKind.DETAILS);
+    if (details.length) {
+      const detailRows = details.map((request) => {
+        const payload = asRecord(request.payload);
+        return Prisma.sql`(
+          ${request.projectId}::uuid,
+          ${requiredString(payload.title)},
+          ${optionalString(payload.summary)},
+          ${optionalString(payload.objective)},
+          ${requiredString(payload.status)}::"ProjectStatus",
+          ${optionalDate(payload.startsAt)},
+          ${optionalDate(payload.endsAt)},
+          ${Boolean(payload.publicPageEnabled)}::boolean
+        )`;
+      });
+      await transaction.$executeRaw(
+        Prisma.sql`
+          UPDATE "ResearchItem" AS item
+          SET
+            "publishedAt" = CASE
+              WHEN selected.public_page_enabled THEN ${now}
+              ELSE item."publishedAt"
+            END,
+            "reviewStatus" = CASE
+              WHEN selected.public_page_enabled THEN 'PUBLISHED'::"ReviewStatus"
+              ELSE item."reviewStatus"
+            END,
+            "summary" = selected.summary,
+            "title" = selected.title,
+            "updatedAt" = NOW()
+          FROM (VALUES ${Prisma.join(detailRows)}) AS selected(
+            project_id,
+            title,
+            summary,
+            objective,
+            status,
+            starts_at,
+            ends_at,
+            public_page_enabled
+          )
+          WHERE item."id" = selected.project_id
+        `,
+      );
+      await transaction.$executeRaw(
+        Prisma.sql`
+          UPDATE "Project" AS project
+          SET
+            "endsAt" = selected.ends_at,
+            "objective" = selected.objective,
+            "publicPageEnabled" = selected.public_page_enabled,
+            "startsAt" = selected.starts_at,
+            "status" = selected.status,
+            "version" = project."version" + 1
+          FROM (VALUES ${Prisma.join(detailRows)}) AS selected(
+            project_id,
+            title,
+            summary,
+            objective,
+            status,
+            starts_at,
+            ends_at,
+            public_page_enabled
+          )
+          WHERE project."researchItemId" = selected.project_id
+        `,
+      );
+      const detailIds = details.map(({ projectId }) => projectId);
+      await transaction.projectObjective.deleteMany({
+        where: { projectId: { in: detailIds } },
+      });
+      const objectives = details.flatMap((request) => {
+        const payload = asRecord(request.payload);
+        return (Array.isArray(payload.objectives) ? payload.objectives : []).map(
+          (value, sortOrder) => {
+            const objective = asRecord(value);
+            return {
+              description: optionalString(objective.description),
+              projectId: request.projectId,
+              sortOrder,
+              title: requiredString(objective.title),
+            };
+          },
+        );
+      });
+      if (objectives.length) {
+        await transaction.projectObjective.createMany({ data: objectives });
+      }
+      const titleRows = details.map((request) => {
+        const payload = asRecord(request.payload);
+        return Prisma.sql`(${request.projectId}::uuid, ${requiredString(payload.title)})`;
+      });
+      await transaction.$executeRaw(
+        Prisma.sql`
+          UPDATE "Conversation" AS conversation
+          SET "title" = selected.title, "updatedAt" = NOW()
+          FROM (VALUES ${Prisma.join(titleRows)}) AS selected(project_id, title)
+          WHERE conversation."kind" = 'PROJECT'::"ConversationKind"
+            AND conversation."projectId" = selected.project_id
+        `,
+      );
+    }
+
+    const milestoneRequests = byKind(ProjectChangeKind.MILESTONES);
+    if (milestoneRequests.length) {
+      const projectIds = milestoneRequests.map(({ projectId }) => projectId);
+      await transaction.projectMilestone.deleteMany({
+        where: { projectId: { in: projectIds } },
+      });
+      const milestones = milestoneRequests.flatMap((request) => {
+        const payload = asRecord(request.payload);
+        return (Array.isArray(payload.milestones) ? payload.milestones : []).map(
+          (value, sortOrder) => {
+            const milestone = asRecord(value);
+            const status = milestone.status as ProjectMilestoneStatus;
+            return {
+              completedAt:
+                status === ProjectMilestoneStatus.COMPLETE ? now : null,
+              description: optionalString(milestone.description),
+              dueAt: optionalDate(milestone.dueAt),
+              ownerId: optionalString(milestone.ownerId),
+              progress:
+                status === ProjectMilestoneStatus.COMPLETE
+                  ? 100
+                  : status === ProjectMilestoneStatus.PLANNED ||
+                      status === ProjectMilestoneStatus.BLOCKED
+                    ? 0
+                    : Number(milestone.progress),
+              projectId: request.projectId,
+              sortOrder,
+              status,
+              title: requiredString(milestone.title),
+              weight: Number(milestone.weight),
+            };
+          },
+        );
+      });
+      if (milestones.length) {
+        await transaction.projectMilestone.createMany({ data: milestones });
+      }
+      await transaction.project.updateMany({
+        where: { researchItemId: { in: projectIds } },
+        data: { version: { increment: 1 } },
+      });
+    }
+
+    const updateRequests = byKind(ProjectChangeKind.UPDATE);
+    if (updateRequests.length) {
+      const updates = updateRequests.map((request) => {
+        const payload = asRecord(request.payload);
+        const status = payload.status as ProjectUpdateStatus;
+        return {
+          authorId: request.submittedById,
+          body: requiredString(payload.body),
+          linkedOutputId: optionalString(payload.linkedOutputId),
+          milestoneId: optionalString(payload.milestoneId),
+          projectId: request.projectId,
+          publishedAt: status === ProjectUpdateStatus.PUBLISHED ? now : null,
+          status,
+          title: requiredString(payload.title),
+        };
+      });
+      await transaction.projectUpdate.createMany({ data: updates });
+      const publishedProjectIds = updates
+        .filter(({ status }) => status === ProjectUpdateStatus.PUBLISHED)
+        .map(({ projectId }) => projectId);
+      if (publishedProjectIds.length) {
+        await transaction.project.updateMany({
+          where: { researchItemId: { in: publishedProjectIds } },
+          data: { version: { increment: 1 } },
+        });
+      }
+    }
+
+    const teamRequests = byKind(ProjectChangeKind.TEAM);
+    if (teamRequests.length) {
+      const memberRequests = teamRequests.flatMap((request) => {
+        const payload = asRecord(request.payload);
+        const personId = optionalString(payload.personId);
+        return personId ? [{ payload, personId, request }] : [];
+      });
+      if (memberRequests.length) {
+        const people = await transaction.person.findMany({
+          where: {
+            id: { in: memberRequests.map(({ personId }) => personId) },
+          },
+          include: { user: true },
+        });
+        const peopleById = new Map(people.map((person) => [person.id, person]));
+        if (
+          memberRequests.some(({ personId }) => {
+            const person = peopleById.get(personId);
+            return (
+              !person?.user ||
+              !PROJECT_ACCOUNT_STATUSES.includes(person.user.status)
+            );
+          })
+        ) {
+          throw new BadRequestException(
+            'Project members must have available registered accounts',
+          );
+        }
+        const membershipRows = memberRequests.map(({ payload, personId, request }) =>
+          Prisma.sql`(
+            ${randomUUID()}::uuid,
+            ${request.projectId}::uuid,
+            ${personId}::uuid,
+            ${requiredString(payload.role)}::"ProjectMemberRole",
+            ${requiredString(payload.access)}::"ProjectAccess",
+            'ACTIVE'::"ProjectMembershipStatus",
+            NOW(),
+            NOW()
+          )`,
+        );
+        await transaction.$executeRaw(
+          Prisma.sql`
+            INSERT INTO "ProjectMembership" (
+              "id",
+              "projectId",
+              "personId",
+              "role",
+              "access",
+              "status",
+              "createdAt",
+              "updatedAt"
+            )
+            VALUES ${Prisma.join(membershipRows)}
+            ON CONFLICT ("projectId", "personId") DO UPDATE
+            SET
+              "role" = EXCLUDED."role",
+              "access" = EXCLUDED."access",
+              "status" = 'ACTIVE'::"ProjectMembershipStatus",
+              "updatedAt" = NOW()
+          `,
+        );
+        const conversations = await transaction.conversation.findMany({
+          where: {
+            kind: ConversationKind.PROJECT,
+            projectId: {
+              in: memberRequests.map(({ request }) => request.projectId),
+            },
+          },
+          select: { id: true, projectId: true },
+        });
+        const conversationByProject = new Map(
+          conversations.flatMap((conversation) =>
+            conversation.projectId
+              ? [[conversation.projectId, conversation.id] as const]
+              : [],
+          ),
+        );
+        const memberRows = memberRequests.flatMap(({ personId, request }) => {
+          const conversationId = conversationByProject.get(request.projectId);
+          const userId = peopleById.get(personId)?.user?.id;
+          return conversationId && userId
+            ? [Prisma.sql`(${conversationId}::uuid, ${userId}::uuid, NOW())`]
+            : [];
+        });
+        if (memberRows.length) {
+          await transaction.$executeRaw(
+            Prisma.sql`
+              INSERT INTO "ConversationMember" (
+                "conversationId",
+                "userId",
+                "joinedAt"
+              )
+              VALUES ${Prisma.join(memberRows)}
+              ON CONFLICT ("conversationId", "userId") DO NOTHING
+            `,
+          );
+        }
+        await transaction.notification.createMany({
+          data: memberRequests.map(({ personId, request }) => ({
+            actionUrl: `/workspace/projects/${request.projectId}`,
+            body: 'You now have access to an AMIR Lab project workspace.',
+            payload: { projectId: request.projectId },
+            recipientId: peopleById.get(personId)!.user!.id,
+            title: 'Added to a project',
+            type: NotificationType.PROJECT_CHANGED,
+          })),
+        });
+      }
+
+      const emailRequests = teamRequests.flatMap((request) => {
+        const payload = asRecord(request.payload);
+        if (optionalString(payload.personId)) return [];
+        const email = requiredString(payload.email).trim().toLowerCase();
+        const token = randomBytes(32).toString('base64url');
+        return [
+          {
+            email,
+            id: randomUUID(),
+            payload,
+            request,
+            token,
+            tokenHash: createHash('sha256').update(token).digest('hex'),
+          },
+        ];
+      });
+      if (emailRequests.length) {
+        const expiresAt = new Date(now.getTime() + 14 * DAY);
+        await transaction.projectInvitation.createMany({
+          data: emailRequests.map(({ email, id, payload, request, tokenHash }) => ({
+            access: requiredString(payload.access) as ProjectAccess,
+            email,
+            expiresAt,
+            id,
+            invitedById: request.submittedById,
+            projectId: request.projectId,
+            role: requiredString(payload.role) as ProjectMemberRole,
+            tokenHash,
+          })),
+        });
+        const accounts = await transaction.user.findMany({
+          where: { email: { in: emailRequests.map(({ email }) => email) } },
+          select: { email: true, id: true },
+        });
+        const accountByEmail = new Map(
+          accounts.flatMap((account) =>
+            account.email ? [[account.email.toLowerCase(), account.id] as const] : [],
+          ),
+        );
+        const frontend = this.config.get('frontendOrigins', { infer: true })[0];
+        await transaction.job.createMany({
+          data: emailRequests.map(({ email, id, request, token }) => {
+            const link = `${frontend}/workspace/project-invitations?token=${encodeURIComponent(token)}`;
+            return {
+              payload: {
+                subject: `Invitation to ${request.project.researchItem.title ?? 'an AMIR Lab project'}`,
+                text: `You were invited to an AMIR Lab project. Sign in with this email and accept within 14 days:\n\n${link}\n\nExternal invitees receive no project access until their AMIR Lab account and identity are verified.`,
+                to: email,
+              },
+              type: 'SEND_EMAIL',
+              uniqueKey: `project-invitation:${id}`,
+            };
+          }),
+        });
+        const inviteNotifications = emailRequests.flatMap(
+          ({ email, request, token }) => {
+            const recipientId = accountByEmail.get(email);
+            if (!recipientId) return [];
+            const link = `/workspace/project-invitations?token=${encodeURIComponent(token)}`;
+            return [
+              {
+                actionUrl: link,
+                body: request.project.researchItem.title ?? 'AMIR Lab project',
+                payload: { projectId: request.projectId },
+                recipientId,
+                title: 'Project invitation',
+                type: NotificationType.PROJECT_INVITED,
+              },
+            ];
+          },
+        );
+        if (inviteNotifications.length) {
+          await transaction.notification.createMany({
+            data: inviteNotifications,
+          });
+        }
+      }
+
+      await transaction.project.updateMany({
+        where: {
+          researchItemId: { in: teamRequests.map(({ projectId }) => projectId) },
+        },
+        data: { version: { increment: 1 } },
+      });
+    }
+
+    const outputRequests = byKind(ProjectChangeKind.OUTPUT);
+    if (outputRequests.length) {
+      await transaction.projectOutput.createMany({
+        data: outputRequests.map((request) => ({
+          outputId: requiredString(asRecord(request.payload).outputId),
+          projectId: request.projectId,
+        })),
+        skipDuplicates: true,
+      });
+      await transaction.project.updateMany({
+        where: {
+          researchItemId: {
+            in: outputRequests.map(({ projectId }) => projectId),
+          },
+        },
+        data: { version: { increment: 1 } },
+      });
+    }
+
+    const resourceRequests = byKind(ProjectChangeKind.RESOURCE);
+    if (resourceRequests.length) {
+      const projectIds = resourceRequests.map(({ projectId }) => projectId);
+      const counts = await transaction.projectResource.groupBy({
+        by: ['projectId'],
+        where: { projectId: { in: projectIds } },
+        _count: { _all: true },
+      });
+      const countByProject = new Map(
+        counts.map(({ _count, projectId }) => [projectId, _count._all]),
+      );
+      await transaction.projectResource.createMany({
+        data: resourceRequests.map((request) => {
+          const payload = asRecord(request.payload);
+          return {
+            kind: requiredString(payload.kind),
+            label: requiredString(payload.label),
+            projectId: request.projectId,
+            sortOrder: countByProject.get(request.projectId) ?? 0,
+            url: requiredString(payload.url),
+          };
+        }),
+      });
+      await transaction.project.updateMany({
+        where: { researchItemId: { in: projectIds } },
+        data: { version: { increment: 1 } },
+      });
+    }
+
+    const archiveRequests = byKind(ProjectChangeKind.ARCHIVE);
+    if (archiveRequests.length) {
+      const projectIds = archiveRequests.map(({ projectId }) => projectId);
+      await transaction.researchItem.updateMany({
+        where: { id: { in: projectIds } },
+        data: { reviewStatus: ReviewStatus.ARCHIVED },
+      });
+      await transaction.project.updateMany({
+        where: { researchItemId: { in: projectIds } },
+        data: { publicPageEnabled: false, version: { increment: 1 } },
+      });
+    }
+
+    const unsupported = requests.filter(
+      ({ kind }) =>
+        ![
+          ProjectChangeKind.ARCHIVE,
+          ProjectChangeKind.DETAILS,
+          ProjectChangeKind.MILESTONES,
+          ProjectChangeKind.OUTPUT,
+          ProjectChangeKind.RESOURCE,
+          ProjectChangeKind.TEAM,
+          ProjectChangeKind.UPDATE,
+        ].includes(kind),
+    );
+    if (unsupported.length) {
+      throw new BadRequestException(
+        `Unsupported project change: ${unsupported[0].kind}`,
+      );
+    }
+
+    await transaction.auditRecord.createMany({
+      data: requests.map((request) => ({
+        action: 'project.change-applied',
+        actorId: request.submittedById,
+        entityId: request.projectId,
+        entityType: 'Project',
+        details: { bulk: true, kind: request.kind },
+      })),
+    });
+
+    const conversations = await transaction.conversation.findMany({
+      where: {
+        kind: ConversationKind.PROJECT,
+        projectId: { in: requests.map(({ projectId }) => projectId) },
+      },
+      select: { id: true, projectId: true },
+    });
+    const conversationByProject = new Map(
+      conversations.flatMap((conversation) =>
+        conversation.projectId
+          ? [[conversation.projectId, conversation.id] as const]
+          : [],
+      ),
+    );
+    const messages = requests.flatMap((request) => {
+      const conversationId = conversationByProject.get(request.projectId);
+      if (!conversationId) return [];
+      return [
+        {
+          body: `${request.submittedBy.person?.fullName ?? 'A project member'} ${activityLabel(request.kind)}.`,
+          conversationId,
+          id: randomUUID(),
+          kind: MessageKind.SYSTEM,
+          senderId: request.submittedById,
+        },
+      ];
+    });
+    if (messages.length) {
+      await transaction.message.createMany({ data: messages });
+      await transaction.conversation.updateMany({
+        where: { id: { in: messages.map(({ conversationId }) => conversationId) } },
+        data: { updatedAt: now },
+      });
+    }
+    return messages.map(({ id }) => id);
   }
 
   private async applyChange(

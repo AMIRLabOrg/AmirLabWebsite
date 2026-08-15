@@ -14,9 +14,14 @@ import { ToolbarSearchField } from "@/components/ui/toolbar-search-field";
 import { SelectControl } from "@/components/ui/select-control";
 import { FormField } from "@/components/ui/form-field";
 import { ButtonControl } from "@/components/ui/button-control";
+import { CheckboxControl } from "@/components/ui/checkbox-control";
+import { BulkReviewBar } from "@/components/bulk-review-bar";
+import { useBulkSelection } from "@/lib/use-bulk-selection";
+import { useNotifications } from "@/components/notification-provider";
 
 export function ProfileReviewQueue() {
   const router = useRouter();
+  const { refreshUnreadCount } = useNotifications();
   const [result, setResult] =
     useState<PaginatedResponse<ProfileEditRequest>>();
   const [page, setPage] = useState(1);
@@ -58,6 +63,49 @@ export function ProfileReviewQueue() {
       active = false;
     };
   }, [deferredSearch, page, reload, sort]);
+
+  const bulk = useBulkSelection((result?.items ?? []).map(({ id }) => id));
+  const selectedRequests = (result?.items ?? []).filter(({ id }) => bulk.isSelected(id));
+  const commonBulkActions = selectedRequests.length && selectedRequests.every(({ status }) => status === "NEEDS_REVIEW")
+    ? [
+        {
+          confirmDescription: `Approve the ${selectedRequests.length} selected profile change request${selectedRequests.length === 1 ? "" : "s"}. Each request is guarded by its current revision.`,
+          confirmLabel: "Approve selected",
+          confirmTitle: "Approve selected profile changes?",
+          label: "Approve selected",
+          status: "APPROVED" as const,
+          tone: "primary" as const,
+        },
+        {
+          confirmDescription: `Reject the ${selectedRequests.length} selected profile change request${selectedRequests.length === 1 ? "" : "s"} with the same reviewer note.`,
+          confirmLabel: "Reject selected",
+          confirmTitle: "Reject selected profile changes?",
+          label: "Reject selected",
+          notePlaceholder: "Explain what these members need to fix.",
+          requiresNote: true,
+          status: "REJECTED" as const,
+          tone: "danger" as const,
+        },
+      ]
+    : [];
+
+  async function decideBulk({ note, status }: { note?: string; status: "APPROVED" | "REJECTED" }) {
+    if (!selectedRequests.length) return;
+    await apiRequest("/profile-reviews/bulk-review", {
+      body: JSON.stringify({
+        items: selectedRequests.map(({ id, revision }) => ({ id, revision })),
+        ...(note ? { note } : {}),
+        status,
+      }),
+      headers: { "content-type": "application/json" },
+      method: "POST",
+    });
+    bulk.clear();
+    setLoading(true);
+    if (selectedRequests.length === (result?.items.length ?? 0) && page > 1) setPage((current) => current - 1);
+    else setReload((current) => current + 1);
+    void refreshUnreadCount().catch(() => undefined);
+  }
 
   const filtered = Boolean(search);
   const clear = () => {
@@ -102,6 +150,21 @@ export function ProfileReviewQueue() {
         </ButtonControl>
       </div>
 
+      {loading || result?.items.length ? (
+        <BulkReviewBar
+          actions={commonBulkActions}
+          loading={loading}
+          onClear={bulk.clear}
+          onSelectAll={bulk.toggleAll}
+          onSubmit={decideBulk}
+          selectAllState={bulk.selectAllState}
+          selectableCount={result?.items.length ?? 0}
+          selectedCount={bulk.selectedCount}
+          successBody={(status) => `${selectedRequests.length} profile review${selectedRequests.length === 1 ? "" : "s"} ${status === "APPROVED" ? "approved" : "rejected"}.`}
+          successTitle="Bulk profile review saved"
+        />
+      ) : null}
+
       {error && result ? <p className="m-0 flex items-center gap-[.45rem] text-[.82rem] leading-[1.5] text-ink-muted rounded-panel bg-danger-soft p-[.8rem] text-danger">{error}</p> : null}
       {error && !result ? (
         <StatePanel
@@ -122,6 +185,7 @@ export function ProfileReviewQueue() {
             <DataTable>
               <thead>
                 <tr>
+                  <DataTableHeadCell className="w-[48px]">Select</DataTableHeadCell>
                   <DataTableHeadCell>Member</DataTableHeadCell>
                   <DataTableHeadCell>Changed fields</DataTableHeadCell>
                   <DataTableHeadCell>Submitted</DataTableHeadCell>
@@ -143,6 +207,20 @@ export function ProfileReviewQueue() {
                     role="link"
                     tabIndex={loading ? -1 : 0}
                   >
+                    <DataTableCell
+                      onClick={(event) => event.stopPropagation()}
+                      onKeyDown={(event) => event.stopPropagation()}
+                    >
+                      {request ? (
+                        <CheckboxControl
+                          ariaLabel={`Select ${request.person.fullName} profile review`}
+                          checked={bulk.isSelected(request.id)}
+                          className="gap-0"
+                          id={`profile-review-select-${request.id}`}
+                          onCheckedChange={(checked) => bulk.toggle(request.id, checked)}
+                        />
+                      ) : <span className={loadingPlaceholder(true, "control")} data-placeholder="control" />}
+                    </DataTableCell>
                     <DataTableCell>
                       <strong className={cn("block", loadingPlaceholder(loading, "text", "long"))} data-placeholder="text" data-placeholder-width="long">{request?.person.fullName ?? "Loading member"}</strong>
                       <span className={cn("mt-[.2rem] block text-[.72rem] text-ink-muted", loadingPlaceholder(loading, "label", "medium"))} data-placeholder="label" data-placeholder-width="medium">{request?.person.publicEmail ?? "Loading public email"}</span>

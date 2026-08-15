@@ -281,3 +281,11 @@ export class ReviewProjectChangeDto {
   @MaxLength(4_000)
   note?: string;
 }
+
+export class BulkReviewProjectChangesDto extends ReviewProjectChangeDto {
+  @IsArray()
+  @ArrayNotEmpty()
+  @ArrayMaxSize(100)
+  @IsUUID('4', { each: true })
+  ids!: string[];
+}

@@ -1,0 +1,72 @@
+"use client";
+
+import { ReviewActions, type ReviewAction } from "@/components/review-actions";
+import { ButtonControl } from "@/components/ui/button-control";
+import { CheckboxControl } from "@/components/ui/checkbox-control";
+import { useId } from "react";
+
+export function BulkReviewBar<Status extends string>({
+  actions,
+  loading = false,
+  onClear,
+  onSelectAll,
+  onSubmit,
+  selectAllState,
+  selectedCount,
+  selectableCount,
+  successBody,
+  successTitle,
+}: {
+  actions: Array<ReviewAction<Status>>;
+  loading?: boolean;
+  onClear: () => void;
+  onSelectAll: (checked: boolean) => void;
+  onSubmit: (decision: { note?: string; status: Status }) => Promise<void>;
+  selectAllState: boolean | "indeterminate";
+  selectedCount: number;
+  selectableCount: number;
+  successBody: (status: Status) => string;
+  successTitle: string;
+}) {
+  const selectAllId = useId();
+  if (!selectableCount && !loading) return null;
+
+  return (
+    <section className="grid min-w-0 grid-cols-[minmax(160px,auto)_minmax(0,1fr)] items-center gap-4 rounded-panel border border-line bg-surface px-4 py-3 max-[720px]:grid-cols-1" aria-label="Bulk review actions">
+      <div className="flex min-w-0 flex-wrap items-center gap-3">
+        <CheckboxControl
+          checked={selectAllState}
+          disabled={loading || selectableCount === 0}
+          id={selectAllId}
+          onCheckedChange={onSelectAll}
+        >
+          Select all{selectableCount ? ` ${selectableCount}` : ""}
+        </CheckboxControl>
+        <span className="font-mono text-[.68rem] uppercase tracking-[.05em] text-ink-muted">
+          {selectedCount ? `${selectedCount} selected` : "No selection"}
+        </span>
+      </div>
+      <div className="flex min-w-0 flex-wrap items-center justify-end gap-3 max-[720px]:justify-start">
+        {selectedCount && actions.length ? (
+          <ReviewActions
+            actions={actions}
+            className="compact min-w-0"
+            loading={loading}
+            onSubmit={onSubmit}
+            successBody={successBody}
+            successTitle={successTitle}
+          />
+        ) : selectedCount ? (
+          <span className="text-[.78rem] leading-[1.45] text-ink-muted">No common action is available for this selection.</span>
+        ) : (
+          <span className="text-[.78rem] leading-[1.45] text-ink-muted">Select review items to act on them together.</span>
+        )}
+        {selectedCount ? (
+          <ButtonControl compact disabled={loading} onClick={onClear} variant="ghost">
+            Clear selection
+          </ButtonControl>
+        ) : null}
+      </div>
+    </section>
+  );
+}

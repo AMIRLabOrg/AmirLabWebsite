@@ -183,6 +183,24 @@ export class AssetsService {
     await rm(resolve(this.uploadRoot, asset.storageKey), { force: true });
   }
 
+  async removeMany(assetIds: readonly string[]): Promise<void> {
+    const ids = [...new Set(assetIds.filter(Boolean))];
+    if (!ids.length) return;
+    const assets = await this.prisma.asset.findMany({
+      where: { id: { in: ids } },
+      select: { id: true, storageKey: true },
+    });
+    if (!assets.length) return;
+    await this.prisma.asset.deleteMany({
+      where: { id: { in: assets.map(({ id }) => id) } },
+    });
+    await Promise.all(
+      assets.map(({ storageKey }) =>
+        rm(resolve(this.uploadRoot, storageKey), { force: true }),
+      ),
+    );
+  }
+
   private async readAsset(assetId: string) {
     const asset = await this.prisma.asset.findUnique({
       where: { id: assetId },

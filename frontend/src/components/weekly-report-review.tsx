@@ -7,6 +7,9 @@ import { CheckCircle2, RotateCcw } from "lucide-react";
 import { StatePanel } from "@/components/state-panel";
 import { Badge } from "@/components/ui/badge";
 import { ButtonControl } from "@/components/ui/button-control";
+import { CheckboxControl } from "@/components/ui/checkbox-control";
+import { BulkReviewBar } from "@/components/bulk-review-bar";
+import { useBulkSelection } from "@/lib/use-bulk-selection";
 import { TabsControl } from "@/components/ui/tabs-control";
 import { TextareaControl } from "@/components/ui/form-controls";
 import { FormField } from "@/components/ui/form-field";
@@ -60,10 +63,55 @@ export function WeeklyReportReview() {
 
   const visible = useMemo(() => reports?.filter(({ status }) => status === filter) ?? [], [filter, reports]);
   const selected = reports?.find(({ id }) => id === selectedId);
+  const bulk = useBulkSelection(visible.map(({ id }) => id));
+  const selectedReports = visible.filter(({ id }) => bulk.isSelected(id));
+  const commonBulkActions = selectedReports.length && selectedReports.every(({ status }) => status === "SUBMITTED")
+    ? [
+        {
+          confirmDescription: `Return the ${selectedReports.length} selected weekly report${selectedReports.length === 1 ? "" : "s"} for changes with the same supervisor note.`,
+          confirmLabel: "Request changes",
+          confirmTitle: "Request changes for selected reports?",
+          label: "Request changes",
+          notePlaceholder: "Explain what these researchers must change.",
+          requiresNote: true,
+          status: "CHANGES_REQUESTED" as const,
+          tone: "secondary" as const,
+        },
+        {
+          confirmDescription: `Mark the ${selectedReports.length} selected weekly report${selectedReports.length === 1 ? "" : "s"} as reviewed.`,
+          confirmLabel: "Mark reviewed",
+          confirmTitle: "Mark selected reports reviewed?",
+          label: "Mark reviewed",
+          status: "REVIEWED" as const,
+          tone: "primary" as const,
+        },
+      ]
+    : [];
   const options = filters.map((option) => ({
     ...option,
     count: reports?.filter(({ status }) => status === option.value).length ?? 0,
   }));
+
+  async function reviewBulk({ note: bulkNote, status }: { note?: string; status: "CHANGES_REQUESTED" | "REVIEWED" }) {
+    if (!selectedReports.length) return;
+    setWorking(true);
+    try {
+      await apiRequest("/weekly-reports/bulk-review", {
+        body: JSON.stringify({
+          ids: selectedReports.map(({ id }) => id),
+          ...(bulkNote ? { note: bulkNote } : {}),
+          status,
+        }),
+        headers: { "content-type": "application/json" },
+        method: "POST",
+      });
+      bulk.clear();
+      setSelectedId(undefined);
+      setReload((current) => current + 1);
+    } finally {
+      setWorking(false);
+    }
+  }
 
   async function review(status: "CHANGES_REQUESTED" | "REVIEWED") {
     if (!selected) return;
@@ -119,6 +167,19 @@ export function WeeklyReportReview() {
         value={filter}
       />
 
+      <BulkReviewBar
+        actions={commonBulkActions}
+        loading={!reports || working}
+        onClear={bulk.clear}
+        onSelectAll={bulk.toggleAll}
+        onSubmit={reviewBulk}
+        selectAllState={bulk.selectAllState}
+        selectableCount={visible.length}
+        selectedCount={bulk.selectedCount}
+        successBody={(status) => `${selectedReports.length} weekly report${selectedReports.length === 1 ? "" : "s"} moved to ${status.replaceAll("_", " ").toLowerCase()}.`}
+        successTitle="Bulk weekly report review saved"
+      />
+
       <WorkspaceSplit>
         <WorkspacePanel description="Select a report to inspect its evidence and plan." eyebrow="Queue" title={filters.find(({ value }) => value === filter)?.label ?? "Reports"}>
           <div
@@ -127,23 +188,35 @@ export function WeeklyReportReview() {
             data-loading={!reports || undefined}
           >
             {(reports ? visible : Array.from({ length: 3 }, () => undefined)).map((report, index) => (
-              <ButtonControl
-                aria-pressed={Boolean(report && selectedId === report.id)}
-                className="min-h-[74px] w-full justify-between rounded-none border-0 border-b border-line px-6 py-4 text-left hover:bg-brand-faint aria-pressed:bg-brand-faint aria-pressed:text-ink"
-                key={report?.id ?? `weekly-review-loading-${index}`}
-                loading={!report}
-                onClick={report ? () => {
-                  setSelectedId(report.id);
-                  setNote(report.reviewNote ?? "");
-                } : undefined}
-                variant="secondary"
-              >
-                <span className="grid gap-1">
-                  <strong className={loadingPlaceholder(!report, "text", "long")} data-placeholder={!report ? "text" : undefined} data-placeholder-width="long">{report?.author.person?.fullName ?? report?.author.email ?? "Researcher name"}</strong>
-                  <small className={cn("text-[.7rem] text-ink-muted", loadingPlaceholder(!report, "label", "medium"))} data-placeholder={!report ? "label" : undefined} data-placeholder-width="medium">{report ? reportWeek(report.weekStart) : "Reporting week"}</small>
-                </span>
-                <Badge loading={!report} tone={report ? statusTone(report.status) : "neutral"}>{report ? reportStatusLabel(report.status) : "Submitted"}</Badge>
-              </ButtonControl>
+              <div className="grid grid-cols-[auto_minmax(0,1fr)] items-stretch border-b border-line last:border-b-0" key={report?.id ?? `weekly-review-loading-${index}`}>
+                <div className="grid place-items-center px-4">
+                  {report ? (
+                    <CheckboxControl
+                      ariaLabel={`Select ${report.author.person?.fullName ?? report.author.email ?? "weekly report"}`}
+                      checked={bulk.isSelected(report.id)}
+                      className="gap-0"
+                      id={`weekly-review-select-${report.id}`}
+                      onCheckedChange={(checked) => bulk.toggle(report.id, checked)}
+                    />
+                  ) : <span className={loadingPlaceholder(true, "control")} data-placeholder="control" />}
+                </div>
+                <ButtonControl
+                  aria-pressed={Boolean(report && selectedId === report.id)}
+                  className="min-h-[74px] w-full justify-between rounded-none border-0 px-5 py-4 text-left hover:bg-brand-faint aria-pressed:bg-brand-faint aria-pressed:text-ink"
+                  loading={!report}
+                  onClick={report ? () => {
+                    setSelectedId(report.id);
+                    setNote(report.reviewNote ?? "");
+                  } : undefined}
+                  variant="secondary"
+                >
+                  <span className="grid gap-1">
+                    <strong className={loadingPlaceholder(!report, "text", "long")} data-placeholder={!report ? "text" : undefined} data-placeholder-width="long">{report?.author.person?.fullName ?? report?.author.email ?? "Researcher name"}</strong>
+                    <small className={cn("text-[.7rem] text-ink-muted", loadingPlaceholder(!report, "label", "medium"))} data-placeholder={!report ? "label" : undefined} data-placeholder-width="medium">{report ? reportWeek(report.weekStart) : "Reporting week"}</small>
+                  </span>
+                  <Badge loading={!report} tone={report ? statusTone(report.status) : "neutral"}>{report ? reportStatusLabel(report.status) : "Submitted"}</Badge>
+                </ButtonControl>
+              </div>
             ))}
             {reports && visible.length === 0 ? (
               <WorkspaceEmpty>No reports match this review state.</WorkspaceEmpty>

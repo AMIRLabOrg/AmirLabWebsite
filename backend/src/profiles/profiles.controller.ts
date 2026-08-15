@@ -14,7 +14,7 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { CurrentUser, RequireRole } from '../auth/auth.decorators';
 import type { AuthenticatedUser } from '../auth/auth.types';
 import { PlatformRole } from '../../generated/prisma/client';
-import { ReviewProfileEditDto, SubmitProfileEditDto } from './dto/profile.dto';
+import { BulkReviewProfileEditsDto, ReviewProfileEditDto, SubmitProfileEditDto } from './dto/profile.dto';
 import { ProfileReviewQueryDto } from './dto/profile-review-query.dto';
 import { ProfilesService } from './profiles.service';
 
@@ -73,6 +73,15 @@ export class ProfilesController {
   @RequireRole(PlatformRole.MODERATOR)
   reviewQueue(@Query() query: ProfileReviewQueryDto) {
     return this.profiles.reviewQueue(query);
+  }
+
+  @Post('profile-reviews/bulk-review')
+  @RequireRole(PlatformRole.MODERATOR)
+  bulkReview(
+    @Body() body: BulkReviewProfileEditsDto,
+    @CurrentUser() reviewer: AuthenticatedUser,
+  ) {
+    return this.profiles.bulkReview(body, reviewer);
   }
 
   @Get('profile-reviews/:id')

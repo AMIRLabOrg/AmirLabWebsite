@@ -63,6 +63,28 @@ export class CollaborationGateway {
     }
   }
 
+  async broadcastMessages<T extends { conversationId: string }>(
+    messages: readonly T[],
+  ): Promise<void> {
+    if (!messages.length) return;
+    const conversationIds = [...new Set(messages.map(({ conversationId }) => conversationId))];
+    const members = await this.prisma.conversationMember.findMany({
+      where: { conversationId: { in: conversationIds } },
+      select: { conversationId: true, userId: true },
+    });
+    const recipients = new Map<string, string[]>();
+    for (const member of members) {
+      const current = recipients.get(member.conversationId) ?? [];
+      current.push(member.userId);
+      recipients.set(member.conversationId, current);
+    }
+    for (const message of messages) {
+      for (const userId of recipients.get(message.conversationId) ?? []) {
+        this.server.to(`user:${userId}`).emit('message.created', message);
+      }
+    }
+  }
+
   @SubscribeMessage('presence.heartbeat')
   async heartbeat(@ConnectedSocket() socket: Socket) {
     if (socket.data.userId) await this.redis.setPresence(socket.data.userId);

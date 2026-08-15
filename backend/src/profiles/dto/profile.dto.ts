@@ -1,4 +1,8 @@
+import { Type } from 'class-transformer';
 import {
+  ArrayMaxSize,
+  ArrayNotEmpty,
+  IsArray,
   IsBooleanString,
   IsEnum,
   IsInt,
@@ -6,6 +10,8 @@ import {
   IsString,
   MaxLength,
   Min,
+  ValidateNested,
+  IsUUID,
 } from 'class-validator';
 import {
   PersonLinkType,
@@ -39,6 +45,32 @@ export class ReviewProfileEditDto {
   @IsInt()
   @Min(1)
   revision!: number;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(4_000)
+  note?: string;
+}
+
+export class BulkProfileReviewItemDto {
+  @IsUUID('4')
+  id!: string;
+
+  @IsInt()
+  @Min(1)
+  revision!: number;
+}
+
+export class BulkReviewProfileEditsDto {
+  @IsArray()
+  @ArrayNotEmpty()
+  @ArrayMaxSize(100)
+  @ValidateNested({ each: true })
+  @Type(() => BulkProfileReviewItemDto)
+  items!: BulkProfileReviewItemDto[];
+
+  @IsEnum(ProfileReviewStatus)
+  status!: ProfileReviewStatus;
 
   @IsOptional()
   @IsString()

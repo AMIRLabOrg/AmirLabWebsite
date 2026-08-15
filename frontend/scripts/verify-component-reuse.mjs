@@ -38,6 +38,20 @@ for (const consumer of ["site-header.tsx", "workspace-shell.tsx"]) {
   if (!/<ProfileAvatar[^>]*shape="round"/.test(source)) failures.push(`${consumer}: navbar ProfileAvatar must be round`);
 }
 
+for (const consumer of ["profile-review-queue.tsx", "research-review-queue.tsx", "project-review-queue.tsx", "weekly-report-review.tsx"]) {
+  const file = path.join(srcRoot, "components", consumer);
+  const source = sources.get(file) ?? "";
+  if (!source.includes("BulkReviewBar")) failures.push(`${consumer}: does not reuse BulkReviewBar`);
+  if (!source.includes("CheckboxControl")) failures.push(`${consumer}: bulk queue does not use shared checkboxes`);
+  if (!source.includes("useBulkSelection")) failures.push(`${consumer}: bulk queue does not use shared selection state`);
+}
+const segmentedSource = sources.get(path.join(srcRoot, "components", "ui", "segmented-control.tsx")) ?? "";
+if (/border-0 bg-transparent px-/.test(segmentedSource)) failures.push("SegmentedControl: base bg-transparent conflicts with selected tone backgrounds");
+const researchReviewSource = sources.get(path.join(srcRoot, "components", "research-review-queue.tsx")) ?? "";
+if (!researchReviewSource.includes("commonResearchBulkStatuses") || !researchReviewSource.includes('status === "PENDING"') || !researchReviewSource.includes('status === "PROPOSED"')) {
+  failures.push("research-review-queue.tsx: bulk action intersection/verification guards are missing");
+}
+
 const manualButtonPattern = /inline-flex\s+min-h-\[(?:42px|var\(--control-height\))\][^"'`\n]*rounded-control[^"'`\n]*border-transparent/;
 const duplicateFieldPattern = /grid\s+content-start\s+gap-\[\.45rem\]/;
 for (const [file, source] of sources) {
@@ -70,4 +84,6 @@ console.log("- one shared ProfileAvatar is reused, with round avatars in both pu
 console.log("- native form controls are encapsulated by shared UI controls");
 console.log("- generic button implementation is centralized in ButtonControl/ButtonLink/ButtonAnchor");
 console.log("- repeated field wrapper is centralized in FormField");
+console.log("- review queues reuse guarded bulk selection/actions, including research publish guards");
+console.log("- segmented controls keep inactive and active background utilities mutually exclusive");
 console.log("- no selector-dump styling or dedicated skeleton component tree");

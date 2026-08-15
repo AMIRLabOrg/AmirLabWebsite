@@ -7,10 +7,14 @@ import { StatePanel } from "@/components/state-panel";
 import { Badge } from "@/components/ui/badge";
 import { ButtonAnchor } from "@/components/ui/button-control";
 import { ReviewActions } from "@/components/review-actions";
+import { BulkReviewBar } from "@/components/bulk-review-bar";
+import { CheckboxControl } from "@/components/ui/checkbox-control";
+import { useBulkSelection } from "@/lib/use-bulk-selection";
 import { apiRequest } from "@/lib/client-api";
 
 interface ChangeRequest {
   id: string;
+  projectId: string;
   kind: string;
   payload: unknown;
   submittedAt: string;
@@ -61,6 +65,47 @@ export function ProjectReviewQueue() {
     await load();
   }
 
+  const bulk = useBulkSelection(items.map(({ id }) => id));
+  const selectedItems = items.filter(({ id }) => bulk.isSelected(id));
+  const hasDuplicateProjects = new Set(selectedItems.map(({ projectId }) => projectId)).size !== selectedItems.length;
+  const commonBulkActions = selectedItems.length
+    ? [
+        ...(!hasDuplicateProjects ? [{
+          confirmDescription: `Apply and publish the ${selectedItems.length} selected project change${selectedItems.length === 1 ? "" : "s"}. Version guards still apply to every request.`,
+          confirmLabel: "Approve selected",
+          confirmTitle: "Approve selected project changes?",
+          label: "Approve selected",
+          status: "APPROVED" as const,
+          tone: "primary" as const,
+        }] : []),
+        {
+          confirmDescription: `Reject the ${selectedItems.length} selected project change${selectedItems.length === 1 ? "" : "s"} with the same reviewer note.`,
+          confirmLabel: "Reject selected",
+          confirmTitle: "Reject selected project changes?",
+          label: "Reject selected",
+          notePlaceholder: "Explain why these project changes were rejected.",
+          requiresNote: true,
+          status: "REJECTED" as const,
+          tone: "danger" as const,
+        },
+      ]
+    : [];
+
+  async function decideBulk({ note, status }: { note?: string; status: "APPROVED" | "REJECTED" }) {
+    if (!selectedItems.length) return;
+    await apiRequest("/project-change-reviews/bulk-review", {
+      body: JSON.stringify({
+        ids: selectedItems.map(({ id }) => id),
+        ...(note ? { note } : {}),
+        status,
+      }),
+      headers: { "content-type": "application/json" },
+      method: "POST",
+    });
+    bulk.clear();
+    await load();
+  }
+
   return (
     <section className="grid min-w-0 gap-4">
       <div className="flex items-center justify-between gap-4 rounded-panel border border-line bg-surface p-5 max-[640px]:flex-col max-[640px]:items-start">
@@ -71,6 +116,21 @@ export function ProjectReviewQueue() {
         </div>
         <Badge loading={loading}>{loading ? "Loading" : `${items.length} pending`}</Badge>
       </div>
+
+      {loading || items.length ? (
+        <BulkReviewBar
+          actions={commonBulkActions}
+          loading={loading}
+          onClear={bulk.clear}
+          onSelectAll={bulk.toggleAll}
+          onSubmit={decideBulk}
+          selectAllState={bulk.selectAllState}
+          selectableCount={items.length}
+          selectedCount={bulk.selectedCount}
+          successBody={(status) => `${selectedItems.length} project review${selectedItems.length === 1 ? "" : "s"} ${status === "APPROVED" ? "approved" : "rejected"}.`}
+          successTitle="Bulk project review saved"
+        />
+      ) : null}
 
       {error && items.length ? <p className="m-0 flex items-center gap-[.45rem] text-[.82rem] leading-[1.5] text-ink-muted rounded-panel bg-danger-soft p-[.8rem] text-danger">{error}</p> : null}
 
@@ -89,7 +149,18 @@ export function ProjectReviewQueue() {
               ? Array.from({ length: 4 }, () => undefined)
               : items
             ).map((item, index) => (
-              <article className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-5 rounded-panel border border-line bg-surface p-[clamp(1rem,2vw,1.4rem)] max-[640px]:grid-cols-1" key={item?.id ?? `project-review-loading-${index}`}>
+              <article className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-start gap-4 rounded-panel border border-line bg-surface p-[clamp(1rem,2vw,1.4rem)] max-[720px]:grid-cols-[auto_minmax(0,1fr)]" key={item?.id ?? `project-review-loading-${index}`}>
+                <div className="pt-1">
+                  {item ? (
+                    <CheckboxControl
+                      ariaLabel={`Select ${item.project.researchItem.title ?? "project"} change review`}
+                      checked={bulk.isSelected(item.id)}
+                      className="gap-0"
+                      id={`project-review-select-${item.id}`}
+                      onCheckedChange={(checked) => bulk.toggle(item.id, checked)}
+                    />
+                  ) : <span className={loadingPlaceholder(true, "control")} data-placeholder="control" />}
+                </div>
                 <div className="grid min-w-0 gap-[.55rem]">
                   <span className={cn("font-mono text-[.68rem] uppercase tracking-[.08em] text-brand", loadingPlaceholder(loading, "label", "medium"))} data-placeholder="label" data-placeholder-width="medium">{item?.kind.replaceAll("_", " ") ?? "Loading change type"}</span>
                   <h2 className={cn("font-serif text-[clamp(1.35rem,2.4vw,2.1rem)] font-[430] leading-[1.08] [overflow-wrap:anywhere]", loadingPlaceholder(loading, "text", "long"))} data-placeholder="text" data-placeholder-width="long">{item?.project.researchItem.title ?? "Loading project title"}</h2>
@@ -102,6 +173,7 @@ export function ProjectReviewQueue() {
                   </section>
                 </div>
                 <ReviewActions
+                  className="max-[720px]:col-span-2"
                   loading={loading}
                   actions={[
                     {

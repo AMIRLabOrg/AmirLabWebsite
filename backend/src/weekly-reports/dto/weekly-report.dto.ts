@@ -51,3 +51,11 @@ export class ReviewWeeklyReportDto {
   @MaxLength(4_000)
   note?: string;
 }
+
+export class BulkReviewWeeklyReportsDto extends ReviewWeeklyReportDto {
+  @IsArray()
+  @ArrayNotEmpty()
+  @ArrayMaxSize(100)
+  @IsUUID('4', { each: true })
+  ids!: string[];
+}

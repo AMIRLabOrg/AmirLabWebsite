@@ -13,7 +13,10 @@ import { ButtonAnchor, ButtonControl } from "@/components/ui/button-control";
 import { SearchableSelect } from "@/components/ui/searchable-select";
 import { Badge, type BadgeTone } from "@/components/ui/badge";
 import { ToolbarSearchField } from "@/components/ui/toolbar-search-field";
-import { ReviewActions } from "@/components/review-actions";
+import { ReviewActions, type ReviewAction } from "@/components/review-actions";
+import { BulkReviewBar } from "@/components/bulk-review-bar";
+import { CheckboxControl } from "@/components/ui/checkbox-control";
+import { useBulkSelection } from "@/lib/use-bulk-selection";
 import { StatePanel } from "@/components/state-panel";
 import type { PaginatedResponse } from "@/lib/types";
 import { useNotifications } from "@/components/notification-provider";
@@ -400,11 +403,41 @@ export function ResearchReviewQueue({ selectedId }: { selectedId?: string }) {
     focusedItem && !items.some((candidate) => candidate.id === focusedItem.id)
       ? [focusedItem, ...items]
       : items;
+  const bulk = useBulkSelection(visibleItems.map(({ id }) => id));
+  const selectedResearchItems = visibleItems.filter(({ id }) => bulk.isSelected(id));
+  const commonBulkStatuses = commonResearchBulkStatuses(selectedResearchItems, relationBusy);
+  const commonBulkActions = researchBulkActions(commonBulkStatuses, selectedResearchItems.length);
   const item = visibleItems.find((candidate) => candidate.id === selected) ?? (loading ? loadingResearchItem() : undefined);
   const sourcePending =
     item?.sourceSnapshot?.status === "PENDING" ||
     relationBusy === `discover:${item?.id}`;
   const hasProposedMatches = Boolean(item?.contributors.some((contributor) => contributor.matches.some((match) => match.status === "PROPOSED")));
+  async function decideBulk({ note, status: decisionStatus }: { note?: string; status: ResearchDecision }) {
+    if (!selectedResearchItems.length) return;
+    await apiRequest("/research-review/bulk-review", {
+      body: JSON.stringify({
+        ids: selectedResearchItems.map(({ id }) => id),
+        ...(note ? { note } : {}),
+        status: decisionStatus,
+      }),
+      headers: { "content-type": "application/json" },
+      method: "POST",
+    });
+    bulk.clear();
+    setSelected(undefined);
+    setFocusedItem(undefined);
+    setLoading(true);
+    if (selectedId) {
+      router.push("/workspace/research");
+      router.refresh();
+    } else if (selectedResearchItems.length === items.length && page > 1) {
+      setPage((current) => current - 1);
+    } else {
+      setReload((current) => current + 1);
+    }
+    void refreshUnreadCount().catch(() => undefined);
+  }
+
   const loadingRows = loading;
   const loadingDetail = loading;
   const refreshing = loading && Boolean(result);
@@ -477,6 +510,20 @@ export function ResearchReviewQueue({ selectedId }: { selectedId?: string }) {
           />
         </FormField>
       </div>
+      {loading || visibleItems.length ? (
+        <BulkReviewBar
+          actions={commonBulkActions}
+          loading={loading}
+          onClear={bulk.clear}
+          onSelectAll={bulk.toggleAll}
+          onSubmit={decideBulk}
+          selectAllState={bulk.selectAllState}
+          selectableCount={visibleItems.length}
+          selectedCount={bulk.selectedCount}
+          successBody={(decisionStatus) => `${selectedResearchItems.length} research review${selectedResearchItems.length === 1 ? "" : "s"} moved to ${decisionStatus.replaceAll("_", " ").toLowerCase()}.`}
+          successTitle="Bulk research review saved"
+        />
+      ) : null}
       {error && !result && !loading ? (
         <StatePanel
           action={{
@@ -511,16 +558,33 @@ export function ResearchReviewQueue({ selectedId }: { selectedId?: string }) {
           {renderedItems.length ? (
             <div data-loading={loadingRows || undefined}>
               {renderedItems.map((candidate) => (
-                <button
-                  className={`grid min-h-[88px] w-full min-w-0 cursor-pointer gap-[.4rem] overflow-hidden rounded-panel border p-[.85rem_.9rem] text-left ${candidate.id === selected ? "border-brand bg-brand-soft" : "border-line bg-surface"}`}
-                  disabled={loadingRows}
+                <div
+                  className={`grid min-w-0 grid-cols-[auto_minmax(0,1fr)] items-stretch overflow-hidden rounded-panel border ${candidate.id === selected ? "border-brand bg-brand-soft" : "border-line bg-surface"}`}
                   key={candidate.id}
-                  onClick={() => setSelected(candidate.id)}
-                  type="button"
                 >
-                  <span className={loadingPlaceholder(loadingRows, "label", "short")} data-placeholder={loadingRows ? "label" : undefined} data-placeholder-width="short">{candidate.type.toLowerCase()}</span>
-                  <span className={cn("line-clamp-2 [overflow-wrap:anywhere] font-sans text-[.95rem] font-normal normal-case leading-[1.35] tracking-normal text-ink", loadingPlaceholder(loadingRows, "text", "long"))} data-placeholder={loadingRows ? "text" : undefined} data-placeholder-width="long">{researchLabel(candidate)}</span>
-                </button>
+                  <div className="grid place-items-center px-3">
+                    {loadingRows ? (
+                      <span className={loadingPlaceholder(true, "control")} data-placeholder="control" />
+                    ) : (
+                      <CheckboxControl
+                        ariaLabel={`Select ${researchLabel(candidate)} review`}
+                        checked={bulk.isSelected(candidate.id)}
+                        className="gap-0"
+                        id={`research-review-select-${candidate.id}`}
+                        onCheckedChange={(checked) => bulk.toggle(candidate.id, checked)}
+                      />
+                    )}
+                  </div>
+                  <button
+                    className="grid min-h-[88px] w-full min-w-0 cursor-pointer gap-[.4rem] overflow-hidden border-0 bg-transparent p-[.85rem_.9rem] text-left"
+                    disabled={loadingRows}
+                    onClick={() => setSelected(candidate.id)}
+                    type="button"
+                  >
+                    <span className={loadingPlaceholder(loadingRows, "label", "short")} data-placeholder={loadingRows ? "label" : undefined} data-placeholder-width="short">{candidate.type.toLowerCase()}</span>
+                    <span className={cn("line-clamp-2 [overflow-wrap:anywhere] font-sans text-[.95rem] font-normal normal-case leading-[1.35] tracking-normal text-ink", loadingPlaceholder(loadingRows, "text", "long"))} data-placeholder={loadingRows ? "text" : undefined} data-placeholder-width="long">{researchLabel(candidate)}</span>
+                  </button>
+                </div>
               ))}
             </div>
           ) : (
@@ -792,6 +856,70 @@ function ResearchRecordEditor({ item, onSubmit, saving }: { item: ReviewResearch
       <div className="flex justify-end"><ButtonControl disabled={saving} type="submit" variant="primary">{saving ? "Saving…" : "Save and re-run review"}</ButtonControl></div>
     </form>
   );
+}
+
+function researchBulkStatuses(item: ReviewResearch, relationBusy?: string): ResearchDecision[] {
+  if (item.reviewStatus === "PUBLISHED" || item.reviewStatus === "REJECTED") {
+    return ["NEEDS_REVIEW"];
+  }
+  if (item.reviewStatus !== "NEEDS_REVIEW" && item.reviewStatus !== "CHANGES_REQUESTED") {
+    return [];
+  }
+  const statuses: ResearchDecision[] = ["CHANGES_REQUESTED", "REJECTED"];
+  const sourcePending = item.sourceSnapshot?.status === "PENDING" || relationBusy === `discover:${item.id}`;
+  const hasProposedMatches = item.contributors.some((contributor) => contributor.matches.some((match) => match.status === "PROPOSED"));
+  if (!sourcePending && !hasProposedMatches) statuses.unshift("PUBLISHED");
+  return statuses;
+}
+
+function commonResearchBulkStatuses(items: ReviewResearch[], relationBusy?: string): ResearchDecision[] {
+  if (!items.length) return [];
+  const [first, ...rest] = items.map((item) => researchBulkStatuses(item, relationBusy));
+  return first.filter((status) => rest.every((statuses) => statuses.includes(status)));
+}
+
+function researchBulkActions(statuses: ResearchDecision[], count: number): Array<ReviewAction<ResearchDecision>> {
+  const actions: Record<ResearchDecision, ReviewAction<ResearchDecision>> = {
+    PUBLISHED: {
+      confirmDescription: `Publish the ${count} selected paper/dataset record${count === 1 ? "" : "s"}. This action is only offered when every selected record has cleared source and contributor guards.`,
+      confirmLabel: "Publish selected",
+      confirmTitle: "Publish selected research records?",
+      label: "Publish selected",
+      status: "PUBLISHED",
+      tone: "primary",
+    },
+    CHANGES_REQUESTED: {
+      confirmDescription: `Return the ${count} selected research record${count === 1 ? "" : "s"} for changes with the same reviewer note.`,
+      confirmLabel: "Request changes",
+      confirmTitle: "Request changes for selected records?",
+      label: "Add review",
+      notePlaceholder: "Explain what must change before these records can be approved.",
+      requiresNote: true,
+      status: "CHANGES_REQUESTED",
+      tone: "secondary",
+    },
+    REJECTED: {
+      confirmDescription: `Reject the ${count} selected research record${count === 1 ? "" : "s"} with the same reviewer note.`,
+      confirmLabel: "Reject selected",
+      confirmTitle: "Reject selected research records?",
+      label: "Reject selected",
+      notePlaceholder: "Explain why these submissions were rejected.",
+      requiresNote: true,
+      status: "REJECTED",
+      tone: "danger",
+    },
+    NEEDS_REVIEW: {
+      confirmDescription: `Reopen the ${count} selected published/rejected research record${count === 1 ? "" : "s"} for manual review.`,
+      confirmLabel: "Reopen selected",
+      confirmTitle: "Reopen selected research records?",
+      label: "Reopen selected",
+      notePlaceholder: "Explain why these records need to be reviewed again.",
+      requiresNote: true,
+      status: "NEEDS_REVIEW",
+      tone: "secondary",
+    },
+  };
+  return statuses.map((status) => actions[status]);
 }
 
 function sourceTone(status: SourceStatus | undefined): BadgeTone {
