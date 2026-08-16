@@ -428,6 +428,7 @@ export function ProfileEditor({ userId }: ProfileEditorProps) {
             data-placeholder={editorLoading ? "portrait" : undefined}
           >
             <label className="group relative flex aspect-square w-24 cursor-pointer items-center justify-center overflow-hidden rounded-full border border-[color-mix(in_srgb,var(--ink)_18%,transparent)] bg-surface-subtle">
+              <div className="absolute inset-0 z-10 bg-[color-mix(in_srgb,var(--ink)_40%,transparent)] opacity-0 transition-opacity group-hover:opacity-100 pointer-events-none" />
               {avatarPreview ? (
                 <Image
                   alt="New profile preview"
@@ -461,7 +462,7 @@ export function ProfileEditor({ userId }: ProfileEditorProps) {
                 }}
               />
             </label>
-            <span className="pointer-events-none absolute bottom-[3px] right-[3px] z-[2] flex h-[30px] w-[30px] items-center justify-center rounded-full border-2 border-surface bg-brand text-on-accent">
+            <span className="pointer-events-none absolute bottom-[3px] right-[3px] z-20 flex h-[30px] w-[30px] items-center justify-center rounded-full border-2 border-surface bg-brand text-on-accent">
               <Camera aria-hidden="true" size={14} />
             </span>
           </div>

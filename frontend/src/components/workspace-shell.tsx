@@ -12,7 +12,6 @@ import {
   PanelLeftOpen,
 } from "lucide-react";
 import { useAuth } from "@/components/auth-provider";
-import { BrandLockup, BrandMark } from "@/components/brand-mark";
 import { ConfirmDialog } from "@/components/confirm-dialog";
 import { useNotifications } from "@/components/notification-provider";
 import { ProfileAvatar } from "@/components/profile-avatar";
@@ -35,6 +34,7 @@ export function WorkspaceShell({ children }: { children: ReactNode }) {
   useEffect(() => {
     try {
       const stored = localStorage.getItem("amirlab:sidebar-open");
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       if (stored !== null) setSidebarOpen(stored === "true");
     } catch {}
   }, []);
@@ -68,10 +68,10 @@ export function WorkspaceShell({ children }: { children: ReactNode }) {
             : "grid-cols-[64px_minmax(0,1fr)]",
         )}
       >
-        <aside className="sticky top-0 flex h-screen min-w-0 flex-col overflow-y-auto overflow-x-hidden border-r border-line bg-paper pt-[.85rem] pb-4 max-[820px]:static max-[820px]:h-auto max-[820px]:w-full max-[820px]:overflow-visible max-[820px]:border-r-0 max-[820px]:border-b max-[820px]:pt-[.65rem] max-[820px]:pb-0">
+        <aside className="sticky top-0 flex h-screen min-w-0 flex-col overflow-y-auto overflow-x-hidden border-r border-line bg-paper pb-4 max-[820px]:static max-[820px]:h-auto max-[820px]:w-full max-[820px]:overflow-visible max-[820px]:border-r-0 max-[820px]:border-b max-[820px]:pt-[.65rem] max-[820px]:pb-0">
           <div
             className={cn(
-              "flex items-center gap-2 border-b border-line-strong pt-[.1rem] pb-[.85rem] max-[820px]:border-b-0 max-[820px]:pb-[.55rem] min-h-[51px]",
+              "flex items-center h-[52px] gap-2 border-b border-line-strong max-[820px]:border-b-0 max-[820px]:h-auto max-[820px]:pb-[.55rem]",
               sidebarOpen
                 ? "justify-between px-[.85rem]"
                 : "justify-center px-0",
@@ -96,7 +96,7 @@ export function WorkspaceShell({ children }: { children: ReactNode }) {
           <nav
             aria-label="Workspace navigation"
             className={cn(
-              "mt-[.55rem] grid gap-[.55rem] max-[820px]:-mx-4 max-[820px]:mt-0 max-[820px]:flex max-[820px]:gap-0 max-[820px]:overflow-x-auto max-[820px]:px-4 max-[820px]:[scrollbar-width:none]",
+              "mt-[.85rem] grid gap-[.55rem] max-[820px]:-mx-4 max-[820px]:mt-0 max-[820px]:flex max-[820px]:gap-0 max-[820px]:overflow-x-auto max-[820px]:px-4 max-[820px]:[scrollbar-width:none]",
               sidebarOpen ? "px-[.85rem]" : "px-[.4rem]",
             )}
           >

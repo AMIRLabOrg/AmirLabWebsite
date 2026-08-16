@@ -37,3 +37,15 @@ export class ResetPasswordDto {
   @MaxLength(PASSWORD_MAX_LENGTH)
   password!: string;
 }
+
+export class ChangePasswordDto {
+  @IsString()
+  @MinLength(PASSWORD_MIN_LENGTH)
+  @MaxLength(PASSWORD_MAX_LENGTH)
+  currentPassword!: string;
+
+  @IsString()
+  @MinLength(PASSWORD_MIN_LENGTH)
+  @MaxLength(PASSWORD_MAX_LENGTH)
+  newPassword!: string;
+}

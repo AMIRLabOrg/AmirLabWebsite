@@ -60,7 +60,7 @@ expect(
   "Profile review queue must mark item-specific issues.",
 );
 expect(
-  profileQueue.includes('tone="warning">Not provided'),
+  /tone="warning">\s*Not provided/.test(profileQueue),
   "Missing submitted email must use warning styling.",
 );
 

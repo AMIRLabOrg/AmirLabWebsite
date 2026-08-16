@@ -279,6 +279,48 @@ export class AuthService {
     });
   }
 
+  async changePassword(
+    userId: string,
+    currentPassword: string,
+    newPassword: string,
+  ): Promise<void> {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { id: true, passwordHash: true },
+    });
+    if (!user) {
+      throw new NotFoundException('Account not found');
+    }
+    if (
+      !user.passwordHash ||
+      !(await verifyPassword(currentPassword, user.passwordHash))
+    ) {
+      throw new UnauthorizedException('Incorrect current password');
+    }
+
+    const passwordHash = await hashPassword(newPassword);
+    const now = new Date();
+    await this.prisma.$transaction(async (transaction) => {
+      await transaction.user.update({
+        where: { id: userId },
+        data: { passwordHash, passwordSetAt: now },
+      });
+      await transaction.session.updateMany({
+        where: { userId, revokedAt: null },
+        data: { revokedAt: now },
+      });
+      await transaction.auditRecord.create({
+        data: {
+          action: 'auth.password-change',
+          actorId: userId,
+          entityId: userId,
+          entityType: 'User',
+          details: { sessionsRevoked: true },
+        },
+      });
+    });
+  }
+
   async revoke(rawToken: string | undefined): Promise<void> {
     if (!rawToken) {
       return;

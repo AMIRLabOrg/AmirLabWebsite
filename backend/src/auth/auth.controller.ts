@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post, Req, Res } from '@nestjs/common';
+import { Body, Controller, Get, Patch, Post, Req, Res } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Throttle } from '@nestjs/throttler';
 import type { Request, Response } from 'express';
@@ -11,6 +11,7 @@ import {
   RequestPasswordResetDto,
   ResetPasswordDto,
   SetupAccountDto,
+  ChangePasswordDto,
 } from './dto/auth.dto';
 
 @Controller('auth')
@@ -66,6 +67,19 @@ export class AuthController {
     await this.auth.resetPassword(body.token, body.password);
     response.clearCookie(this.config.get('sessionCookieName', { infer: true }));
     return { reset: true };
+  }
+
+  @Patch('password')
+  async changePassword(
+    @Body() body: ChangePasswordDto,
+    @CurrentUser() user: AuthenticatedUser,
+  ): Promise<{ changed: true }> {
+    await this.auth.changePassword(
+      user.id,
+      body.currentPassword,
+      body.newPassword,
+    );
+    return { changed: true };
   }
 
   @Get('me')

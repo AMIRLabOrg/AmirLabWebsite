@@ -143,7 +143,7 @@ export class UniversitiesService {
   private normalizedDto(
     dto: UniversityDto | UpdateUniversityDto,
   ): Partial<UniversityDto> {
-    const normalized: any = {
+    const normalized: Record<string, unknown> = {
       ...dto,
       ...('websiteUrl' in dto && dto.websiteUrl !== undefined
         ? { websiteUrl: dto.websiteUrl?.trim() || null }
