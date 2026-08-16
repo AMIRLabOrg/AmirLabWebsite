@@ -1,3 +1,5 @@
+import { PrismaService } from '../database/prisma.service';
+import { resolveService } from '../../test/resolve-service';
 import { DepartmentsService } from './departments.service';
 
 describe('DepartmentsService', () => {
@@ -8,7 +10,9 @@ describe('DepartmentsService', () => {
         findUnique: jest.fn().mockResolvedValue(null),
       },
     };
-    const service = new DepartmentsService(prisma as never);
+    const service = await resolveService(DepartmentsService, [
+      { provide: PrismaService, useValue: prisma },
+    ]);
 
     await service.create({
       description: null,
@@ -34,7 +38,9 @@ describe('DepartmentsService', () => {
           .mockResolvedValueOnce(null),
       },
     };
-    const service = new DepartmentsService(prisma as never);
+    const service = await resolveService(DepartmentsService, [
+      { provide: PrismaService, useValue: prisma },
+    ]);
 
     await service.create({
       description: null,
@@ -54,7 +60,9 @@ describe('DepartmentsService', () => {
         update: jest.fn().mockResolvedValue({ id: 'department-1' }),
       },
     };
-    const service = new DepartmentsService(prisma as never);
+    const service = await resolveService(DepartmentsService, [
+      { provide: PrismaService, useValue: prisma },
+    ]);
 
     await service.update('department-1', {
       name: 'Department of Natural Language Processing',

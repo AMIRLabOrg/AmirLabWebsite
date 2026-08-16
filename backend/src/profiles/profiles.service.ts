@@ -1,7 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import {
   BadRequestException,
-  ConflictException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -15,6 +14,8 @@ import { AssetsService } from '../assets/assets.service';
 import type { AuthenticatedUser } from '../auth/auth.types';
 import { PrismaService } from '../database/prisma.service';
 import { NotificationsService } from '../notifications/notifications.service';
+import { ResearchProfileSyncService } from '../research/research-profile-sync.service';
+import { reviewBadRequest, reviewConflict, type ReviewIssue } from '../common/review-problem';
 import { SettingsService } from '../settings/settings.service';
 import type {
   BulkReviewProfileEditsDto,
@@ -25,14 +26,23 @@ import {
   type ProfileReviewQueryDto,
   ProfileReviewSort,
 } from './dto/profile-review-query.dto';
-import { parseProfilePayload, type ProfileEditScope } from './profile-payload';
+import {
+  parseProfilePayload,
+  profilePayloadToJson,
+  type ProfileEditScope,
+} from './profile-payload';
 
 const PROFILE_INCLUDE = {
   avatar: true,
   links: { orderBy: { sortOrder: 'asc' as const } },
   profileSections: {
     orderBy: { sortOrder: 'asc' as const },
-    include: { subsections: { orderBy: { sortOrder: 'asc' as const } } },
+    include: {
+      subsections: {
+        orderBy: { sortOrder: 'asc' as const },
+        include: { entries: { orderBy: { sortOrder: 'asc' as const } } },
+      },
+    },
   },
 } as const;
 
@@ -42,6 +52,7 @@ export class ProfilesService {
     private readonly assets: AssetsService,
     private readonly notifications: NotificationsService,
     private readonly prisma: PrismaService,
+    private readonly profileSync: ResearchProfileSyncService,
     private readonly settings: SettingsService,
   ) {}
 
@@ -150,13 +161,13 @@ export class ProfilesService {
         where: { personId: person.id },
         create: {
           avatarAssetId,
-          payload: payload as unknown as Prisma.InputJsonValue,
+          payload: profilePayloadToJson(payload),
           personId: person.id,
         },
         update: {
           avatarAssetId,
           note: null,
-          payload: payload as unknown as Prisma.InputJsonValue,
+          payload: profilePayloadToJson(payload),
           revision: { increment: 1 },
           reviewedAt: null,
           reviewedById: null,
@@ -273,12 +284,19 @@ export class ProfilesService {
       status: ProfileReviewStatus.NEEDS_REVIEW,
       ...(search
         ? {
-            person: {
-              OR: [
-                { fullName: { contains: search, mode: 'insensitive' } },
-                { publicEmail: { contains: search, mode: 'insensitive' } },
-              ],
-            },
+            OR: [
+              {
+                person: {
+                  fullName: { contains: search, mode: 'insensitive' },
+                },
+              },
+              {
+                payload: {
+                  path: ['publicEmail'],
+                  string_contains: search,
+                },
+              },
+            ],
           }
         : {}),
     };
@@ -289,12 +307,17 @@ export class ProfilesService {
             submittedAt:
               query.sort === ProfileReviewSort.NEWEST ? 'desc' : 'asc',
           };
-    const [items, total] = await this.prisma.$transaction([
+    const [items, total] = await Promise.all([
       this.prisma.profileEditRequest.findMany({
         where,
         include: {
           avatarAsset: true,
-          person: { include: PROFILE_INCLUDE },
+          person: {
+            include: {
+              ...PROFILE_INCLUDE,
+              user: { select: { role: true } },
+            },
+          },
         },
         orderBy,
         skip: (query.page - 1) * query.pageSize,
@@ -303,7 +326,7 @@ export class ProfilesService {
       this.prisma.profileEditRequest.count({ where }),
     ]);
     return {
-      items,
+      items: items.map((request) => profileReviewView(request)),
       page: query.page,
       pageSize: query.pageSize,
       total,
@@ -316,11 +339,16 @@ export class ProfilesService {
       where: { id },
       include: {
         avatarAsset: true,
-        person: { include: PROFILE_INCLUDE },
+        person: {
+          include: {
+            ...PROFILE_INCLUDE,
+            user: { select: { role: true } },
+          },
+        },
       },
     });
     if (!request) throw new NotFoundException('Profile edit not found');
-    return request;
+    return profileReviewView(request);
   }
 
   async bulkReview(
@@ -370,65 +398,87 @@ export class ProfilesService {
     const expectedRevision = new Map(
       dto.items.map(({ id, revision }) => [id, revision]),
     );
-    if (
-      requests.some(
-        (request) =>
-          request.status !== ProfileReviewStatus.NEEDS_REVIEW ||
-          request.revision !== expectedRevision.get(request.id),
-      )
-    ) {
-      throw new ConflictException(
-        'One or more profile requests changed after selection; reload the queue',
+    const changedRequests = requests.filter(
+      (request) =>
+        request.status !== ProfileReviewStatus.NEEDS_REVIEW ||
+        request.revision !== expectedRevision.get(request.id),
+    );
+    if (changedRequests.length) {
+      throw reviewConflict(
+        'Some selected profiles changed after selection. Reload the queue before reviewing them.',
+        changedRequests.map((request) => ({
+          code: 'PROFILE_REVIEW_CHANGED',
+          itemId: request.id,
+          message: 'This profile review changed after it was selected.',
+          tone: 'warning',
+        })),
       );
     }
 
-    const approved = requests.map((request) => {
-      const scope = profileEditScope(
-        request.person.user?.role ?? PlatformRole.MEMBER,
+    const payloadIssues =
+      dto.status === ProfileReviewStatus.APPROVED
+        ? requests.flatMap((request) => profilePayloadIssues(request))
+        : [];
+    if (payloadIssues.length) {
+      throw reviewBadRequest(
+        'Some selected profiles contain submitted data that needs attention before approval.',
+        payloadIssues,
       );
-      const payload = parseProfilePayload(request.payload, false, { scope });
-      const approvedAvatarId = request.avatarAssetId
-        ? request.avatarAssetId
-        : payload.removeAvatar
-          ? null
-          : request.person.avatarId;
-      const current = request.person;
-      return {
-        approvedAvatarId,
-        oldAvatarId: current.avatarId,
-        payload,
-        request,
-        scope,
-        target: {
-          avatarId:
-            scope === 'ADMIN' || scope === 'RESEARCH'
-              ? approvedAvatarId
-              : current.avatarId,
-          biography:
-            scope === 'RESEARCH' ? payload.biography : current.biography,
-          contactAddress:
-            scope === 'MODERATOR' || scope === 'RESEARCH'
-              ? payload.contactAddress
-              : current.contactAddress,
-          expertise:
-            scope === 'RESEARCH' ? payload.expertise : current.expertise,
-          fullName: payload.fullName,
-          headline: scope === 'RESEARCH' ? payload.headline : current.headline,
-          phone:
-            scope === 'MODERATOR' || scope === 'RESEARCH'
-              ? payload.phone
-              : current.phone,
-          publicEmail:
-            scope === 'ADMIN' || scope === 'RESEARCH'
-              ? payload.publicEmail
-              : current.publicEmail,
-          roleTitle:
-            scope === 'RESEARCH' && payload.roleTitle !== undefined
-              ? payload.roleTitle
-              : current.roleTitle,
-        },
-      };
-    });
+    }
+
+    const approved =
+      dto.status === ProfileReviewStatus.APPROVED
+        ? requests.map((request) => {
+            const scope = profileEditScope(
+              request.person.user?.role ?? PlatformRole.MEMBER,
+            );
+            const payload = parseProfilePayload(request.payload, false, {
+              scope,
+            });
+            const approvedAvatarId = request.avatarAssetId
+              ? request.avatarAssetId
+              : payload.removeAvatar
+                ? null
+                : request.person.avatarId;
+            const current = request.person;
+            return {
+              approvedAvatarId,
+              oldAvatarId: current.avatarId,
+              payload,
+              request,
+              scope,
+              target: {
+                avatarId:
+                  scope === 'ADMIN' || scope === 'RESEARCH'
+                    ? approvedAvatarId
+                    : current.avatarId,
+                biography:
+                  scope === 'RESEARCH' ? payload.biography : current.biography,
+                contactAddress:
+                  scope === 'MODERATOR' || scope === 'RESEARCH'
+                    ? payload.contactAddress
+                    : current.contactAddress,
+                expertise:
+                  scope === 'RESEARCH' ? payload.expertise : current.expertise,
+                fullName: payload.fullName,
+                headline:
+                  scope === 'RESEARCH' ? payload.headline : current.headline,
+                phone:
+                  scope === 'MODERATOR' || scope === 'RESEARCH'
+                    ? payload.phone
+                    : current.phone,
+                publicEmail:
+                  scope === 'ADMIN' || scope === 'RESEARCH'
+                    ? payload.publicEmail
+                    : current.publicEmail,
+                roleTitle:
+                  scope === 'RESEARCH' && payload.roleTitle !== undefined
+                    ? payload.roleTitle
+                    : current.roleTitle,
+              },
+            };
+          })
+        : [];
 
     const reviewedAt = new Date();
     await this.prisma.$transaction(async (transaction) => {
@@ -451,8 +501,17 @@ export class ProfilesService {
         `,
       );
       if (claimed.length !== requests.length) {
-        throw new ConflictException(
-          'One or more profile requests changed while the bulk review was being saved',
+        const claimedIds = new Set(claimed.map(({ id }) => id));
+        throw reviewConflict(
+          'Some selected profiles changed while the review was being saved. Reload the queue and retry.',
+          requests
+            .filter(({ id }) => !claimedIds.has(id))
+            .map(({ id }) => ({
+              code: 'PROFILE_REVIEW_CHANGED',
+              itemId: id,
+              message: 'This profile review changed while the decision was being saved.',
+              tone: 'warning',
+            })),
         );
       }
 
@@ -545,18 +604,41 @@ export class ProfilesService {
             });
             const subsections = sections.flatMap((section) =>
               section.subsections.map((subsection, sortOrder) => ({
-                ...subsection,
+                id: randomUUID(),
+                heading: subsection.heading,
+                entries: subsection.entries,
                 sectionId: section.id,
                 sortOrder,
               })),
             );
             if (subsections.length) {
               await transaction.personProfileSubsection.createMany({
-                data: subsections,
+                data: subsections.map(({ entries: _entries, ...subsection }) =>
+                  subsection,
+                ),
               });
+              const entries = subsections.flatMap((subsection) =>
+                subsection.entries.map((entry, sortOrder) => ({
+                  ...entry,
+                  id: randomUUID(),
+                  subsectionId: subsection.id,
+                  sortOrder,
+                })),
+              );
+              if (entries.length) {
+                await transaction.personProfileEntry.createMany({ data: entries });
+              }
             }
           }
         }
+      }
+
+      if (dto.status === ProfileReviewStatus.APPROVED) {
+        await this.profileSync.normalizePublishedOutputsForPeople(
+          approved.map(({ request }) => request.personId),
+          reviewer.id,
+          transaction,
+        );
       }
 
       await transaction.auditRecord.createMany({
@@ -624,21 +706,44 @@ export class ProfilesService {
       request.status !== ProfileReviewStatus.NEEDS_REVIEW ||
       request.revision !== dto.revision
     ) {
-      throw new ConflictException(
-        'This profile request changed after it was opened; reload the latest revision',
+      throw reviewConflict(
+        'This profile review changed after it was opened. Reload the latest revision.',
+        [
+          {
+            code: 'PROFILE_REVIEW_CHANGED',
+            itemId: request.id,
+            message: 'This profile review changed after it was opened.',
+            tone: 'warning',
+          },
+        ],
       );
     }
 
     const scope = profileEditScope(
       request.person.user?.role ?? PlatformRole.MEMBER,
     );
-    const payload = parseProfilePayload(request.payload, false, { scope });
+    const validationIssues =
+      dto.status === ProfileReviewStatus.APPROVED
+        ? profilePayloadIssues(request)
+        : [];
+    if (validationIssues.length) {
+      throw reviewBadRequest(
+        'This profile contains submitted data that needs attention before approval.',
+        validationIssues,
+      );
+    }
+    const payload =
+      dto.status === ProfileReviewStatus.APPROVED
+        ? parseProfilePayload(request.payload, false, { scope })
+        : undefined;
     const oldAvatarId = request.person.avatarId;
-    const approvedAvatarId = request.avatarAssetId
+    const approvedAvatarId = payload
       ? request.avatarAssetId
-      : payload.removeAvatar
-        ? null
-        : oldAvatarId;
+        ? request.avatarAssetId
+        : payload.removeAvatar
+          ? null
+          : oldAvatarId
+      : oldAvatarId;
     const reviewNote =
       dto.status === ProfileReviewStatus.REJECTED
         ? dto.note?.trim()
@@ -661,12 +766,20 @@ export class ProfilesService {
         },
       });
       if (claimed.count !== 1) {
-        throw new ConflictException(
-          'This profile request changed after it was opened; reload the latest revision',
+        throw reviewConflict(
+          'This profile review changed while the decision was being saved. Reload and try again.',
+          [
+            {
+              code: 'PROFILE_REVIEW_CHANGED',
+              itemId: request.id,
+              message: 'This profile review changed while the decision was being saved.',
+              tone: 'warning',
+            },
+          ],
         );
       }
 
-      if (dto.status === ProfileReviewStatus.APPROVED) {
+      if (dto.status === ProfileReviewStatus.APPROVED && payload) {
         await transaction.person.update({
           where: { id: request.personId },
           data: {
@@ -674,6 +787,11 @@ export class ProfilesService {
             isPublished: true,
           },
         });
+        await this.profileSync.normalizePublishedOutputsForPeople(
+          [request.personId],
+          reviewer.id,
+          transaction,
+        );
       }
       await transaction.auditRecord.create({
         data: {
@@ -754,8 +872,14 @@ function profileUpdateData(
         subsections: {
           create: section.subsections.map(
             (subsection, subsectionSortOrder) => ({
-              ...subsection,
+              heading: subsection.heading,
               sortOrder: subsectionSortOrder,
+              entries: {
+                create: subsection.entries.map((entry, entrySortOrder) => ({
+                  ...entry,
+                  sortOrder: entrySortOrder,
+                })),
+              },
             }),
           ),
         },
@@ -765,6 +889,89 @@ function profileUpdateData(
     ...(payload.roleTitle !== undefined
       ? { roleTitle: payload.roleTitle }
       : {}),
+  };
+}
+
+function profileReviewView<
+  T extends {
+    id: string;
+    payload: Prisma.JsonValue;
+    person: { user?: { role: PlatformRole } | null } & Record<string, unknown>;
+  },
+>(request: T) {
+  const { user, ...person } = request.person;
+  return {
+    ...request,
+    person,
+    reviewIssues: profilePayloadIssues({
+      id: request.id,
+      payload: request.payload,
+      person: { user },
+    }),
+  };
+}
+
+function profilePayloadIssues(request: {
+  id: string;
+  payload: Prisma.JsonValue;
+  person: { user?: { role: PlatformRole } | null };
+}): ReviewIssue[] {
+  const scope = profileEditScope(
+    request.person.user?.role ?? PlatformRole.MEMBER,
+  );
+  try {
+    parseProfilePayload(request.payload, false, { scope });
+    return [];
+  } catch (error) {
+    return [profilePayloadIssue(request.id, error)];
+  }
+}
+
+function profilePayloadIssue(itemId: string, error: unknown): ReviewIssue {
+  const detail =
+    error instanceof BadRequestException
+      ? error.getResponse()
+      : error instanceof Error
+        ? error.message
+        : '';
+  const raw =
+    typeof detail === 'string'
+      ? detail
+      : detail && typeof detail === 'object' && 'message' in detail
+        ? String((detail as { message?: unknown }).message ?? '')
+        : '';
+  if (raw.includes('publicEmail')) {
+    return {
+      code: 'INVALID_PUBLIC_EMAIL',
+      field: 'publicEmail',
+      itemId,
+      message: 'Invalid submitted public email.',
+      tone: 'error',
+    };
+  }
+  if (raw.includes('links')) {
+    return {
+      code: 'INVALID_PROFILE_LINKS',
+      field: 'links',
+      itemId,
+      message: 'One or more submitted profile links are invalid.',
+      tone: 'error',
+    };
+  }
+  if (raw.includes('sections')) {
+    return {
+      code: 'INVALID_PROFILE_SECTIONS',
+      field: 'sections',
+      itemId,
+      message: 'The submitted profile section data is invalid.',
+      tone: 'error',
+    };
+  }
+  return {
+    code: 'INVALID_PROFILE_DATA',
+    itemId,
+    message: 'The submitted profile data needs attention before approval.',
+    tone: 'error',
   };
 }
 

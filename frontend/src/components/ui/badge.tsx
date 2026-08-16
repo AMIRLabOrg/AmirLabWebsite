@@ -2,20 +2,27 @@ import type { ReactNode } from "react";
 import { cn } from "@/lib/cn";
 import { loadingPlaceholder } from "@/lib/loading-style";
 
-export type BadgeTone = "field" | "gold" | "neutral" | "rust";
+export type BadgeTone =
+  | "success"
+  | "warning"
+  | "info"
+  | "error"
+  | "neutral";
 
 const toneClass: Record<BadgeTone, string> = {
-  field: "bg-brand-soft text-brand-hover",
-  gold: "bg-gold-soft text-review",
+  success: "bg-success-soft text-success",
+  warning: "bg-warning-soft text-warning",
+  info: "bg-info-soft text-info",
+  error: "bg-danger-soft text-danger",
   neutral: "border-line bg-surface text-ink-muted",
-  rust: "bg-danger-soft text-danger",
 };
 
 const dotClass: Record<BadgeTone, string> = {
-  field: "bg-brand",
-  gold: "bg-gold",
+  success: "bg-success",
+  warning: "bg-warning",
+  info: "bg-info",
+  error: "bg-danger",
   neutral: "bg-ink-muted",
-  rust: "bg-danger",
 };
 
 export function Badge({

@@ -11,10 +11,12 @@ import { DateField, DateTimeField } from "@/components/ui/date-time-field";
 import { formControlClass, InputControl, TextareaControl } from "@/components/ui/form-controls";
 import { StatePanel } from "@/components/state-panel";
 import { useNotifications } from "@/components/notification-provider";
-import { apiRequest } from "@/lib/client-api";
+import { ApiRequestError, apiRequest } from "@/lib/client-api";
 import type { Department, Position } from "@/lib/types";
 import { ButtonControl, ButtonLink } from "@/components/ui/button-control";
 import { SegmentedControl } from "@/components/ui/segmented-control";
+import { ReviewIssueStamp, SemanticStatus } from "@/components/ui/semantic-status";
+import { useReviewIssues } from "@/lib/use-review-issues";
 
 const POSITION_TYPES = [
   "INTERNSHIP",
@@ -62,6 +64,7 @@ export function PositionAdminList() {
   const [loading, setLoading] = useState(true);
   const [reload, setReload] = useState(0);
   const [updatingId, setUpdatingId] = useState<string>();
+  const actionIssues = useReviewIssues();
 
   useEffect(() => {
     void apiRequest<Position[]>("/positions/admin", { method: "GET" })
@@ -92,6 +95,7 @@ export function PositionAdminList() {
       setPositions((current) =>
         current.map((item) => (item.id === updated.id ? updated : item)),
       );
+      actionIssues.clearOne(position.id);
       showToast({
         body: enabled
           ? `${updated.title} is enabled for the public site.`
@@ -99,8 +103,14 @@ export function PositionAdminList() {
         title: enabled ? "Job post enabled" : "Job post disabled",
       });
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Could not update job post.";
-      showToast({ body: message, title: "Update failed", tone: "error" });
+      const requestError = error instanceof ApiRequestError ? error : undefined;
+      if (requestError?.issues.length) actionIssues.capture(requestError);
+      else actionIssues.setOne(position.id, {
+        code: "POSITION_STATE_UPDATE_FAILED",
+        message: "This job post publication state could not be updated.",
+        tone: "error",
+      });
+      showToast({ body: requestError?.message ?? "Could not update job post.", title: "Update failed", tone: "error" });
     } finally {
       setUpdatingId(undefined);
     }
@@ -130,34 +140,41 @@ export function PositionAdminList() {
         />
       ) : loading || positions.length ? (
         <div className="grid border-t border-line" data-loading={loading || undefined}>
-          {(loading && !positions.length ? Array.from({ length: 5 }, () => undefined) : positions).map((position, index) => (
-            <article className="grid grid-cols-[minmax(0,1fr)_130px_auto] items-center gap-4 border-b border-line py-4 max-[760px]:grid-cols-1" key={position?.id ?? `position-loading-${index}`}>
-              <div>
-                <strong className={cn("block leading-[1.35]", loadingPlaceholder(loading, "text", "long"))} data-placeholder="text" data-placeholder-width="long">{position?.title ?? "Loading position"}</strong>
-                <span className={cn("text-[.72rem] capitalize text-ink-muted", loadingPlaceholder(loading, "label", "medium"))} data-placeholder="label" data-placeholder-width="medium">{position ? positionTypeLabel(position.positionType) : "Loading type"}</span>
-              </div>
-              <span className={cn("text-[.72rem] capitalize text-ink-muted", loadingPlaceholder(loading, "label", "medium"))} data-placeholder="label" data-placeholder-width="medium">{position ? (position._count?.applications ?? 0) : 0} applications</span>
-              <div className="flex items-center justify-end gap-[.85rem] max-[760px]:justify-start">
-                <SegmentedControl
-                  ariaLabel={position ? `${position.title} publication state` : "Job post publication state"}
-                  disabled={loading || !position || updatingId === position?.id}
-                  loading={loading}
-                  onValueChange={(value) => {
-                    if (!position) return;
-                    const nextEnabled = value === "OPEN";
-                    if ((position.status === "OPEN") === nextEnabled) return;
-                    void setEnabled(position, nextEnabled);
-                  }}
-                  options={[
-                    { label: "Disabled", tone: "neutral", value: "DISABLED" },
-                    { label: "Enabled", tone: "success", value: "OPEN" },
-                  ]}
-                  value={position?.status === "OPEN" ? "OPEN" : "DISABLED"}
-                />
-                <ButtonLink compact href={position ? `/workspace/positions/${position.id}` : "#"} loading={loading || !position}>Edit</ButtonLink>
-              </div>
-            </article>
-          ))}
+          {(loading && !positions.length ? Array.from({ length: 5 }, () => undefined) : positions).map((position, index) => {
+            const issue = position ? actionIssues.forItem(position.id)[0] : undefined;
+            return (
+              <article className="relative grid grid-cols-[minmax(0,1fr)_130px_auto] items-center gap-4 border-b border-line py-4 pr-9 max-[760px]:grid-cols-1" key={position?.id ?? `position-loading-${index}`}>
+                {position ? <ReviewIssueStamp issue={issue} /> : null}
+                <div>
+                  <strong className={cn("block leading-[1.35]", loadingPlaceholder(loading, "text", "long"))} data-placeholder="text" data-placeholder-width="long">{position?.title ?? "Loading position"}</strong>
+                  <div className="mt-[.25rem] flex flex-wrap items-center gap-2">
+                    <span className={cn("text-[.72rem] capitalize text-ink-muted", loadingPlaceholder(loading, "label", "medium"))} data-placeholder="label" data-placeholder-width="medium">{position ? positionTypeLabel(position.positionType) : "Loading type"}</span>
+                    {issue ? <SemanticStatus tone={issue.tone ?? "error"}>{issue.message}</SemanticStatus> : null}
+                  </div>
+                </div>
+                <span className={cn("text-[.72rem] capitalize text-ink-muted", loadingPlaceholder(loading, "label", "medium"))} data-placeholder="label" data-placeholder-width="medium">{position ? (position._count?.applications ?? 0) : 0} applications</span>
+                <div className="flex items-center justify-end gap-[.85rem] max-[760px]:justify-start">
+                  <SegmentedControl
+                    ariaLabel={position ? `${position.title} publication state` : "Job post publication state"}
+                    disabled={loading || !position || updatingId === position?.id}
+                    loading={loading}
+                    onValueChange={(value) => {
+                      if (!position) return;
+                      const nextEnabled = value === "OPEN";
+                      if ((position.status === "OPEN") === nextEnabled) return;
+                      void setEnabled(position, nextEnabled);
+                    }}
+                    options={[
+                      { label: "Disabled", tone: "neutral", value: "DISABLED" },
+                      { label: "Enabled", tone: "success", value: "OPEN" },
+                    ]}
+                    value={position?.status === "OPEN" ? "OPEN" : "DISABLED"}
+                  />
+                  <ButtonLink compact href={position ? `/workspace/positions/${position.id}` : "#"} loading={loading || !position}>Edit</ButtonLink>
+                </div>
+              </article>
+            );
+          })}
         </div>
       ) : (
         <StatePanel body="Create the first job post, then enable it when it is ready to accept applications." title="No job posts yet" />

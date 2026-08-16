@@ -2,6 +2,7 @@ import {
   BadRequestException,
   ConflictException,
   Injectable,
+  Logger,
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
@@ -23,6 +24,8 @@ interface SessionResult {
 
 @Injectable()
 export class AuthService {
+  private readonly logger = new Logger(AuthService.name);
+
   constructor(
     private readonly config: ConfigService<Environment, true>,
     private readonly mail: MailService,
@@ -47,13 +50,13 @@ export class AuthService {
     }
 
     const session = this.prepareSession(user.id, request);
-    await this.prisma.$transaction([
-      this.prisma.user.update({
+    await this.prisma.$transaction(async (transaction) => {
+      await transaction.user.update({
         where: { id: user.id },
         data: { lastLoginAt: new Date() },
-      }),
-      this.prisma.session.create({ data: session.data }),
-    ]);
+      });
+      await transaction.session.create({ data: session.data });
+    });
     return {
       csrfToken: session.csrfToken,
       sessionToken: session.sessionToken,
@@ -169,6 +172,113 @@ export class AuthService {
     };
   }
 
+  async requestPasswordReset(email: string): Promise<void> {
+    const normalizedEmail = email.trim().toLowerCase();
+    const user = await this.prisma.user.findUnique({
+      where: { email: normalizedEmail },
+      select: { id: true, email: true, status: true },
+    });
+
+    // Deliberately return the same public result for unknown/inactive accounts.
+    if (!user?.email || user.status !== AccountStatus.ACTIVE) return;
+
+    const requestedAt = new Date();
+    const token = randomBytes(32).toString('base64url');
+    const tokenHash = createHash('sha256').update(token).digest('hex');
+    const expiresAt = new Date(
+      requestedAt.getTime() +
+        this.config.get('passwordResetMinutes', { infer: true }) * 60_000,
+    );
+    await this.prisma.passwordResetToken.upsert({
+      where: { userId: user.id },
+      create: { createdAt: requestedAt, expiresAt, tokenHash, userId: user.id },
+      update: { createdAt: requestedAt, expiresAt, tokenHash },
+    });
+
+    const frontendUrl = this.config.get('frontendOrigins', { infer: true })[0];
+    const link = `${frontendUrl}/reset-password#token=${encodeURIComponent(token)}`;
+    const minutes = this.config.get('passwordResetMinutes', { infer: true });
+    try {
+      // Do not queue this message: the queue persists message payloads, while a
+      // password-reset secret should exist only in memory and the outgoing email.
+      await this.mail.sendNow({
+        to: user.email,
+        subject: 'Reset your AMIR Lab password',
+        text: `A password reset was requested for your AMIR Lab account. Use this one-time link within ${minutes} minutes:\n\n${link}\n\nIf you did not request this change, you can ignore this email.`,
+      });
+    } catch (error) {
+      // Preserve the anti-enumeration response even when SMTP is temporarily down,
+      // but do not leave an undelivered reset credential active. A concurrent newer
+      // request is preserved because the token hash must still match this request.
+      try {
+        await this.prisma.passwordResetToken.deleteMany({
+          where: { userId: user.id, tokenHash },
+        });
+      } catch (cleanupError) {
+        this.logger.error(
+          `Password reset token cleanup failed for user ${user.id}`,
+          cleanupError instanceof Error
+            ? cleanupError.stack
+            : String(cleanupError),
+        );
+      }
+      this.logger.error(
+        `Password reset email delivery failed for user ${user.id}`,
+        error instanceof Error ? error.stack : String(error),
+      );
+    }
+  }
+
+  async resetPassword(rawToken: string, password: string): Promise<void> {
+    const tokenHash = createHash('sha256').update(rawToken).digest('hex');
+    const resetToken = await this.prisma.passwordResetToken.findUnique({
+      where: { tokenHash },
+      select: { id: true, expiresAt: true, userId: true },
+    });
+    if (!resetToken) {
+      throw invalidPasswordResetLink();
+    }
+
+    const now = new Date();
+    if (resetToken.expiresAt <= now) {
+      await this.prisma.passwordResetToken.deleteMany({
+        where: { id: resetToken.id, tokenHash },
+      });
+      throw invalidPasswordResetLink();
+    }
+
+    const passwordHash = await hashPassword(password);
+    await this.prisma.$transaction(async (transaction) => {
+      const claimed = await transaction.passwordResetToken.deleteMany({
+        where: {
+          id: resetToken.id,
+          tokenHash,
+          expiresAt: { gt: now },
+        },
+      });
+      if (claimed.count !== 1) {
+        throw invalidPasswordResetLink();
+      }
+      await transaction.user.update({
+        where: { id: resetToken.userId },
+        data: { passwordHash, passwordSetAt: now },
+      });
+      await transaction.session.updateMany({
+        where: { userId: resetToken.userId, revokedAt: null },
+        data: { revokedAt: now },
+      });
+      await transaction.auditRecord.create({
+        data: {
+          action: 'auth.password-reset',
+          actorId: resetToken.userId,
+          entityId: resetToken.userId,
+          entityType: 'User',
+          details: { sessionsRevoked: true },
+        },
+      });
+    });
+  }
+
   async revoke(rawToken: string | undefined): Promise<void> {
     if (!rawToken) {
       return;
@@ -211,4 +321,11 @@ export class AuthService {
       },
     };
   }
+}
+
+function invalidPasswordResetLink(): UnauthorizedException {
+  return new UnauthorizedException({
+    code: 'PASSWORD_RESET_INVALID',
+    publicMessage: 'This reset link is invalid or has expired. Request a new one.',
+  });
 }

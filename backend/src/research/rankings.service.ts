@@ -89,17 +89,17 @@ export class RankingsService implements OnModuleInit, OnModuleDestroy {
     );
     const nextEffective = effectiveRank(person.appointedRank, nextEarned);
 
-    await this.prisma.$transaction([
-      this.prisma.personMetric.upsert({
+    await this.prisma.$transaction(async (transaction) => {
+      await transaction.personMetric.upsert({
         where: { personId },
         create: { personId, publishedPaperCount: paperCount },
         update: { publishedPaperCount: paperCount },
-      }),
-      this.prisma.person.update({
+      });
+      await transaction.person.update({
         where: { id: personId },
         data: { earnedRank: nextEarned },
-      }),
-      this.prisma.auditRecord.create({
+      });
+      await transaction.auditRecord.create({
         data: {
           action: 'person.rank-recalculated',
           actorId,
@@ -112,8 +112,8 @@ export class RankingsService implements OnModuleInit, OnModuleDestroy {
             paperCount,
           },
         },
-      }),
-    ]);
+      });
+    });
     if (person.userId && previousEffective !== nextEffective) {
       await this.notifications.create(person.userId, {
         type: NotificationType.RANK_CHANGED,

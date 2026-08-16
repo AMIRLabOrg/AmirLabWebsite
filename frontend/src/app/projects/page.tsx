@@ -6,8 +6,8 @@ export const metadata: Metadata = { title: "Projects" };
 export default function ProjectsPage() {
   return (
     <ResearchListing
-      description="Active and completed research programs, their objectives, collaborators, and linked outputs."
-      eyebrow="What we are building"
+      description="Current and completed AMIR Lab research projects, including objectives, collaborators, milestones, updates, and linked outputs."
+      eyebrow="Research projects"
       title="Projects"
       type="PROJECT"
     />

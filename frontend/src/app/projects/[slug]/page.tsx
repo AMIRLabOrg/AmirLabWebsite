@@ -20,15 +20,26 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
   const milestones = project.milestones ?? [];
   const totalWeight = milestones.reduce((sum, milestone) => sum + milestone.weight, 0);
   const progress = totalWeight ? Math.round(milestones.reduce((sum, milestone) => sum + milestone.progress * milestone.weight, 0) / totalWeight) : 0;
+  const objectives = project.objectives?.length
+    ? project.objectives
+    : project.objective
+      ? [{ id: "main", title: project.objective, description: item.summary, sortOrder: 0 }]
+      : [];
+  const navigation = [
+    ...(objectives.length ? [["#objectives", "Objectives"] as const] : []),
+    ["#milestones", "Milestones"] as const,
+    ["#updates", "Updates"] as const,
+    ["#team", "Team"] as const,
+  ];
 
   return (
     <main>
       <header className="border-b border-line-strong py-[clamp(2.4rem,5vw,4rem)]">
         <PublicShell className="grid grid-cols-[minmax(0,1.35fr)_minmax(260px,.65fr)] items-end gap-[clamp(2rem,5vw,4.5rem)] max-[760px]:grid-cols-1">
           <div>
-            <div className="mb-3 flex items-center gap-[.65rem] font-mono text-[.56rem] text-ink-muted uppercase"><span className={statusBadge}>{project.status ?? "Active"}</span><span>Research project</span></div>
+            <div className="mb-3 flex items-center gap-[.65rem] font-mono text-[.56rem] text-ink-muted uppercase">{project.status ? <span className={statusBadge}>{project.status.replaceAll("_", " ")}</span> : null}<span>Research project</span></div>
             <h1 className="m-0 font-serif text-[clamp(2.5rem,5vw,4.7rem)] leading-[.96] font-medium tracking-[-.045em]">{item.title}</h1>
-            <p className="mt-4 max-w-[720px] text-[.86rem] leading-[1.65] text-ink-muted">{item.summary ?? project.objective}</p>
+            {item.summary || project.objective ? <p className="mt-4 max-w-[720px] text-[.86rem] leading-[1.65] text-ink-muted">{item.summary ?? project.objective}</p> : null}
           </div>
           <aside className="border-t border-line-strong pt-[.7rem]">
             <div className="flex items-end justify-between"><strong className="font-mono text-[1.6rem] font-medium">{progress}%</strong><span className="font-mono text-[.54rem] text-ink-muted uppercase">Overall progress</span></div>
@@ -43,19 +54,20 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
       <PublicShell className="grid grid-cols-[180px_minmax(0,1fr)] gap-[clamp(2rem,5vw,4.5rem)] py-[clamp(2.5rem,5vw,4rem)] max-[760px]:grid-cols-1">
         <aside className="sticky top-[76px] grid self-start max-[760px]:hidden">
           <Eyebrow>On this page</Eyebrow>
-          {[['#objectives','Objectives'],['#milestones','Milestones'],['#updates','Updates'],['#team','Team']].map(([href,label]) => <a className="border-b border-line py-[.62rem] text-[.68rem] text-ink-muted hover:text-brand" href={href} key={href}>{label}</a>)}
+          {navigation.map(([href, label]) => <a className="border-b border-line py-[.62rem] text-[.68rem] text-ink-muted hover:text-brand" href={href} key={href}>{label}</a>)}
         </aside>
         <div className="grid gap-[3.6rem]">
-          <ProjectSection eyebrow="Direction" id="objectives" title="Project objectives">
-            <ol className="m-0 list-none p-0 [counter-reset:objective]">
-              {(project.objectives?.length ? project.objectives : [{ id: "main", title: project.objective ?? "Research objective", description: item.summary, sortOrder: 0 }]).map((objective, index) => (
-                <li className="grid grid-cols-[48px_1fr] border-t border-line py-[.9rem]" key={objective.id}>
-                  <span className="font-mono text-[.56rem] text-brand">{String(index + 1).padStart(2, "0")}</span>
-                  <div><h3 className="my-[.2rem] font-serif text-[1.05rem] font-medium">{objective.title}</h3>{objective.description ? <p className="text-[.72rem] leading-[1.55] text-ink-muted">{objective.description}</p> : null}</div>
-                </li>
-              ))}
-            </ol>
-          </ProjectSection>
+          {objectives.length ? (
+            <ProjectSection eyebrow="Direction" id="objectives" title="Project objectives">
+              <ul className="m-0 list-none p-0">
+                {objectives.map((objective) => (
+                  <li className="border-t border-line py-[.9rem]" key={objective.id}>
+                    <div><h3 className="my-[.2rem] font-serif text-[1.05rem] font-medium">{objective.title}</h3>{objective.description ? <p className="text-[.72rem] leading-[1.55] text-ink-muted">{objective.description}</p> : null}</div>
+                  </li>
+                ))}
+              </ul>
+            </ProjectSection>
+          ) : null}
           <ProjectSection eyebrow="Roadmap" id="milestones" title="Milestones">
             <div>
               {milestones.map((milestone, index) => (

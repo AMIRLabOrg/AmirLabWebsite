@@ -1,3 +1,4 @@
+import type { ReviewIssue } from "./review-issues";
 export type ResearchItemType = "PAPER" | "DATASET" | "PROJECT";
 
 export interface PaginatedResponse<T> {
@@ -107,6 +108,11 @@ export interface Department {
   _count?: { people: number; researchItems: number; positions?: number };
 }
 
+export interface ProfileSectionEntry {
+  label: string | null;
+  content: string;
+}
+
 export interface Person {
   id: string;
   slug: string;
@@ -141,7 +147,7 @@ export interface Person {
     content?: string;
     subsections?: Array<{
       heading: string | null;
-      entries: string[];
+      entries: ProfileSectionEntry[];
     }>;
   }>;
   contributions?: Array<{
@@ -213,7 +219,10 @@ export interface ProfileEditPayload {
   sections: Array<{
     type: string;
     title: string;
-    subsections: Array<{ heading: string | null; entries: string[] }>;
+    subsections: Array<{
+      heading: string | null;
+      entries: ProfileSectionEntry[];
+    }>;
   }>;
   removeAvatar: boolean;
 }
@@ -227,6 +236,7 @@ export interface ProfileEditRequest {
   payload: ProfileEditPayload;
   avatarAsset: { id: string } | null;
   person: Person;
+  reviewIssues?: ReviewIssue[];
 }
 
 export interface MyProfile {

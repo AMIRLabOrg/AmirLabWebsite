@@ -278,6 +278,7 @@ model User {
   person                      Person?
   sessions                    Session[]
   accountSetupTokens          AccountSetupToken[]
+  passwordResetToken          PasswordResetToken?
   notifications               Notification[]
   submittedItems              ResearchItem[]         @relation("ResearchSubmitter")
   reviewedItems               ResearchItem[]         @relation("ResearchReviewer")
@@ -405,12 +406,23 @@ model PersonProfileSection {
 model PersonProfileSubsection {
   id        String               @id @default(uuid()) @db.Uuid
   heading   String?
-  entries   String[]
+  entries   PersonProfileEntry[]
   sortOrder Int
   sectionId String               @db.Uuid
   section   PersonProfileSection @relation(fields: [sectionId], references: [id], onDelete: Cascade)
 
   @@unique([sectionId, sortOrder])
+}
+
+model PersonProfileEntry {
+  id           String                  @id @default(uuid()) @db.Uuid
+  label        String?
+  content      String
+  sortOrder    Int
+  subsectionId String                  @db.Uuid
+  subsection   PersonProfileSubsection @relation(fields: [subsectionId], references: [id], onDelete: Cascade)
+
+  @@unique([subsectionId, sortOrder])
 }
 
 model Department {
@@ -1057,6 +1069,19 @@ model AccountSetupToken {
   user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, expiresAt])
+}
+
+
+model PasswordResetToken {
+  id        String   @id @default(uuid()) @db.Uuid
+  tokenHash String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  userId    String   @unique @db.Uuid
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([expiresAt])
 }
 
 model Notification {

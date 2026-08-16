@@ -24,6 +24,8 @@ async function main(): Promise<void> {
   });
   let queued = 0;
   for (const [index, paper] of papers.entries()) {
+    const canonicalUrl = paper.canonicalUrl;
+    if (!canonicalUrl) continue;
     const uniqueKey = `research-source:${paper.id}`;
     const existing = await prisma.job.findUnique({ where: { uniqueKey } });
     if (
@@ -38,29 +40,29 @@ async function main(): Promise<void> {
         data: { uniqueKey: null },
       });
     }
-    await prisma.$transaction([
-      prisma.researchSourceSnapshot.upsert({
+    await prisma.$transaction(async (transaction) => {
+      await transaction.researchSourceSnapshot.upsert({
         where: { researchItemId: paper.id },
         create: {
           researchItemId: paper.id,
           status: SourceFetchStatus.PENDING,
-          url: paper.canonicalUrl!,
+          url: canonicalUrl,
         },
         update: {
           failureReason: null,
           status: SourceFetchStatus.PENDING,
-          url: paper.canonicalUrl!,
+          url: canonicalUrl,
         },
-      }),
-      prisma.job.create({
+      });
+      await transaction.job.create({
         data: {
           payload: { researchItemId: paper.id },
           runAt: new Date(Date.now() + index * 5_000),
           type: DISCOVERY_JOB,
           uniqueKey,
         },
-      }),
-    ]);
+      });
+    });
     queued += 1;
   }
   console.log(`Queued ${queued} of ${papers.length} review papers for metadata recovery.`);

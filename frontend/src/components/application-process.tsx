@@ -1,13 +1,13 @@
 const STEPS = [
   { meta: "Choose an open role and upload one text-based PDF.", title: "Upload CV" },
   { meta: "We check readable text, contact details, and section structure.", title: "ATS validation" },
-  { meta: "A moderator reviews the parsed record beside the original file.", title: "Human review" },
+  { meta: "A lab reviewer checks the parsed CV beside the original file.", title: "Human review" },
   { meta: "Accepted applicants receive secure instructions to activate an account.", title: "Decision & account" },
 ] as const;
 
 export function ApplicationProcess() {
   return (
-    <aside className="sticky top-[6.5rem] self-start rounded-panel border border-line bg-surface px-[1.6rem] pb-8 pt-7 shadow-[0_2px_0_color-mix(in_srgb,var(--brand)_5%,transparent)] max-[900px]:static" aria-label="Application process">
+    <aside className="sticky top-[6.5rem] self-start px-[.25rem] py-[.25rem] max-[900px]:static" aria-label="Application process">
       <p className="m-0 mb-4 font-[var(--font-sans)] text-[.75rem] font-extrabold uppercase tracking-[.12em] text-brand">Application path</p>
       <h2 className="mb-[1.8rem] mt-3 font-serif text-[clamp(2rem,3vw,2.8rem)] font-medium leading-[.98] tracking-[-.035em]">From upload to review</h2>
       <ol className="relative m-0 list-none p-0 before:absolute before:bottom-3 before:left-[6px] before:top-[7px] before:w-px before:bg-line after:absolute after:left-[6px] after:top-[7px] after:h-[16%] after:w-px after:origin-top after:animate-[rail-enter_700ms_180ms_cubic-bezier(.22,1,.36,1)_both] after:bg-brand motion-reduce:after:animate-none">

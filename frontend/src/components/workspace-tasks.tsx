@@ -112,8 +112,10 @@ export function WorkspaceTasks() {
       >
         {loadingTasks || visibleTasks.length ? (
           <div className="grid" data-loading={loadingTasks || undefined}>
-            {(loadingTasks ? Array.from({ length: 5 }, () => undefined) : visibleTasks).map((task, index) => (
-              <Link aria-disabled={loadingTasks || undefined} className="grid grid-cols-[auto_minmax(0,1fr)_auto_auto] items-center gap-4 border-t border-line px-6 py-5 first:border-t-0 hover:bg-brand-faint motion-reduce:transition-none max-[760px]:grid-cols-[auto_minmax(0,1fr)_auto] max-[760px]:items-start max-[760px]:p-4" href={loadingTasks ? "#" : `/workspace/projects/${task!.projectId}`} key={task?.id ?? `loading-task-${index}`} tabIndex={loadingTasks ? -1 : undefined}>
+            {(loadingTasks ? Array.from({ length: 5 }, () => undefined) : visibleTasks).map((task, index) => {
+              const href = task ? `/workspace/projects/${task.projectId}` : "#";
+              return (
+                <Link aria-disabled={loadingTasks || undefined} className="grid grid-cols-[auto_minmax(0,1fr)_auto_auto] items-center gap-4 border-t border-line px-6 py-5 first:border-t-0 hover:bg-brand-faint motion-reduce:transition-none max-[760px]:grid-cols-[auto_minmax(0,1fr)_auto] max-[760px]:items-start max-[760px]:p-4" href={href} key={task?.id ?? `loading-task-${index}`} tabIndex={loadingTasks ? -1 : undefined}>
                 <span className={`h-[9px] w-[9px] rounded-full ${task?.status === "IN_PROGRESS" ? "bg-brand" : task?.status === "BLOCKED" ? "bg-danger" : task?.status === "DONE" ? "bg-success" : "bg-line"}`} />
                 <div className="grid min-w-0 gap-2">
                   <span className="flex flex-wrap gap-2">
@@ -132,8 +134,9 @@ export function WorkspaceTasks() {
                   <span className={loadingPlaceholder(loadingTasks, "text")} data-placeholder={loadingTasks ? "text" : undefined}>{task ? task.dueAt ? formatDate(task.dueAt) : "No due date" : "00 Mon 0000"}</span>
                 </div>
                 <ArrowRight aria-hidden="true" className={cn("max-[760px]:col-start-3 max-[760px]:row-span-2 max-[760px]:row-start-1", loadingTasks && "opacity-[.12]")} data-loading-icon={loadingTasks || undefined} size={16} />
-              </Link>
-            ))}
+                </Link>
+              );
+            })}
           </div>
         ) : (
           <WorkspaceEmpty>No tasks match this view.</WorkspaceEmpty>
@@ -144,14 +147,14 @@ export function WorkspaceTasks() {
 }
 
 function taskTone(status: WorkspaceTask["status"]): BadgeTone {
-  if (status === "BLOCKED") return "rust";
-  if (status === "IN_PROGRESS") return "field";
+  if (status === "BLOCKED") return "error";
+  if (status === "IN_PROGRESS") return "info";
   return "neutral";
 }
 
 function priorityTone(priority: WorkspaceTask["priority"]): BadgeTone {
-  if (priority === "URGENT") return "rust";
-  if (priority === "HIGH") return "gold";
+  if (priority === "URGENT") return "error";
+  if (priority === "HIGH") return "warning";
   return "neutral";
 }
 

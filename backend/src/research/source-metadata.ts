@@ -35,7 +35,7 @@ export function personNameMatchEvidence(
   sourceName: string,
   personName: string,
 ):
-  | { confidence: number; reason: 'Exact name' | 'Initials + surname' | 'Fuzzy full name' }
+  | { confidence: number; reason: 'Exact normalized name' | 'Initials + surname' | 'Fuzzy full name' }
   | undefined {
   const sourceKey = personNameTokenKey(sourceName);
   if (
@@ -43,7 +43,7 @@ export function personNameMatchEvidence(
     sourceKey.split(' ').length >= 2 &&
     sourceKey === personNameTokenKey(personName)
   ) {
-    return { confidence: 0.92, reason: 'Exact name' };
+    return { confidence: 1, reason: 'Exact normalized name' };
   }
 
   const source = orderedPersonNameTokens(sourceName);
@@ -66,16 +66,6 @@ export function personNameMatchEvidence(
     return { confidence: 0.82, reason: 'Initials + surname' };
   }
   return undefined;
-}
-
-export function personNameOverlapHint(
-  sourceName: string,
-  personName: string,
-): boolean {
-  if (personNameMatchEvidence(sourceName, personName)) return false;
-  const source = new Set(orderedPersonNameTokens(sourceName));
-  const person = orderedPersonNameTokens(personName);
-  return [...source].some((token) => token.length > 1 && person.includes(token));
 }
 
 export function normalizeOrcid(value: string): string | undefined {

@@ -5,6 +5,7 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import cookieParser from 'cookie-parser';
 import helmet from 'helmet';
 import { AppModule } from './app.module';
+import { ApiExceptionFilter } from './common/api-exception.filter';
 import type { Environment } from './config/environment';
 
 async function bootstrap() {
@@ -20,6 +21,7 @@ async function bootstrap() {
   });
   app.use(helmet());
   app.use(cookieParser());
+  app.useGlobalFilters(new ApiExceptionFilter());
   app.useGlobalPipes(
     new ValidationPipe({
       forbidNonWhitelisted: true,

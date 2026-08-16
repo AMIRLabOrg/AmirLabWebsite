@@ -10,7 +10,10 @@ import { ReviewActions } from "@/components/review-actions";
 import { BulkReviewBar } from "@/components/bulk-review-bar";
 import { CheckboxControl } from "@/components/ui/checkbox-control";
 import { useBulkSelection } from "@/lib/use-bulk-selection";
-import { apiRequest } from "@/lib/client-api";
+import { ApiRequestError, apiRequest } from "@/lib/client-api";
+import { useReviewIssues } from "@/lib/use-review-issues";
+import type { ReviewIssue } from "@/lib/review-issues";
+import { ReviewIssueStamp, SemanticStatus } from "@/components/ui/semantic-status";
 
 interface ChangeRequest {
   id: string;
@@ -20,12 +23,14 @@ interface ChangeRequest {
   submittedAt: string;
   submittedBy: { email: string | null; person: { fullName: string } | null };
   project: { researchItem: { title: string | null } };
+  reviewIssues?: ReviewIssue[];
 }
 
 export function ProjectReviewQueue() {
   const [items, setItems] = useState<ChangeRequest[]>([]);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
+  const reviewIssues = useReviewIssues();
   const loaded = !loading && !error;
 
   function load() {
@@ -33,6 +38,7 @@ export function ProjectReviewQueue() {
     return apiRequest<ChangeRequest[]>("/project-change-reviews", { method: "GET" })
       .then((nextItems) => {
         setItems(nextItems);
+        reviewIssues.clear();
         setError("");
       })
       .catch((value: Error) => setError(value.message))
@@ -56,6 +62,11 @@ export function ProjectReviewQueue() {
     };
   }, []);
 
+  function captureItemError(itemId: string, error: ApiRequestError) {
+    if (error.issues.length) reviewIssues.capture(error);
+    else reviewIssues.setOne(itemId, { code: "PROJECT_REVIEW_FAILED", message: "This project change decision could not be saved.", tone: "error" });
+  }
+
   async function decide(id: string, { note, status }: { note?: string; status: "APPROVED" | "REJECTED" }) {
     await apiRequest(`/project-change-reviews/${id}/review`, {
       body: JSON.stringify({ ...(note ? { note } : {}), status }),
@@ -67,10 +78,31 @@ export function ProjectReviewQueue() {
 
   const bulk = useBulkSelection(items.map(({ id }) => id));
   const selectedItems = items.filter(({ id }) => bulk.isSelected(id));
-  const hasDuplicateProjects = new Set(selectedItems.map(({ projectId }) => projectId)).size !== selectedItems.length;
+  const selectedProjectCounts = selectedItems.reduce((counts, item) => {
+    counts.set(item.projectId, (counts.get(item.projectId) ?? 0) + 1);
+    return counts;
+  }, new Map<string, number>());
+  const hasDuplicateProjects = [...selectedProjectCounts.values()].some((count) => count > 1);
+  const itemReviewIssues = (item: ChangeRequest): ReviewIssue[] => [
+    ...(item.reviewIssues ?? []),
+    ...reviewIssues.forItem(item.id),
+  ];
+  const issuesFor = (item: ChangeRequest): ReviewIssue[] => [
+    ...itemReviewIssues(item),
+    ...((selectedProjectCounts.get(item.projectId) ?? 0) > 1
+      ? [{
+          code: "MULTIPLE_CHANGES_FOR_PROJECT",
+          itemId: item.id,
+          message: "Another selected change belongs to the same project.",
+          tone: "warning" as const,
+        }]
+      : []),
+  ];
+  const selectedAttentionCount = selectedItems.filter((item) => issuesFor(item).length > 0).length;
+  const selectedCanApprove = selectedItems.every((item) => issuesFor(item).length === 0);
   const commonBulkActions = selectedItems.length
     ? [
-        ...(!hasDuplicateProjects ? [{
+        ...(selectedCanApprove && !hasDuplicateProjects ? [{
           confirmDescription: `Apply and publish the ${selectedItems.length} selected project change${selectedItems.length === 1 ? "" : "s"}. Version guards still apply to every request.`,
           confirmLabel: "Approve selected",
           confirmTitle: "Approve selected project changes?",
@@ -120,10 +152,13 @@ export function ProjectReviewQueue() {
       {loading || items.length ? (
         <BulkReviewBar
           actions={commonBulkActions}
+          attentionCount={selectedAttentionCount}
           loading={loading}
           onClear={bulk.clear}
           onSelectAll={bulk.toggleAll}
+          onError={reviewIssues.capture}
           onSubmit={decideBulk}
+          onSuccess={reviewIssues.clear}
           selectAllState={bulk.selectAllState}
           selectableCount={items.length}
           selectedCount={bulk.selectedCount}
@@ -149,7 +184,8 @@ export function ProjectReviewQueue() {
               ? Array.from({ length: 4 }, () => undefined)
               : items
             ).map((item, index) => (
-              <article className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-start gap-4 rounded-panel border border-line bg-surface p-[clamp(1rem,2vw,1.4rem)] max-[720px]:grid-cols-[auto_minmax(0,1fr)]" key={item?.id ?? `project-review-loading-${index}`}>
+              <article className="relative grid grid-cols-[auto_minmax(0,1fr)_auto] items-start gap-4 rounded-panel border border-line bg-surface p-[clamp(1rem,2vw,1.4rem)] pr-10 max-[720px]:grid-cols-[auto_minmax(0,1fr)]" key={item?.id ?? `project-review-loading-${index}`}>
+                {item ? <ReviewIssueStamp issue={issuesFor(item)[0]} /> : null}
                 <div className="pt-1">
                   {item ? (
                     <CheckboxControl
@@ -167,6 +203,9 @@ export function ProjectReviewQueue() {
                   <p className={cn("m-0 text-[.86rem] text-ink-muted", loadingPlaceholder(loading, "text", "full"))} data-placeholder="text" data-placeholder-width="full">
                     {item ? <>Submitted by {item.submittedBy.person?.fullName ?? item.submittedBy.email ?? "member"} ·{" "}{new Date(item.submittedAt).toLocaleString()}</> : "Loading submission provenance"}
                   </p>
+                  {item && issuesFor(item)[0] ? (
+                    <SemanticStatus tone={issuesFor(item)[0].tone ?? "warning"}>{issuesFor(item)[0].message}</SemanticStatus>
+                  ) : null}
                   <section className="mt-[.4rem] grid gap-3 border-t border-line pt-[.8rem]" aria-label="Proposed project changes">
                     <h3 className={cn("text-[.82rem] font-[750]", loadingPlaceholder(loading, "label"))} data-placeholder={loading ? "label" : undefined}>Proposed changes</h3>
                     {item ? <ProjectChangePreview kind={item.kind} payload={item.payload} /> : <div className={loadingPlaceholder(true, "text", "full")} data-placeholder="text" data-placeholder-width="full">Loading proposed changes</div>}
@@ -180,7 +219,8 @@ export function ProjectReviewQueue() {
                       confirmDescription: "Apply this project change and publish it to the workspace record.",
                       confirmLabel: "Approve change",
                       confirmTitle: "Approve this project change?",
-                      label: "Approve",
+                      disabled: Boolean(item && itemReviewIssues(item).length),
+                      label: item && itemReviewIssues(item).length ? "Needs attention" : "Approve",
                       status: "APPROVED",
                       tone: "primary",
                     },
@@ -195,7 +235,9 @@ export function ProjectReviewQueue() {
                       tone: "danger",
                     },
                   ]}
+                  onError={(requestError) => item && captureItemError(item.id, requestError)}
                   onSubmit={(decision) => item ? decide(item.id, decision) : Promise.resolve()}
+                  onSuccess={() => item && reviewIssues.clearOne(item.id)}
                   successBody={(status) => `The project change was ${status.toLowerCase()}.`}
                   successTitle="Project review saved"
                 />
@@ -294,7 +336,7 @@ function renderProjectChangeValue(value: unknown) {
     return <span className="text-ink-muted">Not set</span>;
   }
   if (typeof value === "boolean") {
-    return <Badge tone={value ? "field" : "neutral"}>{value ? "Enabled" : "Disabled"}</Badge>;
+    return <Badge tone={value ? "success" : "neutral"}>{value ? "Enabled" : "Disabled"}</Badge>;
   }
   if (typeof value === "number") return String(value);
   if (typeof value === "string") {

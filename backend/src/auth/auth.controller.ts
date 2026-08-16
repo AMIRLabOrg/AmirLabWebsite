@@ -1,11 +1,12 @@
 import { Body, Controller, Get, Post, Req, Res } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { Throttle } from '@nestjs/throttler';
 import type { Request, Response } from 'express';
 import type { Environment } from '../config/environment';
 import { AuthService } from './auth.service';
 import { CurrentUser, Public } from './auth.decorators';
 import type { AuthenticatedUser } from './auth.types';
-import { LoginDto, SetupAccountDto } from './dto/auth.dto';
+import { LoginDto, RequestPasswordResetDto, ResetPasswordDto, SetupAccountDto } from './dto/auth.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -38,6 +39,30 @@ export class AuthController {
       request,
     );
     return this.setSessionCookie(response, session);
+  }
+
+  @Public()
+  @Throttle({ default: { limit: 5, ttl: 600_000 } })
+  @Post('password-reset/request')
+  async requestPasswordReset(
+    @Body() body: RequestPasswordResetDto,
+  ): Promise<{ accepted: true }> {
+    await this.auth.requestPasswordReset(body.email);
+    return { accepted: true };
+  }
+
+  @Public()
+  @Throttle({ default: { limit: 10, ttl: 600_000 } })
+  @Post('password-reset/complete')
+  async resetPassword(
+    @Body() body: ResetPasswordDto,
+    @Res({ passthrough: true }) response: Response,
+  ): Promise<{ reset: true }> {
+    await this.auth.resetPassword(body.token, body.password);
+    response.clearCookie(
+      this.config.get('sessionCookieName', { infer: true }),
+    );
+    return { reset: true };
   }
 
   @Get('me')

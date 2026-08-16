@@ -11,7 +11,7 @@ import { ConfirmDialog } from "@/components/confirm-dialog";
 import { useNotifications } from "@/components/notification-provider";
 import { StatePanel } from "@/components/state-panel";
 import { WorkspaceRecord } from "@/components/workspace-record";
-import { apiRequest } from "@/lib/client-api";
+import { ApiRequestError, apiRequest } from "@/lib/client-api";
 import { Badge } from "@/components/ui/badge";
 import { ButtonControl } from "@/components/ui/button-control";
 import { CheckboxControl } from "@/components/ui/checkbox-control";
@@ -21,6 +21,8 @@ import { IconButton } from "@/components/ui/icon-button";
 import { SearchableSelect } from "@/components/ui/searchable-select";
 import { SelectControl } from "@/components/ui/select-control";
 import type { Department, Person } from "@/lib/types";
+import { ReviewIssueStamp, SemanticStatus } from "@/components/ui/semantic-status";
+import { useReviewIssues } from "@/lib/use-review-issues";
 
 const EMPTY_DEPARTMENT: Department = {
   abbreviation: null,
@@ -64,7 +66,7 @@ export function DepartmentIndex() {
         <div className="grid gap-[.7rem]" data-loading={loading || undefined}>
           {(loading && !departments.length ? Array.from({ length: 5 }, () => undefined) : departments).map((department, index) => (
             <Link aria-disabled={loading || !department} className="flex items-center justify-between gap-4 rounded-panel border border-line bg-surface px-[1.1rem] py-4 text-inherit hover:border-[color-mix(in_srgb,var(--brand)_45%,var(--line))]" href={department ? `/workspace/departments/${department.id}` : "#"} key={department?.id ?? `department-loading-${index}`} tabIndex={loading ? -1 : undefined}>
-              <div><strong className={cn("text-[.98rem] leading-[1.35]", loadingPlaceholder(loading, "text", "long"))} data-placeholder="text" data-placeholder-width="long">{department?.name ?? "Loading department"}</strong><br /><small className={cn("font-mono text-[.7rem] text-ink-muted", loadingPlaceholder(loading, "label", "medium"))} data-placeholder="label" data-placeholder-width="medium">{department ? `${department.people.length} member${department.people.length === 1 ? "" : "s"}` : "Loading members"}</small></div>
+              <div><strong className={cn("text-[.98rem] leading-[1.35]", loadingPlaceholder(loading, "text", "long"))} data-placeholder="text" data-placeholder-width="long">{department?.name ?? "Loading department"}</strong><div className="mt-[.35rem] flex flex-wrap items-center gap-2"><small className={cn("font-mono text-[.7rem] text-ink-muted", loadingPlaceholder(loading, "label", "medium"))} data-placeholder="label" data-placeholder-width="medium">{department ? `${department.people.length} member${department.people.length === 1 ? "" : "s"}` : "Loading members"}</small>{department ? <SemanticStatus tone={department.isPublished ? "success" : "warning"}>{department.isPublished ? "Published" : "Draft"}</SemanticStatus> : null}</div></div>
               <ArrowRight aria-hidden="true" className={loading ? "opacity-[.12]" : undefined} data-loading-icon={loading ? "true" : undefined} size={17} />
             </Link>
           ))}
@@ -86,6 +88,7 @@ export function DepartmentEditor({ id }: { id?: string }) {
   const [deletePending, setDeletePending] = useState(false);
   const [personId, setPersonId] = useState("");
   const [role, setRole] = useState("MEMBER");
+  const memberIssues = useReviewIssues();
 
   const load = () => {
     setLoading(Boolean(id));
@@ -140,15 +143,23 @@ export function DepartmentEditor({ id }: { id?: string }) {
     } finally { setSaving(false); }
   }
 
-  async function changeMember(path: string, init: RequestInit, success: string) {
+  async function changeMember(path: string, init: RequestInit, success: string, itemId?: string) {
     try {
       await apiRequest(path, init);
+      if (itemId) memberIssues.clearOne(itemId);
       showToast({ body: success, title: "Department team updated" });
       load();
     } catch (value) {
-      const message = value instanceof Error ? value.message : "Unable to update the department team.";
-      setError(message);
-      showToast({ body: message, title: "Department team was not updated", tone: "error" });
+      const requestError = value instanceof ApiRequestError ? value : undefined;
+      if (itemId) {
+        if (requestError?.issues.length) memberIssues.capture(requestError);
+        else memberIssues.setOne(itemId, {
+          code: "DEPARTMENT_MEMBER_UPDATE_FAILED",
+          message: "This department membership could not be updated.",
+          tone: "error",
+        });
+      }
+      showToast({ body: requestError?.message ?? "Unable to update the department team.", title: "Department team was not updated", tone: "error" });
     }
   }
 
@@ -188,13 +199,13 @@ export function DepartmentEditor({ id }: { id?: string }) {
           {error ? <p className="m-0 flex items-center gap-[.45rem] text-[.82rem] leading-[1.5] text-ink-muted rounded-panel bg-danger-soft p-[.8rem] text-danger" role="alert">{error}</p> : null}
         </form>
         {id ? <section className="mx-auto grid w-full max-w-[820px] gap-[1.35rem] rounded-panel border border-line bg-surface p-[clamp(1.25rem,3vw,2rem)]" data-loading={loading || undefined}><header className="grid gap-[.35rem] border-b border-line pb-[1.15rem]"><p className="m-0 font-mono text-[.62rem] font-semibold uppercase tracking-[.1em] text-brand">Membership</p><h2 className="m-0 font-serif text-[clamp(1.4rem,2.4vw,2rem)] font-normal leading-[1.1]">Department team</h2><p className="m-0 text-[.82rem] leading-[1.55] text-ink-muted">Link registered people to the department and set their role.</p></header>
-          <div className="grid border-t border-line">{(loading && !department.people.length ? Array.from({ length: 2 }, () => undefined) : department.people).map((membership, index) => { const person = membership?.person; const memberRole = membership?.role ?? "MEMBER"; return <article className="flex items-center justify-between gap-4 border-b border-line px-1 py-[.9rem]" key={person?.id ?? `member-loading-${index}`}><div className="flex flex-wrap items-center gap-[.6rem]"><strong className={loadingPlaceholder(loading, "text", "long")} data-placeholder="text" data-placeholder-width="long">{person?.fullName ?? "Loading member"}</strong><Badge loading={loading} tone={memberRole === "HEAD" ? "field" : "neutral"}>{readableDepartmentRole(memberRole)}</Badge></div><IconButton aria-label={person ? `Remove ${person.fullName}` : "Remove member"} className="text-danger hover:text-danger" disabled={!person} loading={loading} onClick={() => person && setMemberToRemove({ id: person.id, name: person.fullName })}><Trash2 size={15} /></IconButton></article>})}</div>
+          <div className="grid border-t border-line">{(loading && !department.people.length ? Array.from({ length: 2 }, () => undefined) : department.people).map((membership, index) => { const person = membership?.person; const memberRole = membership?.role ?? "MEMBER"; const issue = person ? memberIssues.forItem(person.id)[0] : undefined; return <article className="relative flex items-center justify-between gap-4 border-b border-line px-1 py-[.9rem] pr-10" key={person?.id ?? `member-loading-${index}`}>{person ? <ReviewIssueStamp issue={issue} /> : null}<div className="flex flex-wrap items-center gap-[.6rem]"><strong className={loadingPlaceholder(loading, "text", "long")} data-placeholder="text" data-placeholder-width="long">{person?.fullName ?? "Loading member"}</strong><Badge loading={loading} tone={memberRole === "HEAD" ? "info" : "neutral"}>{readableDepartmentRole(memberRole)}</Badge>{issue ? <SemanticStatus tone={issue.tone ?? "error"}>{issue.message}</SemanticStatus> : null}</div><IconButton aria-label={person ? `Remove ${person.fullName}` : "Remove member"} className="text-danger hover:text-danger" disabled={!person} loading={loading} onClick={() => person && setMemberToRemove({ id: person.id, name: person.fullName })}><Trash2 size={15} /></IconButton></article>})}</div>
           <div className="grid grid-cols-[minmax(220px,1fr)_minmax(160px,.6fr)_auto] items-end gap-4 max-[700px]:grid-cols-1"><FormField label="Person"><SearchableSelect ariaLabel="Add department member" disabled={loading} placeholderLoading={loading} onValueChange={setPersonId} options={people.map((person) => ({ label: person.fullName, value: person.id }))} placeholder="Select registered person…" searchPlaceholder="Search people…" value={personId} /></FormField><FormField label="Department role"><SelectControl ariaLabel="Department role" loading={loading} onValueChange={setRole} options={[{ label: "Head", value: "HEAD" }, { label: "Lead", value: "LEAD" }, { label: "Member", value: "MEMBER" }]} value={role} /></FormField><ButtonControl loading={loading} disabled={!personId} onClick={() => void changeMember(`/admin/departments/${id}/members`, { body: JSON.stringify({ isPrimary: false, personId, role, sortOrder: department.people.length }), headers: { "content-type": "application/json" }, method: "POST" }, "The person was added to this department.")} type="button">Add member</ButtonControl></div>
         </section> : null}
         {id ? <section className="mx-auto grid w-full max-w-[820px] gap-[1.35rem] rounded-panel border border-danger/40 bg-danger-soft/30 p-[clamp(1.25rem,3vw,2rem)]"><header className="grid gap-[.35rem] border-b border-danger/30 pb-[1.15rem]"><p className="m-0 font-mono text-[.62rem] font-semibold uppercase tracking-[.1em] text-danger">Danger zone</p><h2 className="m-0 font-serif text-[clamp(1.4rem,2.4vw,2rem)] font-normal leading-[1.1]">Delete department</h2><p className="m-0 text-[.82rem] leading-[1.55] text-ink-muted">Deleting this department removes it permanently from the database and public directory.</p></header><ButtonControl onClick={() => setDeletePending(true)} type="button" variant="danger"><Trash2 size={14} /> Delete this department</ButtonControl></section> : null}
       </WorkspaceRecord>
       <ConfirmDialog confirmLabel="Delete department" description={`\"${department.name}\" will be permanently removed.`} onCancel={() => setDeletePending(false)} onConfirm={() => { void removeDepartment(); setDeletePending(false); }} open={deletePending} title="Delete this department?" tone="danger" />
-      <ConfirmDialog confirmLabel="Remove member" description={memberToRemove ? `${memberToRemove.name} will no longer appear in this department.` : ""} onCancel={() => setMemberToRemove(undefined)} onConfirm={() => { if (memberToRemove) void changeMember(`/admin/departments/${id}/members/${memberToRemove.id}`, { method: "DELETE" }, "The person was removed from this department."); setMemberToRemove(undefined); }} open={Boolean(memberToRemove)} title="Remove department member?" tone="danger" />
+      <ConfirmDialog confirmLabel="Remove member" description={memberToRemove ? `${memberToRemove.name} will no longer appear in this department.` : ""} onCancel={() => setMemberToRemove(undefined)} onConfirm={() => { if (memberToRemove) void changeMember(`/admin/departments/${id}/members/${memberToRemove.id}`, { method: "DELETE" }, "The person was removed from this department.", memberToRemove.id); setMemberToRemove(undefined); }} open={Boolean(memberToRemove)} title="Remove department member?" tone="danger" />
     </AdminOnly>
   );
 }

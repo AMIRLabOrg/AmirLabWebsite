@@ -7,7 +7,8 @@ import { loadingPlaceholder } from "@/lib/loading-style";
 
 export function ExpandableBiography({ text, loading = false }: { text?: string; loading?: boolean }) {
   const [expanded, setExpanded] = useState(false);
-  const value = text ?? "Biography, research focus, and institutional context are loading for this profile.";
+  const value = loading ? "Biography is loading" : text?.trim();
+  if (!value) return null;
   const long = !loading && value.length > 520;
   return (
     <div className="mt-8 max-w-[760px] border-l-2 border-brand pl-6" data-loading={loading || undefined}>

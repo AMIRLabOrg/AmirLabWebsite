@@ -7,6 +7,7 @@ import { TextareaControl } from "@/components/ui/form-controls";
 import { ButtonControl } from "@/components/ui/button-control";
 import { cn } from "@/lib/cn";
 import { FormField } from "@/components/ui/form-field";
+import { ApiRequestError } from "@/lib/client-api";
 
 export interface ReviewAction<Status extends string> {
   confirmDescription: string;
@@ -27,7 +28,9 @@ export function ReviewActions<Status extends string>({
   errorTitle = "Review was not saved",
   noteLabel = "Reviewer note",
   loading = false,
+  onError,
   onSubmit,
+  onSuccess,
   successBody,
   successTitle,
 }: {
@@ -36,7 +39,9 @@ export function ReviewActions<Status extends string>({
   errorTitle?: string;
   noteLabel?: string;
   loading?: boolean;
+  onError?: (error: ApiRequestError) => void;
   onSubmit: (decision: { note?: string; status: Status }) => Promise<void>;
+  onSuccess?: (status: Status) => void;
   successBody: (status: Status) => string;
   successTitle: string;
 }) {
@@ -44,18 +49,18 @@ export function ReviewActions<Status extends string>({
   const [active, setActive] = useState<ReviewAction<Status>>();
   const [confirming, setConfirming] = useState<ReviewAction<Status>>();
   const [note, setNote] = useState("");
-  const [error, setError] = useState<string>();
+  const [noteError, setNoteError] = useState<string>();
   const [busy, setBusy] = useState(false);
 
   function choose(action: ReviewAction<Status>) {
-    setError(undefined);
+    setNoteError(undefined);
     if (action.requiresNote && active?.status !== action.status) {
       setActive(action);
       return;
     }
     if (action.requiresNote && !note.trim()) {
       setActive(action);
-      setError("Add a reviewer note before continuing.");
+      setNoteError("Add a reviewer note before continuing.");
       return;
     }
     setConfirming(action);
@@ -63,20 +68,24 @@ export function ReviewActions<Status extends string>({
 
   async function submit(action: ReviewAction<Status>) {
     setBusy(true);
-    setError(undefined);
+    setNoteError(undefined);
     try {
       await onSubmit({
         note: action.requiresNote ? note.trim() : undefined,
         status: action.status,
       });
       showToast({ body: successBody(action.status), title: successTitle });
+      onSuccess?.(action.status);
       setActive(undefined);
       setConfirming(undefined);
       setNote("");
     } catch (caught) {
-      const message = caught instanceof Error ? caught.message : "Review failed.";
-      setError(message);
-      showToast({ body: message, title: errorTitle, tone: "error" });
+      const error =
+        caught instanceof ApiRequestError
+          ? caught
+          : new ApiRequestError("The review could not be saved. Try again.", 0);
+      onError?.(error);
+      showToast({ body: error.message, title: errorTitle, tone: "error" });
       setConfirming(undefined);
     } finally {
       setBusy(false);
@@ -91,7 +100,7 @@ export function ReviewActions<Status extends string>({
             id={`review-note-${active.status}`}
             onChange={(event) => {
               setNote(event.target.value);
-              if (event.target.value.trim()) setError(undefined);
+              if (event.target.value.trim()) setNoteError(undefined);
             }}
             placeholder={active.notePlaceholder ?? "Explain the decision clearly."}
             rows={4}
@@ -99,7 +108,11 @@ export function ReviewActions<Status extends string>({
           />
         </FormField>
       ) : null}
-      {error ? <p className="m-0 flex items-center gap-[.45rem] text-[.82rem] leading-[1.5] text-ink-muted rounded-panel bg-danger-soft p-[.8rem] text-danger" role="alert">{error}</p> : null}
+      {noteError ? (
+        <p className="m-0 rounded-panel bg-warning-soft p-[.8rem] text-[.82rem] leading-[1.5] text-warning" role="alert">
+          {noteError}
+        </p>
+      ) : null}
       <div className="flex flex-wrap justify-end gap-3">
         {actions.map((action) => {
           const awaitingNote = action.requiresNote && active?.status === action.status;

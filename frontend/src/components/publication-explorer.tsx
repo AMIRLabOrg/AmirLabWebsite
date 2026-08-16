@@ -177,15 +177,15 @@ export function PublicationExplorer({ staticLoading = false }: { staticLoading?:
           <aside className="sticky top-[82px] grid gap-4 border-t border-line-strong max-[900px]:static max-[900px]:grid-cols-[minmax(180px,.65fr)_minmax(0,1fr)] max-[900px]:pt-4 max-[640px]:grid-cols-1" data-loading={busy || undefined}>
             <div className="h-[150px] overflow-hidden border-b border-line max-[900px]:h-[130px] max-[900px]:border-b-0 max-[640px]:hidden"><MotionScene className="h-[170px] w-full opacity-70" variant="paper" /></div>
             <section>
-              <p className="mb-[.65rem] font-mono text-[.66rem] font-semibold tracking-[.105em] text-brand uppercase">Evidence model</p>
-              <h2 className="m-0 font-serif text-[1.55rem] font-medium tracking-[-.03em]">Source before presentation.</h2>
-              <p className="mt-[.55rem] mb-0 text-[.72rem] leading-[1.62] text-ink-muted">Every listed item keeps its authorship, venue, year, DOI or source URL, and review state attached to the same record.</p>
+              <p className="mb-[.65rem] font-mono text-[.66rem] font-semibold tracking-[.105em] text-brand uppercase">Publication search</p>
+              <h2 className="m-0 font-serif text-[1.55rem] font-medium tracking-[-.03em]">Find papers by topic, author, or year.</h2>
+              <p className="mt-[.55rem] mb-0 text-[.72rem] leading-[1.62] text-ink-muted">Filter the publication list by category and year. DOI and source links are shown when they are available.</p>
             </section>
             <dl className="m-0 border-t border-line-strong max-[900px]:col-span-full max-[900px]:grid max-[900px]:grid-cols-3 max-[640px]:col-auto">
               {[
                 ["Categories", busy ? "00" : result?.facets.categories.length ?? 0],
-                ["Years indexed", busy ? "00" : result?.facets.years.length ?? 0],
-                ["Current view", busy ? "00" : result?.items.length ?? 0],
+                ["Years", busy ? "00" : result?.facets.years.length ?? 0],
+                ["On this page", busy ? "00" : result?.items.length ?? 0],
               ].map(([label, value]) => (
                 <div className="grid grid-cols-[1fr_auto] items-baseline border-b border-dotted border-line py-[.55rem] max-[900px]:pr-4" key={String(label)}>
                   <dt className="font-mono text-[.55rem] text-ink-faint uppercase">{label}</dt>

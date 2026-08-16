@@ -1,5 +1,12 @@
 import { BadRequestException, ForbiddenException } from '@nestjs/common';
-import { WeeklyReportStatus } from '../../generated/prisma/client';
+import {
+  AccountStatus,
+  PlatformRole,
+  WeeklyReportStatus,
+} from '../../generated/prisma/client';
+import { PrismaService } from '../database/prisma.service';
+import { NotificationsService } from '../notifications/notifications.service';
+import { resolveService } from '../../test/resolve-service';
 import {
   WeeklyReportsService,
   currentWeekStart,
@@ -34,8 +41,8 @@ describe('WeeklyReportsService', () => {
   const member = {
     id: '11111111-1111-4111-8111-111111111111',
     email: 'member@amirl.local',
-    role: 'MEMBER' as never,
-    status: 'ACTIVE' as never,
+    role: PlatformRole.MEMBER,
+    status: AccountStatus.ACTIVE,
     person: {
       id: '22222222-2222-4222-8222-222222222222',
       fullName: 'Lab Member',
@@ -68,10 +75,10 @@ describe('WeeklyReportsService', () => {
         ],
       },
     ]);
-    const service = new WeeklyReportsService(
-      notifications as never,
-      prisma as never,
-    );
+    const service = await resolveService(WeeklyReportsService, [
+      { provide: NotificationsService, useValue: notifications },
+      { provide: PrismaService, useValue: prisma },
+    ]);
 
     const result = await service.current(member);
 
@@ -89,14 +96,14 @@ describe('WeeklyReportsService', () => {
   });
 
   it('rejects personal weekly-report access for staff accounts', async () => {
-    const service = new WeeklyReportsService(
-      notifications as never,
-      prisma as never,
-    );
+    const service = await resolveService(WeeklyReportsService, [
+      { provide: NotificationsService, useValue: notifications },
+      { provide: PrismaService, useValue: prisma },
+    ]);
     const moderator = {
       ...member,
       id: '66666666-6666-4666-8666-666666666666',
-      role: 'MODERATOR' as never,
+      role: PlatformRole.MODERATOR,
     };
 
     await expect(service.current(moderator)).rejects.toBeInstanceOf(
@@ -110,10 +117,10 @@ describe('WeeklyReportsService', () => {
 
   it('rejects projects outside the author access scope', async () => {
     prisma.project.count.mockResolvedValue(0);
-    const service = new WeeklyReportsService(
-      notifications as never,
-      prisma as never,
-    );
+    const service = await resolveService(WeeklyReportsService, [
+      { provide: NotificationsService, useValue: notifications },
+      { provide: PrismaService, useValue: prisma },
+    ]);
 
     await expect(
       service.save(
@@ -133,10 +140,10 @@ describe('WeeklyReportsService', () => {
       authorId: member.id,
       status: WeeklyReportStatus.SUBMITTED,
     });
-    const service = new WeeklyReportsService(
-      notifications as never,
-      prisma as never,
-    );
+    const service = await resolveService(WeeklyReportsService, [
+      { provide: NotificationsService, useValue: notifications },
+      { provide: PrismaService, useValue: prisma },
+    ]);
 
     await expect(
       service.review(
@@ -145,7 +152,7 @@ describe('WeeklyReportsService', () => {
         {
           ...member,
           id: '55555555-5555-4555-8555-555555555555',
-          role: 'MODERATOR' as never,
+          role: PlatformRole.MODERATOR,
         },
       ),
     ).rejects.toBeInstanceOf(BadRequestException);

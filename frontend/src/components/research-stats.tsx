@@ -5,8 +5,8 @@ import { loadingPlaceholder } from "@/lib/loading-style";
 
 export function ResearchStats({ stats, loading = false }: { stats?: PublicStats; loading?: boolean }) {
   const value = stats ?? { papers: 0, people: 0, datasets: 0, projects: 0, openPositions: 0 };
-  const required = [[value.papers, "Verified papers"], [value.people, "Lab community"]] as const;
-  const optional = [[value.datasets + value.projects, "Datasets and projects"], [value.openPositions, "Open positions"]] as const;
+  const required = [[value.papers, "Publications"], [value.people, "People"]] as const;
+  const optional = [[value.datasets + value.projects, "Datasets & projects"], [value.openPositions, "Open positions"]] as const;
   const values = loading ? [...required, ...optional] : [...required, ...optional.filter(([count]) => count > 0)];
 
   return (

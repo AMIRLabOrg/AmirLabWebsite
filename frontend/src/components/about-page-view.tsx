@@ -32,7 +32,7 @@ export function AboutPageView({ content = DEFAULT_ABOUT_CONTENT, loading = false
       </section>
 
       <section className={cn(shell, "grid grid-cols-[minmax(150px,.28fr)_minmax(0,1fr)] gap-[clamp(2rem,5vw,5rem)] py-[clamp(3rem,6vw,5rem)] max-[820px]:grid-cols-1")} data-loading={loading || undefined}>
-        <div className="grid grid-cols-[28px_1fr] gap-[.55rem] border-t border-line-strong pt-[.7rem]"><span className="font-mono text-[.56rem] text-ink-faint">01</span><p className={eyebrow}>Mission</p></div>
+        <div className="border-t border-line-strong pt-[.7rem]"><p className={eyebrow}>Mission</p></div>
         <div>
           <h2 className={cn("m-0 max-w-[850px] font-serif text-[clamp(2rem,4vw,3.7rem)] leading-none font-medium tracking-[-.04em]", loadingPlaceholder(loading, "text"))} data-placeholder={loading ? "text" : undefined}>{content.missionTitle}</h2>
           <p className={cn("mt-[1.2rem] mb-0 ml-auto max-w-[680px] text-[.84rem] leading-[1.7] text-ink-muted max-[820px]:ml-0", loadingPlaceholder(loading, "text"))} data-placeholder={loading ? "text" : undefined}>{content.missionBody}</p>
@@ -42,26 +42,25 @@ export function AboutPageView({ content = DEFAULT_ABOUT_CONTENT, loading = false
       <section className="border-y border-line-strong bg-paper text-ink" data-loading={loading || undefined}>
         <div className={cn(shell, "py-[clamp(3rem,6vw,5rem)]")}>
           <header className="mb-[1.6rem] grid grid-cols-[minmax(150px,.28fr)_minmax(0,1fr)] items-end gap-8 max-[820px]:grid-cols-1">
-            <div className="grid grid-cols-[28px_1fr] gap-[.55rem]"><span className="font-mono text-[.56rem] text-ink-faint">02</span><p className={eyebrow}>Research focus</p></div>
+            <div><p className={eyebrow}>Research focus</p></div>
             <h2 className={cn("m-0 font-serif text-[clamp(2rem,4vw,3.4rem)] leading-none font-medium tracking-[-.035em]", loadingPlaceholder(loading, "text"))} data-placeholder={loading ? "text" : undefined}>{content.focusTitle}</h2>
           </header>
-          <ol className="m-0 grid list-none grid-cols-2 border-t border-line-strong p-0 max-[640px]:grid-cols-1">
+          <ul className="m-0 grid list-none grid-cols-2 border-t border-line-strong p-0 max-[640px]:grid-cols-1">
             {content.focusAreas.map((area, index) => (
-              <li className="grid min-h-16 grid-cols-[36px_minmax(0,1fr)] items-center gap-[.8rem] border-r border-b border-line px-[.9rem] py-[.7rem] odd:pl-0 even:border-r-0 max-[640px]:border-r-0 max-[640px]:pl-0" key={`${area}-${index}`}>
-                <span className="font-mono text-[.54rem] text-brand">{String(index + 1).padStart(2, "0")}</span>
+              <li className="grid min-h-16 items-center border-r border-b border-line px-[.9rem] py-[.7rem] odd:pl-0 even:border-r-0 max-[640px]:border-r-0 max-[640px]:pl-0" key={`${area}-${index}`}>
                 <strong className={cn("font-serif text-base font-medium", loadingPlaceholder(loading, "text"))} data-placeholder={loading ? "text" : undefined}>{area}</strong>
               </li>
             ))}
-          </ol>
+          </ul>
         </div>
       </section>
 
       <section className={cn(shell, "grid grid-cols-[minmax(150px,.28fr)_minmax(0,1fr)] gap-[clamp(2rem,5vw,5rem)] py-[clamp(3rem,6vw,5rem)] max-[820px]:grid-cols-1")} data-loading={loading || undefined}>
-        <div className="grid grid-cols-[28px_1fr] gap-[.55rem] border-t border-line-strong pt-[.7rem]"><span className="font-mono text-[.56rem] text-ink-faint">03</span><p className={eyebrow}>Organization</p></div>
+        <div className="border-t border-line-strong pt-[.7rem]"><p className={eyebrow}>Organization</p></div>
         <div>
           <h2 className={cn("m-0 max-w-[850px] font-serif text-[clamp(2rem,4vw,3.7rem)] leading-none font-medium tracking-[-.04em]", loadingPlaceholder(loading, "text"))} data-placeholder={loading ? "text" : undefined}>{content.organizationTitle}</h2>
           <p className={cn("mt-[1.2rem] mb-0 ml-auto max-w-[680px] text-[.84rem] leading-[1.7] text-ink-muted max-[820px]:ml-0", loadingPlaceholder(loading, "text"))} data-placeholder={loading ? "text" : undefined}>{content.organizationBody}</p>
-          <Link className="mt-[1.3rem] ml-auto flex max-w-[680px] items-center justify-between gap-2 border-b border-line pb-[.55rem] text-[.7rem] text-brand max-[820px]:ml-0" href="/people" prefetch={false}>Meet the consortium <ArrowRight aria-hidden="true" size={16} /></Link>
+          <Link className="mt-[1.3rem] ml-auto flex max-w-[680px] items-center justify-between gap-2 border-b border-line pb-[.55rem] text-[.7rem] text-brand max-[820px]:ml-0" href="/people" prefetch={false}>Meet the research team <ArrowRight aria-hidden="true" size={16} /></Link>
         </div>
       </section>
 

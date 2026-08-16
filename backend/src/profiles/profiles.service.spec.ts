@@ -1,8 +1,41 @@
+import { Test } from '@nestjs/testing';
 import {
+  AccountStatus,
   PlatformRole,
   ProfileReviewStatus,
 } from '../../generated/prisma/client';
+import { AssetsService } from '../assets/assets.service';
+import { PrismaService } from '../database/prisma.service';
+import { NotificationsService } from '../notifications/notifications.service';
+import { ResearchProfileSyncService } from '../research/research-profile-sync.service';
+import { SettingsService } from '../settings/settings.service';
 import { ProfilesService } from './profiles.service';
+
+async function createProfilesService({
+  assets = {},
+  notifications = {},
+  prisma = {},
+  profileSync = {},
+  settings = {},
+}: {
+  assets?: object;
+  notifications?: object;
+  prisma?: object;
+  profileSync?: object;
+  settings?: object;
+} = {}) {
+  const module = await Test.createTestingModule({
+    providers: [
+      ProfilesService,
+      { provide: AssetsService, useValue: assets },
+      { provide: NotificationsService, useValue: notifications },
+      { provide: PrismaService, useValue: prisma },
+      { provide: ResearchProfileSyncService, useValue: profileSync },
+      { provide: SettingsService, useValue: settings },
+    ],
+  }).compile();
+  return module.get(ProfilesService);
+}
 
 describe('ProfilesService review', () => {
   it('preserves the published avatar when a text-only edit is approved', async () => {
@@ -57,12 +90,15 @@ describe('ProfilesService review', () => {
     const settings = {
       verification: jest.fn().mockResolvedValue({ profileEdit: 'MANUAL' }),
     };
-    const service = new ProfilesService(
-      assets as never,
-      notifications as never,
-      prisma as never,
-      settings as never,
-    );
+    const service = await createProfilesService({
+      assets,
+      notifications,
+      prisma,
+      profileSync: {
+        normalizePublishedOutputsForPeople: jest.fn().mockResolvedValue(undefined),
+      },
+      settings,
+    });
 
     await service.review(
       'request-id',
@@ -76,7 +112,7 @@ describe('ProfilesService review', () => {
         id: 'admin-id',
         person: null,
         role: PlatformRole.ADMIN,
-        status: 'ACTIVE',
+        status: AccountStatus.ACTIVE,
       },
     );
 
@@ -96,10 +132,10 @@ describe('ProfilesService review', () => {
   });
 
   it('requires a reviewer note when rejecting profile changes', async () => {
-    const service = new ProfilesService(
-      { remove: jest.fn() } as never,
-      { create: jest.fn() } as never,
-      {
+    const service = await createProfilesService({
+      assets: { remove: jest.fn() },
+      notifications: { create: jest.fn() },
+      prisma: {
         profileEditRequest: {
           findUnique: jest.fn().mockResolvedValue({
             id: 'request-id',
@@ -120,9 +156,10 @@ describe('ProfilesService review', () => {
             status: ProfileReviewStatus.NEEDS_REVIEW,
           }),
         },
-      } as never,
-      { verification: jest.fn() } as never,
-    );
+      },
+      profileSync: { normalizePublishedOutputsForPeople: jest.fn() },
+      settings: { verification: jest.fn() },
+    });
 
     await expect(
       service.review(
@@ -133,7 +170,7 @@ describe('ProfilesService review', () => {
           id: 'admin-id',
           person: null,
           role: PlatformRole.ADMIN,
-          status: 'ACTIVE',
+          status: AccountStatus.ACTIVE,
         },
       ),
     ).rejects.toThrow('A reviewer note is required');

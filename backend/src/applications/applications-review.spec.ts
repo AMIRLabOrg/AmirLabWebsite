@@ -4,6 +4,12 @@ import {
   AssetAccess,
   PlatformRole,
 } from '../../generated/prisma/client';
+import { AssetsService } from '../assets/assets.service';
+import { PrismaService } from '../database/prisma.service';
+import { JobsService } from '../jobs/jobs.service';
+import { MailService } from '../mail/mail.service';
+import { NotificationsService } from '../notifications/notifications.service';
+import { resolveService } from '../../test/resolve-service';
 import { ApplicationsService } from './applications.service';
 
 describe('ApplicationsService review notes', () => {
@@ -40,28 +46,31 @@ describe('ApplicationsService review notes', () => {
         }),
       },
     };
-    const service = new ApplicationsService(
-      {} as never,
-      {} as never,
-      {} as never,
-      {} as never,
+    const service = await resolveService(ApplicationsService, [
+      { provide: AssetsService, useValue: {} },
+      { provide: JobsService, useValue: { register: jest.fn() } },
+      { provide: MailService, useValue: { queue: jest.fn() } },
+      { provide: NotificationsService, useValue: {} },
       {
-        $transaction: jest.fn(
-          (callback: (client: typeof transaction) => Promise<void>) =>
-            callback(transaction),
-        ),
-        application: {
-          findUnique: jest.fn().mockResolvedValue({
-            email: 'jane@example.org',
-            fullName: 'Jane Researcher',
-            id: 'application-id',
-            position: { targetRank: null, title: 'Research Intern' },
-            profileImageAssetId: 'profile-image-id',
-            status: ApplicationStatus.NEEDS_REVIEW,
-          }),
+        provide: PrismaService,
+        useValue: {
+          $transaction: jest.fn(
+            (callback: (client: typeof transaction) => Promise<void>) =>
+              callback(transaction),
+          ),
+          application: {
+            findUnique: jest.fn().mockResolvedValue({
+              email: 'jane@example.org',
+              fullName: 'Jane Researcher',
+              id: 'application-id',
+              position: { targetRank: null, title: 'Research Intern' },
+              profileImageAssetId: 'profile-image-id',
+              status: ApplicationStatus.NEEDS_REVIEW,
+            }),
+          },
         },
-      } as never,
-    );
+      },
+    ]);
 
     await service.review(
       'application-id',
@@ -71,7 +80,7 @@ describe('ApplicationsService review notes', () => {
         id: 'admin-id',
         person: null,
         role: PlatformRole.ADMIN,
-        status: 'ACTIVE',
+        status: AccountStatus.ACTIVE,
       },
     );
 

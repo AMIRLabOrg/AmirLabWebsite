@@ -41,14 +41,15 @@ export function PositionList({ positions = [], loading = false }: { positions?: 
       {visible.length ? (
         <div className="grid">
           {visible.map((position, index) => (
-            <article className="grid grid-cols-[44px_minmax(0,1fr)_auto] items-start gap-[clamp(1rem,2vw,2rem)] border-b border-line py-4 first:border-t max-[640px]:grid-cols-[30px_minmax(0,1fr)]" key={position?.id ?? `loading-position-${index}`}>
-              <span className="pt-1 font-mono text-[.65rem] text-ink-muted">{String(index + 1).padStart(2, "0")}</span>
+            <article className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-[clamp(1rem,2vw,2rem)] border-b border-line py-4 first:border-t max-[640px]:grid-cols-1" key={position?.id ?? `loading-position-${index}`}>
               <div className="grid gap-[.55rem]">
                 <span className={cn("font-mono text-[.62rem] uppercase tracking-[.05em] text-brand", loadingPlaceholder(loading, "text", "short"))} data-placeholder={loading ? "text" : undefined}>
                   {position ? `${rankLabel(position.positionType ?? "OTHER")}${position.department ? ` · ${position.department.name}` : ""}` : "Research opportunity"}
                 </span>
-                <h3 className={cn("font-serif text-[clamp(1.2rem,2.2vw,1.7rem)] font-medium", loadingPlaceholder(loading, "text", "long"))} data-placeholder={loading ? "text" : undefined}>{position?.title ?? "Research position title"}</h3>
-                <p className={cn("m-0 max-w-[760px] text-[.76rem] leading-[1.55] text-ink-muted", loadingPlaceholder(loading, "text", "full"))} data-placeholder={loading ? "text" : undefined}>{position?.summary ?? "Role scope, responsibilities, and research context are loading."}</p>
+                <h3 className={cn("font-serif text-[clamp(1.2rem,2.2vw,1.7rem)] font-medium", loadingPlaceholder(loading, "text", "long"))} data-placeholder={loading ? "text" : undefined}>{position?.title ?? (loading ? "Position title is loading" : "")}</h3>
+                {loading || position?.summary ? (
+                  <p className={cn("m-0 max-w-[760px] text-[.76rem] leading-[1.55] text-ink-muted", loadingPlaceholder(loading, "text", "full"))} data-placeholder={loading ? "text" : undefined}>{loading ? "Position summary is loading" : position?.summary}</p>
+                ) : null}
                 <span className={cn("inline-flex items-center gap-[.35rem] text-[.72rem] text-ink-muted", loadingPlaceholder(loading, "text", "medium"))} data-placeholder={loading ? "text" : undefined}>
                   <CalendarDays aria-hidden="true" className={loading ? "opacity-[.12]" : undefined} data-loading-icon={loading || undefined} size={14} />
                   {position
@@ -58,7 +59,7 @@ export function PositionList({ positions = [], loading = false }: { positions?: 
                     : "Application deadline"}
                 </span>
               </div>
-              <Link aria-disabled={loading || undefined} className="inline-flex items-center gap-[.35rem] pt-[.2rem] text-[.78rem] font-bold text-brand max-[640px]:col-start-2" href="#apply" tabIndex={loading ? -1 : undefined}>
+              <Link aria-disabled={loading || undefined} className="inline-flex items-center gap-[.35rem] pt-[.2rem] text-[.78rem] font-bold text-brand max-[640px]:justify-self-start" href="#apply" tabIndex={loading ? -1 : undefined}>
                 Apply <ArrowRight aria-hidden="true" className={loading ? "opacity-[.12]" : undefined} data-loading-icon={loading || undefined} size={16} />
               </Link>
             </article>

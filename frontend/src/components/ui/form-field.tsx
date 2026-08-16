@@ -18,21 +18,50 @@ export function FormField({
 }) {
   return (
     <div className={cn("field grid content-start gap-[.45rem]", className)}>
-      {label ? htmlFor ? <label className={labelClassName} htmlFor={htmlFor}>{label}</label> : <span className={labelClassName}>{label}</span> : null}
+      {label ? (
+        htmlFor ? (
+          <label className={labelClassName} htmlFor={htmlFor}>
+            {label}
+          </label>
+        ) : (
+          <span className={labelClassName}>{label}</span>
+        )
+      ) : null}
       {children}
-      {description ? <p className="m-0 text-[.82rem] leading-[1.5] text-ink-muted">{description}</p> : null}
+      {description ? (
+        <p className="m-0 text-[.82rem] leading-[1.5] text-ink-muted">
+          {description}
+        </p>
+      ) : null}
     </div>
   );
 }
 
-export function FormMessage({ children, tone = "error" }: { children: ReactNode; tone?: "error" | "muted" }) {
+export function FormMessage({
+  children,
+  tone = "error",
+}: {
+  children: ReactNode;
+  tone?: "error" | "info" | "muted" | "success";
+}) {
   return (
     <p
       className={cn(
         "m-0 text-[.82rem] leading-[1.5]",
-        tone === "error" ? "rounded-panel bg-danger-soft p-[.8rem] text-danger" : "text-ink-muted",
+        tone === "error" && "rounded-panel bg-danger-soft p-[.8rem] text-danger",
+        tone === "success" &&
+          "rounded-panel bg-success-soft p-[.8rem] text-success",
+        tone === "info" &&
+          "rounded-panel bg-info-soft p-[.8rem] text-info",
+        tone === "muted" && "text-ink-muted",
       )}
-      role={tone === "error" ? "alert" : undefined}
+      role={
+        tone === "error"
+          ? "alert"
+          : tone === "success" || tone === "info"
+            ? "status"
+            : undefined
+      }
     >
       {children}
     </p>

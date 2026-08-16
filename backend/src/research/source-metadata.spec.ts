@@ -78,7 +78,7 @@ describe('source metadata', () => {
       personNameMatchConfidence('Firoz Mridha', 'Mohammad Firoz Mridha'),
     ).toBe(0.86);
     expect(personNameMatchConfidence('Rahman, Asha', 'Dr. Asha Rahman')).toBe(
-      0.92,
+      1,
     );
   });
 

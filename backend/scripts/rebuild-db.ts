@@ -33,7 +33,7 @@ import {
 
 const uploadRoot = resolve(process.env.UPLOAD_ROOT ?? './storage');
 const peopleStorageRoot = resolve(uploadRoot, 'peoples');
-const adminEmail = (process.env.ADMIN_EMAIL ?? 'admin@amirl.local').toLowerCase();
+const adminEmail = (process.env.ADMIN_EMAIL ?? 'admin@amirl.org').toLowerCase();
 const adminPassword = process.env.ADMIN_PASSWORD ?? 'AmirlabLocal2026!';
 const adminName = process.env.ADMIN_NAME ?? 'AMIRLab Administrator';
 
@@ -81,6 +81,7 @@ async function main() {
         fullName: adminName,
         headline: 'Research operations administrator',
         isPublished: false,
+        publicEmail: adminEmail,
         roleTitle: 'Lab Administrator',
         slug: 'amirlab-administrator',
         userId: admin.id,
@@ -177,11 +178,14 @@ async function main() {
               title: section.title,
               subsections: section.subsections.map((subsection) => ({
                 heading: subsection.heading,
-                entries: subsection.entries,
+                entries: subsection.entries.map((entry) => ({
+                  label: entry.label,
+                  content: entry.content,
+                })),
               })),
             })),
             removeAvatar: false,
-          } as Prisma.InputJsonValue,
+          },
         },
       });
 
@@ -235,13 +239,6 @@ async function main() {
               year: paper.year,
             },
           },
-          ...(paper.canonicalUrl
-            ? {
-                sourceSnapshot: {
-                  create: { url: paper.canonicalUrl },
-                },
-              }
-            : {}),
         },
       });
 
@@ -258,7 +255,7 @@ async function main() {
               create: {
                 confidence: 1,
                 evidence: {
-                  matchReason: 'Canonical AMIRLab import; requires moderator confirmation',
+                  matchReason: 'Imported identity',
                   personSourceId: sourceId,
                   researchSourceId: paper.sourceId,
                 },
@@ -306,7 +303,7 @@ async function main() {
             status: enumValue(ProjectStatus, project.status),
             summary: project.summary,
             title: project.title,
-          } as Prisma.InputJsonValue,
+          },
           projectId: item.id,
           submittedById: admin.id,
         },
@@ -380,7 +377,7 @@ async function seedSiteSettings(
   for (const [key, value] of Object.entries(values)) {
     if (value === undefined) continue;
     await prisma.siteSetting.create({
-      data: { key, value: value as Prisma.InputJsonValue },
+      data: { key, value: toInputJsonValue(value) },
     });
   }
 }
@@ -458,3 +455,32 @@ void main().catch((error) => {
   console.error(error instanceof Error ? error.stack ?? error.message : String(error));
   process.exitCode = 1;
 });
+
+function toInputJsonValue(value: unknown): Prisma.InputJsonValue {
+  if (typeof value === 'string' || typeof value === 'boolean') return value;
+  if (typeof value === 'number') {
+    if (!Number.isFinite(value)) {
+      throw new Error('Seed JSON cannot contain non-finite numbers');
+    }
+    return value;
+  }
+  if (Array.isArray(value)) {
+    return value.map((entry) =>
+      entry === null ? null : toInputJsonValue(entry),
+    );
+  }
+  if (isJsonRecord(value)) {
+    return Object.fromEntries(
+      Object.entries(value).flatMap(([key, entry]) =>
+        entry === undefined
+          ? []
+          : [[key, entry === null ? null : toInputJsonValue(entry)]],
+      ),
+    );
+  }
+  throw new Error('Seed setting is not valid JSON');
+}
+
+function isJsonRecord(value: unknown): value is Record<string, unknown> {
+  return !!value && !Array.isArray(value) && typeof value === 'object';
+}

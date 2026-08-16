@@ -1,3 +1,5 @@
+import { PrismaService } from '../database/prisma.service';
+import { resolveService } from '../../test/resolve-service';
 import { SiteContentService } from './site-content.service';
 import {
   DEFAULT_ABOUT_CONTENT,
@@ -16,9 +18,14 @@ describe('SiteContentService', () => {
       Promise.resolve(callback({ auditRecord, siteSetting })),
     ),
   };
-  const service = new SiteContentService(prisma as never);
+  let service: SiteContentService;
 
-  beforeEach(() => jest.clearAllMocks());
+  beforeEach(async () => {
+    jest.clearAllMocks();
+    service = await resolveService(SiteContentService, [
+      { provide: PrismaService, useValue: prisma },
+    ]);
+  });
 
   it('returns the designed defaults before an administrator customizes a page', async () => {
     siteSetting.findUnique.mockResolvedValue(null);

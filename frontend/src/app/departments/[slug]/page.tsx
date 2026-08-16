@@ -39,11 +39,12 @@ export default async function DepartmentPage({ params }: { params: Promise<{ slu
         <section className={`${shell} border-t border-line py-16`}>
           <div className="mb-10 flex items-end justify-between"><div><p className="mb-[.65rem] font-mono text-[.66rem] font-semibold tracking-[.105em] text-brand uppercase">Outputs</p><h2 className="mt-2 font-serif text-[clamp(2.2rem,5vw,4rem)] font-normal">Research from this department</h2></div></div>
           <div className="grid border-t border-line">
-            {department.researchItems.map(({ researchItem }) => (
-              <Link className="grid grid-cols-[100px_1fr_auto] items-center border-b border-line py-4" href={researchItem.type === "PROJECT" ? `/projects/${researchItem.slug}` : researchItem.canonicalUrl ?? "#"} key={researchItem.id}>
-                <span className="m-0 font-mono text-[.6rem] text-brand uppercase">{researchItem.type}</span><h3 className="m-0 font-serif text-[1.2rem] font-[450]">{researchItem.title}</h3><ArrowUpRight size={16} />
-              </Link>
-            ))}
+            {department.researchItems.map(({ researchItem }) => {
+              const content = <><span className="m-0 font-mono text-[.6rem] text-brand uppercase">{researchItem.type}</span><h3 className="m-0 font-serif text-[1.2rem] font-[450]">{researchItem.title}</h3>{researchItem.type === "PROJECT" || researchItem.canonicalUrl ? <ArrowUpRight size={16} /> : <span />}</>;
+              if (researchItem.type === "PROJECT") return <Link className="grid grid-cols-[100px_1fr_auto] items-center border-b border-line py-4" href={`/projects/${researchItem.slug}`} key={researchItem.id}>{content}</Link>;
+              if (researchItem.canonicalUrl) return <a className="grid grid-cols-[100px_1fr_auto] items-center border-b border-line py-4" href={researchItem.canonicalUrl} key={researchItem.id} rel="noreferrer" target="_blank">{content}</a>;
+              return <article className="grid grid-cols-[100px_1fr_auto] items-center border-b border-line py-4" key={researchItem.id}>{content}</article>;
+            })}
           </div>
         </section>
       ) : null}

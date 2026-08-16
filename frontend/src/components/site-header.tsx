@@ -53,7 +53,7 @@ export function SiteHeader() {
         </nav>
         <div className="ml-auto flex min-w-16 justify-end">
           {loading ? (
-            <Link aria-disabled="true" aria-label="Loading account" className="pointer-events-none" href="/workspace" role="status" tabIndex={-1}><ProfileAvatar loading name="Account" shape="round" /></Link>
+            <span aria-label="Loading account" className="pointer-events-none" role="status"><ProfileAvatar loading name="Account" shape="round" /></span>
           ) : user ? (
             <div className="flex items-center gap-[.45rem]">
               <Link aria-label={notificationsLoading ? "Notifications" : `${unreadCount} unread notification${unreadCount === 1 ? "" : "s"}`} className="relative flex h-[38px] w-[38px] items-center justify-center rounded-control border border-transparent text-ink-muted" href="/workspace/notifications" prefetch={false} title="Notifications">

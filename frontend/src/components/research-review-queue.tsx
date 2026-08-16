@@ -4,7 +4,10 @@ import { cn } from "@/lib/cn";
 import { loadingPlaceholder } from "@/lib/loading-style";
 import { useEffect, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
-import { apiRequest } from "@/lib/client-api";
+import { ApiRequestError, apiRequest } from "@/lib/client-api";
+import { useReviewIssues } from "@/lib/use-review-issues";
+import type { ReviewIssue } from "@/lib/review-issues";
+import { ReviewIssueStamp, SemanticStatus } from "@/components/ui/semantic-status";
 import { PaginationControls } from "@/components/pagination-controls";
 import { SelectControl } from "@/components/ui/select-control";
 import { InputControl, TextareaControl } from "@/components/ui/form-controls";
@@ -48,6 +51,7 @@ interface ReviewResearch {
     fetchedAt: string | null;
     metadata: { authors?: Array<{ name: string; orcid?: string }> } | null;
   } | null;
+  reviewIssues?: ReviewIssue[];
   contributors: Array<{
     displayName: string;
     sortOrder: number;
@@ -60,12 +64,6 @@ interface ReviewResearch {
       evidence: { matchReason?: string; orcid?: string } | null;
       person: { id: string; fullName: string; slug: string };
       requestedBy: { email: string | null } | null;
-    }>;
-    possiblePeople?: Array<{
-      id: string;
-      fullName: string;
-      slug: string;
-      reason: string;
     }>;
   }>;
   submittedBy: {
@@ -93,7 +91,9 @@ function proposalReason(
 ): string {
   if (match.evidence?.matchReason) return match.evidence.matchReason;
   if (match.evidence?.orcid) return "ORCID";
-  return match.source === "SOURCE_METADATA" ? "Canonical metadata" : "Member claim";
+  if (match.source === "SOURCE_METADATA") return "Canonical metadata";
+  if (match.source === "ADMIN_MANUAL") return "Manual link";
+  return "Member claim";
 }
 
 function loadingResearchItem(index = 0): ReviewResearch {
@@ -108,12 +108,12 @@ function loadingResearchItem(index = 0): ReviewResearch {
     paper: { citation: "Loading citation", doi: null, publicationType: null, venue: null, year: null },
     dataset: null,
     sourceSnapshot: { status: "PENDING", failureReason: null, fetchedAt: null, metadata: null },
+    reviewIssues: [],
     contributors: Array.from({ length: 4 }, (_, contributorIndex) => ({
       displayName: "Loading contributor",
       sortOrder: contributorIndex,
       person: null,
       matches: [],
-      possiblePeople: [],
     })),
     submittedBy: null,
   };
@@ -137,9 +137,10 @@ export function ResearchReviewQueue({ selectedId }: { selectedId?: string }) {
   const [people, setPeople] = useState<LinkablePerson[]>([]);
   const [manualPeople, setManualPeople] = useState<Record<string, string>>({});
   const [relationBusy, setRelationBusy] = useState<string>();
-  const [editing, setEditing] = useState(false);
+  const [editingId, setEditingId] = useState<string>();
   const [editSaving, setEditSaving] = useState(false);
   const [sourcePollTick, setSourcePollTick] = useState(0);
+  const actionIssues = useReviewIssues();
 
   function beginRefresh() {
     if (result) setLoading(true);
@@ -161,7 +162,7 @@ export function ResearchReviewQueue({ selectedId }: { selectedId?: string }) {
     const timeout = window.setTimeout(() => {
       const params = new URLSearchParams({
         page: String(page),
-        pageSize: "20",
+        pageSize: "10",
         sort,
       });
       if (search.trim()) params.set("search", search.trim());
@@ -248,9 +249,11 @@ export function ResearchReviewQueue({ selectedId }: { selectedId?: string }) {
     };
   }, [pendingSourceId, sourcePollTick]);
 
-  useEffect(() => {
-    setEditing(false);
-  }, [selected]);
+
+  function captureItemError(itemId: string, error: ApiRequestError) {
+    if (error.issues.length) actionIssues.capture(error);
+    else actionIssues.setOne(itemId, { code: "RESEARCH_REVIEW_FAILED", message: "This research review decision could not be saved.", tone: "error" });
+  }
 
   async function decide({ note, status }: { note?: string; status: ResearchDecision }) {
     if (!selected) return;
@@ -269,6 +272,7 @@ export function ResearchReviewQueue({ selectedId }: { selectedId?: string }) {
       setReload((current) => current + 1);
     }
     setSelected(undefined);
+    setEditingId(undefined);
     setFocusedItem(undefined);
     void refreshUnreadCount().catch(() => undefined);
   }
@@ -315,19 +319,20 @@ export function ResearchReviewQueue({ selectedId }: { selectedId?: string }) {
       });
       setFocusedItem(updated);
       setItems((current) => current.map((candidate) => candidate.id === updated.id ? updated : candidate));
-      setEditing(false);
+      setEditingId(undefined);
       setReload((current) => current + 1);
       showToast({ body: "The record was returned to manual review and source/contributor verification was restarted.", title: "Research record updated" });
     } catch (caught) {
-      const message = caught instanceof Error ? caught.message : "Research record could not be updated.";
-      setError(message);
-      showToast({ body: message, title: "Research record was not updated", tone: "error" });
+      const requestError = caught instanceof ApiRequestError ? caught : undefined;
+      if (requestError?.issues.length) actionIssues.capture(requestError);
+      else actionIssues.setOne(item.id, { code: "RESEARCH_EDIT_FAILED", message: "This research record could not be updated.", tone: "error" });
+      showToast({ body: requestError?.message ?? "The research record could not be updated.", title: "Research record was not updated", tone: "error" });
     } finally {
       setEditSaving(false);
     }
   }
 
-  async function reviewMatch(id: string, { note, status }: { note?: string; status: "VERIFIED" | "REJECTED" }) {
+  async function reviewMatch(itemId: string, id: string, { note, status }: { note?: string; status: "VERIFIED" | "REJECTED" }) {
     setRelationBusy(id);
     setError(undefined);
     try {
@@ -336,18 +341,44 @@ export function ResearchReviewQueue({ selectedId }: { selectedId?: string }) {
         headers: { "content-type": "application/json" },
         method: "POST",
       });
+      actionIssues.clearOne(itemId);
       setReload((current) => current + 1);
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : "Connection review failed.");
+      if (caught instanceof ApiRequestError && caught.issues.length) actionIssues.capture(caught);
+      else actionIssues.setOne(itemId, { code: "CONTRIBUTOR_REVIEW_FAILED", message: "A contributor relationship could not be reviewed.", tone: "error" });
       throw caught;
     } finally {
       setRelationBusy(undefined);
     }
   }
 
-  async function linkContributor(itemId: string, sortOrder: number) {
+  async function verifyContributor(
+    itemId: string,
+    sortOrder: number,
+    personId: string,
+    selectedMatch?: ReviewResearch["contributors"][number]["matches"][number],
+  ) {
+    if (selectedMatch?.status === "PROPOSED") {
+      try {
+        await reviewMatch(itemId, selectedMatch.id, { status: "VERIFIED" });
+        showToast({
+          body: `${selectedMatch.person.fullName} was verified for this contributor.`,
+          title: "Contributor verified",
+        });
+      } catch {
+        showToast({
+          body: "The selected contributor match could not be verified.",
+          title: "Contributor was not verified",
+          tone: "error",
+        });
+      }
+      return;
+    }
+    await linkContributor(itemId, sortOrder, personId);
+  }
+
+  async function linkContributor(itemId: string, sortOrder: number, personId: string) {
     const key = `${itemId}:${sortOrder}`;
-    const personId = manualPeople[key];
     if (!personId) return;
     setRelationBusy(key);
     setError(undefined);
@@ -357,12 +388,19 @@ export function ResearchReviewQueue({ selectedId }: { selectedId?: string }) {
         headers: { "content-type": "application/json" },
         method: "POST",
       });
+      setManualPeople((current) => {
+        const next = { ...current };
+        delete next[key];
+        return next;
+      });
+      actionIssues.clearOne(itemId);
       setReload((current) => current + 1);
       showToast({ body: "The contributor is now linked to the verified person record.", title: "Contributor linked" });
     } catch (caught) {
-      const message = caught instanceof Error ? caught.message : "Manual link failed.";
-      setError(message);
-      showToast({ body: message, title: "Contributor was not linked", tone: "error" });
+      const requestError = caught instanceof ApiRequestError ? caught : undefined;
+      if (requestError?.issues.length) actionIssues.capture(requestError);
+      else actionIssues.setOne(itemId, { code: "CONTRIBUTOR_LINK_FAILED", message: "A contributor could not be linked to this record.", tone: "error" });
+      showToast({ body: requestError?.message ?? "The contributor could not be linked.", title: "Contributor was not linked", tone: "error" });
     } finally {
       setRelationBusy(undefined);
     }
@@ -377,6 +415,21 @@ export function ResearchReviewQueue({ selectedId }: { selectedId?: string }) {
         candidate.id === itemId
           ? {
               ...candidate,
+              reviewIssues: [
+                ...(candidate.reviewIssues ?? []).filter(
+                  ({ code }) => ![
+                    "SOURCE_DISCOVERY_FAILED",
+                    "SOURCE_METADATA_UNAVAILABLE",
+                    "SOURCE_DISCOVERY_PENDING",
+                  ].includes(code ?? ""),
+                ),
+                {
+                  code: "SOURCE_DISCOVERY_PENDING",
+                  itemId,
+                  message: "Canonical source discovery is still in progress.",
+                  tone: "pending",
+                },
+              ],
               sourceSnapshot: {
                 failureReason: null,
                 fetchedAt: candidate.sourceSnapshot?.fetchedAt ?? null,
@@ -389,11 +442,13 @@ export function ResearchReviewQueue({ selectedId }: { selectedId?: string }) {
       setFocusedItem((current) =>
         current ? markPending(current) : current,
       );
+      actionIssues.clearOne(itemId);
       showToast({ body: "Canonical source evidence is being checked in the background.", title: "Source check started" });
     } catch (caught) {
-      const message = caught instanceof Error ? caught.message : "Source discovery failed.";
-      setError(message);
-      showToast({ body: message, title: "Source check was not started", tone: "error" });
+      const requestError = caught instanceof ApiRequestError ? caught : undefined;
+      if (requestError?.issues.length) actionIssues.capture(requestError);
+      else actionIssues.setOne(itemId, { code: "SOURCE_CHECK_FAILED", message: "The canonical source check could not be started.", tone: "error" });
+      showToast({ body: requestError?.message ?? "The source check could not be started.", title: "Source check was not started", tone: "error" });
     } finally {
       setRelationBusy(undefined);
     }
@@ -405,9 +460,15 @@ export function ResearchReviewQueue({ selectedId }: { selectedId?: string }) {
       : items;
   const bulk = useBulkSelection(visibleItems.map(({ id }) => id));
   const selectedResearchItems = visibleItems.filter(({ id }) => bulk.isSelected(id));
+  const issuesFor = (candidate: ReviewResearch): ReviewIssue[] => [
+    ...(candidate.reviewIssues ?? []),
+    ...actionIssues.forItem(candidate.id),
+  ];
+  const selectedAttentionCount = selectedResearchItems.filter((candidate) => issuesFor(candidate).length > 0).length;
   const commonBulkStatuses = commonResearchBulkStatuses(selectedResearchItems, relationBusy);
   const commonBulkActions = researchBulkActions(commonBulkStatuses, selectedResearchItems.length);
   const item = visibleItems.find((candidate) => candidate.id === selected) ?? (loading ? loadingResearchItem() : undefined);
+  const editing = Boolean(item && editingId === item.id);
   const sourcePending =
     item?.sourceSnapshot?.status === "PENDING" ||
     relationBusy === `discover:${item?.id}`;
@@ -425,6 +486,7 @@ export function ResearchReviewQueue({ selectedId }: { selectedId?: string }) {
     });
     bulk.clear();
     setSelected(undefined);
+    setEditingId(undefined);
     setFocusedItem(undefined);
     setLoading(true);
     if (selectedId) {
@@ -513,10 +575,13 @@ export function ResearchReviewQueue({ selectedId }: { selectedId?: string }) {
       {loading || visibleItems.length ? (
         <BulkReviewBar
           actions={commonBulkActions}
+          attentionCount={selectedAttentionCount}
           loading={loading}
           onClear={bulk.clear}
           onSelectAll={bulk.toggleAll}
+          onError={actionIssues.capture}
           onSubmit={decideBulk}
+          onSuccess={actionIssues.clear}
           selectAllState={bulk.selectAllState}
           selectableCount={visibleItems.length}
           selectedCount={bulk.selectedCount}
@@ -539,7 +604,7 @@ export function ResearchReviewQueue({ selectedId }: { selectedId?: string }) {
         />
       ) : (
       <div className="grid min-w-0 grid-cols-[minmax(300px,360px)_minmax(0,1fr)] items-start gap-5 max-[960px]:grid-cols-1">
-        <aside className={`sticky top-[88px] grid min-w-0 gap-[.35rem] rounded-panel border border-line bg-surface p-4 max-[960px]:static ${refreshing ? "opacity-70" : ""}`}>
+        <aside className={`sticky top-[88px] grid max-h-[calc(100svh-104px)] min-w-0 grid-rows-[auto_minmax(0,1fr)] gap-[.35rem] overflow-hidden rounded-panel border border-line bg-surface p-4 max-[960px]:static max-[960px]:max-h-none ${refreshing ? "opacity-70" : ""}`}>
           <div className="grid min-w-0 items-stretch gap-3 border-b border-line pb-[.85rem]">
             <div>
               <p className="m-0 mb-4 font-[var(--font-sans)] text-[.75rem] font-extrabold uppercase tracking-[.12em] text-brand">Review queue</p>
@@ -549,19 +614,20 @@ export function ResearchReviewQueue({ selectedId }: { selectedId?: string }) {
                 loading={loading}
                 onPageChange={changePage}
                 page={result?.page ?? page}
-                pageSize={result?.pageSize ?? 20}
+                pageSize={result?.pageSize ?? 10}
                 total={result?.total ?? 0}
                 totalPages={result?.totalPages ?? 1}
               />
             ) : null}
           </div>
           {renderedItems.length ? (
-            <div data-loading={loadingRows || undefined}>
+            <div className="min-h-0 overflow-y-auto pr-1 [scrollbar-color:var(--ink-faint)_transparent] [scrollbar-width:thin]" data-loading={loadingRows || undefined}>
               {renderedItems.map((candidate) => (
                 <div
-                  className={`grid min-w-0 grid-cols-[auto_minmax(0,1fr)] items-stretch overflow-hidden rounded-panel border ${candidate.id === selected ? "border-brand bg-brand-soft" : "border-line bg-surface"}`}
+                  className={`relative grid min-w-0 grid-cols-[auto_minmax(0,1fr)] items-stretch overflow-hidden rounded-panel border ${candidate.id === selected ? "border-brand bg-brand-soft" : "border-line bg-surface"}`}
                   key={candidate.id}
                 >
+                  {!loadingRows ? <ReviewIssueStamp className="right-2 top-2" issue={issuesFor(candidate)[0]} /> : null}
                   <div className="grid place-items-center px-3">
                     {loadingRows ? (
                       <span className={loadingPlaceholder(true, "control")} data-placeholder="control" />
@@ -576,13 +642,16 @@ export function ResearchReviewQueue({ selectedId }: { selectedId?: string }) {
                     )}
                   </div>
                   <button
-                    className="grid min-h-[88px] w-full min-w-0 cursor-pointer gap-[.4rem] overflow-hidden border-0 bg-transparent p-[.85rem_.9rem] text-left"
+                    className="grid min-h-[88px] w-full min-w-0 cursor-pointer gap-[.4rem] overflow-hidden border-0 bg-transparent p-[.85rem_.9rem] pr-10 text-left"
                     disabled={loadingRows}
                     onClick={() => setSelected(candidate.id)}
                     type="button"
                   >
                     <span className={loadingPlaceholder(loadingRows, "label", "short")} data-placeholder={loadingRows ? "label" : undefined} data-placeholder-width="short">{candidate.type.toLowerCase()}</span>
                     <span className={cn("line-clamp-2 [overflow-wrap:anywhere] font-sans text-[.95rem] font-normal normal-case leading-[1.35] tracking-normal text-ink", loadingPlaceholder(loadingRows, "text", "long"))} data-placeholder={loadingRows ? "text" : undefined} data-placeholder-width="long">{researchLabel(candidate)}</span>
+                    {!loadingRows && issuesFor(candidate)[0] ? (
+                      <SemanticStatus tone={issuesFor(candidate)[0].tone ?? "pending"}>{issuesFor(candidate)[0].message}</SemanticStatus>
+                    ) : null}
                   </button>
                 </div>
               ))}
@@ -591,7 +660,7 @@ export function ResearchReviewQueue({ selectedId }: { selectedId?: string }) {
             <p className="m-0 text-[.82rem] leading-[1.5] text-ink-muted">No submissions match these filters.</p>
           )}
         </aside>
-        <section className="grid min-w-0 gap-4 overflow-hidden rounded-panel border border-line bg-surface p-5" data-loading={loadingDetail || undefined}>
+        <section className="sticky top-[88px] grid max-h-[calc(100svh-104px)] min-w-0 gap-4 overflow-y-auto rounded-panel border border-line bg-surface p-5 [scrollbar-color:var(--ink-faint)_transparent] [scrollbar-width:thin] max-[960px]:static max-[960px]:max-h-none" data-loading={loadingDetail || undefined}>
           {item ? (
             <>
               <header className="grid gap-[.65rem]">
@@ -607,38 +676,53 @@ export function ResearchReviewQueue({ selectedId }: { selectedId?: string }) {
                 <h2 className={cn("m-0 font-serif text-[clamp(1.75rem,2.7vw,2.45rem)] leading-[1.08] [overflow-wrap:anywhere]", loadingPlaceholder(loadingDetail, "text", "full"))} data-placeholder={loadingDetail ? "text" : undefined} data-placeholder-width="full">{researchLabel(item)}</h2>
                 {item.summary ? <p className={cn("m-0 text-[.95rem] leading-[1.55] text-ink-muted", loadingPlaceholder(loadingDetail, "text", "full"))} data-placeholder={loadingDetail ? "text" : undefined} data-placeholder-width="full">{item.summary}</p> : null}
                 <div className="flex flex-wrap items-center gap-2">
-                  <Badge tone={item.reviewStatus === "PUBLISHED" ? "field" : item.reviewStatus === "REJECTED" ? "rust" : "gold"}>{item.reviewStatus.replaceAll("_", " ").toLowerCase()}</Badge>
-                  <ButtonControl compact disabled={loadingDetail} onClick={() => setEditing((value) => !value)} variant="secondary">{editing ? "Close editor" : "Edit record"}</ButtonControl>
+                  <Badge tone={item.reviewStatus === "PUBLISHED" ? "success" : item.reviewStatus === "REJECTED" ? "error" : "warning"}>{item.reviewStatus.replaceAll("_", " ").toLowerCase()}</Badge>
+                  {issuesFor(item).map((issue, index) => (
+                    <SemanticStatus key={`${issue.code ?? issue.message}-${index}`} tone={issue.tone ?? "pending"}>{issue.message}</SemanticStatus>
+                  ))}
+                  <ButtonControl compact disabled={loadingDetail} onClick={() => setEditingId((current) => (current === item.id ? undefined : item.id))} variant="secondary">{editing ? "Close editor" : "Edit record"}</ButtonControl>
                 </div>
               </header>
               {editing ? <ResearchRecordEditor item={item} onSubmit={saveRecordEdit} saving={editSaving} /> : null}
               <section className="grid gap-4 rounded-panel border border-line bg-surface p-[clamp(1rem,2vw,1.35rem)]" aria-label="Source discovery">
                 <div className="flex items-center justify-between gap-4 max-[640px]:flex-col max-[640px]:items-start">
                   <div className="flex items-center gap-[.7rem]">
-                    <Badge dot loading={loadingDetail} tone={sourceTone(item.sourceSnapshot?.status)}>
-                      {item.sourceSnapshot?.status.toLowerCase() ?? "not checked"}
+                    <Badge dot loading={loadingDetail} tone={!item.canonicalUrl ? "warning" : sourceTone(item.sourceSnapshot?.status)}>
+                      {!item.canonicalUrl ? "not provided" : item.sourceSnapshot?.status.toLowerCase() ?? "not checked"}
                     </Badge>
                     <h3 className="font-serif text-[clamp(1.15rem,1.7vw,1.35rem)] leading-[1.2]">Canonical source evidence</h3>
                   </div>
-                  <ButtonControl compact disabled={sourcePending} loading={loadingDetail} onClick={() => void rediscover(item.id)} variant="secondary">
-                    {sourcePending
-                      ? "Checking source…"
-                      : item.sourceSnapshot
-                        ? "Check source again"
-                        : "Check source"}
+                  <ButtonControl compact disabled={sourcePending || !item.canonicalUrl} loading={loadingDetail} onClick={() => void rediscover(item.id)} variant="secondary">
+                    {!item.canonicalUrl
+                      ? "No source URL"
+                      : sourcePending
+                        ? "Checking source…"
+                        : item.sourceSnapshot
+                          ? "Check source again"
+                          : "Check source"}
                   </ButtonControl>
                 </div>
-                {item.sourceSnapshot?.failureReason ? (
-                  <p className="m-0 text-[.82rem] leading-[1.5] text-ink-muted">{item.sourceSnapshot.failureReason}</p>
+                {!item.canonicalUrl ? (
+                  <SemanticStatus tone="warning">No canonical source URL was submitted. Contributor relationships can still be verified manually.</SemanticStatus>
+                ) : !item.sourceSnapshot ? (
+                  <SemanticStatus tone="info">The canonical source has not been checked yet.</SemanticStatus>
+                ) : item.sourceSnapshot.status === "PENDING" ? (
+                  <SemanticStatus tone="pending">Canonical source metadata is being checked.</SemanticStatus>
+                ) : item.sourceSnapshot.status === "FAILED" ? (
+                  <SemanticStatus tone="error">The canonical source check failed. Check the source URL or try again.</SemanticStatus>
+                ) : item.sourceSnapshot.status === "UNAVAILABLE" ? (
+                  <SemanticStatus tone="warning">No machine-readable source metadata was available. Manual review is still possible.</SemanticStatus>
                 ) : sourceAuthorsDiffer(item) ? (
                   <div className="grid gap-[.65rem]">
-                    <p className="m-0 text-[.75rem] font-semibold text-ink-muted">Source metadata differs</p>
-                    <div className="flex flex-wrap gap-[.45rem]">
-                      {item.sourceSnapshot?.metadata?.authors?.map(({ name }) => <span className="rounded-full bg-brand-soft px-[.65rem] py-[.4rem] text-[.75rem] text-brand" key={name}>{name}</span>)}
+                    <SemanticStatus tone="warning">Source metadata differs</SemanticStatus>
+                    <div className="flex flex-wrap gap-[.45rem] text-[.75rem] text-ink-muted">
+                      {item.sourceSnapshot.metadata?.authors?.map(({ name }, index) => (
+                        <span key={name}>{index ? ` · ${name}` : name}</span>
+                      ))}
                     </div>
                   </div>
-                ) : item.sourceSnapshot?.metadata?.authors?.length ? null : (
-                  <p className="m-0 text-[.82rem] leading-[1.5] text-ink-muted">No machine-readable contributor metadata was found. Manual linking remains available.</p>
+                ) : item.sourceSnapshot.metadata?.authors?.length ? null : (
+                  <SemanticStatus tone="warning">No machine-readable contributor metadata was found. Manual linking remains available.</SemanticStatus>
                 )}
               </section>
               <section className="grid gap-4 rounded-panel border border-line bg-surface p-[clamp(1rem,2vw,1.35rem)]" aria-label="Contributor verification">
@@ -648,115 +732,124 @@ export function ResearchReviewQueue({ selectedId }: { selectedId?: string }) {
                 </div>
                 {item.contributors.map((contributor) => {
                   const key = `${item.id}:${contributor.sortOrder}`;
-                  const proposals = contributor.matches.filter(({ status }) => status === "PROPOSED");
-                  const hints = contributor.possiblePeople ?? [];
+                  const proposals = contributor.matches
+                    .filter(({ status }) => status === "PROPOSED")
+                    .sort((left, right) => (right.confidence ?? 0) - (left.confidence ?? 0));
+                  const suggested = proposals[0];
+                  const selectedPersonId = manualPeople[key] ?? contributor.person?.id ?? suggested?.person.id ?? "";
+                  const selectedMatch = contributor.matches.find(({ person }) => person.id === selectedPersonId);
+                  const verifiedCurrent = Boolean(contributor.person && contributor.person.id === selectedPersonId);
+                  const metadata = selectedMatch
+                    ? `${selectedMatch.status === "REJECTED" ? "Previously rejected · " : ""}${proposalReason(selectedMatch)}${selectedMatch.confidence !== null ? ` · ${Math.round(selectedMatch.confidence * 100)}% match` : ""}`
+                    : selectedPersonId
+                      ? "Manual selection · no automatic confidence score"
+                      : "No reliable registered-person match was found";
+                  const selectedIsSuggestion = selectedMatch?.status === "PROPOSED";
+                  const selectedWasRejected = selectedMatch?.status === "REJECTED";
+                  const selectedManually = Boolean(selectedPersonId && !selectedMatch && !verifiedCurrent);
+                  const statusTone: BadgeTone = verifiedCurrent
+                    ? "success"
+                    : selectedIsSuggestion
+                      ? "warning"
+                      : selectedWasRejected
+                        ? "error"
+                        : selectedManually
+                          ? "info"
+                          : "neutral";
+                  const statusLabel = verifiedCurrent
+                    ? "Verified"
+                    : selectedIsSuggestion
+                      ? "Suggested"
+                      : selectedWasRejected
+                        ? "Previously rejected"
+                        : selectedManually
+                          ? "Manual"
+                          : "Unmatched";
+                  const rejectMatch = selectedIsSuggestion ? selectedMatch : undefined;
+                  const verificationBusy = relationBusy === key || relationBusy === selectedMatch?.id;
                   return (
-                    <article className="grid grid-cols-[minmax(220px,.8fr)_minmax(0,1.2fr)] gap-x-4 gap-y-[.85rem] border-t border-line pt-4 first:border-t-0 first:pt-0 max-[700px]:grid-cols-1" key={key}>
-                      <div className="flex min-w-0 items-baseline gap-[.7rem]">
-                        <span className={cn("font-mono text-[.75rem] text-ink-muted", loadingPlaceholder(loadingDetail, "label"))} data-placeholder={loadingDetail ? "label" : undefined}>{String(contributor.sortOrder + 1).padStart(2, "0")}</span>
-                        <strong className={loadingPlaceholder(loadingDetail, "text", "long")} data-placeholder={loadingDetail ? "text" : undefined} data-placeholder-width="long">{contributor.displayName}</strong>
-                      </div>
-                      {contributor.person ? (
-                        <div className="flex min-w-0 items-center justify-between gap-[.8rem] bg-transparent px-1 py-[.45rem]">
-                          <Badge dot tone="field">Verified</Badge>
-                          <strong>{contributor.person.fullName}</strong>
-                        </div>
-                      ) : (
-                        <>
-                          {proposals.map((match) => (
-                            <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center justify-between gap-[.8rem] rounded-panel border border-[color-mix(in_srgb,var(--gold)_24%,var(--line))] bg-[color-mix(in_srgb,var(--gold-soft)_52%,var(--surface))] p-[.85rem] max-[700px]:grid-cols-1" key={match.id}>
-                              <div className="grid min-w-0 grid-cols-[auto_minmax(0,1fr)] items-center gap-x-[.55rem] gap-y-1">
-                                <Badge dot tone="gold">Proposed</Badge>
-                                <strong className="text-base leading-[1.35] [overflow-wrap:anywhere]">{match.person.fullName}</strong>
-                                <small className="col-start-2 text-[.82rem] leading-[1.45] text-ink-muted">
-                                  {proposalReason(match)}
-                                  {match.confidence ? ` · ${Math.round(match.confidence * 100)}% match` : ""}
-                                </small>
-                              </div>
-                              <ReviewActions
-                                className="gap-[.55rem]"
-                                actions={[
-                                  {
-                                    confirmDescription: `Link ${match.person.fullName} to this contributor.`,
-                                    confirmLabel: "Verify link",
-                                    confirmTitle: "Verify this contributor link?",
-                                    disabled: relationBusy === match.id,
-                                    label: "Verify",
-                                    status: "VERIFIED",
-                                    tone: "primary",
-                                  },
-                                  {
-                                    confirmDescription: "Reject this proposed contributor link with a reviewer note.",
-                                    confirmLabel: "Reject link",
-                                    confirmTitle: "Reject this contributor link?",
-                                    disabled: relationBusy === match.id,
-                                    label: "Reject",
-                                    notePlaceholder: "Explain why this contributor link was rejected.",
-                                    requiresNote: true,
-                                    status: "REJECTED",
-                                    tone: "secondary",
-                                  },
-                                ]}
-                                onSubmit={(decision) => reviewMatch(match.id, decision)}
-                                successBody={(status) => `The contributor match was ${status.toLowerCase()}.`}
-                                successTitle="Contributor link reviewed"
-                              />
-                            </div>
-                          ))}
-                          {hints.length ? (
-                            <div className="flex flex-wrap gap-2">
-                              {hints.map((person) => (
-                                <button
-                                  className="inline-flex cursor-pointer items-center gap-[.45rem] rounded-full border border-line bg-canvas px-[.7rem] py-[.45rem] text-ink hover:border-brand"
-                                  key={person.id}
-                                  onClick={() =>
-                                    setManualPeople((current) => ({
-                                      ...current,
-                                      [key]: person.id,
-                                    }))
+                    <article className="grid min-w-0 gap-[.65rem] border-t border-line py-4 first:border-t-0 first:pt-0" key={key}>
+                      <div className="grid min-w-0 grid-cols-[minmax(180px,.72fr)_minmax(260px,1fr)_auto] items-center gap-[.65rem] max-[720px]:grid-cols-1">
+                        <strong className={cn("min-w-0 [overflow-wrap:anywhere]", loadingPlaceholder(loadingDetail, "text", "long"))} data-placeholder={loadingDetail ? "text" : undefined} data-placeholder-width="long">
+                          {contributor.displayName}
+                        </strong>
+                        <SearchableSelect
+                          ariaLabel={`Match ${contributor.displayName} to a registered person`}
+                          disabled={loadingDetail}
+                          placeholderLoading={loadingDetail}
+                          onValueChange={(value) =>
+                            setManualPeople((current) => ({ ...current, [key]: value }))
+                          }
+                          options={people.map((person) => {
+                            const match = contributor.matches.find(({ person: matchedPerson }) => matchedPerson.id === person.id);
+                            return {
+                              label: person.fullName,
+                              value: person.id,
+                              ...(match
+                                ? {
+                                    description: `${match.status === "REJECTED" ? "Previously rejected · " : match.status === "VERIFIED" ? "Verified · " : ""}${proposalReason(match)}${match.confidence !== null ? ` · ${Math.round(match.confidence * 100)}% match` : ""}`,
                                   }
-                                  type="button"
-                                >
-                                  <strong className="text-[.82rem]">{person.fullName}</strong>
-                                  <span className="text-[.76rem] text-ink-muted">{person.reason}</span>
-                                </button>
-                              ))}
-                            </div>
-                          ) : null}
-                          <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] gap-[.6rem] max-[640px]:grid-cols-1">
-                            <SearchableSelect
-                              aria-label={`Link ${contributor.displayName} manually`}
-                              disabled={loadingDetail}
-                              placeholderLoading={loadingDetail}
-                              onValueChange={(value) =>
-                                setManualPeople((current) => ({ ...current, [key]: value }))
-                              }
-                              options={people.map((person) => ({
-                                label: person.fullName,
-                                value: person.id,
-                              }))}
-                              placeholder="Select registered person…"
-                              searchPlaceholder="Search people…"
-                              value={manualPeople[key] ?? ""}
+                                : {}),
+                            };
+                          })}
+                          placeholder="Search registered person…"
+                          searchPlaceholder="Search people…"
+                          value={selectedPersonId}
+                        />
+                        <div className="flex items-center justify-end gap-2 max-[720px]:justify-start">
+                          <ButtonControl
+                            compact
+                            disabled={!selectedPersonId || verifiedCurrent || verificationBusy}
+                            loading={loadingDetail}
+                            onClick={() => void verifyContributor(item.id, contributor.sortOrder, selectedPersonId, selectedMatch)}
+                            variant="primary"
+                          >
+                            {verifiedCurrent ? "Verified" : "Verify"}
+                          </ButtonControl>
+                          {rejectMatch ? (
+                            <ReviewActions
+                              className="gap-0"
+                              actions={[{
+                                confirmDescription: `Reject ${rejectMatch.person.fullName} as the selected suggested match for ${contributor.displayName}.`,
+                                confirmLabel: "Reject suggestion",
+                                confirmTitle: "Reject this contributor match?",
+                                disabled: relationBusy === rejectMatch.id,
+                                label: "Reject",
+                                notePlaceholder: "Optional note about why this suggested contributor match is incorrect.",
+                                requiresNote: rejectMatch.source === "USER_CLAIM",
+                                status: "REJECTED",
+                                tone: "secondary",
+                              }]}
+                              onSubmit={(decision) => reviewMatch(item.id, rejectMatch.id, decision)}
+                              successBody={() => "The suggested contributor match was rejected."}
+                              successTitle="Contributor suggestion rejected"
                             />
-                            <ButtonControl compact disabled={!manualPeople[key] || relationBusy === key} loading={loadingDetail} onClick={() => void linkContributor(item.id, contributor.sortOrder)} variant="secondary">
-                              Verify manual link
-                            </ButtonControl>
-                          </div>
-                        </>
-                      )}
+                          ) : (
+                            <ButtonControl compact disabled variant="secondary">Reject</ButtonControl>
+                          )}
+                        </div>
+                      </div>
+                      <div className="grid min-w-0 grid-cols-[minmax(180px,.72fr)_minmax(0,1fr)] items-start gap-[.65rem] max-[720px]:grid-cols-1">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <Badge dot tone={statusTone}>{statusLabel}</Badge>
+                          <Badge tone="neutral">Author</Badge>
+                        </div>
+                        <div className="grid min-w-0 gap-1">
+                          <span className={cn("text-[.78rem] leading-[1.45]", selectedMatch?.confidence === 1 ? "text-success" : selectedMatch ? "text-warning" : "text-ink-muted")}>
+                            {metadata}
+                          </span>
+                        </div>
+                      </div>
                     </article>
                   );
                 })}
               </section>
               {(item.canonicalUrl ?? item.legacyUrl) ? (
                 <ButtonAnchor className="justify-self-start" href={loadingDetail ? "#" : (item.canonicalUrl ?? item.legacyUrl ?? undefined)} loading={loadingDetail} rel="noreferrer" target="_blank" variant="secondary">
-                  Verify source
+                  {item.canonicalUrl ? "Open canonical source" : "Open import source"}
                 </ButtonAnchor>
               ) : (
-                <p className="m-0 text-[.82rem] leading-[1.5] text-ink-muted">
-                  No external source URL was present in the archive.
-                </p>
+                <SemanticStatus tone="warning">No external source URL was provided. Manual source verification is required.</SemanticStatus>
               )}
               {error ? <p className="m-0 flex items-center gap-[.45rem] text-[.82rem] leading-[1.5] text-ink-muted rounded-panel bg-danger-soft p-[.8rem] text-danger">{error}</p> : null}
               {item.reviewStatus === "PUBLISHED" || item.reviewStatus === "REJECTED" ? (
@@ -772,7 +865,9 @@ export function ResearchReviewQueue({ selectedId }: { selectedId?: string }) {
                     status: "NEEDS_REVIEW",
                     tone: "secondary",
                   }]}
+                  onError={(requestError) => item && captureItemError(item.id, requestError)}
                   onSubmit={loadingDetail ? () => Promise.resolve() : decide}
+                  onSuccess={() => item && actionIssues.clearOne(item.id)}
                   successBody={() => "The record was reopened for manual review."}
                   successTitle="Research record reopened"
                 />
@@ -811,7 +906,9 @@ export function ResearchReviewQueue({ selectedId }: { selectedId?: string }) {
                       tone: "danger",
                     },
                   ]}
+                  onError={(requestError) => item && captureItemError(item.id, requestError)}
                   onSubmit={loadingDetail ? () => Promise.resolve() : decide}
+                  onSuccess={() => item && actionIssues.clearOne(item.id)}
                   successBody={(status) => `The research record was moved to ${status.replaceAll("_", " ").toLowerCase()}.`}
                   successTitle="Research review saved"
                 />
@@ -837,7 +934,7 @@ function ResearchRecordEditor({ item, onSubmit, saving }: { item: ReviewResearch
       </div>
       <div className="grid grid-cols-2 gap-4 max-[700px]:grid-cols-1">
         <FormField className="col-span-full" htmlFor="review-edit-title" label="Title"><InputControl defaultValue={item.title ?? ""} id="review-edit-title" name="title" required /></FormField>
-        <FormField className="col-span-full" htmlFor="review-edit-url" label="Canonical URL"><InputControl defaultValue={item.canonicalUrl ?? item.legacyUrl ?? ""} id="review-edit-url" name="canonicalUrl" required type="url" /></FormField>
+        <FormField className="col-span-full" htmlFor="review-edit-url" label="Canonical URL"><InputControl defaultValue={item.canonicalUrl ?? ""} id="review-edit-url" name="canonicalUrl" required type="url" /></FormField>
         <FormField className="col-span-full" htmlFor="review-edit-contributors" label="Contributors"><TextareaControl defaultValue={item.contributors.map(({ displayName }) => displayName).join(", ")} id="review-edit-contributors" name="contributors" required rows={2} /></FormField>
         <FormField className="col-span-full" htmlFor="review-edit-summary" label="Summary"><TextareaControl defaultValue={item.summary ?? ""} id="review-edit-summary" name="summary" rows={3} /></FormField>
         {item.type === "PAPER" ? (<>
@@ -923,9 +1020,11 @@ function researchBulkActions(statuses: ResearchDecision[], count: number): Array
 }
 
 function sourceTone(status: SourceStatus | undefined): BadgeTone {
-  if (status === "FETCHED") return "field";
-  if (status === "PENDING") return "gold";
-  return "rust";
+  if (!status) return "warning";
+  if (status === "FETCHED") return "success";
+  if (status === "PENDING") return "warning";
+  if (status === "UNAVAILABLE") return "warning";
+  return "error";
 }
 
 function sourceAuthorsDiffer(item: ReviewResearch): boolean {

@@ -5,6 +5,7 @@ import {
   AssetKind,
   ContributorMatchStatus,
   PositionStatus,
+  PlatformRole,
   ProfileReviewStatus,
   ProjectChangeStatus,
   ResearchItemType,
@@ -50,6 +51,8 @@ async function main() {
       avatars,
       siteSettings,
       departmentMemberships,
+      adminProfile,
+      seededSourceSnapshots,
     ] = await Promise.all([
       prisma.person.count({ where: { legacySourceId: { not: null } } }),
       prisma.user.count({
@@ -94,6 +97,11 @@ async function main() {
       prisma.asset.findMany({ where: { kind: AssetKind.AVATAR } }),
       prisma.siteSetting.findMany({ select: { key: true } }),
       prisma.personDepartment.count(),
+      prisma.person.findFirst({
+        where: { user: { is: { role: PlatformRole.ADMIN } } },
+        select: { publicEmail: true, user: { select: { email: true } } },
+      }),
+      prisma.researchSourceSnapshot.count(),
     ]);
 
     expect('imported people identity records', importedPeople, seed.people.length);
@@ -116,6 +124,11 @@ async function main() {
     expect('imported positions opened without manual decision', nonDraftPositions, 0);
     expect('department memberships', departmentMemberships, expectedMemberships);
     expect('avatar assets staged for profile review', avatars.length, expectedAvatars);
+    if (!adminProfile?.user?.email || adminProfile.publicEmail !== adminProfile.user.email) {
+      throw new Error('Admin public profile email must match the administrator login email');
+    }
+    console.log(`[verify] admin profile email: ${adminProfile.publicEmail}`);
+    expect('source checks staged without a discovery job', seededSourceSnapshots, 0);
 
     const badAvatarKeys = avatars.filter(
       (asset) =>

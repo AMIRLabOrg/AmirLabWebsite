@@ -14,7 +14,7 @@ export default function LoginPage() {
               <div className="border-t border-line-strong pt-[.8rem]">
                 <p className="mb-[.8rem] flex items-center gap-[.55rem] font-mono text-[.6rem] font-semibold uppercase tracking-[.09em] text-brand before:h-px before:w-[30px] before:bg-brand">Member access</p>
                 <h1 className="m-0 font-serif text-[clamp(2.8rem,6vw,4.8rem)] font-medium leading-[.9] tracking-[-.055em]">Lab workspace</h1>
-                <p className="mt-[.9rem] max-w-[460px] text-[.82rem] leading-[1.6] text-ink-muted">Sign in to the private research operating system.</p>
+                <p className="mt-[.9rem] max-w-[460px] text-[.82rem] leading-[1.6] text-ink-muted">Sign in to the private member workspace.</p>
               </div>
               <LoginForm />
             </div>

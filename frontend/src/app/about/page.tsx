@@ -4,7 +4,7 @@ import { AboutPageView } from "@/components/about-page-view";
 import { getAboutContent } from "@/lib/api";
 
 export const metadata: Metadata = {
-  description: "Learn about AmirLab, its mission, research focus, and academic consortium.",
+  description: "Learn about AmirLab, its mission, research areas, and research team.",
   title: "About",
 };
 

@@ -61,7 +61,7 @@ export class NotificationsService {
           : {}),
       ...(query.from || query.to ? { createdAt } : {}),
     };
-    const [items, total, unreadCount] = await this.prisma.$transaction([
+    const [items, total, unreadCount] = await Promise.all([
       this.prisma.notification.findMany({
         where,
         orderBy: { createdAt: 'desc' },

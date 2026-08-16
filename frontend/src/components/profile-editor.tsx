@@ -20,6 +20,7 @@ import type {
   MyProfile,
   ProfileEditPayload,
   ProfileEditRequest,
+  ProfileSectionEntry,
 } from "@/lib/types";
 
 const LINK_TYPES = [
@@ -71,13 +72,35 @@ const EMPTY_PROFILE: ProfileEditPayload = {
   removeAvatar: false,
 };
 
-const EMPTY_SUBSECTION = { heading: null, entries: [""] };
+const EMPTY_ENTRY: ProfileSectionEntry = { label: null, content: "" };
 
-function splitEntries(value: string): string[] {
-  return value
-    .split(/\n\s*\n/)
-    .map((entry) => entry.trim())
-    .filter(Boolean);
+function emptySubsection(): ProfileEditPayload["sections"][number]["subsections"][number] {
+  return { heading: null, entries: [{ ...EMPTY_ENTRY }] };
+}
+
+function normalizeEditorEntries(entries: unknown[]): ProfileSectionEntry[] {
+  const normalized = entries.map((entry) => {
+    if (typeof entry === "string") return { label: null, content: entry };
+    const candidate = entry as Partial<ProfileSectionEntry> | null;
+    return {
+      label: candidate?.label ?? null,
+      content: typeof candidate?.content === "string" ? candidate.content : "",
+    };
+  });
+  return normalized.length ? normalized : [{ ...EMPTY_ENTRY }];
+}
+
+function normalizeProfileEditPayload(payload: ProfileEditPayload): ProfileEditPayload {
+  return {
+    ...payload,
+    sections: payload.sections.map((section) => ({
+      ...section,
+      subsections: section.subsections.map((subsection) => ({
+        ...subsection,
+        entries: normalizeEditorEntries(subsection.entries as unknown[]),
+      })),
+    })),
+  };
 }
 
 interface ProfileEditorProps {
@@ -145,12 +168,12 @@ export function ProfileEditor({ userId }: ProfileEditorProps) {
                   ({ content, subsections, title, type }) => ({
                     subsections: subsections?.length
                       ? subsections.map(({ entries, heading }) => ({
-                          entries,
+                          entries: normalizeEditorEntries(entries as unknown[]),
                           heading,
                         }))
                       : content
-                        ? [{ heading: null, entries: [content] }]
-                        : [{ ...EMPTY_SUBSECTION }],
+                        ? [{ heading: null, entries: [{ label: null, content }] }]
+                        : [emptySubsection()],
                     title,
                     type,
                   }),
@@ -158,7 +181,7 @@ export function ProfileEditor({ userId }: ProfileEditorProps) {
                 removeAvatar: false,
               };
         setRecord(result);
-        setProfile(latest);
+        setProfile(normalizeProfileEditPayload(latest as ProfileEditPayload));
         setRemoveAvatar(latest.removeAvatar);
         setLoadError(undefined);
       })
@@ -596,7 +619,7 @@ export function ProfileEditor({ userId }: ProfileEditorProps) {
                   {
                     type: "OTHER",
                     title: "",
-                    subsections: [{ ...EMPTY_SUBSECTION }],
+                    subsections: [emptySubsection()],
                   },
                 ],
               })
@@ -679,7 +702,7 @@ export function ProfileEditor({ userId }: ProfileEditorProps) {
                           ...section,
                           subsections: [
                             ...section.subsections,
-                            { ...EMPTY_SUBSECTION },
+                            emptySubsection(),
                           ],
                         };
                         setProfile({ ...profile, sections });
@@ -713,9 +736,10 @@ export function ProfileEditor({ userId }: ProfileEditorProps) {
                           <Trash2 aria-hidden="true" size={16} />
                         </ButtonControl>
                       </div>
-                      <div className="grid gap-[1.2rem] grid-cols-2 max-[640px]:grid-cols-1">
-                        <FormField label="Item heading">
-                          <InputControl loading={editorLoading}
+                      <div className="grid gap-[1.2rem]">
+                        <FormField label="Subsection heading">
+                          <InputControl
+                            loading={editorLoading}
                             onChange={(event) => {
                               const sections = [...profile.sections];
                               const subsections = [...section.subsections];
@@ -730,23 +754,92 @@ export function ProfileEditor({ userId }: ProfileEditorProps) {
                             value={subsection.heading ?? ""}
                           />
                         </FormField>
-                        <FormField className="col-span-full" label="Item details">
-                          <TextareaControl loading={editorLoading}
-                            onChange={(event) => {
-                              const sections = [...profile.sections];
-                              const subsections = [...section.subsections];
-                              subsections[subsectionIndex] = {
-                                ...subsection,
-                                entries: splitEntries(event.target.value),
-                              };
-                              sections[index] = { ...section, subsections };
-                              setProfile({ ...profile, sections });
-                            }}
-                            required
-                            rows={7}
-                            value={subsection.entries.join("\n\n")}
-                          />
-                        </FormField>
+                        <div className="grid gap-3">
+                          <div className="flex items-center justify-between gap-4 border-b border-line pb-2">
+                            <span className="text-[.78rem] font-semibold">Entries</span>
+                            <ButtonControl
+                              loading={editorLoading}
+                              variant="add-empty"
+                              onClick={() => {
+                                const sections = [...profile.sections];
+                                const subsections = [...section.subsections];
+                                subsections[subsectionIndex] = {
+                                  ...subsection,
+                                  entries: [...subsection.entries, { ...EMPTY_ENTRY }],
+                                };
+                                sections[index] = { ...section, subsections };
+                                setProfile({ ...profile, sections });
+                              }}
+                              type="button"
+                            >
+                              <Plus aria-hidden="true" size={14} /> Add entry
+                            </ButtonControl>
+                          </div>
+                          {subsection.entries.map((entry, entryIndex) => (
+                            <article className="grid gap-3 border-b border-line pb-4 last:border-b-0 last:pb-0" key={entryIndex}>
+                              <div className="flex items-center justify-between gap-4">
+                                <span className="font-mono text-[.66rem] text-ink-muted">
+                                  ENTRY {String(entryIndex + 1).padStart(2, "0")}
+                                </span>
+                                <ButtonControl
+                                  aria-label={`Remove entry ${entryIndex + 1}`}
+                                  className="min-h-[36px] rounded-full p-0 text-ink-muted"
+                                  disabled={subsection.entries.length === 1}
+                                  loading={editorLoading}
+                                  onClick={() => {
+                                    const sections = [...profile.sections];
+                                    const subsections = [...section.subsections];
+                                    subsections[subsectionIndex] = {
+                                      ...subsection,
+                                      entries: subsection.entries.filter((_, itemIndex) => itemIndex !== entryIndex),
+                                    };
+                                    sections[index] = { ...section, subsections };
+                                    setProfile({ ...profile, sections });
+                                  }}
+                                  type="button"
+                                >
+                                  <Trash2 aria-hidden="true" size={15} />
+                                </ButtonControl>
+                              </div>
+                              <FormField label="Label">
+                                <InputControl
+                                  loading={editorLoading}
+                                  onChange={(event) => {
+                                    const sections = [...profile.sections];
+                                    const subsections = [...section.subsections];
+                                    const entries = [...subsection.entries];
+                                    entries[entryIndex] = {
+                                      ...entry,
+                                      label: event.target.value || null,
+                                    };
+                                    subsections[subsectionIndex] = { ...subsection, entries };
+                                    sections[index] = { ...section, subsections };
+                                    setProfile({ ...profile, sections });
+                                  }}
+                                  placeholder="Optional label"
+                                  value={entry.label ?? ""}
+                                />
+                              </FormField>
+                              <FormField label="Content">
+                                <TextareaControl
+                                  loading={editorLoading}
+                                  onChange={(event) => {
+                                    const sections = [...profile.sections];
+                                    const subsections = [...section.subsections];
+                                    const entries = [...subsection.entries];
+                                    entries[entryIndex] = { ...entry, content: event.target.value };
+                                    subsections[subsectionIndex] = { ...subsection, entries };
+                                    sections[index] = { ...section, subsections };
+                                    setProfile({ ...profile, sections });
+                                  }}
+                                  required
+                                  rows={4}
+                                  value={entry.content}
+                                />
+                              </FormField>
+                            </article>
+                          ))}
+                        </div>
                       </div>
                     </article>
                   ))}

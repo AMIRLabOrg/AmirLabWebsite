@@ -15,8 +15,12 @@ export class PushService {
     const subject = config.get('vapidSubject', { infer: true });
     const publicKey = config.get('vapidPublicKey', { infer: true });
     const privateKey = config.get('vapidPrivateKey', { infer: true });
-    this.enabled = Boolean(subject && publicKey && privateKey);
-    if (this.enabled) webPush.setVapidDetails(subject!, publicKey!, privateKey!);
+    if (subject && publicKey && privateKey) {
+      this.enabled = true;
+      webPush.setVapidDetails(subject, publicKey, privateKey);
+    } else {
+      this.enabled = false;
+    }
   }
 
   publicKey(): string | null {

@@ -3,6 +3,7 @@ import {
   PersonLinkType,
   PersonSectionType,
 } from '../../generated/prisma/enums';
+import type { Prisma } from '../../generated/prisma/client';
 import type { ProfileEditPayload } from './dto/profile.dto';
 
 const PROFILE_FIELDS = new Set([
@@ -120,6 +121,31 @@ export function parseProfilePayload(
     sections: sections(source.sections),
     removeAvatar:
       typeof raw === 'string' ? removeAvatar : source.removeAvatar === true,
+  };
+}
+
+export function profilePayloadToJson(
+  payload: ProfileEditPayload,
+): Prisma.InputJsonObject {
+  return {
+    fullName: payload.fullName,
+    headline: payload.headline,
+    biography: payload.biography,
+    publicEmail: payload.publicEmail,
+    phone: payload.phone,
+    contactAddress: payload.contactAddress,
+    ...(payload.roleTitle !== undefined ? { roleTitle: payload.roleTitle } : {}),
+    expertise: payload.expertise,
+    links: payload.links.map(({ label, type, url }) => ({ label, type, url })),
+    sections: payload.sections.map(({ subsections, title, type }) => ({
+      title,
+      type,
+      subsections: subsections.map(({ entries, heading }) => ({
+        heading,
+        entries: entries.map(({ content, label }) => ({ content, label })),
+      })),
+    })),
+    removeAvatar: payload.removeAvatar,
   };
 }
 
@@ -261,6 +287,38 @@ function sections(value: unknown): ProfileEditPayload['sections'] {
   });
 }
 
+function profileEntries(
+  value: unknown,
+  field: string,
+): ProfileEditPayload['sections'][number]['subsections'][number]['entries'] {
+  if (!Array.isArray(value) || value.length > 200) {
+    throw new BadRequestException(`${field} must contain at most 200 items`);
+  }
+  return value.map((item, index) => {
+    // Legacy profile payloads and seed records used plain strings. Accept them
+    // at the boundary and normalize them into the entry object shape.
+    if (typeof item === 'string') {
+      return {
+        label: null,
+        content: requiredText(item, `${field}[${index}].content`, 1, 20_000),
+      };
+    }
+    if (!item || Array.isArray(item) || typeof item !== 'object') {
+      throw new BadRequestException(`${field}[${index}] is invalid`);
+    }
+    const source = item as Record<string, unknown>;
+    return {
+      label: optionalText(source.label, `${field}[${index}].label`, 160),
+      content: requiredText(
+        source.content,
+        `${field}[${index}].content`,
+        1,
+        20_000,
+      ),
+    };
+  });
+}
+
 function subsections(
   value: unknown,
   field: string,
@@ -273,11 +331,9 @@ function subsections(
       throw new BadRequestException(`${field}[${index}] is invalid`);
     }
     const source = item as Record<string, unknown>;
-    const entries = stringArray(
+    const entries = profileEntries(
       source.entries,
       `${field}[${index}].entries`,
-      200,
-      20_000,
     );
     if (!entries.length) {
       throw new BadRequestException(`${field}[${index}].entries is required`);

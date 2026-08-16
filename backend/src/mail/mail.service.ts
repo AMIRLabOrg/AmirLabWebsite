@@ -5,7 +5,7 @@ import type { Prisma } from '../../generated/prisma/client';
 import type { Environment } from '../config/environment';
 import { JobsService } from '../jobs/jobs.service';
 
-interface MailMessage {
+export interface MailMessage {
   to: string;
   subject: string;
   text: string;
@@ -37,19 +37,25 @@ export class MailService implements OnModuleInit {
   }
 
   onModuleInit(): void {
-    this.jobs.register('SEND_EMAIL', async (payload) => this.deliver(payload));
-  }
-
-  async queue(message: MailMessage, uniqueKey?: string): Promise<void> {
-    await this.jobs.enqueue(
-      'SEND_EMAIL',
-      message as unknown as Prisma.InputJsonValue,
-      uniqueKey,
+    this.jobs.register('SEND_EMAIL', async (payload) =>
+      this.deliver(payload, false),
     );
   }
 
-  private async deliver(payload: Prisma.JsonValue): Promise<void> {
-    if (!payload || Array.isArray(payload) || typeof payload !== 'object') {
+  async queue(message: MailMessage, uniqueKey?: string): Promise<void> {
+    await this.jobs.enqueue('SEND_EMAIL', mailMessageToJson(message), uniqueKey);
+  }
+
+  /** Send immediately when a one-time secret must never be persisted in the job payload. */
+  async sendNow(message: MailMessage): Promise<void> {
+    await this.deliver(message, true);
+  }
+
+  private async deliver(
+    payload: unknown,
+    requireTransport: boolean,
+  ): Promise<void> {
+    if (!isRecord(payload)) {
       throw new Error('Email job payload must be an object');
     }
     const { to, subject, text, html } = payload;
@@ -63,6 +69,9 @@ export class MailService implements OnModuleInit {
     }
 
     if (!this.transporter) {
+      if (requireTransport) {
+        throw new Error('SMTP is not configured');
+      }
       this.logger.warn(
         `SMTP is not configured; skipped email to ${to}: ${subject}`,
       );
@@ -77,4 +86,17 @@ export class MailService implements OnModuleInit {
       html: html ?? undefined,
     });
   }
+}
+
+function mailMessageToJson(message: MailMessage): Prisma.InputJsonObject {
+  return {
+    to: message.to,
+    subject: message.subject,
+    text: message.text,
+    ...(message.html ? { html: message.html } : {}),
+  };
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return !!value && !Array.isArray(value) && typeof value === 'object';
 }

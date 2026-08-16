@@ -1,6 +1,12 @@
 import { BadRequestException } from '@nestjs/common';
-import { PDFParse } from 'pdf-parse';
+import { PDFParse, TextResult } from 'pdf-parse';
 import { ApplicationStatus, AssetAccess } from '../../generated/prisma/client';
+import { AssetsService } from '../assets/assets.service';
+import { PrismaService } from '../database/prisma.service';
+import { JobsService } from '../jobs/jobs.service';
+import { MailService } from '../mail/mail.service';
+import { NotificationsService } from '../notifications/notifications.service';
+import { resolveService } from '../../test/resolve-service';
 import { ApplicationsService } from './applications.service';
 
 const cv = {
@@ -11,31 +17,40 @@ const cv = {
   size: 9,
 } as Express.Multer.File;
 
-function serviceWith(assets: object, prisma: object) {
-  return new ApplicationsService(
-    assets as never,
-    { enqueue: jest.fn() } as never,
-    {} as never,
-    { notifyReviewers: jest.fn() } as never,
-    prisma as never,
-  );
+async function serviceWith(assets: object, prisma: object) {
+  return resolveService(ApplicationsService, [
+    { provide: AssetsService, useValue: assets },
+    {
+      provide: JobsService,
+      useValue: { enqueue: jest.fn(), register: jest.fn() },
+    },
+    { provide: MailService, useValue: { queue: jest.fn() } },
+    { provide: NotificationsService, useValue: { notifyReviewers: jest.fn() } },
+    { provide: PrismaService, useValue: prisma },
+  ]);
+}
+
+function pdfTextResult(text: string): TextResult {
+  const result = new TextResult(1);
+  result.pages = [{ num: 1, text }];
+  result.text = text;
+  return result;
 }
 
 describe('ApplicationsService submission parsing', () => {
   afterEach(() => jest.restoreAllMocks());
 
   it('rejects an image-only PDF before creating an application', async () => {
-    jest.spyOn(PDFParse.prototype, 'getText').mockResolvedValue({
-      text: '',
-      total: 1,
-    } as never);
+    jest
+      .spyOn(PDFParse.prototype, 'getText')
+      .mockResolvedValue(pdfTextResult(''));
     jest.spyOn(PDFParse.prototype, 'destroy').mockResolvedValue(undefined);
     const assets = {
       remove: jest.fn().mockResolvedValue(undefined),
       storeCv: jest.fn().mockResolvedValue({ id: 'cv-asset' }),
     };
     const application = { create: jest.fn() };
-    const service = serviceWith(assets, {
+    const service = await serviceWith(assets, {
       application,
       position: {
         findFirst: jest
@@ -60,13 +75,12 @@ describe('ApplicationsService submission parsing', () => {
   });
 
   it('stores an extracted image privately with a digital PDF', async () => {
-    jest.spyOn(PDFParse.prototype, 'getText').mockResolvedValue({
-      text: `Jane Researcher jane@example.org
+    jest.spyOn(PDFParse.prototype, 'getText').mockResolvedValue(
+      pdfTextResult(`Jane Researcher jane@example.org
         Education PhD in Computer Science. Experience in research.
         Skills Python and statistics. Projects include clinical NLP.
-        ${'Published reproducible research and collaborated across teams. '.repeat(8)}`,
-      total: 1,
-    } as never);
+        ${'Published reproducible research and collaborated across teams. '.repeat(8)}`),
+    );
     jest.spyOn(PDFParse.prototype, 'destroy').mockResolvedValue(undefined);
     const assets = {
       remove: jest.fn(),
@@ -84,7 +98,7 @@ describe('ApplicationsService submission parsing', () => {
         });
       }),
     };
-    const service = serviceWith(assets, {
+    const service = await serviceWith(assets, {
       application,
       position: {
         findFirst: jest.fn().mockResolvedValue({

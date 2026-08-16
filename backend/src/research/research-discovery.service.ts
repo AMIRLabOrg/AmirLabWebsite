@@ -185,6 +185,7 @@ export class ResearchDiscoveryService implements OnModuleInit {
 
     const contributors = await this.prisma.researchContributor.findMany({
       where: { researchItemId },
+      include: { matches: true },
       orderBy: { sortOrder: 'asc' },
     });
     const people = await this.prisma.person.findMany({
@@ -230,8 +231,18 @@ export class ResearchDiscoveryService implements OnModuleInit {
       if (!person) continue;
       // Discovery can establish strong evidence, but it never makes the identity decision.
       // Every registered-person match must be reviewed by a moderator.
-      const confidence = identifierMatch ? 1 : (fuzzyMatch?.confidence ?? 0.92);
-      const reason = identifierMatch ? 'ORCID' : (fuzzyMatch?.reason ?? 'Exact name');
+      const existingDecision = contributor.matches.find(
+        (match) => match.personId === person.id,
+      );
+      if (
+        existingDecision?.status === ContributorMatchStatus.VERIFIED ||
+        existingDecision?.status === ContributorMatchStatus.REJECTED
+      ) {
+        continue;
+      }
+
+      const confidence = identifierMatch ? 1 : (fuzzyMatch?.confidence ?? 1);
+      const reason = identifierMatch ? 'ORCID' : (fuzzyMatch?.reason ?? 'Exact normalized name');
       const status = ContributorMatchStatus.PROPOSED;
       await this.prisma.$transaction(async (transaction) => {
         await transaction.contributorMatch.upsert({
@@ -295,7 +306,7 @@ export class ResearchDiscoveryService implements OnModuleInit {
     const text = response.body.toString('utf8');
     if (response.contentType.includes('json')) {
       try {
-        return parseJsonMetadata(JSON.parse(text) as unknown);
+        return parseJsonMetadata(JSON.parse(text));
       } catch {
         return { authors: [] };
       }
@@ -319,17 +330,13 @@ export class ResearchDiscoveryService implements OnModuleInit {
       return;
     }
 
-    const contributorsByName = new Map<string, ExistingContributor>();
-    for (const contributor of contributors) {
-      contributorsByName.set(
-        personNameTokenKey(contributor.displayName),
-        contributor,
-      );
-    }
-
     const used = new Set<ExistingContributor>();
     const nextContributors = authors.map((author, sortOrder) => {
-      const existing = contributorsByName.get(personNameTokenKey(author.name));
+      const existing = bestExistingContributorMatch(
+        author.name,
+        contributors,
+        used,
+      );
       if (existing) used.add(existing);
       return {
         displayName: author.name,
@@ -352,22 +359,20 @@ export class ResearchDiscoveryService implements OnModuleInit {
 
     const preservedMatches = nextContributors.flatMap(
       ({ existing, sortOrder }) =>
-        (existing?.matches ?? [])
-          .filter(
-            (match) => match.source !== ContributorMatchSource.SOURCE_METADATA,
-          )
-          .map((match) => ({
-            confidence: match.confidence,
-            contributorSortOrder: sortOrder,
-            evidence: match.evidence as Prisma.InputJsonValue,
-            personId: match.personId,
-            researchItemId,
-            requestedById: match.requestedById,
-            reviewedAt: match.reviewedAt,
-            reviewedById: match.reviewedById,
-            source: match.source,
-            status: match.status,
-          })),
+        (existing?.matches ?? []).map((match) => ({
+          id: match.id,
+          confidence: match.confidence,
+          createdAt: match.createdAt,
+          contributorSortOrder: sortOrder,
+          evidence: requiredEvidenceObject(match.evidence),
+          personId: match.personId,
+          researchItemId,
+          requestedById: match.requestedById,
+          reviewedAt: match.reviewedAt,
+          reviewedById: match.reviewedById,
+          source: match.source,
+          status: match.status,
+        })),
     );
 
     await this.prisma.$transaction(async (transaction) => {
@@ -398,7 +403,9 @@ export class ResearchDiscoveryService implements OnModuleInit {
 interface ExistingContributor {
   displayName: string;
   matches: Array<{
+    id: string;
     confidence: number | null;
+    createdAt: Date;
     evidence: Prisma.JsonValue;
     personId: string;
     requestedById: string | null;
@@ -408,6 +415,34 @@ interface ExistingContributor {
     status: ContributorMatchStatus;
   }>;
   personId: string | null;
+}
+
+function bestExistingContributorMatch(
+  authorName: string,
+  contributors: ExistingContributor[],
+  used: Set<ExistingContributor>,
+): ExistingContributor | undefined {
+  const authorKey = personNameTokenKey(authorName);
+  const exact = contributors.find(
+    (contributor) =>
+      !used.has(contributor) &&
+      personNameTokenKey(contributor.displayName) === authorKey,
+  );
+  if (exact) return exact;
+
+  const matches = contributors
+    .filter((contributor) => !used.has(contributor))
+    .flatMap((contributor) => {
+      const evidence = personNameMatchEvidence(
+        authorName,
+        contributor.displayName,
+      );
+      return evidence ? [{ confidence: evidence.confidence, contributor }] : [];
+    })
+    .sort((left, right) => right.confidence - left.confidence);
+  const best = matches[0];
+  if (!best || matches[1]?.confidence === best.confidence) return undefined;
+  return best.contributor;
 }
 
 function bestPersonNameMatch<T extends { fullName: string }>(
@@ -457,4 +492,11 @@ function serializableMetadata(
     ...(metadata.doi ? { doi: metadata.doi } : {}),
     ...(metadata.title ? { title: metadata.title } : {}),
   };
+}
+
+function requiredEvidenceObject(value: Prisma.JsonValue): Prisma.InputJsonObject {
+  if (!value || Array.isArray(value) || typeof value !== 'object') {
+    throw new Error('Contributor match evidence must be a JSON object');
+  }
+  return value;
 }

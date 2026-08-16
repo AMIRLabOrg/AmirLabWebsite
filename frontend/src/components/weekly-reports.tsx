@@ -148,7 +148,7 @@ export function WeeklyReports() {
               }}
             >
               {currentReport?.reviewNote ? (
-                <div className="rounded-small border-l-[3px] border-review bg-review-soft p-4 text-ink">
+                <div className="rounded-small border-l-[3px] border-warning bg-warning-soft p-4 text-ink">
                   <strong className="text-[.76rem] tracking-[.04em]">Supervisor note</strong>
                   <p className="mt-2 whitespace-pre-wrap leading-[1.55] text-ink-muted">{currentReport.reviewNote}</p>
                 </div>
@@ -300,8 +300,8 @@ export function WeeklyReports() {
 }
 
 export function statusTone(status: WeeklyReportStatus): BadgeTone {
-  if (status === "REVIEWED") return "field";
-  if (status === "CHANGES_REQUESTED") return "rust";
-  if (status === "SUBMITTED") return "gold";
+  if (status === "REVIEWED") return "success";
+  if (status === "CHANGES_REQUESTED") return "error";
+  if (status === "SUBMITTED") return "warning";
   return "neutral";
 }

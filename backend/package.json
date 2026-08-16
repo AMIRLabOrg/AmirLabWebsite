@@ -7,13 +7,13 @@
   "license": "UNLICENSED",
   "scripts": {
     "postinstall": "prisma generate",
-    "build": "nest build",
-    "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
+    "build": "prisma generate && nest build",
+    "format": "prettier --write \"src/**/*.ts\" \"scripts/**/*.{ts,mjs}\" \"test/**/*.ts\"",
     "start": "nest start",
     "start:dev": "nest start --watch",
     "start:debug": "nest start --debug --watch",
     "start:prod": "node dist/src/main",
-    "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
+    "lint": "eslint \"{src,test,scripts}/**/*.ts\"",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",
@@ -26,12 +26,19 @@
     "db:cluster:reset": "node scripts/local-postgres.mjs reset",
     "db:reset": "pnpm run db:rebuild",
     "db:generate": "prisma generate",
-    "db:push": "prisma db push",
+    "db:push": "node scripts/migrate-profile-entry-labels.mjs && prisma db push && prisma generate",
     "seed:validate": "tsx scripts/validate-seed-data.ts",
     "db:seed": "tsx scripts/rebuild-db.ts",
     "db:verify": "tsx scripts/verify-db.ts",
     "db:rebuild": "node scripts/local-postgres.mjs start && prisma generate && prisma db push --force-reset && tsx scripts/rebuild-db.ts && tsx scripts/verify-db.ts",
-    "research:sources:backfill": "tsx scripts/backfill-research-sources.ts"
+    "research:sources:backfill": "tsx scripts/backfill-research-sources.ts",
+    "db:migrate:profile-entry-labels": "node scripts/migrate-profile-entry-labels.mjs",
+    "verify:api-boundary": "node scripts/verify-api-boundary.mjs",
+    "verify:recovery-research": "node scripts/verify-recovery-and-research-sync.mjs",
+    "lint:fix": "eslint \"{src,test,scripts}/**/*.ts\" --fix",
+    "typecheck": "prisma generate && tsc --noEmit -p tsconfig.json",
+    "verify:production": "pnpm run typecheck && pnpm run lint && pnpm run verify:safety && pnpm run test -- --runInBand && pnpm run verify:api-boundary && pnpm run verify:recovery-research && pnpm run build",
+    "verify:safety": "tsx scripts/verify-production-safety.ts"
   },
   "dependencies": {
     "@nestjs/common": "^11.0.1",
@@ -110,5 +117,9 @@
     ],
     "coverageDirectory": "../coverage",
     "testEnvironment": "node"
+  },
+  "packageManager": "pnpm@10.34.5",
+  "engines": {
+    "node": ">=22.0.0"
   }
 }

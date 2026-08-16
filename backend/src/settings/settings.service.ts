@@ -67,49 +67,51 @@ export class SettingsService {
     actorId: string,
   ): Promise<VerificationPolicy> {
     const parsed = parseVerificationPolicy(value);
-    await this.prisma.$transaction([
-      this.prisma.siteSetting.upsert({
+    const json = verificationPolicyToJson(parsed);
+    await this.prisma.$transaction(async (transaction) => {
+      await transaction.siteSetting.upsert({
         where: { key: VERIFICATION_KEY },
         create: {
           key: VERIFICATION_KEY,
-          value: parsed as unknown as Prisma.InputJsonValue,
+          value: json,
         },
-        update: { value: parsed as unknown as Prisma.InputJsonValue },
-      }),
-      this.prisma.auditRecord.create({
+        update: { value: json },
+      });
+      await transaction.auditRecord.create({
         data: {
           action: 'settings.verification-updated',
           actorId,
           entityId: VERIFICATION_KEY,
           entityType: 'SiteSetting',
-          details: parsed as unknown as Prisma.InputJsonValue,
+          details: json,
         },
-      }),
-    ]);
+      });
+    });
     return parsed;
   }
 
   async updateRanking(value: RankPolicy, actorId: string): Promise<RankPolicy> {
     const parsed = parseRankPolicy(value);
-    await this.prisma.$transaction([
-      this.prisma.siteSetting.upsert({
+    const json = rankPolicyToJson(parsed);
+    await this.prisma.$transaction(async (transaction) => {
+      await transaction.siteSetting.upsert({
         where: { key: RANK_KEY },
         create: {
           key: RANK_KEY,
-          value: parsed as unknown as Prisma.InputJsonValue,
+          value: json,
         },
-        update: { value: parsed as unknown as Prisma.InputJsonValue },
-      }),
-      this.prisma.auditRecord.create({
+        update: { value: json },
+      });
+      await transaction.auditRecord.create({
         data: {
           action: 'settings.rank-policy-updated',
           actorId,
           entityId: RANK_KEY,
           entityType: 'SiteSetting',
-          details: parsed as unknown as Prisma.InputJsonValue,
+          details: json,
         },
-      }),
-    ]);
+      });
+    });
     await this.jobs.enqueueWhileActive(
       RECALCULATE_ALL_RANKS_JOB,
       {},
@@ -134,16 +136,16 @@ export class SettingsService {
     actorId: string,
   ): Promise<{ url: string }> {
     const url = value.trim() || DEFAULT_REDIRECT_URL;
-    await this.prisma.$transaction([
-      this.prisma.siteSetting.upsert({
+    await this.prisma.$transaction(async (transaction) => {
+      await transaction.siteSetting.upsert({
         where: { key: REDIRECT_URL_KEY },
         create: {
           key: REDIRECT_URL_KEY,
           value: url,
         },
         update: { value: url },
-      }),
-      this.prisma.auditRecord.create({
+      });
+      await transaction.auditRecord.create({
         data: {
           action: 'settings.redirect-url-updated',
           actorId,
@@ -151,8 +153,8 @@ export class SettingsService {
           entityType: 'SiteSetting',
           details: { url },
         },
-      }),
-    ]);
+      });
+    });
     return { url };
   }
 }
@@ -194,18 +196,57 @@ export function effectiveRank(
 }
 
 function parseVerificationPolicy(value: unknown): VerificationPolicy {
-  if (!isRecord(value)) return DEFAULT_VERIFICATION_POLICY;
-  return Object.fromEntries(
-    Object.entries(DEFAULT_VERIFICATION_POLICY).map(([key, fallback]) => {
-      const candidate = value[key];
-      return [
-        key,
-        candidate === 'AUTOMATIC' || candidate === 'MANUAL'
-          ? candidate
-          : fallback,
-      ];
-    }),
-  ) as unknown as VerificationPolicy;
+  const candidate = isRecord(value) ? value : {};
+  return {
+    profileEdit: verificationMode(
+      candidate.profileEdit,
+      DEFAULT_VERIFICATION_POLICY.profileEdit,
+    ),
+    newPaper: verificationMode(
+      candidate.newPaper,
+      DEFAULT_VERIFICATION_POLICY.newPaper,
+    ),
+    newDataset: verificationMode(
+      candidate.newDataset,
+      DEFAULT_VERIFICATION_POLICY.newDataset,
+    ),
+    newProject: verificationMode(
+      candidate.newProject,
+      DEFAULT_VERIFICATION_POLICY.newProject,
+    ),
+    updateProject: verificationMode(
+      candidate.updateProject,
+      DEFAULT_VERIFICATION_POLICY.updateProject,
+    ),
+  };
+}
+
+function verificationMode(
+  value: unknown,
+  fallback: VerificationMode,
+): VerificationMode {
+  return value === 'AUTOMATIC' || value === 'MANUAL' ? value : fallback;
+}
+
+function verificationPolicyToJson(
+  policy: VerificationPolicy,
+): Prisma.InputJsonObject {
+  return {
+    profileEdit: policy.profileEdit,
+    newPaper: policy.newPaper,
+    newDataset: policy.newDataset,
+    newProject: policy.newProject,
+    updateProject: policy.updateProject,
+  };
+}
+
+function rankPolicyToJson(policy: RankPolicy): Prisma.InputJsonObject {
+  return {
+    seniorPaperMinimum: policy.seniorPaperMinimum,
+    seniorCitationMinimum: policy.seniorCitationMinimum,
+    leadPaperMinimum: policy.leadPaperMinimum,
+    leadCitationMinimum: policy.leadCitationMinimum,
+  };
 }
 
 function parseRankPolicy(value: unknown): RankPolicy {

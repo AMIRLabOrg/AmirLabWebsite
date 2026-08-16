@@ -10,10 +10,12 @@ import { ReviewActions } from "./review-actions";
 import { StatePanel } from "./state-panel";
 import { useAuth } from "./auth-provider";
 import { API_URL } from "@/lib/api";
-import { apiRequest } from "@/lib/client-api";
+import { ApiRequestError, apiRequest } from "@/lib/client-api";
 import { Badge, type BadgeTone } from "./ui/badge";
 import { useNotifications } from "./notification-provider";
 import { ButtonAnchor } from "@/components/ui/button-control";
+import { useReviewIssues } from "@/lib/use-review-issues";
+import { ReviewIssueStamp, SemanticStatus } from "@/components/ui/semantic-status";
 
 interface ReviewApplication {
   id: string; fullName: string; email: string; phone: string | null;
@@ -48,6 +50,7 @@ export function ApplicationReviewDetail({ id }: { id: string }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string>();
   const [reload, setReload] = useState(0);
+  const reviewIssues = useReviewIssues();
 
   useEffect(() => {
     let active = true;
@@ -77,7 +80,7 @@ export function ApplicationReviewDetail({ id }: { id: string }) {
 
   return <div className="grid min-w-0 gap-5" data-loading={loading || undefined}>
     <Link className="inline-flex w-fit items-center gap-[.4rem] text-[.78rem] text-ink-muted hover:text-brand" href="/workspace/applications"><ArrowLeft aria-hidden="true" size={15} /> Applications</Link>
-    <header className="flex items-start justify-between gap-8 rounded-panel border border-line bg-surface p-6 max-[640px]:flex-col"><div><p className="m-0 mb-4 font-[var(--font-sans)] text-[.75rem] font-extrabold uppercase tracking-[.12em] text-brand">Applicant review</p><h2 className={cn("font-serif text-[clamp(1.7rem,2.8vw,2.4rem)] leading-[1.1]", loadingPlaceholder(loading, "text", "long"))} data-placeholder="text" data-placeholder-width="long">{application?.fullName ?? "Loading applicant"}</h2><p className={cn("mt-[.7rem] text-[.8rem] text-ink-muted", loadingPlaceholder(loading, "text", "long"))} data-placeholder="text" data-placeholder-width="long">{application ? `${application.position.title} · submitted ${new Date(application.createdAt).toLocaleDateString()}` : "Loading position and submission date"}</p></div><Badge dot live={!loading && status === "NEEDS_REVIEW"} loading={loading} tone={application ? applicationDetailTone(status) : "neutral"}>{status.replaceAll("_", " ").toLowerCase()}</Badge></header>
+    <header className="relative flex items-start justify-between gap-8 rounded-panel border border-line bg-surface p-6 max-[640px]:flex-col">{application ? <ReviewIssueStamp issue={reviewIssues.forItem(application.id)[0]} /> : null}<div><p className="m-0 mb-4 font-[var(--font-sans)] text-[.75rem] font-extrabold uppercase tracking-[.12em] text-brand">Applicant review</p><h2 className={cn("font-serif text-[clamp(1.7rem,2.8vw,2.4rem)] leading-[1.1]", loadingPlaceholder(loading, "text", "long"))} data-placeholder="text" data-placeholder-width="long">{application?.fullName ?? "Loading applicant"}</h2><p className={cn("mt-[.7rem] text-[.8rem] text-ink-muted", loadingPlaceholder(loading, "text", "long"))} data-placeholder="text" data-placeholder-width="long">{application ? `${application.position.title} · submitted ${new Date(application.createdAt).toLocaleDateString()}` : "Loading position and submission date"}</p></div><Badge dot live={!loading && status === "NEEDS_REVIEW"} loading={loading} tone={application ? applicationDetailTone(status) : "neutral"}>{status.replaceAll("_", " ").toLowerCase()}</Badge></header>
     <div className="grid grid-cols-[minmax(0,1.35fr)_minmax(300px,.65fr)] items-start gap-4 max-[820px]:grid-cols-1">
       <section className="min-w-0 rounded-panel border border-line bg-surface p-6">
         <h2 className="mb-5 font-serif text-[1.3rem]">Parsed information</h2>
@@ -88,13 +91,12 @@ export function ApplicationReviewDetail({ id }: { id: string }) {
       <aside className="min-w-0 rounded-panel border border-line bg-surface p-6">
         <h2 className="mb-5 font-serif text-[1.3rem]">Original file</h2>
         <div className="flex flex-col items-center rounded-panel border border-line bg-canvas px-4 py-8 text-center"><FileText aria-hidden="true" className="mb-[.6rem] text-brand" size={34} /><strong>Applicant CV</strong><span className="mb-4 mt-[.3rem] text-[.7rem] text-ink-muted">PDF · private reviewer access</span><ButtonAnchor href={application ? `${API_URL}/applications/${application.id}/cv` : "#"} loading={loading || !application} rel="noreferrer" target={loading ? undefined : "_blank"} variant="secondary">Open original</ButtonAnchor></div>
-        <div className="mt-4 rounded-panel border-l-[3px] border-gold bg-gold-soft p-4"><span className="font-mono text-[.64rem] uppercase tracking-[.06em] text-review">ATS assessment</span><p className={cn("mt-[.45rem] text-[.8rem] leading-[1.55] text-ink-muted", loadingPlaceholder(loading, "text", "full"))} data-placeholder="text" data-placeholder-width="full">{application?.parseFeedback ?? (loading ? "Loading ATS assessment" : "No ATS feedback recorded.")}</p></div>
+        <div className="mt-4 grid gap-2 rounded-panel border border-line bg-canvas p-4"><span className="font-mono text-[.64rem] uppercase tracking-[.06em] text-ink-muted">ATS assessment</span>{loading ? <p className={cn("m-0 text-[.8rem] leading-[1.55] text-ink-muted", loadingPlaceholder(true, "text", "full"))} data-placeholder="text" data-placeholder-width="full">Loading ATS assessment</p> : application?.status === "PARSE_FAILED" ? <SemanticStatus tone="error">The uploaded PDF could not be processed automatically.</SemanticStatus> : application?.status === "PARSING" ? <SemanticStatus tone="pending">Automatic CV processing is still running.</SemanticStatus> : <><SemanticStatus tone="success">Automatic CV processing completed.</SemanticStatus>{application?.parseFeedback ? <p className="m-0 text-[.8rem] leading-[1.55] text-ink-muted">{application.parseFeedback}</p> : null}</>}</div>
         <details className="mt-4 border-t border-line pt-4"><summary className="cursor-pointer text-[.8rem] font-bold">Backend extraction</summary><pre className={cn("max-h-[300px] overflow-auto whitespace-pre-wrap rounded-panel bg-canvas p-[.8rem] font-mono text-[.65rem] leading-[1.5]", loadingPlaceholder(loading, "text"))} data-placeholder={loading ? "text" : undefined}>{application?.extractedText ?? (loading ? "Loading extracted text" : "No extracted text.")}</pre></details>
       </aside>
     </div>
     {loading || canDecide ? (
       <div className="sticky bottom-3 z-[5] grid gap-4 rounded-panel border border-line bg-surface p-5">
-        {!loading && error ? <p className="m-0 flex items-center gap-[.45rem] text-[.82rem] leading-[1.5] text-ink-muted rounded-panel bg-danger-soft p-[.8rem] text-danger">{error}</p> : null}
         <ReviewActions
           loading={loading}
           actions={[
@@ -117,7 +119,13 @@ export function ApplicationReviewDetail({ id }: { id: string }) {
               tone: "primary",
             },
           ]}
+          onError={(requestError) => {
+            if (!application) return;
+            if (requestError instanceof ApiRequestError && requestError.issues.length) reviewIssues.capture(requestError);
+            else reviewIssues.setOne(application.id, { code: "APPLICATION_REVIEW_FAILED", message: "This application decision could not be saved.", tone: "error" });
+          }}
           onSubmit={application ? decide : () => Promise.resolve()}
+          onSuccess={() => application && reviewIssues.clearOne(application.id)}
           successBody={(decisionStatus) => application ? `${application.fullName}'s application was ${decisionStatus.toLowerCase()}.` : "Application decision saved."}
           successTitle="Application decision saved"
         />
@@ -125,14 +133,14 @@ export function ApplicationReviewDetail({ id }: { id: string }) {
     ) : user?.role !== "ADMIN" && application?.status === "NEEDS_REVIEW" ? (
       <StatePanel body="Moderators may inspect applications, but only an administrator can make the final decision." title="Administrator decision required" variant="permission" />
     ) : application?.decisionReason ? (
-      <div className="mt-4 rounded-panel border-l-[3px] border-gold bg-gold-soft p-4"><span className="font-mono text-[.64rem] uppercase tracking-[.06em] text-review">Decision note</span><p className="mt-[.45rem] text-[.8rem] leading-[1.55] text-ink-muted">{application.decisionReason}</p></div>
+      <div className="mt-4 rounded-panel border-l-[3px] border-info bg-info-soft p-4"><span className="font-mono text-[.64rem] uppercase tracking-[.06em] text-info">Decision note</span><p className="mt-[.45rem] text-[.8rem] leading-[1.55] text-ink-muted">{application.decisionReason}</p></div>
     ) : null}
   </div>;
 }
 
 function applicationDetailTone(status: string): BadgeTone {
-  if (status === "NEEDS_REVIEW") return "gold";
-  if (status === "ACCEPTED") return "field";
-  if (status === "PARSING") return "neutral";
-  return "rust";
+  if (status === "NEEDS_REVIEW") return "warning";
+  if (status === "ACCEPTED") return "success";
+  if (status === "PARSING") return "warning";
+  return "error";
 }

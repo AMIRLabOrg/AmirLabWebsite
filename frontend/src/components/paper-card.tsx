@@ -21,8 +21,8 @@ export function PaperCard({ compact = false, item, loading = false }: { compact?
     <article aria-busy={loading || undefined} className={cn("border-b border-line bg-transparent", compact && "")} data-loading={loading || undefined}>
       <button
         aria-expanded={!loading && open}
-        className="block w-full cursor-pointer border-0 bg-transparent px-1 py-4 text-left text-inherit hover:bg-[color-mix(in_srgb,var(--brand-faint)_60%,transparent)] disabled:cursor-progress"
-        disabled={loading}
+        className="block w-full cursor-pointer border-0 bg-transparent px-1 py-4 text-left text-inherit hover:bg-[color-mix(in_srgb,var(--brand-faint)_60%,transparent)] disabled:cursor-default disabled:hover:bg-transparent"
+        disabled={loading || !details}
         onClick={() => setOpen((current) => !current)}
         type="button"
       >
@@ -34,7 +34,7 @@ export function PaperCard({ compact = false, item, loading = false }: { compact?
           </span>
           <strong className={cn("font-serif text-[1.06rem] leading-[1.34] font-medium transition-colors duration-[140ms] group-hover:text-brand", loading && loadingPlaceholder(true, "text", "long"))} data-placeholder={loading ? "text" : undefined} data-placeholder-width="long">{title}</strong>
           {loading || authors ? <span className={cn("text-[.72rem] leading-[1.5] text-ink-muted", loading && loadingPlaceholder(true, "text", "medium"))} data-placeholder={loading ? "text" : undefined} data-placeholder-width="medium">{authors}</span> : null}
-          <em className={cn("text-[.63rem] font-normal text-ink-faint not-italic", loading && loadingPlaceholder(true, "text", "short"))} data-placeholder={loading ? "text" : undefined} data-placeholder-width="short">{loading ? "Publication record" : details ? (open ? "Click to collapse abstract" : "Click to expand abstract") : "Publication record"}</em>
+          {loading || details ? <em className={cn("text-[.63rem] font-normal text-ink-faint not-italic", loading && loadingPlaceholder(true, "text", "short"))} data-placeholder={loading ? "text" : undefined} data-placeholder-width="short">{loading ? "Loading details" : open ? "Click to collapse details" : "Click to expand details"}</em> : null}
         </span>
       </button>
       {!loading && open && details ? <div className="px-1 pb-[.8rem]"><p className="m-0 max-w-[850px] text-[.76rem] leading-[1.65] text-ink-muted">{details}</p></div> : null}

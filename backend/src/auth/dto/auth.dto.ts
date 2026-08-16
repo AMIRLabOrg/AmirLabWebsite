@@ -21,3 +21,19 @@ export class SetupAccountDto {
   @MaxLength(PASSWORD_MAX_LENGTH)
   password!: string;
 }
+
+export class RequestPasswordResetDto {
+  @IsEmail()
+  email!: string;
+}
+
+export class ResetPasswordDto {
+  @IsString()
+  @MinLength(32)
+  token!: string;
+
+  @IsString()
+  @MinLength(PASSWORD_MIN_LENGTH)
+  @MaxLength(PASSWORD_MAX_LENGTH)
+  password!: string;
+}

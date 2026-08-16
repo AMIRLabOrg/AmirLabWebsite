@@ -1,15 +1,27 @@
+import { Test } from '@nestjs/testing';
 import { PositionStatus } from '../../generated/prisma/client';
+import { PrismaService } from '../database/prisma.service';
+import { NotificationsService } from '../notifications/notifications.service';
+import { RankingsService } from '../rankings/rankings.service';
+import { SettingsService } from '../settings/settings.service';
+import { ResearchDiscoveryService } from './research-discovery.service';
+import { ResearchProfileSyncService } from './research-profile-sync.service';
 import { ResearchService } from './research.service';
 
 describe('job post lifecycle', () => {
-  function service(prisma: object) {
-    return new ResearchService(
-      {} as never,
-      {} as never,
-      prisma as never,
-      {} as never,
-      {} as never,
-    );
+  async function service(prisma: object) {
+    const module = await Test.createTestingModule({
+      providers: [
+        ResearchService,
+        { provide: ResearchDiscoveryService, useValue: {} },
+        { provide: NotificationsService, useValue: {} },
+        { provide: PrismaService, useValue: prisma },
+        { provide: ResearchProfileSyncService, useValue: {} },
+        { provide: RankingsService, useValue: {} },
+        { provide: SettingsService, useValue: {} },
+      ],
+    }).compile();
+    return module.get(ResearchService);
   }
 
   it('creates every job post disabled', async () => {
@@ -23,7 +35,7 @@ describe('job post lifecycle', () => {
       },
     };
 
-    await service(prisma).createPosition({
+    await (await service(prisma)).createPosition({
       engagementDurationLabel: 'Six months',
       requirements: ['Strong research skills'],
       summary: 'Support the lab with reproducible research and documentation.',
@@ -41,7 +53,7 @@ describe('job post lifecycle', () => {
         update,
       },
     };
-    const positions = service(prisma);
+    const positions = await service(prisma);
 
     await positions.enablePosition('position-id');
     await positions.disablePosition('position-id');
@@ -67,9 +79,9 @@ describe('job post lifecycle', () => {
       },
     };
 
-    await expect(service(prisma).deletePosition('position-id')).rejects.toThrow(
-      'Job posts with applications cannot be deleted',
-    );
+    await expect(
+      (await service(prisma)).deletePosition('position-id'),
+    ).rejects.toThrow('Job posts with applications cannot be deleted');
     expect(remove).not.toHaveBeenCalled();
   });
 
@@ -85,7 +97,7 @@ describe('job post lifecycle', () => {
     };
 
     await expect(
-      service(prisma).deletePosition('position-id'),
+      (await service(prisma)).deletePosition('position-id'),
     ).resolves.toEqual({ deleted: true });
     expect(remove).toHaveBeenCalledWith({ where: { id: 'position-id' } });
   });

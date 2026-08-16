@@ -4,13 +4,18 @@ import { ReviewActions, type ReviewAction } from "@/components/review-actions";
 import { ButtonControl } from "@/components/ui/button-control";
 import { CheckboxControl } from "@/components/ui/checkbox-control";
 import { useId } from "react";
+import type { ApiRequestError } from "@/lib/client-api";
+import { SemanticStatus } from "@/components/ui/semantic-status";
 
 export function BulkReviewBar<Status extends string>({
   actions,
+  attentionCount = 0,
   loading = false,
   onClear,
   onSelectAll,
+  onError,
   onSubmit,
+  onSuccess,
   selectAllState,
   selectedCount,
   selectableCount,
@@ -18,10 +23,13 @@ export function BulkReviewBar<Status extends string>({
   successTitle,
 }: {
   actions: Array<ReviewAction<Status>>;
+  attentionCount?: number;
   loading?: boolean;
   onClear: () => void;
   onSelectAll: (checked: boolean) => void;
+  onError?: (error: ApiRequestError) => void;
   onSubmit: (decision: { note?: string; status: Status }) => Promise<void>;
+  onSuccess?: (status: Status) => void;
   selectAllState: boolean | "indeterminate";
   selectedCount: number;
   selectableCount: number;
@@ -45,6 +53,11 @@ export function BulkReviewBar<Status extends string>({
         <span className="font-mono text-[.68rem] uppercase tracking-[.05em] text-ink-muted">
           {selectedCount ? `${selectedCount} selected` : "No selection"}
         </span>
+        {attentionCount ? (
+          <SemanticStatus tone="warning">
+            {attentionCount} need{attentionCount === 1 ? "s" : ""} attention
+          </SemanticStatus>
+        ) : null}
       </div>
       <div className="flex min-w-0 flex-wrap items-center justify-end gap-3 max-[720px]:justify-start">
         {selectedCount && actions.length ? (
@@ -52,7 +65,9 @@ export function BulkReviewBar<Status extends string>({
             actions={actions}
             className="compact min-w-0"
             loading={loading}
+            onError={onError}
             onSubmit={onSubmit}
+            onSuccess={onSuccess}
             successBody={successBody}
             successTitle={successTitle}
           />

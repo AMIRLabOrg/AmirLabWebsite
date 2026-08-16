@@ -14,18 +14,19 @@ import { apiRequest } from "@/lib/client-api";
 import type { PaginatedResponse } from "@/lib/types";
 import { ButtonControl, ButtonLink } from "@/components/ui/button-control";
 import { FormField } from "@/components/ui/form-field";
+import { ReviewIssueStamp } from "@/components/ui/semantic-status";
+import type { ReviewIssue } from "@/lib/review-issues";
 
 interface ApplicationSummary {
   id: string;
   fullName: string;
   email: string;
   status: string;
-  parseFeedback: string | null;
   createdAt: string;
   position: { title: string };
 }
 
-const STATUSES = ["ALL", "NEEDS_REVIEW", "ACCEPTED", "REJECTED"];
+const STATUSES = ["ALL", "NEEDS_REVIEW", "PARSING", "PARSE_FAILED", "ACCEPTED", "REJECTED"];
 
 function label(value: string) {
   return value.replaceAll("_", " ").toLowerCase();
@@ -111,16 +112,17 @@ export function ApplicationReviewQueue() {
         <>
           <DataTableCard data-loading={loading || undefined}>
             <DataTable>
-              <thead><tr><DataTableHeadCell>Applicant</DataTableHeadCell><DataTableHeadCell>Position</DataTableHeadCell><DataTableHeadCell>Submitted</DataTableHeadCell><DataTableHeadCell>ATS check</DataTableHeadCell><DataTableHeadCell>Status</DataTableHeadCell><DataTableHeadCell><span className="sr-only">Action</span></DataTableHeadCell></tr></thead>
+              <thead><tr><DataTableHeadCell>Applicant</DataTableHeadCell><DataTableHeadCell>Position</DataTableHeadCell><DataTableHeadCell>Submitted</DataTableHeadCell><DataTableHeadCell>ATS check</DataTableHeadCell><DataTableHeadCell>Status</DataTableHeadCell><DataTableHeadCell><span className="sr-only">Action</span></DataTableHeadCell><DataTableHeadCell className="w-[48px]"><span className="sr-only">Attention</span></DataTableHeadCell></tr></thead>
               <tbody>{(loading && !result?.items.length ? Array.from({ length: 6 }, () => undefined) : result?.items ?? []).map((application, row) => {
                 const failed = application?.status === "PARSE_FAILED";
                 return <DataTableRow key={application?.id ?? `application-loading-${row}`}>
                   <DataTableCell><strong className={cn("block", loadingPlaceholder(loading, "text", "long"))} data-placeholder="text" data-placeholder-width="long">{application?.fullName ?? "Loading applicant"}</strong><span className={cn("mt-[.2rem] block text-[.72rem] text-ink-muted", loadingPlaceholder(loading, "label", "medium"))} data-placeholder="label" data-placeholder-width="medium">{application?.email ?? "loading@example.org"}</span></DataTableCell>
                   <DataTableCell className={loadingPlaceholder(loading, "text", "long")} data-placeholder="text" data-placeholder-width="long">{application?.position.title ?? "Loading position"}</DataTableCell>
                   <DataTableCell className="font-mono text-[.7rem] text-ink-muted"><time className={loadingPlaceholder(loading, "label", "medium")} data-placeholder="label" data-placeholder-width="medium" dateTime={application?.createdAt}>{application?.createdAt ? new Date(application.createdAt).toLocaleDateString() : "Loading date"}</time></DataTableCell>
-                  <DataTableCell><Badge dot loading={loading} tone={failed ? "rust" : application?.status === "PARSING" ? "neutral" : "field"}>{failed ? "Not readable" : application?.status === "PARSING" ? "Processing" : "Passed"}</Badge></DataTableCell>
+                  <DataTableCell><Badge dot loading={loading} tone={failed ? "error" : application?.status === "PARSING" ? "warning" : "success"}>{failed ? "Not readable" : application?.status === "PARSING" ? "Processing" : "Passed"}</Badge></DataTableCell>
                   <DataTableCell><Badge dot loading={loading} live={application?.status === "NEEDS_REVIEW"} tone={application ? applicationTone(application.status) : "neutral"}>{application ? label(application.status) : "Loading"}</Badge></DataTableCell>
                   <DataTableCell><ButtonLink compact href={application ? `/workspace/applications/${application.id}` : "#"} loading={loading || !application} variant="secondary">{application?.status === "NEEDS_REVIEW" ? "Review" : "View"}</ButtonLink></DataTableCell>
+                  <DataTableCell className="relative w-[48px] p-0">{application ? <ReviewIssueStamp className="right-2 top-1/2 -translate-y-1/2" issue={applicationStatusIssue(application)} /> : null}</DataTableCell>
                 </DataTableRow>;
               })}</tbody>
             </DataTable>
@@ -134,9 +136,30 @@ export function ApplicationReviewQueue() {
   );
 }
 
+function applicationStatusIssue(application: ApplicationSummary): ReviewIssue | undefined {
+  if (application.status === "PARSE_FAILED") {
+    return {
+      code: "APPLICATION_PARSE_FAILED",
+      itemId: application.id,
+      message: "Automatic CV processing could not read this file.",
+      tone: "error",
+    };
+  }
+  if (application.status === "PARSING") {
+    return {
+      code: "APPLICATION_PARSE_PENDING",
+      itemId: application.id,
+      message: "Automatic CV processing is still running.",
+      tone: "pending",
+    };
+  }
+  return undefined;
+}
+
 function applicationTone(status: string): BadgeTone {
-  if (status === "NEEDS_REVIEW") return "gold";
-  if (status === "PARSE_FAILED" || status === "REJECTED") return "rust";
-  if (status === "ACCEPTED") return "field";
+  if (status === "NEEDS_REVIEW") return "warning";
+  if (status === "PARSE_FAILED" || status === "REJECTED") return "error";
+  if (status === "ACCEPTED") return "success";
+  if (status === "PARSING") return "warning";
   return "neutral";
 }

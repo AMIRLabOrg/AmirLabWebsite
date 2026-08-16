@@ -1,10 +1,72 @@
+import { Test } from '@nestjs/testing';
 import {
+  AccountStatus,
   PlatformRole,
   ReviewStatus,
   SourceFetchStatus,
 } from '../../generated/prisma/client';
+import { NotificationsService } from '../notifications/notifications.service';
+import { PrismaService } from '../database/prisma.service';
+import { RankingsService } from '../rankings/rankings.service';
+import { SettingsService } from '../settings/settings.service';
+import { JobsService } from '../jobs/jobs.service';
+import { SafeSourceFetcher } from './safe-source-fetcher.service';
 import { ResearchDiscoveryService } from './research-discovery.service';
+import { ResearchProfileSyncService } from './research-profile-sync.service';
 import { ResearchService } from './research.service';
+
+async function createResearchService({
+  discovery = {},
+  prisma = {},
+  profileSync = {
+    normalizePublishedOutputs: jest.fn().mockResolvedValue(undefined),
+  },
+  settings = {},
+}: {
+  discovery?: object;
+  prisma?: object;
+  profileSync?: object;
+  settings?: object;
+}) {
+  const prismaValue = Object.assign(
+    {
+      $transaction: (callback: (transaction: object) => unknown) =>
+        Promise.resolve(callback(prisma)),
+    },
+    prisma,
+  );
+  const module = await Test.createTestingModule({
+    providers: [
+      ResearchService,
+      { provide: ResearchDiscoveryService, useValue: discovery },
+      { provide: NotificationsService, useValue: {} },
+      { provide: PrismaService, useValue: prismaValue },
+      { provide: ResearchProfileSyncService, useValue: profileSync },
+      { provide: RankingsService, useValue: {} },
+      { provide: SettingsService, useValue: settings },
+    ],
+  }).compile();
+  return module.get(ResearchService);
+}
+
+async function createDiscoveryService({
+  jobs = {},
+  prisma = {},
+}: {
+  jobs?: object;
+  prisma?: object;
+}) {
+  const module = await Test.createTestingModule({
+    providers: [
+      ResearchDiscoveryService,
+      { provide: SafeSourceFetcher, useValue: {} },
+      { provide: JobsService, useValue: jobs },
+      { provide: NotificationsService, useValue: {} },
+      { provide: PrismaService, useValue: prisma },
+    ],
+  }).compile();
+  return module.get(ResearchDiscoveryService);
+}
 
 describe('research source discovery queue', () => {
   it('records pending evidence as soon as a job is queued', async () => {
@@ -24,12 +86,7 @@ describe('research source discovery queue', () => {
     const prisma = {
       researchSourceSnapshot: { upsert },
     };
-    const service = new ResearchDiscoveryService(
-      {} as never,
-      jobs as never,
-      {} as never,
-      prisma as never,
-    );
+    const service = await createDiscoveryService({ jobs, prisma });
 
     await expect(
       service.enqueue(
@@ -55,13 +112,7 @@ describe('research source discovery queue', () => {
         }),
       },
     };
-    const service = new ResearchService(
-      discovery as never,
-      {} as never,
-      prisma as never,
-      {} as never,
-      {} as never,
-    );
+    const service = await createResearchService({ discovery, prisma });
 
     await expect(
       service.rediscover('0f52c8f1-1bd0-40c6-9724-6b14c2f6fe58'),
@@ -87,13 +138,7 @@ describe('research source discovery queue', () => {
         }),
       },
     };
-    const service = new ResearchService(
-      discovery as never,
-      {} as never,
-      prisma as never,
-      {} as never,
-      {} as never,
-    );
+    const service = await createResearchService({ discovery, prisma });
 
     await expect(
       service.rediscover('0f52c8f1-1bd0-40c6-9724-6b14c2f6fe58'),
@@ -117,13 +162,7 @@ describe('research source discovery queue', () => {
         update: jest.fn(),
       },
     };
-    const service = new ResearchService(
-      {} as never,
-      {} as never,
-      prisma as never,
-      {} as never,
-      {} as never,
-    );
+    const service = await createResearchService({ prisma });
 
     await expect(
       service.review(
@@ -134,7 +173,7 @@ describe('research source discovery queue', () => {
           id: 'admin-id',
           person: null,
           role: PlatformRole.ADMIN,
-          status: 'ACTIVE',
+          status: AccountStatus.ACTIVE,
         },
       ),
     ).rejects.toThrow('Canonical source discovery is still in progress');
@@ -142,7 +181,14 @@ describe('research source discovery queue', () => {
   });
 
   it('does not store a review note when publishing research', async () => {
-    let updateInput: { data: { reviewNote?: string | null; reviews?: { create: { note?: string | null } } } } | undefined;
+    let updateInput:
+      | {
+          data: {
+            reviewNote?: string | null;
+            reviews?: { create: { note?: string | null } };
+          };
+        }
+      | undefined;
     const prisma = {
       researchItem: {
         findUnique: jest.fn().mockResolvedValue({
@@ -159,13 +205,7 @@ describe('research source discovery queue', () => {
         }),
       },
     };
-    const service = new ResearchService(
-      {} as never,
-      {} as never,
-      prisma as never,
-      {} as never,
-      {} as never,
-    );
+    const service = await createResearchService({ prisma });
 
     await service.review(
       '0f52c8f1-1bd0-40c6-9724-6b14c2f6fe58',
@@ -175,7 +215,7 @@ describe('research source discovery queue', () => {
         id: 'admin-id',
         person: null,
         role: PlatformRole.ADMIN,
-        status: 'ACTIVE',
+        status: AccountStatus.ACTIVE,
       },
     );
 
@@ -196,13 +236,7 @@ describe('research source discovery queue', () => {
         update: jest.fn(),
       },
     };
-    const service = new ResearchService(
-      {} as never,
-      {} as never,
-      prisma as never,
-      {} as never,
-      {} as never,
-    );
+    const service = await createResearchService({ prisma });
 
     await expect(
       service.review(
@@ -213,7 +247,7 @@ describe('research source discovery queue', () => {
           id: 'admin-id',
           person: null,
           role: PlatformRole.ADMIN,
-          status: 'ACTIVE',
+          status: AccountStatus.ACTIVE,
         },
       ),
     ).rejects.toThrow('A reviewer note is required');

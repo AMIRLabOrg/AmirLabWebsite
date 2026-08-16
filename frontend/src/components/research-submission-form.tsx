@@ -21,27 +21,35 @@ export function ResearchSubmissionForm() {
   const staff = Boolean(user && user.role !== "MEMBER");
   const [error, setError] = useState<string>();
   const [loading, setLoading] = useState(false);
-  const [loadingPeople, setLoadingPeople] = useState(false);
-  const [people, setPeople] = useState<Array<{ id: string; fullName: string; roleTitle: string | null; headline: string | null }>>([]);
+  const [people, setPeople] = useState<Array<{ id: string; fullName: string; roleTitle: string | null; headline: string | null }>>();
   const [submitterPersonId, setSubmitterPersonId] = useState("");
 
   useEffect(() => {
-    if (!staff) {
-      setSubmitterPersonId(user?.person?.id ?? "");
-      return;
-    }
-    setLoadingPeople(true);
+    if (!staff) return;
+    let active = true;
     void apiRequest<{ people: Array<{ id: string; fullName: string; roleTitle: string | null; headline: string | null }> }>("/projects/options", { method: "GET" })
-      .then((result) => setPeople(result.people))
-      .catch((caught) => setError(caught instanceof Error ? caught.message : "Registered people could not be loaded."))
-      .finally(() => setLoadingPeople(false));
-  }, [staff, user?.person?.id]);
+      .then((result) => {
+        if (active) setPeople(result.people);
+      })
+      .catch((caught) => {
+        if (!active) return;
+        setPeople([]);
+        setError(caught instanceof Error ? caught.message : "Registered people could not be loaded.");
+      });
+    return () => {
+      active = false;
+    };
+  }, [staff]);
+  const loadingPeople = staff && people === undefined;
+  const availablePeople = people ?? [];
+  const effectiveSubmitterPersonId = staff ? submitterPersonId : (user?.person?.id ?? "");
+
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError(undefined);
     setLoading(true);
     const form = new FormData(event.currentTarget);
-    if (staff && !submitterPersonId) {
+    if (staff && !effectiveSubmitterPersonId) {
       setError("Select the registered person this record is being submitted for.");
       setLoading(false);
       return;
@@ -63,7 +71,7 @@ export function ResearchSubmissionForm() {
         summary: form.get("summary") || undefined,
         title: form.get("title"),
         type,
-        ...(staff ? { submitterPersonId } : {}),
+        ...(staff ? { submitterPersonId: effectiveSubmitterPersonId } : {}),
       };
       await apiRequest<{ reviewStatus: string }>("/research", {
         body: JSON.stringify(body),
@@ -109,7 +117,7 @@ export function ResearchSubmissionForm() {
               disabled={loadingPeople || loading}
               emptyMessage="No registered people found."
               onValueChange={setSubmitterPersonId}
-              options={people.map((person) => ({
+              options={availablePeople.map((person) => ({
                 description: person.roleTitle ?? person.headline ?? undefined,
                 label: person.fullName,
                 value: person.id,

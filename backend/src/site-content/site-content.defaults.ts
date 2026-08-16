@@ -2,46 +2,48 @@ import type { AboutContentDto, HomeContentDto } from './dto/site-content.dto';
 
 export const DEFAULT_HOME_CONTENT: HomeContentDto = {
   establishment:
-    'Est. 2020 · Dhaka, Bangladesh · Non-Profit Academic Consortium',
-  heroTitle: 'Artificial intelligence for real-world problems.',
+    'Est. 2020 · Dhaka, Bangladesh · Non-profit academic consortium',
+  heroTitle: 'Advanced Machine Intelligence Research Lab.',
   heroIntroduction:
-    'AMIR Lab develops machine learning and artificial intelligence solutions across healthcare, education, climate, transportation, and other practical challenges.',
+    'AMIR Lab is a Dhaka-based academic consortium conducting research in artificial intelligence, machine learning, computer vision, natural language processing, and related applications.',
   primaryCtaLabel: 'Explore research',
   secondaryCtaLabel: 'Meet the team',
-  latestEyebrow: 'Latest work',
-  latestTitle: 'Verified research outputs',
+  latestEyebrow: 'Recent research',
+  latestTitle: 'Recent publications',
   recruitmentEyebrow: 'Open positions',
-  recruitmentTitle: "We're looking for curious minds.",
+  recruitmentTitle: 'Research positions and internships',
   recruitmentBody:
-    'Research roles, internships, and collaborative opportunities for people interested in practical machine intelligence.',
+    'View current AMIR Lab openings and apply directly with your CV.',
 };
 
 export const DEFAULT_ABOUT_CONTENT: AboutContentDto = {
-  eyebrow: 'About AmirLab',
-  title: 'Machine intelligence, grounded in real problems.',
+  eyebrow: 'About AMIR Lab',
+  title: 'Advanced Machine Intelligence Research Lab.',
   introduction:
-    'Advanced Machine Intelligence Research Lab (AmirLab) is a non-profit academic research consortium based in Dhaka, Bangladesh. We connect research, people, and evidence around practical applications of artificial intelligence.',
-  missionTitle: 'Research that can be examined, connected, and used.',
+    'Founded in 2020, Advanced Machine Intelligence Research Lab (AMIR Lab) is a non-profit academic consortium based in Dhaka, Bangladesh. Its members include researchers and collaborators from universities and industry.',
+  missionTitle: 'Research, development, and researcher training in AI.',
   missionBody:
-    'Our work begins with a real problem and stays connected to its evidence. Papers, datasets, projects, and contributors are reviewed as related research records so visitors can understand both the result and the people behind it.',
-  focusTitle: 'Where we apply machine intelligence',
+    'AMIR Lab works on interdisciplinary artificial intelligence research, develops practical systems, supports researcher education, and promotes responsible research practice.',
+  focusTitle: 'Research areas',
   focusAreas: [
-    'Healthcare',
-    'Education',
-    'Climate',
-    'Transportation',
+    'Artificial intelligence',
+    'Machine learning',
     'Computer vision',
     'Natural language processing',
+    'Healthcare',
+    'Agriculture',
+    'Security',
+    'Education',
   ],
-  organizationTitle: 'An academic consortium built for collaboration.',
+  organizationTitle: 'Researchers across institutions and disciplines.',
   organizationBody:
-    'AmirLab brings together researchers at different career stages and supports collaboration across institutions. Membership, research claims, and published records are verified before they become part of the public site.',
+    'The lab includes advisors, researchers, research assistants, interns, and administrative contributors working across research departments and partner institutions.',
   facts: [
     { label: 'Established', value: '2020' },
     { label: 'Based in', value: 'Dhaka, Bangladesh' },
     { label: 'Organization', value: 'Non-profit academic consortium' },
   ],
-  closingTitle: 'Work with AmirLab',
+  closingTitle: 'Work with AMIR Lab',
   closingBody:
-    'Explore current research, meet the people doing the work, or apply through an open position to join the consortium.',
+    'Explore current projects and publications, meet the research team, or apply for an open position.',
 };

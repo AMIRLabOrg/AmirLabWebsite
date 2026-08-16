@@ -192,7 +192,15 @@ export function ResearchPrograms() {
 
       <WorkspaceSplit>
         <WorkspacePanel
-          action={!loading && (creating || selected) ? <Badge tone={creating ? "neutral" : statusTone(selected!.status)}>{creating ? "New" : researchProgramStatusLabel(selected!.status)}</Badge> : null}
+          action={
+            loading ? null : creating ? (
+              <Badge tone="neutral">New</Badge>
+            ) : selected ? (
+              <Badge tone={statusTone(selected.status)}>
+                {researchProgramStatusLabel(selected.status)}
+              </Badge>
+            ) : null
+          }
           description={admin ? "Keep the program identity stable while its projects and outputs evolve." : "Program scope, leadership, participating units, and connected research."}
           eyebrow="Program record"
           title={creating ? "Define a program" : selected?.name ?? "Program details"}
@@ -404,8 +412,8 @@ function uniqueProgramItems(programs: ResearchProgram[] | undefined, kind: "OUTP
 }
 
 function statusTone(status: ResearchProgramStatus): BadgeTone {
-  if (status === "ACTIVE") return "field";
-  if (status === "PAUSED") return "gold";
-  if (status === "ARCHIVED") return "rust";
+  if (status === "ACTIVE") return "success";
+  if (status === "PAUSED") return "warning";
+  if (status === "ARCHIVED") return "neutral";
   return "neutral";
 }

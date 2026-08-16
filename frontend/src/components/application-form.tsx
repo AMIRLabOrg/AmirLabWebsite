@@ -81,7 +81,7 @@ export function ApplicationForm({ positions }: { positions: Position[] }) {
       <div>
         <p className="m-0 mb-4 font-[var(--font-sans)] text-[.75rem] font-extrabold uppercase tracking-[.12em] text-brand">Apply without an account</p>
         <h2 className="mb-[.7rem] mt-[.65rem] font-serif text-[clamp(2rem,4vw,3rem)] font-medium leading-none tracking-[-.04em]">Start with your CV</h2>
-        <p className="m-0 max-w-[580px] text-[.86rem] leading-[1.6] text-ink-muted">Choose a role and upload your PDF. We extract the application record from the document, so you do not have to type the same information twice.</p>
+        <p className="m-0 max-w-[580px] text-[.86rem] leading-[1.6] text-ink-muted">Choose a role and upload your CV as a PDF. The browser reads the document to preview the name, email, phone number, and detected sections before you submit.</p>
       </div>
       <FormField htmlFor="positionId" label="Position" labelClassName="text-[.78rem] font-semibold tracking-[.04em]">
         <SelectControl disabled={!positions.length} id="positionId" name="positionId" options={positions.map((position) => ({ label: position.title, value: position.id }))} placeholder="Select a position" required />
@@ -103,7 +103,7 @@ export function ApplicationForm({ positions }: { positions: Position[] }) {
       <ButtonControl disabled={!positions.length || parsing || !parseResult?.likelyAtsFriendly || !parseResult?.resume.profile.fullName || !parseResult.resume.profile.email || submission.kind === "submitting"} type="submit">
         {submission.kind === "submitting" ? "Submitting…" : "Submit application"}
       </ButtonControl>
-      <p className="-mt-[.3rem] text-[.73rem] leading-[1.5] text-ink-muted">The backend repeats the ATS check. If it cannot parse the document, the email found in your CV receives specific formatting feedback.</p>
+      <p className="-mt-[.3rem] text-[.73rem] leading-[1.5] text-ink-muted">The server checks the PDF again after submission. If it cannot read the document, the application is rejected with formatting feedback.</p>
     </form>
   );
 }
@@ -117,7 +117,7 @@ function ResumePreview({ result }: { result: ResumeParseResult }) {
   return (
     <section className="overflow-hidden rounded-panel border border-line animate-[preview-enter_420ms_cubic-bezier(.22,1,.36,1)_both] motion-reduce:animate-none" aria-label="Parsed CV preview">
       <header className="flex items-start justify-between gap-[.8rem] border-b border-line bg-canvas p-4">
-        <div><h3 className="m-0 text-[.9rem]">Parsed application record</h3><p className="mt-1 text-[.72rem] text-ink-muted">{result.feedback}</p></div>
+        <div><h3 className="m-0 text-[.9rem]">CV preview</h3><p className="mt-1 text-[.72rem] text-ink-muted">{result.feedback}</p></div>
         <span className={cn("shrink-0 rounded-full px-2 py-[.35rem] font-mono text-[.62rem] uppercase", result.likelyAtsFriendly ? "bg-brand-soft text-brand" : "bg-danger-soft text-danger")}>{result.likelyAtsFriendly ? "ATS readable" : "Needs attention"}</span>
       </header>
       <div className="flex items-stretch max-[640px]:grid">

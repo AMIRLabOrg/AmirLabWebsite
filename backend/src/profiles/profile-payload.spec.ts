@@ -27,7 +27,7 @@ const profile = {
       subsections: [
         {
           heading: 'Degrees',
-          entries: ['B.Sc. in Computer Science'],
+          entries: [{ label: 'Degree', content: 'B.Sc. in Computer Science' }],
         },
       ],
     },
@@ -42,6 +42,21 @@ describe('parseProfilePayload', () => {
       links: [{ ...profile.links[0], url: 'https://example.org/profile' }],
       removeAvatar: true,
     });
+  });
+
+  it('normalizes legacy string profile entries to labeled entry records', () => {
+    const legacy = {
+      ...profile,
+      sections: [
+        {
+          ...profile.sections[0],
+          subsections: [{ heading: null, entries: ['Legacy profile detail'] }],
+        },
+      ],
+    };
+    expect(parseProfilePayload(legacy).sections[0].subsections[0].entries).toEqual([
+      { label: null, content: 'Legacy profile detail' },
+    ]);
   });
 
   it('round-trips the internal removal flag for reviewer approval', () => {

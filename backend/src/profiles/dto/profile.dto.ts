@@ -93,7 +93,10 @@ export interface ProfileEditPayload {
     title: string;
     subsections: Array<{
       heading: string | null;
-      entries: string[];
+      entries: Array<{
+        label: string | null;
+        content: string;
+      }>;
     }>;
   }>;
   removeAvatar: boolean;

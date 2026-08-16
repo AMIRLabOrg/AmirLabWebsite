@@ -1,7 +1,7 @@
 import {
   BadRequestException,
-  ConflictException,
   Injectable,
+  Logger,
   NotFoundException,
   OnModuleInit,
 } from '@nestjs/common';
@@ -22,6 +22,7 @@ import { PrismaService } from '../database/prisma.service';
 import { JobsService } from '../jobs/jobs.service';
 import { MailService } from '../mail/mail.service';
 import { NotificationsService } from '../notifications/notifications.service';
+import { reviewConflict } from '../common/review-problem';
 import { publicPositionWhere } from '../research/research.service';
 import { buildPersonSlug } from '../users/person-slug';
 import type {
@@ -32,10 +33,16 @@ import {
   ApplicationQueryDto,
   ApplicationSort,
 } from './dto/application-query.dto';
-import { assessResumeText, type ResumeAssessment } from './resume-assessment';
+import {
+  assessResumeText,
+  type ParsedResumeText,
+  type ResumeAssessment,
+} from './resume-assessment';
 
 @Injectable()
 export class ApplicationsService implements OnModuleInit {
+  private readonly logger = new Logger(ApplicationsService.name);
+
   constructor(
     private readonly assets: AssetsService,
     private readonly jobs: JobsService,
@@ -168,7 +175,7 @@ export class ApplicationsService implements OnModuleInit {
       query.sort === ApplicationSort.NAME
         ? { fullName: 'asc' }
         : { createdAt: query.sort === ApplicationSort.OLDEST ? 'asc' : 'desc' };
-    const [items, total] = await this.prisma.$transaction([
+    const [items, total] = await Promise.all([
       this.prisma.application.findMany({
         where,
         select: {
@@ -176,7 +183,6 @@ export class ApplicationsService implements OnModuleInit {
           fullName: true,
           email: true,
           status: true,
-          parseFeedback: true,
           createdAt: true,
           position: { select: { title: true } },
         },
@@ -203,7 +209,19 @@ export class ApplicationsService implements OnModuleInit {
     if (!application) {
       throw new NotFoundException('Application not found');
     }
-    return application;
+    return {
+      ...application,
+      parseFeedback: application.status === ApplicationStatus.PARSE_FAILED
+        ? 'The uploaded PDF could not be processed automatically.'
+        : application.parseFeedback,
+      events: application.events.map((event) => ({
+        ...event,
+        note:
+          event.toStatus === ApplicationStatus.PARSE_FAILED
+            ? 'Automatic CV processing could not read this file.'
+            : event.note,
+      })),
+    };
   }
 
   async readCv(id: string) {
@@ -236,7 +254,15 @@ export class ApplicationsService implements OnModuleInit {
       throw new NotFoundException('Application not found');
     }
     if (application.status !== ApplicationStatus.NEEDS_REVIEW) {
-      throw new ConflictException('Application is not awaiting review');
+      throw reviewConflict(
+        'This application is no longer awaiting a decision.',
+        [{
+          code: 'APPLICATION_REVIEW_CHANGED',
+          itemId: application.id,
+          message: 'This application is no longer awaiting a decision.',
+          tone: 'warning',
+        }],
+      );
     }
 
     if (dto.status === ApplicationStatus.REJECTED) {
@@ -365,12 +391,13 @@ export class ApplicationsService implements OnModuleInit {
       fullName = result.assessment.resume.profile.fullName ?? fullName;
       email = result.assessment.resume.profile.email?.toLowerCase() ?? email;
       phone = result.assessment.resume.profile.phone ?? phone;
-      parsedResume = result.assessment
-        .resume as unknown as Prisma.InputJsonValue;
+      parsedResume = parsedResumeToJson(result.assessment.resume);
     } catch (error) {
-      feedback = `The PDF could not be parsed: ${
-        error instanceof Error ? error.message : String(error)
-      }`;
+      this.logger.warn(
+        `Application ${application.id} PDF parsing failed: ${error instanceof Error ? error.message : String(error)}`,
+      );
+      feedback =
+        'The uploaded PDF could not be processed automatically. Please use a text-based PDF with clear section headings.';
     }
 
     const status = accepted
@@ -452,4 +479,21 @@ export class ApplicationsService implements OnModuleInit {
       await parser.destroy();
     }
   }
+}
+
+function parsedResumeToJson(resume: ParsedResumeText): Prisma.InputJsonObject {
+  const sections = Object.fromEntries(
+    Object.entries(resume.sections).map(([name, entries]) => [name, [...entries]]),
+  );
+  return {
+    parser: resume.parser,
+    profile: {
+      fullName: resume.profile.fullName,
+      email: resume.profile.email,
+      phone: resume.profile.phone,
+    },
+    sections,
+    textLength: resume.textLength,
+    pageCount: resume.pageCount,
+  };
 }

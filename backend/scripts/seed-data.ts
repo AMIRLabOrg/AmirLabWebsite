@@ -8,16 +8,19 @@ export interface SeedLink {
   sortOrder: number;
 }
 
+export interface SeedProfileEntry {
+  label: string | null;
+  content: string;
+}
+
 export interface SeedProfileSubsection {
   heading: string | null;
-  entries: string[];
-  sortOrder: number;
+  entries: SeedProfileEntry[];
 }
 
 export interface SeedProfileSection {
   type: string;
   title: string;
-  sortOrder: number;
   subsections: SeedProfileSubsection[];
 }
 
@@ -119,8 +122,8 @@ export async function readSeedData(): Promise<AmirSeedData> {
 }
 
 export function validateSeedData(data: AmirSeedData): void {
-  if (data.schemaVersion !== 2) {
-    throw new Error(`Unsupported seed schema version ${String(data.schemaVersion)}; expected 2`);
+  if (data.schemaVersion !== 4) {
+    throw new Error(`Unsupported seed schema version ${String(data.schemaVersion)}; expected 4`);
   }
   if (!data.source?.site || !data.source?.capturedAt) {
     throw new Error('Seed source metadata is incomplete');
@@ -155,19 +158,47 @@ export function validateSeedData(data: AmirSeedData): void {
       ],
       `person ${person.slug} appointedRank`,
     );
+    ensureMeaningfulText(person.fullName, `person ${person.slug} fullName`);
+    ensureEmail(person.publicEmail, `person ${person.slug} publicEmail`);
+    rejectImportedJunk(person.headline, `person ${person.slug} headline`);
+    rejectImportedJunk(person.biography, `person ${person.slug} biography`);
     unique(person.links, (link) => link.url, `link URL for ${person.slug}`);
     uniqueNumber(person.links, (link) => link.sortOrder, `link sortOrder for ${person.slug}`);
-    uniqueNumber(
-      person.profileSections,
-      (section) => section.sortOrder,
-      `profile section sortOrder for ${person.slug}`,
-    );
     for (const section of person.profileSections) {
-      uniqueNumber(
-        section.subsections,
-        (subsection) => subsection.sortOrder,
-        `profile subsection sortOrder for ${person.slug}/${section.title}`,
-      );
+      ensureMeaningfulText(section.title, `profile section title for ${person.slug}`);
+      for (const subsection of section.subsections) {
+        if (subsection.heading !== null) {
+          ensureMeaningfulText(subsection.heading, `profile subsection heading for ${person.slug}/${section.title}`);
+        }
+        for (const entry of subsection.entries) {
+          if (!entry || typeof entry !== 'object' || Array.isArray(entry)) {
+            throw new Error(`Profile entry for ${person.slug}/${section.title} must be an object`);
+          }
+          if (entry.label !== null) {
+            ensureMeaningfulText(
+              entry.label,
+              `profile entry label for ${person.slug}/${section.title}`,
+            );
+            rejectImportedJunk(
+              entry.label,
+              `profile entry label for ${person.slug}/${section.title}`,
+            );
+          }
+          ensureMeaningfulText(
+            entry.content,
+            `profile entry for ${person.slug}/${section.title}`,
+          );
+          rejectImportedJunk(
+            entry.content,
+            `profile entry for ${person.slug}/${section.title}`,
+          );
+          if (isDateOnlyProfileEntry(entry.content)) {
+            throw new Error(
+              `Profile entry for ${person.slug}/${section.title} is only a date; keep dates with the record they describe: ${entry.content}`,
+            );
+          }
+        }
+      }
     }
   }
 
@@ -196,6 +227,9 @@ export function validateSeedData(data: AmirSeedData): void {
 
   for (const paper of data.papers) {
     ensureUrl(paper.sourceUrl, `paper ${paper.sourceId} sourceUrl`);
+    ensureMeaningfulText(paper.title, `paper ${paper.sourceId} title`);
+    rejectImportedJunk(paper.title, `paper ${paper.sourceId} title`);
+    rejectImportedJunk(paper.citation, `paper ${paper.sourceId} citation`);
     if (paper.canonicalUrl) ensureUrl(paper.canonicalUrl, `paper ${paper.sourceId} canonicalUrl`);
     const contributors = new Set<string>();
     for (const contributor of paper.contributorSourceIds) {
@@ -211,6 +245,12 @@ export function validateSeedData(data: AmirSeedData): void {
 
   for (const project of data.projects) {
     ensureUrl(project.sourceUrl, `project ${project.sourceId} sourceUrl`);
+    ensureMeaningfulText(project.title, `project ${project.sourceId} title`);
+    rejectImportedJunk(project.summary, `project ${project.sourceId} summary`);
+    rejectImportedJunk(project.objective, `project ${project.sourceId} objective`);
+    if (project.publicPageEnabled && !project.summary?.trim() && !project.objective?.trim()) {
+      throw new Error(`Public project ${project.sourceId} needs a summary or objective`);
+    }
     if (project.canonicalUrl) ensureUrl(project.canonicalUrl, `project ${project.sourceId} canonicalUrl`);
     ensureEnum(
       project.status,
@@ -220,6 +260,14 @@ export function validateSeedData(data: AmirSeedData): void {
   }
 
   for (const position of data.positions) {
+    ensureMeaningfulText(position.title, `position ${position.slug} title`);
+    ensureMeaningfulText(position.summary, `position ${position.slug} summary`);
+    rejectImportedJunk(position.summary, `position ${position.slug} summary`);
+    rejectImportedJunk(position.description, `position ${position.slug} description`);
+    for (const requirement of position.requirements) {
+      ensureMeaningfulText(requirement, `position ${position.slug} requirement`);
+      rejectImportedJunk(requirement, `position ${position.slug} requirement`);
+    }
     ensureEnum(
       position.targetRank,
       [
@@ -249,6 +297,31 @@ export function validateSeedData(data: AmirSeedData): void {
       `position ${position.slug} engagementType`,
     );
   }
+}
+
+const importedJunkPatterns: readonly RegExp[] = [
+  /\[Not Intending to Share\]/i,
+  /\bKeywords\s*:/i,
+  /\bAbstract\s*:/i,
+  /\bPaper No\.?\s*:/i,
+  /\bCongratulations\b/i,
+  /\bnull\s+2025\b/i,
+  /\bsource profile\b/i,
+];
+
+function ensureMeaningfulText(value: string | null | undefined, label: string): void {
+  if (!value?.trim()) throw new Error(`Empty ${label}`);
+}
+
+function rejectImportedJunk(value: string | null | undefined, label: string): void {
+  if (!value) return;
+  const pattern = importedJunkPatterns.find((candidate) => candidate.test(value));
+  if (pattern) throw new Error(`Imported source artifact remains in ${label}: ${value}`);
+}
+
+function isDateOnlyProfileEntry(value: string): boolean {
+  const normalized = value.trim();
+  return /^(?:(?:Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:t(?:ember)?)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\s+)?\d{4}(?:\s*[–—-]\s*(?:(?:Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:t(?:ember)?)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\s+)?(?:\d{4}|Present))?$/i.test(normalized);
 }
 
 export async function missingSeedAvatarFiles(
@@ -302,6 +375,14 @@ function ensureEnum(
 ): void {
   if (!value) return;
   if (!allowed.includes(value)) {
+    throw new Error(`Invalid ${label}: ${value}`);
+  }
+}
+
+function ensureEmail(value: string | null | undefined, label: string): void {
+  if (!value) return;
+  const normalized = value.trim();
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalized)) {
     throw new Error(`Invalid ${label}: ${value}`);
   }
 }

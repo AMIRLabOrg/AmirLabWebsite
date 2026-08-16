@@ -15,20 +15,19 @@ export function PapersPageView({ papers, loading = false }: { papers?: ResearchI
           <IntroRegister
             loading={loading}
             items={[
-              { label: "Published records", value: loading ? "00" : list.length },
+              { label: "Publications", value: loading ? "00" : list.length },
               { label: "Coverage", value: loading ? "0000–0000" : coverage },
-              { label: "Identity", value: "DOI / source URL" },
-              { label: "Authorship", value: "Reviewed" },
+              { label: "Links", value: "DOI / source" },
+              { label: "Types", value: "Journal / conference" },
             ]}
-            title="Publication archive"
+            title="Publication overview"
           />
         }
         eyebrow="Publications"
-        index="PUB / 02"
-        meta={<><span>Journal · Conference · Book chapter</span><span>Canonical source + reviewed authorship</span></>}
-        title="Research output"
+        meta={<><span>Journal · Conference · Book chapter</span><span>DOI and source links where available</span></>}
+        title="Publications"
       >
-        An indexed publication archive built around provenance, authorship, venue, and canonical source rather than decorative cards.
+        Papers, conference proceedings, and book chapters published by AMIR Lab researchers and collaborators.
       </PageIntro>
       <Suspense fallback={<PublicationExplorer staticLoading />}>
         <PublicationExplorer staticLoading={loading} />

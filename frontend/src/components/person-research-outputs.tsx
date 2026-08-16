@@ -24,9 +24,9 @@ export function PersonResearchOutputs({ contributions = [], loading = false }: {
     <section aria-busy={loading || undefined} aria-labelledby="verified-research-title" className="border-b border-line bg-surface py-[clamp(3.5rem,7vw,6rem)]" data-loading={loading || undefined}>
       <PublicShell className="grid gap-12">
         <div className="max-w-[620px]">
-          <Eyebrow>Verified connections</Eyebrow>
+          <Eyebrow>Research</Eyebrow>
           <h2 className="my-[.65rem] mb-4 font-serif text-[clamp(2.3rem,5vw,4.2rem)] leading-[.95]" id="verified-research-title">Research outputs</h2>
-          <p className="m-0 leading-[1.65] text-ink-muted">Authorship and contribution links verified from canonical sources.</p>
+          <p className="m-0 leading-[1.65] text-ink-muted">Papers, datasets, and projects linked to this profile.</p>
         </div>
         {groups.map(({ items, type }) => {
           const visible = loading ? items : expanded[type] ? items : items.slice(0, PREVIEW_SIZE);

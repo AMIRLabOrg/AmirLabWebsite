@@ -5,6 +5,7 @@ export interface Environment {
   port: number;
   sessionCookieName: string;
   sessionDays: number;
+  passwordResetMinutes: number;
   smtpFrom: string;
   smtpHost?: string;
   smtpPort: number;
@@ -59,9 +60,14 @@ export function validateEnvironment(
       'amirl_session',
     ),
     sessionDays: positiveInteger(source.SESSION_DAYS, 30, 'SESSION_DAYS'),
+    passwordResetMinutes: positiveInteger(
+      source.PASSWORD_RESET_MINUTES,
+      10,
+      'PASSWORD_RESET_MINUTES',
+    ),
     smtpFrom: optionalString(
       source.SMTP_FROM,
-      'AMIR Lab <noreply@itsfuad.com>',
+      'AMIR Lab <noreply@amirl.org>',
     ),
     smtpHost,
     smtpPort: positiveInteger(source.SMTP_PORT, 2525, 'SMTP_PORT'),

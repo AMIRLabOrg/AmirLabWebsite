@@ -29,7 +29,7 @@ export function HomePageView({ content = DEFAULT_HOME_CONTENT, research = [], po
         </div>
         <aside className="grid grid-rows-[170px_auto_1fr] border-l border-line pl-6 max-[900px]:grid-cols-[180px_minmax(0,1fr)] max-[900px]:grid-rows-[auto_auto] max-[900px]:border-t max-[900px]:border-l-0 max-[900px]:pt-4 max-[900px]:pl-0 max-[640px]:grid-cols-1" data-loading={loading || undefined}>
           <div className="overflow-hidden border-b border-line max-[900px]:row-span-2 max-[900px]:mr-4 max-[900px]:h-[150px] max-[640px]:hidden"><MotionScene className="h-[190px] w-full opacity-70" /></div>
-          <header className="grid gap-[.15rem] border-b border-line-strong py-[.7rem] max-[900px]:self-start"><span className="font-mono text-[.54rem] tracking-[.08em] text-ink-faint uppercase">AMIRLab / live index</span><strong className="font-serif text-[1.15rem] font-medium">Research register</strong></header>
+          <header className="grid gap-[.15rem] border-b border-line-strong py-[.7rem] max-[900px]:self-start"><span className="font-mono text-[.54rem] tracking-[.08em] text-ink-faint uppercase">AMIR Lab</span><strong className="font-serif text-[1.15rem] font-medium">Research at a glance</strong></header>
           <dl className="m-0 max-[900px]:grid max-[900px]:grid-cols-2">
             {[['People', stats.people], ['Papers', stats.papers], ['Datasets', stats.datasets], ['Projects', stats.projects]].map(([label, value]) => <div className="grid grid-cols-[1fr_auto] items-baseline border-b border-dotted border-line py-[.48rem] max-[900px]:pr-4" key={String(label)}><dt className="font-mono text-[.54rem] tracking-[.08em] text-ink-faint uppercase">{label}</dt><dd className={cn("m-0 font-serif text-xl", loading && loadingPlaceholder(true, "value"))} data-placeholder={loading ? "value" : undefined}>{loading ? "00" : value}</dd></div>)}
           </dl>
@@ -45,7 +45,7 @@ export function HomePageView({ content = DEFAULT_HOME_CONTENT, research = [], po
           <div><p className={cn(eyebrow, "mb-[.65rem]")}>{content.latestEyebrow}</p><h2 className="m-0 font-serif text-[clamp(1.9rem,3vw,3rem)] font-medium tracking-[-.035em]">{content.latestTitle}</h2></div>
           <Link className="text-[.76rem] font-semibold text-brand underline decoration-[color-mix(in_srgb,var(--brand)_35%,transparent)] underline-offset-[3px]" href="/papers" prefetch={false}>View all <ArrowRight aria-hidden="true" className="inline" size={16} /></Link>
         </div>
-        {researchRows.length ? <div className="grid gap-0">{researchRows.map((item, index) => !item || item.type === "PAPER" ? <PaperCard compact item={item} key={item?.id ?? `loading-paper-${index}`} loading={loading} /> : <ResearchCard item={item} key={item.id} loading={false} />)}</div> : <StatePanel body="Verified work will appear here after legacy import and review." title="Research review is in progress" />}
+        {researchRows.length ? <div className="grid gap-0">{researchRows.map((item, index) => !item || item.type === "PAPER" ? <PaperCard compact item={item} key={item?.id ?? `loading-paper-${index}`} loading={loading} /> : <ResearchCard item={item} key={item.id} loading={false} />)}</div> : <StatePanel body="Published work will appear here when available." title="No publications yet" />}
       </section>
 
       <section className="bg-dark-surface text-dark-ink">

@@ -12,9 +12,11 @@ import { Badge } from "@/components/ui/badge";
 import { SelectControl } from "@/components/ui/select-control";
 import { FormField } from "@/components/ui/form-field";
 import { ButtonControl } from "@/components/ui/button-control";
-import { apiRequest } from "@/lib/client-api";
+import { ApiRequestError, apiRequest } from "@/lib/client-api";
 import type { NotificationRecord, PaginatedResponse } from "@/lib/types";
 import { StatePanel } from "@/components/state-panel";
+import { ReviewIssueStamp, SemanticStatus } from "@/components/ui/semantic-status";
+import { useReviewIssues } from "@/lib/use-review-issues";
 
 interface NotificationPage extends PaginatedResponse<NotificationRecord> {
   unreadCount: number;
@@ -22,7 +24,8 @@ interface NotificationPage extends PaginatedResponse<NotificationRecord> {
 
 export function NotificationInbox() {
   const router = useRouter();
-  const { markOneRead, refreshUnreadCount } = useNotifications();
+  const { markOneRead, refreshUnreadCount, showToast } = useNotifications();
+  const itemIssues = useReviewIssues();
   const [result, setResult] = useState<NotificationPage>();
   const [page, setPage] = useState(1);
   const [read, setRead] = useState("ALL");
@@ -92,6 +95,7 @@ export function NotificationInbox() {
               }
             : current,
         );
+        itemIssues.clearOne(notification.id);
         markOneRead();
         if (read === "UNREAD") {
           setResult((current) =>
@@ -111,7 +115,17 @@ export function NotificationInbox() {
         }
       }
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : "Update failed.");
+      const requestError = caught instanceof ApiRequestError ? caught : undefined;
+      itemIssues.setOne(notification.id, {
+        code: "NOTIFICATION_UPDATE_FAILED",
+        message: "This notification could not be marked as read.",
+        tone: "error",
+      });
+      showToast({
+        body: requestError?.message ?? "This notification could not be updated.",
+        title: "Notification was not updated",
+        tone: "error",
+      });
       void refreshUnreadCount().catch(() => undefined);
     } finally {
       setMarkingId(undefined);
@@ -146,10 +160,21 @@ export function NotificationInbox() {
               }
             : current,
         );
+        itemIssues.clearOne(notification.id);
         void refreshUnreadCount().catch(() => undefined);
       }
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : "Update failed.");
+      const requestError = caught instanceof ApiRequestError ? caught : undefined;
+      itemIssues.setOne(notification.id, {
+        code: "NOTIFICATION_UPDATE_FAILED",
+        message: "This notification could not be marked as unread.",
+        tone: "error",
+      });
+      showToast({
+        body: requestError?.message ?? "This notification could not be updated.",
+        title: "Notification was not updated",
+        tone: "error",
+      });
       void refreshUnreadCount().catch(() => undefined);
     } finally {
       setMarkingId(undefined);
@@ -224,9 +249,10 @@ export function NotificationInbox() {
               : result?.items ?? []
             ).map((notification, index) => (
               <article
-                className={`relative grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-6 rounded-panel border bg-surface p-4 [overflow-wrap:anywhere] max-[640px]:grid-cols-1 ${notification?.readAt ? "border-line" : "border-[color-mix(in_srgb,var(--brand)_45%,var(--line))] border-l-[3px] border-l-brand pl-[calc(1rem+3px)]"}`}
+                className={`relative grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-6 rounded-panel border bg-surface p-4 pr-10 [overflow-wrap:anywhere] max-[640px]:grid-cols-1 ${notification?.readAt ? "border-line" : "border-[color-mix(in_srgb,var(--brand)_45%,var(--line))] border-l-[3px] border-l-brand pl-[calc(1rem+3px)]"}`}
                 key={notification?.id ?? `notification-loading-${index}`}
               >
+                {notification ? <ReviewIssueStamp issue={itemIssues.forItem(notification.id)[0]} /> : null}
                 <div>
                   <div className="flex flex-wrap items-center gap-[.65rem] text-[.72rem] text-ink-muted">
                     <Badge loading={loading}>{notification?.readAt ? "Read" : "New"}</Badge>
@@ -240,6 +266,11 @@ export function NotificationInbox() {
                   </div>
                   <h2 className={cn("mt-[.45rem] text-[1.15rem]", loadingPlaceholder(loading, "text", "long"))} data-placeholder="text" data-placeholder-width="long">{notification?.title ?? "Loading notification title"}</h2>
                   <p className={cn("mt-[.45rem] leading-[1.55] text-ink-muted", loadingPlaceholder(loading, "text", "full"))} data-placeholder="text" data-placeholder-width="full">{notification?.body ?? "Loading notification details"}</p>
+                  {notification && itemIssues.forItem(notification.id)[0] ? (
+                    <SemanticStatus className="mt-3" tone={itemIssues.forItem(notification.id)[0].tone ?? "error"}>
+                      {itemIssues.forItem(notification.id)[0].message}
+                    </SemanticStatus>
+                  ) : null}
                 </div>
                 <div className="flex items-center gap-2 max-[640px]:items-stretch">
                   <ButtonControl

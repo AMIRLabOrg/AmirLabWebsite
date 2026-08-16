@@ -6,7 +6,7 @@ export const metadata: Metadata = { title: "Datasets" };
 export default function DatasetsPage() {
   return (
     <ResearchListing
-      description="Verified datasets with version, license, modality, and links to the system responsible for access."
+      description="Datasets published or maintained by AMIR Lab researchers, with available version, license, modality, and access information."
       eyebrow="Research resources"
       title="Datasets"
       type="DATASET"

@@ -1,18 +1,26 @@
 jest.mock('../../generated/prisma/client', () => ({
   AccountStatus: { ACTIVE: 'ACTIVE' },
+  PlatformRole: { ADMIN: 'ADMIN' },
   PrismaClient: class PrismaClient {},
 }));
 
+import type { ExecutionContext } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { Reflector } from '@nestjs/core';
+import { PrismaService } from '../database/prisma.service';
+import { resolveService } from '../../test/resolve-service';
+import { AccountStatus, PlatformRole } from '../../generated/prisma/client';
+import type { AuthenticatedUser } from './auth.types';
 import { csrfTokenForSession } from './csrf';
 import { SessionAuthGuard } from './session-auth.guard';
 
 const sessionToken = 'persistent-session-token';
-const user = {
+const user: AuthenticatedUser = {
   email: 'admin@amirl.local',
   id: 'user-id',
   person: null,
-  role: 'ADMIN',
-  status: 'ACTIVE',
+  role: PlatformRole.ADMIN,
+  status: AccountStatus.ACTIVE,
 };
 
 function context(method: string, csrfToken?: string) {
@@ -31,21 +39,24 @@ function context(method: string, csrfToken?: string) {
   };
 }
 
-function guard() {
-  return new SessionAuthGuard(
-    { getAllAndOverride: () => false } as never,
-    { get: () => 'amirl_session' } as never,
+async function guard() {
+  return resolveService(SessionAuthGuard, [
+    { provide: Reflector, useValue: { getAllAndOverride: () => false } },
+    { provide: ConfigService, useValue: { get: () => 'amirl_session' } },
     {
-      session: {
-        findUnique: jest.fn().mockResolvedValue({
-          csrfTokenHash: 'token-created-before-recovery-was-supported',
-          expiresAt: new Date(Date.now() + 60_000),
-          revokedAt: null,
-          user,
-        }),
+      provide: PrismaService,
+      useValue: {
+        session: {
+          findUnique: jest.fn().mockResolvedValue({
+            csrfTokenHash: 'token-created-before-recovery-was-supported',
+            expiresAt: new Date(Date.now() + 60_000),
+            revokedAt: null,
+            user,
+          }),
+        },
       },
-    } as never,
-  );
+    },
+  ]);
 }
 
 describe('SessionAuthGuard CSRF recovery', () => {
@@ -55,9 +66,9 @@ describe('SessionAuthGuard CSRF recovery', () => {
       csrfTokenForSession(sessionToken),
     );
 
-    await expect(guard().canActivate(executionContext as never)).resolves.toBe(
-      true,
-    );
+    await expect(
+      (await guard()).canActivate(executionContext as ExecutionContext),
+    ).resolves.toBe(true);
     expect(request).toHaveProperty('user', user);
   });
 
@@ -65,7 +76,7 @@ describe('SessionAuthGuard CSRF recovery', () => {
     const { executionContext } = context('PATCH');
 
     await expect(
-      guard().canActivate(executionContext as never),
+      (await guard()).canActivate(executionContext as ExecutionContext),
     ).rejects.toThrow('CSRF token required');
   });
 
@@ -73,7 +84,7 @@ describe('SessionAuthGuard CSRF recovery', () => {
     const { executionContext } = context('POST', 'wrong-token');
 
     await expect(
-      guard().canActivate(executionContext as never),
+      (await guard()).canActivate(executionContext as ExecutionContext),
     ).rejects.toThrow('CSRF token is invalid');
   });
 });

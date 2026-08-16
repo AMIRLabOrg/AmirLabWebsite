@@ -1,4 +1,6 @@
 import { JobStatus } from '../../generated/prisma/client';
+import { PrismaService } from '../database/prisma.service';
+import { resolveService } from '../../test/resolve-service';
 import { JobsService } from './jobs.service';
 
 describe('JobsService active deduplication', () => {
@@ -13,7 +15,9 @@ describe('JobsService active deduplication', () => {
         updateMany: jest.fn(),
       },
     };
-    const service = new JobsService(prisma as never);
+    const service = await resolveService(JobsService, [
+      { provide: PrismaService, useValue: prisma },
+    ]);
 
     await expect(
       service.enqueueWhileActive('DISCOVER', { researchItemId: 'item' }, 'key'),
@@ -36,7 +40,9 @@ describe('JobsService active deduplication', () => {
         updateMany: jest.fn().mockResolvedValue({ count: 1 }),
       },
     };
-    const service = new JobsService(prisma as never);
+    const service = await resolveService(JobsService, [
+      { provide: PrismaService, useValue: prisma },
+    ]);
 
     await expect(
       service.enqueueWhileActive('DISCOVER', { researchItemId: 'item' }, 'key'),

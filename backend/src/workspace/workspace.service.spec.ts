@@ -3,12 +3,17 @@ jest.mock('../../generated/prisma/client', () => ({
   PlatformRole: { ADMIN: 'ADMIN', MEMBER: 'MEMBER', MODERATOR: 'MODERATOR' },
   PrismaClient: class PrismaClient {},
   ProjectMembershipStatus: { ACTIVE: 'ACTIVE' },
+  ProjectMilestoneStatus: { COMPLETE: 'COMPLETE' },
   ProjectStatus: { ACTIVE: 'ACTIVE' },
   ProjectTaskStatus: { BLOCKED: 'BLOCKED', DONE: 'DONE' },
   ResearchItemType: { DATASET: 'DATASET', PAPER: 'PAPER' },
   ReviewStatus: { PUBLISHED: 'PUBLISHED' },
 }));
 
+import { AccountStatus, PlatformRole } from '../../generated/prisma/client';
+import { PrismaService } from '../database/prisma.service';
+import { NotificationsService } from '../notifications/notifications.service';
+import { resolveService } from '../../test/resolve-service';
 import { WorkspaceService } from './workspace.service';
 
 describe('WorkspaceService overview', () => {
@@ -63,16 +68,16 @@ describe('WorkspaceService overview', () => {
   });
 
   it('returns member work from active project memberships', async () => {
-    const service = new WorkspaceService(
-      notifications as never,
-      prisma as never,
-    );
+    const service = await resolveService(WorkspaceService, [
+      { provide: NotificationsService, useValue: notifications },
+      { provide: PrismaService, useValue: prisma },
+    ]);
 
     const result = await service.overview({
       id: 'user-id',
       email: 'member@amirl.local',
-      role: 'MEMBER' as never,
-      status: 'ACTIVE' as never,
+      role: PlatformRole.MEMBER,
+      status: AccountStatus.ACTIVE,
       person: {
         id: 'person-id',
         fullName: 'Member',
@@ -113,16 +118,16 @@ describe('WorkspaceService overview', () => {
   });
 
   it('uses the full portfolio and published outputs for administrators', async () => {
-    const service = new WorkspaceService(
-      notifications as never,
-      prisma as never,
-    );
+    const service = await resolveService(WorkspaceService, [
+      { provide: NotificationsService, useValue: notifications },
+      { provide: PrismaService, useValue: prisma },
+    ]);
 
     await service.overview({
       id: 'admin-id',
       email: 'admin@amirl.local',
-      role: 'ADMIN' as never,
-      status: 'ACTIVE' as never,
+      role: PlatformRole.ADMIN,
+      status: AccountStatus.ACTIVE,
       person: null,
     });
 

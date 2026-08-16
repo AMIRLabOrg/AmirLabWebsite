@@ -19,22 +19,21 @@ export function PeoplePageView({ people, loading = false }: { people?: Person[];
               { label: "Active members", value: loading ? "00" : active },
               { label: "Senior / advisory", value: loading ? "00" : leads },
               { label: "Alumni", value: loading ? "00" : alumni },
-              { label: "Directory", value: "Verified profiles" },
+              { label: "Profiles", value: loading ? "00" : list.length },
             ]}
-            title="People register"
+            title="Team overview"
           />
         }
         eyebrow="People"
-        index="DIR / 01"
         meta={
           <>
             <span>Faculty · Researchers · Assistants · Interns</span>
-            <span className={loadingPlaceholder(loading, "text", "medium")} data-placeholder={loading ? "text" : undefined}>{loading ? "00 indexed profiles" : `${list.length} indexed profiles`}</span>
+            <span className={loadingPlaceholder(loading, "text", "medium")} data-placeholder={loading ? "text" : undefined}>{loading ? "00 profiles" : `${list.length} profiles`}</span>
           </>
         }
         title="People behind the work"
       >
-        Researchers are indexed by role, research connection, and verified output, not placed in a decorative gallery.
+        Meet AMIR Lab researchers, research assistants, interns, advisors, and alumni.
       </PageIntro>
       <PeopleDirectory loading={loading} people={list} />
     </>

@@ -6,12 +6,14 @@ import Image from "next/image";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { API_URL } from "@/lib/api";
-import { apiRequest } from "@/lib/client-api";
+import { ApiRequestError, apiRequest } from "@/lib/client-api";
 import type { ProfileEditPayload, ProfileEditRequest } from "@/lib/types";
 import { ReviewActions } from "@/components/review-actions";
 import { StatePanel } from "@/components/state-panel";
 import { useNotifications } from "@/components/notification-provider";
 import { profileValuesEqual } from "@/lib/profile-changes";
+import { ReviewIssueStamp, SemanticStatus } from "@/components/ui/semantic-status";
+import type { ReviewIssue } from "@/lib/review-issues";
 
 const EMPTY_PROFILE_PAYLOAD: ProfileEditPayload = {
   fullName: "",
@@ -31,6 +33,7 @@ export function ProfileReviewDetail({ id }: { id: string }) {
   const { refreshUnreadCount } = useNotifications();
   const [request, setRequest] = useState<ProfileEditRequest>();
   const [message, setMessage] = useState<string>();
+  const [actionIssues, setActionIssues] = useState<ReviewIssue[]>([]);
   const [reload, setReload] = useState(0);
 
   useEffect(() => {
@@ -44,6 +47,19 @@ export function ProfileReviewDetail({ id }: { id: string }) {
         ),
       );
   }, [id, reload]);
+
+  function captureReviewError(error: ApiRequestError) {
+    setActionIssues(
+      error.issues.length
+        ? error.issues
+        : [{
+            code: "PROFILE_REVIEW_FAILED",
+            itemId: request?.id,
+            message: "This profile decision could not be saved.",
+            tone: "error",
+          }],
+    );
+  }
 
   async function decide({ note, status }: { note?: string; status: "APPROVED" | "REJECTED" }) {
     if (!request) return;
@@ -85,21 +101,31 @@ export function ProfileReviewDetail({ id }: { id: string }) {
     expertise: currentPerson.expertise,
     links: (currentPerson.links ?? []).map(({ label, type, url }) => ({ label, type, url })),
     sections: (currentPerson.profileSections ?? []).map(({ content, subsections, title, type }) => ({
-      subsections: subsections?.length ? subsections : content ? [{ heading: null, entries: [content] }] : [],
+      subsections: subsections?.length ? subsections : content ? [{ heading: null, entries: [{ label: null, content }] }] : [],
       title,
       type,
     })),
     removeAvatar: false,
   } : EMPTY_PROFILE_PAYLOAD;
   const proposedAvatar = request ? (proposed.removeAvatar ? null : (request.avatarAsset?.id ?? currentPerson?.avatar?.id)) : undefined;
+  const reviewIssues = [...(request?.reviewIssues ?? []), ...actionIssues];
+  const blockingIssue = reviewIssues.find(({ tone }) => (tone ?? "error") === "error");
 
   return (
     <div className="grid gap-4" data-loading={loading || undefined}>
-      <section className="rounded-panel border border-line bg-surface p-5">
+      <section className="relative rounded-panel border border-line bg-surface p-5">
+        <ReviewIssueStamp issue={reviewIssues[0]} />
         <div>
           <p className="m-0 mb-4 font-[var(--font-sans)] text-[.75rem] font-extrabold uppercase tracking-[.12em] text-brand">Latest request only</p>
           <h2 className={cn("font-serif text-[clamp(1.6rem,3vw,2.4rem)] font-medium leading-[1.08]", loadingPlaceholder(loading, "text", "long"))} data-placeholder="text" data-placeholder-width="long">{currentPerson?.fullName ?? "Loading member profile"}</h2>
-          <p className={cn("mt-2 font-mono text-[.68rem] uppercase tracking-[.06em] text-ink-muted", loadingPlaceholder(loading, "label", "medium"))} data-placeholder="label" data-placeholder-width="medium">{request?.status.replaceAll("_", " ").toLowerCase() ?? "Loading review status"}</p>
+          <div className="mt-2">{loading ? <span className={cn("block h-5 w-28", loadingPlaceholder(true, "label", "medium"))} data-placeholder="label" data-placeholder-width="medium" /> : request ? <SemanticStatus tone={request.status === "APPROVED" ? "success" : request.status === "REJECTED" ? "error" : "pending"}>{request.status.replaceAll("_", " ").toLowerCase()}</SemanticStatus> : null}</div>
+          {reviewIssues.length ? (
+            <div className="mt-3 flex flex-wrap gap-2">
+              {reviewIssues.map((issue, index) => (
+                <SemanticStatus key={`${issue.code ?? issue.message}-${index}`} tone={issue.tone ?? "error"}>{issue.message}</SemanticStatus>
+              ))}
+            </div>
+          ) : null}
         </div>
       </section>
 
@@ -120,6 +146,7 @@ export function ProfileReviewDetail({ id }: { id: string }) {
                 confirmDescription: "These changes will atomically update the public profile. If the member saved again, the backend will refuse this stale decision.",
                 confirmLabel: "Approve changes",
                 confirmTitle: "Approve the latest profile?",
+                disabled: Boolean(blockingIssue),
                 label: "Approve changes",
                 status: "APPROVED",
                 tone: "primary",
@@ -135,7 +162,9 @@ export function ProfileReviewDetail({ id }: { id: string }) {
                 tone: "danger",
               },
             ]}
+            onError={captureReviewError}
             onSubmit={request ? decide : () => Promise.resolve()}
+            onSuccess={() => setActionIssues([])}
             successBody={(status) => `The profile changes were ${status.toLowerCase()}.`}
             successTitle="Profile review saved"
           />
@@ -415,7 +444,14 @@ function formatProfileValue(
     return (value as ProfileEditPayload["sections"])
       .map(({ subsections, title, type }) =>
         `${title} [${type.replaceAll("_", " ").toLowerCase()}]\n${(subsections ?? [])
-          .map(({ entries, heading }) => `${heading ?? "Details"}\n${entries.join("\n\n")}`)
+          .map(({ entries, heading }) =>
+            `${heading ?? "Details"}\n${entries
+              .map((entry) => {
+                if (typeof entry === "string") return entry;
+                return entry.label ? `${entry.label}\n${entry.content}` : entry.content;
+              })
+              .join("\n\n")}`,
+          )
           .join("\n\n")}`,
       )
       .join("\n\n");

@@ -4,7 +4,7 @@ import { cn } from "@/lib/cn";
 import { loadingPlaceholder } from "@/lib/loading-style";
 import { useEffect, useState } from "react";
 import { Pencil, Plus, Search, Trash2 } from "lucide-react";
-import { apiRequest } from "@/lib/client-api";
+import { ApiRequestError, apiRequest } from "@/lib/client-api";
 import { ConfirmDialog } from "@/components/confirm-dialog";
 import { PaginationControls } from "@/components/pagination-controls";
 import { StatePanel } from "@/components/state-panel";
@@ -15,6 +15,8 @@ import { InputControl } from "@/components/ui/form-controls";
 import { FormField, FormMessage } from "@/components/ui/form-field";
 import type { PaginatedResponse } from "@/lib/types";
 import { useNotifications } from "@/components/notification-provider";
+import { ReviewIssueStamp, SemanticStatus } from "@/components/ui/semantic-status";
+import { useReviewIssues } from "@/lib/use-review-issues";
 
 const ROLES = ["MEMBER", "MODERATOR", "ADMIN"] as const;
 const RANKS = [
@@ -45,9 +47,10 @@ function accountStatusLabel(status: string): string {
 }
 
 function accountStatusTone(status: string): BadgeTone {
-  if (status === "ACTIVE") return "field";
-  if (status === "PENDING_SETUP") return "gold";
-  if (status === "SUSPENDED" || status === "ARCHIVED") return "rust";
+  if (status === "ACTIVE") return "success";
+  if (status === "PENDING_SETUP") return "warning";
+  if (status === "SUSPENDED") return "error";
+  if (status === "ARCHIVED") return "neutral";
   return "neutral";
 }
 
@@ -67,6 +70,7 @@ export function UserManagement() {
   const [rank, setRank] = useState("ALL");
   const [sort, setSort] = useState("NEWEST");
   const [reload, setReload] = useState(0);
+  const actionIssues = useReviewIssues();
 
   function beginRefresh() {
     setLoading(true);
@@ -129,17 +133,21 @@ export function UserManagement() {
             : item,
         ),
       );
+      actionIssues.clearOne(account.id);
       showToast({
         body: `A one-time setup link was queued for ${account.email}.`,
         title: "Access email queued",
       });
       setPendingAccess(undefined);
     } catch (caught) {
-      const message = caught instanceof Error
-        ? caught.message
-        : "Unable to send access email.";
-      setError(message);
-      showToast({ body: message, title: "Access email was not sent", tone: "error" });
+      const requestError = caught instanceof ApiRequestError ? caught : undefined;
+      if (requestError?.issues.length) actionIssues.capture(requestError);
+      else actionIssues.setOne(account.id, {
+        code: "ACCESS_EMAIL_QUEUE_FAILED",
+        message: "The access email could not be queued for this account.",
+        tone: "error",
+      });
+      showToast({ body: requestError?.message ?? "Unable to send access email.", title: "Access email was not sent", tone: "error" });
     } finally {
       setActiveId(undefined);
     }
@@ -266,8 +274,11 @@ export function UserManagement() {
         />
       ) : (
         <section className="grid gap-4" data-loading={loading || undefined}>
-          {(loading && !accounts.length ? Array.from({ length: 4 }, () => undefined) : accounts).map((account, index) => (
-              <article className="grid min-w-0 grid-cols-[minmax(220px,4fr)_minmax(260px,5fr)_minmax(360px,3fr)] items-center gap-4 rounded-panel border border-line bg-surface p-4 max-[1180px]:grid-cols-2 max-[700px]:grid-cols-1" key={account?.id ?? `account-loading-${index}`}>
+          {(loading && !accounts.length ? Array.from({ length: 4 }, () => undefined) : accounts).map((account, index) => {
+            const issue = account ? actionIssues.forItem(account.id)[0] : undefined;
+            return (
+              <article className="relative grid min-w-0 grid-cols-[minmax(220px,4fr)_minmax(260px,5fr)_minmax(360px,3fr)] items-center gap-4 rounded-panel border border-line bg-surface p-4 pr-10 max-[1180px]:grid-cols-2 max-[700px]:grid-cols-1" key={account?.id ?? `account-loading-${index}`}>
+                {account ? <ReviewIssueStamp issue={issue} /> : null}
                 <div className="grid min-w-0 gap-[.35rem] [overflow-wrap:anywhere]">
                   <strong className={cn("text-[.95rem] font-semibold leading-[1.35]", loadingPlaceholder(loading, "text", "long"))} data-placeholder="text" data-placeholder-width="long">
                     {account?.person?.fullName ?? (loading ? "Loading account" : "Account without profile")}
@@ -278,13 +289,20 @@ export function UserManagement() {
                       {account ? accountStatusLabel(account.status) : "loading"}
                     </Badge>
                     {loading || account?.person?.rank ? (
-                      <Badge loading={loading} tone="field">{account?.person?.rank ? readable(account.person.rank) : "rank"}</Badge>
+                      <Badge loading={loading} tone="info">{account?.person?.rank ? readable(account.person.rank) : "rank"}</Badge>
                     ) : null}
+                    {issue ? <SemanticStatus tone={issue.tone ?? "error"}>{issue.message}</SemanticStatus> : null}
                   </div>
                 </div>
                 <div className="grid min-w-0 gap-[.35rem]">
                   <span className="text-[.68rem] text-ink-muted">Account email</span>
-                  <strong className={cn("text-[.82rem] font-semibold [overflow-wrap:anywhere]", loadingPlaceholder(loading, "text", "long"))} data-placeholder="text" data-placeholder-width="long">{account?.email ?? (loading ? "loading@example.org" : "Email not set")}</strong>
+                  {loading ? (
+                    <strong className={cn("text-[.82rem] font-semibold [overflow-wrap:anywhere]", loadingPlaceholder(true, "text", "long"))} data-placeholder="text" data-placeholder-width="long">loading@example.org</strong>
+                  ) : account?.email ? (
+                    <strong className="text-[.82rem] font-semibold [overflow-wrap:anywhere]">{account.email}</strong>
+                  ) : (
+                    <SemanticStatus tone="warning">Not provided</SemanticStatus>
+                  )}
                 </div>
                 <div className="flex items-center justify-end gap-2 max-[1180px]:col-span-full max-[1180px]:justify-start max-[700px]:grid max-[700px]:grid-cols-1">
                   <ButtonLink href={account ? `/workspace/users/${account.id}/edit` : "#"} loading={loading || !account} variant="secondary">
@@ -310,7 +328,8 @@ export function UserManagement() {
                   </p>
                 ) : null}
               </article>
-            ))}
+            );
+          })}
         </section>
       )}
       {(loading || result) ? (

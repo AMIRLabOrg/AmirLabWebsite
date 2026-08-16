@@ -9,7 +9,7 @@ const ICONS = { empty: Inbox, error: AlertTriangle, filtered: SearchX, permissio
 
 export function StatePanel({ action, body, title, variant = "empty" }: { action?: { href?: string; label: string; onClick?: () => void }; body: ReactNode; title: string; variant?: keyof typeof ICONS; }) {
   const Icon = ICONS[variant];
-  const iconTone = variant === "error" ? "border-danger text-danger" : variant === "permission" ? "border-gold text-gold" : "border-line text-ink-muted";
+  const iconTone = variant === "error" ? "border-danger text-danger" : variant === "permission" ? "border-warning text-warning" : "border-line text-ink-muted";
   return (
     <div className="flex flex-col items-center rounded-panel border border-line bg-surface px-8 py-16 text-center" role={variant === "error" ? "alert" : "status"}>
       <span className={cn("mb-[1.2rem] flex h-12 w-12 items-center justify-center rounded-full border bg-canvas", iconTone)}><Icon aria-hidden="true" size={21} /></span>

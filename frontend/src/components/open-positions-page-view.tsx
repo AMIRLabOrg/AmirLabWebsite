@@ -14,24 +14,25 @@ export function OpenPositionsPageView({ positions, loading = false }: { position
             loading={loading}
             items={[
               { label: "Open roles", value: loading ? "00" : list.length },
-              { label: "Application", value: "No account needed" },
-              { label: "Decision", value: "Human reviewed" },
+              { label: "Account", value: "Not required" },
+              { label: "Review", value: "Lab team" },
               { label: "Status", value: loading ? "Checking" : list.length ? "Accepting" : "Closed" },
             ]}
-            title="Opportunity register"
+            title="Applications"
           />
         }
         eyebrow="Careers & opportunities"
-        index="OPP / 06"
-        meta={<><span>Research roles · Internships · Collaboration</span><span>Direct application workflow</span></>}
+        meta={<><span>Research roles · Internships</span><span>Apply with a CV</span></>}
         title="Open opportunities"
       >
-        Join a research group where responsibilities, review stages, and project work are visible. Applications remain human-reviewed.
+        Current AMIR Lab research roles and internships. Applications are reviewed by the lab team.
       </PageIntro>
       <PositionList loading={loading} positions={list} />
-      <section className="mx-auto w-full max-w-[1280px] px-8 max-[640px]:px-4 border-t border-line-strong pt-6" id="apply">
+      <section className="mx-auto grid w-full max-w-[1280px] grid-cols-[minmax(0,1fr)_minmax(280px,360px)] items-start gap-[clamp(1.5rem,3vw,3rem)] border-t border-line-strong px-8 pt-8 pb-16 max-[900px]:grid-cols-1 max-[640px]:px-4" id="apply">
         <ApplicationForm positions={list} />
-        <ApplicationProcess />
+        <div className="border-l border-line pl-[clamp(1.25rem,2.2vw,2rem)] max-[900px]:border-l-0 max-[900px]:border-t max-[900px]:pt-8 max-[900px]:pl-0">
+          <ApplicationProcess />
+        </div>
       </section>
     </>
   );

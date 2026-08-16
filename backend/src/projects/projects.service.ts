@@ -1,6 +1,5 @@
 import {
   BadRequestException,
-  ConflictException,
   ForbiddenException,
   Injectable,
   NotFoundException,
@@ -32,6 +31,7 @@ import type { Environment } from '../config/environment';
 import { PrismaService } from '../database/prisma.service';
 import { MailService } from '../mail/mail.service';
 import { NotificationsService } from '../notifications/notifications.service';
+import { reviewBadRequest, reviewConflict } from '../common/review-problem';
 import { SettingsService } from '../settings/settings.service';
 import type {
   BulkReviewProjectChangesDto,
@@ -112,7 +112,7 @@ export class ProjectsService {
   ) {}
 
   async options() {
-    const [people, departments] = await this.prisma.$transaction([
+    const [people, departments] = await Promise.all([
       this.prisma.person.findMany({
         where: {
           user: { is: { status: { in: PROJECT_ACCOUNT_STATUSES } } },
@@ -138,16 +138,24 @@ export class ProjectsService {
 
   async create(dto: CreateProjectDto, user: AuthenticatedUser) {
     const staff = user.role !== PlatformRole.MEMBER;
-    if (!staff && !user.person) {
-      throw new ForbiddenException('A registered person account is required');
-    }
-    if (staff && !dto.ownerPersonId) {
-      throw new BadRequestException(
-        'Staff must select the registered person this project is being created for',
-      );
-    }
-    if (!staff && dto.ownerPersonId && dto.ownerPersonId !== user.person?.id) {
-      throw new ForbiddenException('Members can only create projects for themselves');
+    let ownerPersonId: string;
+    if (staff) {
+      if (!dto.ownerPersonId) {
+        throw new BadRequestException(
+          'Staff must select the registered person this project is being created for',
+        );
+      }
+      ownerPersonId = dto.ownerPersonId;
+    } else {
+      if (!user.person) {
+        throw new ForbiddenException('A registered person account is required');
+      }
+      if (dto.ownerPersonId && dto.ownerPersonId !== user.person.id) {
+        throw new ForbiddenException(
+          'Members can only create projects for themselves',
+        );
+      }
+      ownerPersonId = user.person.id;
     }
     if (dto.startsAt && dto.endsAt && dto.endsAt < dto.startsAt) {
       throw new BadRequestException(
@@ -155,7 +163,6 @@ export class ProjectsService {
       );
     }
 
-    const ownerPersonId = staff ? dto.ownerPersonId! : user.person!.id;
     const contributorPersonIds = [
       ownerPersonId,
       ...dto.contributorPersonIds.filter((id) => id !== ownerPersonId),
@@ -163,7 +170,7 @@ export class ProjectsService {
     if (new Set(contributorPersonIds).size !== contributorPersonIds.length) {
       throw new BadRequestException('A contributor can only be selected once');
     }
-    const [department, people] = await this.prisma.$transaction([
+    const [department, people] = await Promise.all([
       this.prisma.department.findUnique({
         where: { id: dto.departmentId },
         select: { id: true },
@@ -177,14 +184,28 @@ export class ProjectsService {
       }),
     ]);
     if (!department) throw new BadRequestException('Department not found');
-    if (people.length !== contributorPersonIds.length) {
+    if (
+      people.length !== contributorPersonIds.length ||
+      people.some((person) => !person.userId)
+    ) {
       throw new BadRequestException(
         'Every project contributor must have an available registered account',
       );
     }
     const peopleById = new Map(people.map((person) => [person.id, person]));
-    const orderedPeople = contributorPersonIds.map((id) => peopleById.get(id)!);
-    const ownerPerson = peopleById.get(ownerPersonId)!;
+    const orderedPeople = contributorPersonIds.map((id) => {
+      const person = peopleById.get(id);
+      if (!person?.userId) {
+        throw new BadRequestException(
+          'Every project contributor must have an available registered account',
+        );
+      }
+      return { ...person, userId: person.userId };
+    });
+    const ownerPerson = orderedPeople.find(({ id }) => id === ownerPersonId);
+    if (!ownerPerson) {
+      throw new BadRequestException('Project owner is unavailable');
+    }
     const created = await this.prisma.$transaction(async (transaction) => {
       const item = await transaction.researchItem.create({
         data: {
@@ -198,7 +219,7 @@ export class ProjectsService {
           departments: { create: { departmentId: dto.departmentId } },
           reviewStatus: ReviewStatus.DRAFT,
           slug: projectSlug(dto.title),
-          submittedById: ownerPerson.userId!,
+          submittedById: ownerPerson.userId,
           summary: dto.summary?.trim() || null,
           title: dto.title.trim(),
           type: ResearchItemType.PROJECT,
@@ -212,7 +233,7 @@ export class ProjectsService {
               title: dto.title.trim(),
               members: {
                 create: orderedPeople.map((person) => ({
-                  userId: person.userId!,
+                  userId: person.userId,
                 })),
               },
               messages: {
@@ -264,17 +285,20 @@ export class ProjectsService {
       });
       return item.id;
     });
+    const notificationRecipientIds = orderedPeople
+      .map((person) => person.userId)
+      .filter(
+        (userId): userId is string => Boolean(userId) && userId !== user.id,
+      );
     await Promise.all(
-      orderedPeople
-        .filter((person) => person.userId !== user.id)
-        .map((person) =>
-          this.notifications.create(person.userId!, {
-            type: NotificationType.PROJECT_CHANGED,
-            title: 'Added to a project',
-            body: dto.title.trim(),
-            actionUrl: `/workspace/projects/${created}`,
-          }),
-        ),
+      notificationRecipientIds.map((recipientId) =>
+        this.notifications.create(recipientId, {
+          type: NotificationType.PROJECT_CHANGED,
+          title: 'Added to a project',
+          body: dto.title.trim(),
+          actionUrl: `/workspace/projects/${created}`,
+        }),
+      ),
     );
     await this.broadcastLatestActivity(created);
     return withProgress(await this.project(created));
@@ -406,6 +430,7 @@ export class ProjectsService {
     if (!user.email || !user.person) {
       throw new ForbiddenException('A verified person account is required');
     }
+    const personId = user.person.id;
     const invitation = await this.prisma.projectInvitation.findUnique({
       where: { tokenHash: createHash('sha256').update(token).digest('hex') },
     });
@@ -417,17 +442,17 @@ export class ProjectsService {
     ) {
       throw new ForbiddenException('Project invitation is invalid or expired');
     }
-    await this.prisma.$transaction([
-      this.prisma.projectMembership.upsert({
+    await this.prisma.$transaction(async (transaction) => {
+      await transaction.projectMembership.upsert({
         where: {
           projectId_personId: {
             projectId: invitation.projectId,
-            personId: user.person.id,
+            personId,
           },
         },
         create: {
           access: invitation.access,
-          personId: user.person.id,
+          personId,
           projectId: invitation.projectId,
           role: invitation.role,
           status: ProjectMembershipStatus.ACTIVE,
@@ -437,15 +462,15 @@ export class ProjectsService {
           role: invitation.role,
           status: ProjectMembershipStatus.ACTIVE,
         },
-      }),
-      this.prisma.projectInvitation.update({
+      });
+      await transaction.projectInvitation.update({
         where: { id: invitation.id },
         data: {
           acceptedAt: new Date(),
           status: ProjectInvitationStatus.ACCEPTED,
         },
-      }),
-    ]);
+      });
+    });
     return { accepted: true, projectId: invitation.projectId };
   }
 
@@ -483,8 +508,8 @@ export class ProjectsService {
     return this.applyOrQueue(id, ProjectChangeKind.ARCHIVE, input, user);
   }
 
-  reviewQueue() {
-    return this.prisma.projectChangeRequest.findMany({
+  async reviewQueue() {
+    const requests = await this.prisma.projectChangeRequest.findMany({
       where: { status: ProjectChangeStatus.NEEDS_REVIEW },
       include: {
         project: { include: { researchItem: true } },
@@ -492,6 +517,20 @@ export class ProjectsService {
       },
       orderBy: { submittedAt: 'asc' },
     });
+    return requests.map((request) => ({
+      ...request,
+      reviewIssues:
+        request.project.version !== request.baseVersion
+          ? [
+              {
+                code: 'STALE_PROJECT_CHANGE',
+                itemId: request.id,
+                message: 'The project changed after this request was submitted.',
+                tone: 'warning' as const,
+              },
+            ]
+          : [],
+    }));
   }
 
   async bulkReview(
@@ -524,14 +563,26 @@ export class ProjectsService {
     if (requests.length !== ids.length) {
       throw new NotFoundException('One or more project changes were not found');
     }
-    if (requests.some(({ status }) => status !== ProjectChangeStatus.NEEDS_REVIEW)) {
-      throw new ConflictException(
-        'One or more project changes are no longer awaiting review',
+    const unavailableRequests = requests.filter(
+      ({ status }) => status !== ProjectChangeStatus.NEEDS_REVIEW,
+    );
+    if (unavailableRequests.length) {
+      throw reviewConflict(
+        'Some selected project changes are no longer awaiting review. Reload the queue.',
+        unavailableRequests.map(({ id }) => ({
+          code: 'PROJECT_REVIEW_CHANGED',
+          itemId: id,
+          message: 'This project change is no longer awaiting review.',
+          tone: 'warning',
+        })),
       );
     }
 
     const reviewedAt = new Date();
     if (dto.status === ProjectChangeStatus.REJECTED) {
+      if (!reviewNote) {
+        throw new BadRequestException('A reviewer note is required');
+      }
       await this.prisma.$transaction(async (transaction) => {
         const updated = await transaction.projectChangeRequest.updateMany({
           where: { id: { in: ids }, status: ProjectChangeStatus.NEEDS_REVIEW },
@@ -543,15 +594,21 @@ export class ProjectsService {
           },
         });
         if (updated.count !== requests.length) {
-          throw new ConflictException(
-            'One or more project changes changed while the bulk review was being saved',
+          throw reviewConflict(
+            'Some project changes changed while the bulk review was being saved. Reload and retry.',
+            requests.map(({ id }) => ({
+              code: 'PROJECT_REVIEW_CHANGED',
+              itemId: id,
+              message: 'This project change may have changed while the decision was being saved.',
+              tone: 'warning',
+            })),
           );
         }
       });
       await this.notifications.createMany(
         requests.map((request) => ({
           actionUrl: `/workspace/projects/${request.projectId}`,
-          body: reviewNote!,
+          body: reviewNote,
           payload: { projectChangeRequestId: request.id },
           recipientId: request.submittedById,
           title: 'Project change rejected',
@@ -563,8 +620,20 @@ export class ProjectsService {
 
     const projectIds = requests.map(({ projectId }) => projectId);
     if (new Set(projectIds).size !== projectIds.length) {
-      throw new BadRequestException(
-        'Bulk approval can include only one pending change per project at a time',
+      const counts = new Map<string, number>();
+      for (const projectId of projectIds) {
+        counts.set(projectId, (counts.get(projectId) ?? 0) + 1);
+      }
+      throw reviewBadRequest(
+        'Select only one pending change per project when approving in bulk.',
+        requests
+          .filter(({ projectId }) => (counts.get(projectId) ?? 0) > 1)
+          .map(({ id }) => ({
+            code: 'MULTIPLE_CHANGES_FOR_PROJECT',
+            itemId: id,
+            message: 'Another selected change belongs to the same project.',
+            tone: 'warning',
+          })),
       );
     }
     const stale = requests.filter(
@@ -583,8 +652,14 @@ export class ProjectsService {
           status: ProjectChangeStatus.STALE,
         },
       });
-      throw new ConflictException(
-        'One or more selected project changes are stale; the queue was updated',
+      throw reviewConflict(
+        'Some selected project changes became stale because the project changed after submission.',
+        stale.map(({ id }) => ({
+          code: 'STALE_PROJECT_CHANGE',
+          itemId: id,
+          message: 'The project changed after this request was submitted.',
+          tone: 'warning',
+        })),
       );
     }
 
@@ -611,8 +686,19 @@ export class ProjectsService {
           (request) => versions.get(request.projectId) !== request.baseVersion,
         )
       ) {
-        throw new ConflictException(
-          'One or more projects changed while the bulk review was being saved',
+        throw reviewConflict(
+          'Some projects changed while the bulk review was being saved. Reload and retry.',
+          requests
+            .filter(
+              (request) =>
+                versions.get(request.projectId) !== request.baseVersion,
+            )
+            .map(({ id }) => ({
+              code: 'PROJECT_REVIEW_CHANGED',
+              itemId: id,
+              message: 'This project changed while the review was being saved.',
+              tone: 'warning',
+            })),
         );
       }
 
@@ -626,8 +712,14 @@ export class ProjectsService {
         },
       });
       if (claimed.count !== requests.length) {
-        throw new ConflictException(
-          'One or more project changes changed while the bulk review was being saved',
+        throw reviewConflict(
+          'Some project changes changed while the bulk review was being saved. Reload and retry.',
+          requests.map(({ id }) => ({
+            code: 'PROJECT_REVIEW_CHANGED',
+            itemId: id,
+            message: 'This project change may have changed while the decision was being saved.',
+            tone: 'warning',
+          })),
         );
       }
 
@@ -703,7 +795,15 @@ export class ProjectsService {
             status: ProjectChangeStatus.STALE,
           },
         });
-        throw new ConflictException('Project change is stale');
+        throw reviewConflict(
+          'This project change is stale because the project changed after submission.',
+          [{
+            code: 'STALE_PROJECT_CHANGE',
+            itemId: request.id,
+            message: 'The project changed after this request was submitted.',
+            tone: 'warning',
+          }],
+        );
       }
       await this.applyChange(
         request.projectId,
@@ -901,7 +1001,10 @@ export class ProjectsService {
         return (Array.isArray(payload.milestones) ? payload.milestones : []).map(
           (value, sortOrder) => {
             const milestone = asRecord(value);
-            const status = milestone.status as ProjectMilestoneStatus;
+            const status = requiredEnumValue<ProjectMilestoneStatus>(
+              milestone.status,
+              Object.values(ProjectMilestoneStatus),
+            );
             return {
               completedAt:
                 status === ProjectMilestoneStatus.COMPLETE ? now : null,
@@ -937,7 +1040,10 @@ export class ProjectsService {
     if (updateRequests.length) {
       const updates = updateRequests.map((request) => {
         const payload = asRecord(request.payload);
-        const status = payload.status as ProjectUpdateStatus;
+        const status = requiredEnumValue<ProjectUpdateStatus>(
+          payload.status,
+          Object.values(ProjectUpdateStatus),
+        );
         return {
           authorId: request.submittedById,
           body: requiredString(payload.body),
@@ -966,7 +1072,21 @@ export class ProjectsService {
       const memberRequests = teamRequests.flatMap((request) => {
         const payload = asRecord(request.payload);
         const personId = optionalString(payload.personId);
-        return personId ? [{ payload, personId, request }] : [];
+        if (!personId) return [];
+        return [
+          {
+            access: requiredEnumValue<ProjectAccess>(
+              payload.access,
+              Object.values(ProjectAccess),
+            ),
+            personId,
+            request,
+            role: requiredEnumValue<ProjectMemberRole>(
+              payload.role,
+              Object.values(ProjectMemberRole),
+            ),
+          },
+        ];
       });
       if (memberRequests.length) {
         const people = await transaction.person.findMany({
@@ -975,31 +1095,28 @@ export class ProjectsService {
           },
           include: { user: true },
         });
-        const peopleById = new Map(people.map((person) => [person.id, person]));
-        if (
-          memberRequests.some(({ personId }) => {
-            const person = peopleById.get(personId);
-            return (
-              !person?.user ||
-              !PROJECT_ACCOUNT_STATUSES.includes(person.user.status)
+        const userIdByPersonId = new Map<string, string>();
+        for (const { personId } of memberRequests) {
+          const user = people.find(({ id }) => id === personId)?.user;
+          if (!user || !PROJECT_ACCOUNT_STATUSES.includes(user.status)) {
+            throw new BadRequestException(
+              'Project members must have available registered accounts',
             );
-          })
-        ) {
-          throw new BadRequestException(
-            'Project members must have available registered accounts',
-          );
+          }
+          userIdByPersonId.set(personId, user.id);
         }
-        const membershipRows = memberRequests.map(({ payload, personId, request }) =>
-          Prisma.sql`(
-            ${randomUUID()}::uuid,
-            ${request.projectId}::uuid,
-            ${personId}::uuid,
-            ${requiredString(payload.role)}::"ProjectMemberRole",
-            ${requiredString(payload.access)}::"ProjectAccess",
-            'ACTIVE'::"ProjectMembershipStatus",
-            NOW(),
-            NOW()
-          )`,
+        const membershipRows = memberRequests.map(
+          ({ access, personId, request, role }) =>
+            Prisma.sql`(
+              ${randomUUID()}::uuid,
+              ${request.projectId}::uuid,
+              ${personId}::uuid,
+              ${role}::"ProjectMemberRole",
+              ${access}::"ProjectAccess",
+              'ACTIVE'::"ProjectMembershipStatus",
+              NOW(),
+              NOW()
+            )`,
         );
         await transaction.$executeRaw(
           Prisma.sql`
@@ -1040,7 +1157,7 @@ export class ProjectsService {
         );
         const memberRows = memberRequests.flatMap(({ personId, request }) => {
           const conversationId = conversationByProject.get(request.projectId);
-          const userId = peopleById.get(personId)?.user?.id;
+          const userId = userIdByPersonId.get(personId);
           return conversationId && userId
             ? [Prisma.sql`(${conversationId}::uuid, ${userId}::uuid, NOW())`]
             : [];
@@ -1059,14 +1176,22 @@ export class ProjectsService {
           );
         }
         await transaction.notification.createMany({
-          data: memberRequests.map(({ personId, request }) => ({
-            actionUrl: `/workspace/projects/${request.projectId}`,
-            body: 'You now have access to an AMIR Lab project workspace.',
-            payload: { projectId: request.projectId },
-            recipientId: peopleById.get(personId)!.user!.id,
-            title: 'Added to a project',
-            type: NotificationType.PROJECT_CHANGED,
-          })),
+          data: memberRequests.map(({ personId, request }) => {
+            const recipientId = userIdByPersonId.get(personId);
+            if (!recipientId) {
+              throw new BadRequestException(
+                'Project members must have available registered accounts',
+              );
+            }
+            return {
+              actionUrl: `/workspace/projects/${request.projectId}`,
+              body: 'You now have access to an AMIR Lab project workspace.',
+              payload: { projectId: request.projectId },
+              recipientId,
+              title: 'Added to a project',
+              type: NotificationType.PROJECT_CHANGED,
+            };
+          }),
         });
       }
 
@@ -1077,10 +1202,17 @@ export class ProjectsService {
         const token = randomBytes(32).toString('base64url');
         return [
           {
+            access: requiredEnumValue<ProjectAccess>(
+              payload.access,
+              Object.values(ProjectAccess),
+            ),
             email,
             id: randomUUID(),
-            payload,
             request,
+            role: requiredEnumValue<ProjectMemberRole>(
+              payload.role,
+              Object.values(ProjectMemberRole),
+            ),
             token,
             tokenHash: createHash('sha256').update(token).digest('hex'),
           },
@@ -1089,16 +1221,18 @@ export class ProjectsService {
       if (emailRequests.length) {
         const expiresAt = new Date(now.getTime() + 14 * DAY);
         await transaction.projectInvitation.createMany({
-          data: emailRequests.map(({ email, id, payload, request, tokenHash }) => ({
-            access: requiredString(payload.access) as ProjectAccess,
-            email,
-            expiresAt,
-            id,
-            invitedById: request.submittedById,
-            projectId: request.projectId,
-            role: requiredString(payload.role) as ProjectMemberRole,
-            tokenHash,
-          })),
+          data: emailRequests.map(
+            ({ access, email, id, request, role, tokenHash }) => ({
+              access,
+              email,
+              expiresAt,
+              id,
+              invitedById: request.submittedById,
+              projectId: request.projectId,
+              role,
+              tokenHash,
+            }),
+          ),
         });
         const accounts = await transaction.user.findMany({
           where: { email: { in: emailRequests.map(({ email }) => email) } },
@@ -1313,7 +1447,10 @@ export class ProjectsService {
             objective: optionalString(payload.objective),
             publicPageEnabled,
             startsAt: optionalDate(payload.startsAt),
-            status: payload.status as never,
+            status: requiredEnumValue<ProjectStatus>(
+              payload.status,
+              Object.values(ProjectStatus),
+            ),
             version: { increment: 1 },
             objectives: {
               deleteMany: {},
@@ -1357,7 +1494,10 @@ export class ProjectsService {
                     ? 0
                     : Number(milestone.progress),
               sortOrder,
-              status: milestone.status as never,
+              status: requiredEnumValue<ProjectMilestoneStatus>(
+                milestone.status,
+                Object.values(ProjectMilestoneStatus),
+              ),
               title: requiredString(milestone.title),
               weight: Number(milestone.weight),
             })),
@@ -1365,7 +1505,10 @@ export class ProjectsService {
         },
       });
     } else if (kind === ProjectChangeKind.UPDATE) {
-      const status = payload.status as ProjectUpdateStatus;
+      const status = requiredEnumValue<ProjectUpdateStatus>(
+        payload.status,
+        Object.values(ProjectUpdateStatus),
+      );
       result = await this.prisma.projectUpdate.create({
         data: {
           authorId: actorId,
@@ -1410,16 +1553,17 @@ export class ProjectsService {
       });
       shouldIncrementVersion = true;
     } else if (kind === ProjectChangeKind.ARCHIVE) {
-      result = await this.prisma.$transaction([
-        this.prisma.researchItem.update({
+      result = await this.prisma.$transaction(async (transaction) => {
+        const item = await transaction.researchItem.update({
           where: { id: projectId },
           data: { reviewStatus: ReviewStatus.ARCHIVED },
-        }),
-        this.prisma.project.update({
+        });
+        const project = await transaction.project.update({
           where: { researchItemId: projectId },
           data: { publicPageEnabled: false, version: { increment: 1 } },
-        }),
-      ]);
+        });
+        return [item, project];
+      });
     } else {
       throw new BadRequestException(`Unsupported project change: ${kind}`);
     }
@@ -1552,6 +1696,7 @@ export class ProjectsService {
           'Project members must have available registered accounts',
         );
       }
+      const invitedUser = invitedPerson.user;
       const conversation = await this.prisma.conversation.findFirst({
         where: { kind: ConversationKind.PROJECT, projectId },
         select: { id: true },
@@ -1560,15 +1705,27 @@ export class ProjectsService {
         const saved = await transaction.projectMembership.upsert({
           where: { projectId_personId: { projectId, personId } },
           create: {
-            access: payload.access as never,
+            access: requiredEnumValue<ProjectAccess>(
+              payload.access,
+              Object.values(ProjectAccess),
+            ),
             personId,
             projectId,
-            role: payload.role as never,
+            role: requiredEnumValue<ProjectMemberRole>(
+              payload.role,
+              Object.values(ProjectMemberRole),
+            ),
             status: ProjectMembershipStatus.ACTIVE,
           },
           update: {
-            access: payload.access as never,
-            role: payload.role as never,
+            access: requiredEnumValue<ProjectAccess>(
+              payload.access,
+              Object.values(ProjectAccess),
+            ),
+            role: requiredEnumValue<ProjectMemberRole>(
+              payload.role,
+              Object.values(ProjectMemberRole),
+            ),
             status: ProjectMembershipStatus.ACTIVE,
           },
         });
@@ -1577,19 +1734,19 @@ export class ProjectsService {
             where: {
               conversationId_userId: {
                 conversationId: conversation.id,
-                userId: invitedPerson.user!.id,
+                userId: invitedUser.id,
               },
             },
             create: {
               conversationId: conversation.id,
-              userId: invitedPerson.user!.id,
+              userId: invitedUser.id,
             },
             update: {},
           });
         }
         return saved;
       });
-      await this.notifications.create(invitedPerson.user.id, {
+      await this.notifications.create(invitedUser.id, {
         type: NotificationType.PROJECT_CHANGED,
         title: 'Added to a project',
         body: 'You now have access to an AMIR Lab project workspace.',
@@ -1603,12 +1760,18 @@ export class ProjectsService {
     const token = randomBytes(32).toString('base64url');
     const invitation = await this.prisma.projectInvitation.create({
       data: {
-        access: payload.access as never,
+        access: requiredEnumValue<ProjectAccess>(
+          payload.access,
+          Object.values(ProjectAccess),
+        ),
         email,
         expiresAt: new Date(Date.now() + 14 * DAY),
         invitedById: actorId,
         projectId,
-        role: payload.role as never,
+        role: requiredEnumValue<ProjectMemberRole>(
+          payload.role,
+          Object.values(ProjectMemberRole),
+        ),
         tokenHash: createHash('sha256').update(token).digest('hex'),
       },
       include: { project: { include: { researchItem: true } } },
@@ -1708,8 +1871,25 @@ function optionalString(value: unknown): string | null {
   return typeof value === 'string' && value.trim() ? value.trim() : null;
 }
 
+function requiredEnumValue<T extends string>(
+  value: unknown,
+  allowed: readonly T[],
+): T {
+  const candidate = requiredString(value);
+  const match = allowed.find((item) => item === candidate);
+  if (!match) {
+    throw new BadRequestException('Project change contains an invalid value');
+  }
+  return match;
+}
+
 function optionalDate(value: unknown): Date | null {
-  return typeof value === 'string' && value ? new Date(value) : null;
+  if (typeof value !== 'string' || !value) return null;
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    throw new BadRequestException('Project change contains an invalid date');
+  }
+  return date;
 }
 
 function projectSlug(title: string): string {

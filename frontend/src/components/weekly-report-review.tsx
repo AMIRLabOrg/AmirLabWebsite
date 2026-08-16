@@ -20,7 +20,7 @@ import {
   WorkspaceSplit,
   WorkspaceSurface,
 } from "@/components/ui/workspace-surface";
-import { apiRequest } from "@/lib/client-api";
+import { ApiRequestError, apiRequest } from "@/lib/client-api";
 import {
   reportStatusLabel,
   reportWeek,
@@ -28,6 +28,9 @@ import {
   type WeeklyReportStatus,
 } from "@/lib/weekly-reports";
 import { statusTone } from "./weekly-reports";
+import { useReviewIssues } from "@/lib/use-review-issues";
+import { ReviewIssueStamp, SemanticStatus } from "@/components/ui/semantic-status";
+import { useNotifications } from "@/components/notification-provider";
 
 const filters = [
   { label: "Awaiting review", value: "SUBMITTED" },
@@ -36,6 +39,7 @@ const filters = [
 ];
 
 export function WeeklyReportReview() {
+  const { showToast } = useNotifications();
   const [reports, setReports] = useState<WeeklyReport[]>();
   const [filter, setFilter] = useState<WeeklyReportStatus>("SUBMITTED");
   const [selectedId, setSelectedId] = useState<string>();
@@ -43,6 +47,7 @@ export function WeeklyReportReview() {
   const [error, setError] = useState("");
   const [working, setWorking] = useState(false);
   const [reload, setReload] = useState(0);
+  const reviewIssues = useReviewIssues();
 
   useEffect(() => {
     let active = true;
@@ -65,7 +70,8 @@ export function WeeklyReportReview() {
   const selected = reports?.find(({ id }) => id === selectedId);
   const bulk = useBulkSelection(visible.map(({ id }) => id));
   const selectedReports = visible.filter(({ id }) => bulk.isSelected(id));
-  const commonBulkActions = selectedReports.length && selectedReports.every(({ status }) => status === "SUBMITTED")
+  const selectedAttentionCount = selectedReports.filter(({ id }) => reviewIssues.forItem(id).length > 0).length;
+  const commonBulkActions = selectedReports.length && selectedReports.every(({ id, status }) => status === "SUBMITTED" && reviewIssues.forItem(id).length === 0)
     ? [
         {
           confirmDescription: `Return the ${selectedReports.length} selected weekly report${selectedReports.length === 1 ? "" : "s"} for changes with the same supervisor note.`,
@@ -130,8 +136,12 @@ export function WeeklyReportReview() {
       setFilter(status);
       setNote("");
       setError("");
+      reviewIssues.clearOne(selected.id);
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : "The review decision could not be saved.");
+      const requestError = caught instanceof ApiRequestError ? caught : undefined;
+      if (requestError?.issues.length) reviewIssues.capture(requestError);
+      else reviewIssues.setOne(selected.id, { code: "WEEKLY_REVIEW_FAILED", message: "This weekly report decision could not be saved.", tone: "error" });
+      showToast({ body: requestError?.message ?? "The weekly report decision could not be saved.", title: "Weekly report review was not saved", tone: "error" });
     } finally {
       setWorking(false);
     }
@@ -169,10 +179,13 @@ export function WeeklyReportReview() {
 
       <BulkReviewBar
         actions={commonBulkActions}
+        attentionCount={selectedAttentionCount}
         loading={!reports || working}
         onClear={bulk.clear}
         onSelectAll={bulk.toggleAll}
+        onError={reviewIssues.capture}
         onSubmit={reviewBulk}
+        onSuccess={reviewIssues.clear}
         selectAllState={bulk.selectAllState}
         selectableCount={visible.length}
         selectedCount={bulk.selectedCount}
@@ -181,14 +194,16 @@ export function WeeklyReportReview() {
       />
 
       <WorkspaceSplit>
-        <WorkspacePanel description="Select a report to inspect its evidence and plan." eyebrow="Queue" title={filters.find(({ value }) => value === filter)?.label ?? "Reports"}>
+        <div className="sticky top-[88px] max-h-[calc(100svh-104px)] min-w-0 overflow-y-auto [scrollbar-color:var(--ink-faint)_transparent] [scrollbar-width:thin] max-[900px]:static max-[900px]:max-h-none">
+          <WorkspacePanel description="Select a report to inspect its evidence and plan." eyebrow="Queue" title={filters.find(({ value }) => value === filter)?.label ?? "Reports"}>
           <div
             aria-busy={!reports}
             className="grid"
             data-loading={!reports || undefined}
           >
             {(reports ? visible : Array.from({ length: 3 }, () => undefined)).map((report, index) => (
-              <div className="grid grid-cols-[auto_minmax(0,1fr)] items-stretch border-b border-line last:border-b-0" key={report?.id ?? `weekly-review-loading-${index}`}>
+              <div className="relative grid grid-cols-[auto_minmax(0,1fr)] items-stretch border-b border-line last:border-b-0" key={report?.id ?? `weekly-review-loading-${index}`}>
+                {report ? <ReviewIssueStamp className="right-2 top-2" issue={reviewIssues.forItem(report.id)[0]} /> : null}
                 <div className="grid place-items-center px-4">
                   {report ? (
                     <CheckboxControl
@@ -202,7 +217,7 @@ export function WeeklyReportReview() {
                 </div>
                 <ButtonControl
                   aria-pressed={Boolean(report && selectedId === report.id)}
-                  className="min-h-[74px] w-full justify-between rounded-none border-0 px-5 py-4 text-left hover:bg-brand-faint aria-pressed:bg-brand-faint aria-pressed:text-ink"
+                  className="min-h-[74px] w-full justify-between rounded-none border-0 px-5 py-4 pr-10 text-left hover:bg-brand-faint aria-pressed:bg-brand-faint aria-pressed:text-ink"
                   loading={!report}
                   onClick={report ? () => {
                     setSelectedId(report.id);
@@ -213,6 +228,9 @@ export function WeeklyReportReview() {
                   <span className="grid gap-1">
                     <strong className={loadingPlaceholder(!report, "text", "long")} data-placeholder={!report ? "text" : undefined} data-placeholder-width="long">{report?.author.person?.fullName ?? report?.author.email ?? "Researcher name"}</strong>
                     <small className={cn("text-[.7rem] text-ink-muted", loadingPlaceholder(!report, "label", "medium"))} data-placeholder={!report ? "label" : undefined} data-placeholder-width="medium">{report ? reportWeek(report.weekStart) : "Reporting week"}</small>
+                    {report && reviewIssues.forItem(report.id)[0] ? (
+                      <SemanticStatus tone={reviewIssues.forItem(report.id)[0].tone ?? "warning"}>{reviewIssues.forItem(report.id)[0].message}</SemanticStatus>
+                    ) : null}
                   </span>
                   <Badge loading={!report} tone={report ? statusTone(report.status) : "neutral"}>{report ? reportStatusLabel(report.status) : "Submitted"}</Badge>
                 </ButtonControl>
@@ -222,9 +240,11 @@ export function WeeklyReportReview() {
               <WorkspaceEmpty>No reports match this review state.</WorkspaceEmpty>
             ) : null}
           </div>
-        </WorkspacePanel>
+          </WorkspacePanel>
+        </div>
 
-        <WorkspacePanel description="Review outcomes and blockers in the context of the projects covered." eyebrow="Report detail" title={selected ? selected.author.person?.fullName ?? selected.author.email ?? "Weekly report" : "Select a report"}>
+        <div className="sticky top-[88px] max-h-[calc(100svh-104px)] min-w-0 overflow-y-auto [scrollbar-color:var(--ink-faint)_transparent] [scrollbar-width:thin] max-[900px]:static max-[900px]:max-h-none">
+          <WorkspacePanel description="Review outcomes and blockers in the context of the projects covered." eyebrow="Report detail" title={selected ? selected.author.person?.fullName ?? selected.author.email ?? "Weekly report" : "Select a report"}>
           {!reports || selected ? (
             <div className="grid gap-0" data-loading={!reports || undefined}>
               <ReportSection label="Projects" loading={!reports} value={selected ? selected.projects.map(({ project }) => project.researchItem.title ?? "Untitled project").join(" · ") : "Linked research projects"} />
@@ -240,6 +260,13 @@ export function WeeklyReportReview() {
               <ReportSection label="Completed work and evidence" loading={!reports} value={selected?.accomplishments ?? "Research outcomes and evidence from the reporting week."} />
               <ReportSection label="Blockers and decisions needed" loading={!reports} value={selected ? selected.blockers || "No blockers reported." : "Constraints and decisions that need supervisor attention."} />
               <ReportSection label="Plan for next week" loading={!reports} value={selected?.nextWeekPlan ?? "Expected research outcomes for the next reporting week."} />
+              {selected && reviewIssues.forItem(selected.id)[0] ? (
+                <div className="border-t border-line px-6 py-4 max-[640px]:p-5">
+                  <SemanticStatus tone={reviewIssues.forItem(selected.id)[0].tone ?? "warning"}>
+                    {reviewIssues.forItem(selected.id)[0].message}
+                  </SemanticStatus>
+                </div>
+              ) : null}
               {selected?.status === "SUBMITTED" ? (
                 <div className="grid gap-4 border-t border-line px-6 py-5 max-[640px]:p-5">
                   <FormField htmlFor="weekly-review-note" label="Supervisor note" labelClassName="text-[.78rem] font-semibold tracking-[.04em]">
@@ -251,10 +278,10 @@ export function WeeklyReportReview() {
                     />
                   </FormField>
                   <div className="flex flex-wrap justify-end gap-3 max-[640px]:grid max-[640px]:grid-cols-1">
-                    <ButtonControl disabled={working} onClick={() => void review("CHANGES_REQUESTED")} variant="secondary">
+                    <ButtonControl disabled={working || Boolean(selected && reviewIssues.forItem(selected.id).length)} onClick={() => void review("CHANGES_REQUESTED")} variant="secondary">
                       <RotateCcw aria-hidden="true" size={16} /> Request changes
                     </ButtonControl>
-                    <ButtonControl disabled={working} onClick={() => void review("REVIEWED")} variant="primary">
+                    <ButtonControl disabled={working || Boolean(selected && reviewIssues.forItem(selected.id).length)} onClick={() => void review("REVIEWED")} variant="primary">
                       <CheckCircle2 aria-hidden="true" size={16} /> Mark reviewed
                     </ButtonControl>
                   </div>
@@ -266,7 +293,8 @@ export function WeeklyReportReview() {
           ) : (
             <WorkspaceEmpty>Select a report from the queue.</WorkspaceEmpty>
           )}
-        </WorkspacePanel>
+          </WorkspacePanel>
+        </div>
       </WorkspaceSplit>
     </WorkspaceSurface>
   );

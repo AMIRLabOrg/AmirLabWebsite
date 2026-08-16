@@ -16,7 +16,7 @@ export const metadata: Metadata = {
     template: "%s · AmirLab",
   },
   description:
-    "Applied Machine Intelligence Research Lab people, papers, datasets, projects, and opportunities.",
+    "Advanced Machine Intelligence Research Lab people, publications, datasets, projects, and opportunities.",
 };
 
 export default function RootLayout({

@@ -4,8 +4,10 @@ import { cn } from "@/lib/cn";
 import { loadingPlaceholder } from "@/lib/loading-style";
 import { FormEvent, useCallback, useEffect, useState } from "react";
 import { ExternalLink, Link2, Search } from "lucide-react";
-import { apiRequest } from "@/lib/client-api";
+import { ApiRequestError, apiRequest } from "@/lib/client-api";
 import { Badge } from "@/components/ui/badge";
+import { ReviewIssueStamp, SemanticStatus } from "@/components/ui/semantic-status";
+import { useReviewIssues } from "@/lib/use-review-issues";
 import { InputControl } from "@/components/ui/form-controls";
 import { FormField } from "@/components/ui/form-field";
 import { ButtonControl, ButtonLink } from "@/components/ui/button-control";
@@ -64,6 +66,7 @@ export function ResearchConnectionsPanel() {
   const [claiming, setClaiming] = useState<string>();
   const [searching, setSearching] = useState(false);
   const [error, setError] = useState<string>();
+  const claimIssues = useReviewIssues();
 
   const load = useCallback(async () => {
     if (staff) return;
@@ -73,16 +76,14 @@ export function ResearchConnectionsPanel() {
           method: "GET",
         }),
       );
+      setError(undefined);
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "Unable to load connections.");
     }
   }, [staff]);
 
   useEffect(() => {
-    if (staff) {
-      setOverview({ connections: [], requests: [] });
-      return;
-    }
+    if (staff) return;
     let active = true;
     void apiRequest<ConnectionOverview>("/research-connections/mine", {
       method: "GET",
@@ -125,7 +126,7 @@ export function ResearchConnectionsPanel() {
   async function claim(itemId: string, sortOrder: number) {
     const key = `${itemId}:${sortOrder}`;
     setClaiming(key);
-    setError(undefined);
+    claimIssues.clearOne(key);
     try {
       await apiRequest(`/research/${itemId}/contributors/${sortOrder}/claim`, {
         body: JSON.stringify({ evidenceUrl: evidenceUrl || undefined }),
@@ -138,17 +139,25 @@ export function ResearchConnectionsPanel() {
       });
       await load();
     } catch (caught) {
-      const message = caught instanceof Error ? caught.message : "Claim failed.";
-      setError(message);
+      const message =
+        caught instanceof ApiRequestError
+          ? caught.message
+          : "The connection request could not be sent.";
+      claimIssues.setOne(key, {
+        code: caught instanceof ApiRequestError ? caught.code ?? "CLAIM_FAILED" : "CLAIM_FAILED",
+        message,
+        tone: "error",
+      });
       showToast({ body: message, title: "Connection request was not sent", tone: "error" });
     } finally {
       setClaiming(undefined);
     }
   }
 
-  const loading = !overview;
-  const pending = (overview?.requests ?? []).filter(({ status }) => status === "PROPOSED");
-  const connections = (overview?.connections ?? []).filter(outputOnly);
+  const visibleOverview = staff ? { connections: [], requests: [] } : overview;
+  const loading = !staff && !overview;
+  const pending = (visibleOverview?.requests ?? []).filter(({ status }) => status === "PROPOSED");
+  const connections = (visibleOverview?.connections ?? []).filter(outputOnly);
   const outputRequests = pending.filter((request) => outputOnly(request.contributor));
   const outputResults = results.filter(outputOnly);
   if (!authLoading && staff) {
@@ -183,7 +192,7 @@ export function ResearchConnectionsPanel() {
             return (
             <article className="flex items-center justify-between gap-4 border-b border-line py-4 max-[640px]:flex-col max-[640px]:items-start" key={researchItem ? `${researchItem.id}:${displayName}` : `connection-loading-${index}`}>
               <div className="grid grid-cols-[auto_1fr] items-center gap-x-4 gap-y-[.3rem]">
-                <Badge dot loading={loading} tone="field">Verified</Badge>
+                <Badge dot loading={loading} tone="success">Verified</Badge>
                 <strong className={cn("col-start-2", loadingPlaceholder(loading, "text", "long"))} data-placeholder="text" data-placeholder-width="long">{researchItem?.title ?? "Loading research output"}</strong>
                 <small className={cn("col-start-2 text-ink-muted", loadingPlaceholder(loading, "label", "medium"))} data-placeholder="label" data-placeholder-width="medium">{researchItem ? `${researchItem.type.toLowerCase()} · linked as ${displayName}` : "Loading relationship"}</small>
               </div>
@@ -200,11 +209,11 @@ export function ResearchConnectionsPanel() {
       )}
 
       {outputRequests.length ? (
-        <div className="grid gap-3 border-l-[3px] border-gold bg-gold-soft p-4">
+        <div className="grid gap-3 border-l-[3px] border-warning bg-warning-soft p-4">
           <h3 className="font-serif text-[1.05rem]">Awaiting verification</h3>
           {outputRequests.map((request) => (
             <div className="grid grid-cols-[auto_1fr] items-center gap-x-[.65rem] gap-y-1" key={request.id}>
-              <Badge dot tone="gold">Proposed</Badge>
+              <Badge dot tone="warning">Proposed</Badge>
               <p className="m-0">{request.contributor.researchItem.title ?? "Untitled research output"}</p>
               <small className="col-start-2 m-0 text-ink-muted">
                 {request.source === "SOURCE_METADATA"
@@ -261,10 +270,18 @@ export function ResearchConnectionsPanel() {
                 {item.contributors.map((contributor) => {
                   const key = `${item.id}:${contributor.sortOrder}`;
                   return (
-                    <div className="flex items-center justify-between gap-4 border-t border-line py-[.65rem] max-[640px]:flex-col max-[640px]:items-stretch" key={key}>
-                      <span>{contributor.displayName}</span>
+                    <div className="relative flex items-center justify-between gap-4 border-t border-line py-[.65rem] pr-10 max-[640px]:flex-col max-[640px]:items-stretch" key={key}>
+                      <ReviewIssueStamp issue={claimIssues.forItem(key)[0]} />
+                      <div className="grid gap-1">
+                        <span>{contributor.displayName}</span>
+                        {claimIssues.forItem(key)[0] ? (
+                          <SemanticStatus tone={claimIssues.forItem(key)[0].tone}>
+                            {claimIssues.forItem(key)[0].message}
+                          </SemanticStatus>
+                        ) : null}
+                      </div>
                       {contributor.personId ? (
-                        <small className="text-ink-muted">Already linked</small>
+                        <SemanticStatus tone="success">Already linked</SemanticStatus>
                       ) : (
                         <ButtonControl compact disabled={claiming === key} onClick={() => void claim(item.id, contributor.sortOrder)} variant="secondary">
                           <Link2 aria-hidden="true" size={14} />

@@ -1,8 +1,11 @@
 import { BadRequestException } from '@nestjs/common';
 import {
+  AccountStatus,
   PlatformRole,
   ResearchProgramStatus,
 } from '../../generated/prisma/client';
+import { PrismaService } from '../database/prisma.service';
+import { resolveService } from '../../test/resolve-service';
 import { ResearchProgramsService } from './research-programs.service';
 
 describe('ResearchProgramsService', () => {
@@ -23,7 +26,7 @@ describe('ResearchProgramsService', () => {
     id: '11111111-1111-4111-8111-111111111111',
     email: 'admin@amirl.local',
     role: PlatformRole.ADMIN,
-    status: 'ACTIVE' as never,
+    status: AccountStatus.ACTIVE,
     person: null,
   };
   const dto = {
@@ -47,7 +50,9 @@ describe('ResearchProgramsService', () => {
 
   it('keeps archived programs out of the active registry', async () => {
     prisma.researchProgram.findMany.mockResolvedValue([]);
-    const service = new ResearchProgramsService(prisma as never);
+    const service = await resolveService(ResearchProgramsService, [
+      { provide: PrismaService, useValue: prisma },
+    ]);
 
     await service.list();
 
@@ -68,7 +73,9 @@ describe('ResearchProgramsService', () => {
       .mockResolvedValueOnce(null)
       .mockResolvedValueOnce({ id: 'program', items: [], departments: [] });
     prisma.researchProgram.create.mockResolvedValue({ id: 'program' });
-    const service = new ResearchProgramsService(prisma as never);
+    const service = await resolveService(ResearchProgramsService, [
+      { provide: PrismaService, useValue: prisma },
+    ]);
 
     await service.create(dto, user);
 
@@ -93,7 +100,9 @@ describe('ResearchProgramsService', () => {
       .mockResolvedValueOnce(0)
       .mockResolvedValueOnce(1);
     prisma.person.findFirst.mockResolvedValue({ id: dto.leadPersonId });
-    const service = new ResearchProgramsService(prisma as never);
+    const service = await resolveService(ResearchProgramsService, [
+      { provide: PrismaService, useValue: prisma },
+    ]);
 
     await expect(service.create(dto, user)).rejects.toBeInstanceOf(
       BadRequestException,

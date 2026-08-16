@@ -15,6 +15,7 @@ import {
 import type { AuthenticatedUser } from '../auth/auth.types';
 import { PrismaService } from '../database/prisma.service';
 import { NotificationsService } from '../notifications/notifications.service';
+import { reviewConflict } from '../common/review-problem';
 import { accessibleProjectWhere } from '../projects/project-access';
 import type {
   BulkReviewWeeklyReportsDto,
@@ -304,9 +305,18 @@ export class WeeklyReportsService {
     if (reports.length !== ids.length) {
       throw new NotFoundException('One or more weekly reports were not found');
     }
-    if (reports.some(({ status }) => status !== WeeklyReportStatus.SUBMITTED)) {
-      throw new ConflictException(
-        'Only submitted weekly reports can be reviewed in bulk',
+    const unavailableReports = reports.filter(
+      ({ status }) => status !== WeeklyReportStatus.SUBMITTED,
+    );
+    if (unavailableReports.length) {
+      throw reviewConflict(
+        'Some selected weekly reports are no longer awaiting review. Reload the queue.',
+        unavailableReports.map(({ id }) => ({
+          code: 'WEEKLY_REPORT_CHANGED',
+          itemId: id,
+          message: 'This weekly report is no longer awaiting review.',
+          tone: 'warning',
+        })),
       );
     }
 
@@ -325,8 +335,14 @@ export class WeeklyReportsService {
         },
       });
       if (updated.count !== ids.length) {
-        throw new ConflictException(
-          'One or more weekly reports changed while the bulk review was being saved',
+        throw reviewConflict(
+          'Some weekly reports changed while the bulk review was being saved. Reload and retry.',
+          reports.map(({ id }) => ({
+            code: 'WEEKLY_REPORT_CHANGED',
+            itemId: id,
+            message: 'This weekly report may have changed while the decision was being saved.',
+            tone: 'warning',
+          })),
         );
       }
       await transaction.auditRecord.createMany({
@@ -369,8 +385,14 @@ export class WeeklyReportsService {
     });
     if (!report) throw new NotFoundException('Weekly report not found');
     if (report.status !== WeeklyReportStatus.SUBMITTED) {
-      throw new ConflictException(
-        'Only submitted weekly reports can be reviewed',
+      throw reviewConflict(
+        'This weekly report is no longer awaiting review.',
+        [{
+          code: 'WEEKLY_REPORT_CHANGED',
+          itemId: id,
+          message: 'This weekly report is no longer awaiting review.',
+          tone: 'warning',
+        }],
       );
     }
     if (

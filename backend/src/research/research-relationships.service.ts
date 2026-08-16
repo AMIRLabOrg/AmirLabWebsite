@@ -20,6 +20,7 @@ import type {
   LinkContributorDto,
   ReviewContributorMatchDto,
 } from './dto/contributor-match.dto';
+import { ResearchProfileSyncService } from './research-profile-sync.service';
 import { ResearchService } from './research.service';
 
 const MATCH_INCLUDE = {
@@ -33,12 +34,13 @@ export class ResearchRelationshipsService {
   constructor(
     private readonly notifications: NotificationsService,
     private readonly prisma: PrismaService,
+    private readonly profileSync: ResearchProfileSyncService,
     private readonly research: ResearchService,
   ) {}
 
   async mine(user: AuthenticatedUser) {
     if (!user.person) throw new NotFoundException('Profile not found');
-    const [connections, requests] = await this.prisma.$transaction([
+    const [connections, requests] = await Promise.all([
       this.prisma.researchContributor.findMany({
         where: { personId: user.person.id },
         include: {
@@ -101,7 +103,7 @@ export class ResearchRelationshipsService {
       },
       select: { id: true, fullName: true, slug: true },
       orderBy: { fullName: 'asc' },
-      take: 100,
+      take: 250,
     });
   }
 
@@ -112,8 +114,9 @@ export class ResearchRelationshipsService {
     user: AuthenticatedUser,
   ) {
     if (!user.person) throw new NotFoundException('Profile not found');
+    const claimant = user.person;
     const contributor = await this.contributor(researchItemId, sortOrder);
-    if (contributor.personId && contributor.personId !== user.person.id) {
+    if (contributor.personId && contributor.personId !== claimant.id) {
       throw new ConflictException('This contributor is already verified');
     }
     const match = await this.prisma.$transaction(async (transaction) => {
@@ -121,7 +124,7 @@ export class ResearchRelationshipsService {
         where: {
           researchItemId_contributorSortOrder_personId: {
             contributorSortOrder: sortOrder,
-            personId: user.person!.id,
+            personId: claimant.id,
             researchItemId,
           },
         },
@@ -132,7 +135,7 @@ export class ResearchRelationshipsService {
             ...(dto.evidenceUrl ? { evidenceUrl: dto.evidenceUrl } : {}),
             ...(dto.note ? { note: dto.note } : {}),
           },
-          personId: user.person!.id,
+          personId: claimant.id,
           requestedById: user.id,
           researchItemId,
           source: ContributorMatchSource.USER_CLAIM,
@@ -165,7 +168,9 @@ export class ResearchRelationshipsService {
     await this.notifications.notifyReviewers({
       type: NotificationType.RELATION_REVIEW_NEEDED,
       title: 'Authorship claim needs verification',
-      body: `${user.person.fullName} claimed ${contributor.displayName} on ${contributor.researchItem.title ?? 'a research output'}.`,
+      body: `${claimant.fullName} claimed ${contributor.displayName} on ${
+        contributor.researchItem.title ?? 'a research output'
+      }.`,
       actionUrl: `/workspace/research/${researchItemId}`,
       payload: { contributorMatchId: match.id, researchItemId },
     });
@@ -180,7 +185,9 @@ export class ResearchRelationshipsService {
   ) {
     const [contributor, person] = await Promise.all([
       this.contributor(researchItemId, sortOrder),
-      this.prisma.person.findUnique({ where: { id: dto.personId } }),
+      this.prisma.person.findFirst({
+        where: { id: dto.personId, userId: { not: null } },
+      }),
     ]);
     if (!person) throw new NotFoundException('Person not found');
     const match = await this.prisma.$transaction(async (transaction) => {
@@ -239,6 +246,11 @@ export class ResearchRelationshipsService {
           details: { personId: person.id, researchItemId, sortOrder },
         },
       });
+      await this.profileSync.normalizePublishedOutputs(
+        [researchItemId],
+        reviewer.id,
+        transaction,
+      );
       return result;
     });
     await this.recalculateIfPublished(contributor, person.id, reviewer.id);
@@ -268,8 +280,12 @@ export class ResearchRelationshipsService {
     }
     const reviewNote =
       dto.status === ContributorMatchStatus.REJECTED ? dto.note?.trim() : undefined;
-    if (dto.status === ContributorMatchStatus.REJECTED && !reviewNote) {
-      throw new BadRequestException('A reviewer note is required');
+    if (
+      dto.status === ContributorMatchStatus.REJECTED &&
+      match.source === ContributorMatchSource.USER_CLAIM &&
+      !reviewNote
+    ) {
+      throw new BadRequestException('A reviewer note is required for a member claim');
     }
 
     await this.prisma.$transaction(async (transaction) => {
@@ -310,6 +326,11 @@ export class ResearchRelationshipsService {
           },
           data: { personId: match.personId },
         });
+        await this.profileSync.normalizePublishedOutputs(
+          [match.researchItemId],
+          reviewer.id,
+          transaction,
+        );
       }
       await transaction.auditRecord.create({
         data: {

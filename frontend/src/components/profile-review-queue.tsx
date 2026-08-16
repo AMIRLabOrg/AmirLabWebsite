@@ -4,7 +4,7 @@ import { cn } from "@/lib/cn";
 import { loadingPlaceholder } from "@/lib/loading-style";
 import { useRouter } from "next/navigation";
 import { useDeferredValue, useEffect, useState } from "react";
-import { apiRequest } from "@/lib/client-api";
+import { ApiRequestError, apiRequest } from "@/lib/client-api";
 import type { PaginatedResponse, ProfileEditRequest } from "@/lib/types";
 import { profileValuesEqual } from "@/lib/profile-changes";
 import { PaginationControls } from "@/components/pagination-controls";
@@ -18,6 +18,8 @@ import { CheckboxControl } from "@/components/ui/checkbox-control";
 import { BulkReviewBar } from "@/components/bulk-review-bar";
 import { useBulkSelection } from "@/lib/use-bulk-selection";
 import { useNotifications } from "@/components/notification-provider";
+import { ReviewIssueStamp, SemanticStatus } from "@/components/ui/semantic-status";
+import type { ReviewIssue } from "@/lib/review-issues";
 
 export function ProfileReviewQueue() {
   const router = useRouter();
@@ -31,12 +33,13 @@ export function ProfileReviewQueue() {
   const [error, setError] = useState<string>();
   const [loading, setLoading] = useState(true);
   const [reload, setReload] = useState(0);
+  const [actionIssues, setActionIssues] = useState<Record<string, ReviewIssue[]>>({});
 
   useEffect(() => {
     let active = true;
     const params = new URLSearchParams({
       page: String(page),
-      pageSize: "20",
+      pageSize: "10",
       sort,
     });
     if (deferredSearch.trim()) params.set("search", deferredSearch.trim());
@@ -47,6 +50,7 @@ export function ProfileReviewQueue() {
       .then((response) => {
         if (!active) return;
         setResult(response);
+        setActionIssues({});
         setError(undefined);
       })
       .catch((caught: unknown) => {
@@ -66,8 +70,17 @@ export function ProfileReviewQueue() {
 
   const bulk = useBulkSelection((result?.items ?? []).map(({ id }) => id));
   const selectedRequests = (result?.items ?? []).filter(({ id }) => bulk.isSelected(id));
+  const issuesFor = (request: ProfileEditRequest) => [
+    ...(request.reviewIssues ?? []),
+    ...(actionIssues[request.id] ?? []),
+  ];
+  const selectedAttentionCount = selectedRequests.filter((request) => issuesFor(request).length > 0).length;
+  const selectedCanApprove = selectedRequests.every(
+    (request) => !issuesFor(request).some(({ tone }) => (tone ?? "error") === "error"),
+  );
   const commonBulkActions = selectedRequests.length && selectedRequests.every(({ status }) => status === "NEEDS_REVIEW")
     ? [
+        ...(selectedCanApprove ? [
         {
           confirmDescription: `Approve the ${selectedRequests.length} selected profile change request${selectedRequests.length === 1 ? "" : "s"}. Each request is guarded by its current revision.`,
           confirmLabel: "Approve selected",
@@ -75,7 +88,7 @@ export function ProfileReviewQueue() {
           label: "Approve selected",
           status: "APPROVED" as const,
           tone: "primary" as const,
-        },
+        }] : []),
         {
           confirmDescription: `Reject the ${selectedRequests.length} selected profile change request${selectedRequests.length === 1 ? "" : "s"} with the same reviewer note.`,
           confirmLabel: "Reject selected",
@@ -88,6 +101,24 @@ export function ProfileReviewQueue() {
         },
       ]
     : [];
+
+  function captureReviewError(error: ApiRequestError) {
+    if (!error.issues.length) return;
+    setActionIssues((current) => {
+      const next = { ...current };
+      const grouped = new Map<string, ReviewIssue[]>();
+      for (const issue of error.issues) {
+        if (!issue.itemId) continue;
+        grouped.set(issue.itemId, [...(grouped.get(issue.itemId) ?? []), issue]);
+      }
+      for (const [itemId, issues] of grouped) next[itemId] = issues;
+      return next;
+    });
+  }
+
+  function clearActionIssues() {
+    setActionIssues({});
+  }
 
   async function decideBulk({ note, status }: { note?: string; status: "APPROVED" | "REJECTED" }) {
     if (!selectedRequests.length) return;
@@ -126,7 +157,7 @@ export function ProfileReviewQueue() {
             setSearch(event.target.value);
             setPage(1);
           }}
-          placeholder="Name or public email"
+          placeholder="Name or submitted email"
           value={search}
         />
         <FormField htmlFor="profile-review-sort" label="Sort">
@@ -153,10 +184,13 @@ export function ProfileReviewQueue() {
       {loading || result?.items.length ? (
         <BulkReviewBar
           actions={commonBulkActions}
+          attentionCount={selectedAttentionCount}
           loading={loading}
           onClear={bulk.clear}
           onSelectAll={bulk.toggleAll}
+          onError={captureReviewError}
           onSubmit={decideBulk}
+          onSuccess={clearActionIssues}
           selectAllState={bulk.selectAllState}
           selectableCount={result?.items.length ?? 0}
           selectedCount={bulk.selectedCount}
@@ -189,6 +223,7 @@ export function ProfileReviewQueue() {
                   <DataTableHeadCell>Member</DataTableHeadCell>
                   <DataTableHeadCell>Changed fields</DataTableHeadCell>
                   <DataTableHeadCell>Submitted</DataTableHeadCell>
+                  <DataTableHeadCell className="w-[48px]"><span className="sr-only">Attention</span></DataTableHeadCell>
                 </tr>
               </thead>
               <tbody>
@@ -222,16 +257,37 @@ export function ProfileReviewQueue() {
                       ) : <span className={loadingPlaceholder(true, "control")} data-placeholder="control" />}
                     </DataTableCell>
                     <DataTableCell>
-                      <strong className={cn("block", loadingPlaceholder(!request, "text", "long"))} data-placeholder="text" data-placeholder-width="long">{request?.person.fullName ?? "Loading member"}</strong>
-                      <span className={cn("mt-[.2rem] block text-[.72rem] text-ink-muted", loadingPlaceholder(!request, "label", "medium"))} data-placeholder="label" data-placeholder-width="medium">
-                        {request ? request.person.publicEmail?.trim() || "No public email" : "Loading public email"}
-                      </span>
+                      <strong className={cn("block", loadingPlaceholder(loading, "text", "long"))} data-placeholder="text" data-placeholder-width="long">{request?.person.fullName ?? "Loading member"}</strong>
+                      <div className="mt-[.28rem] flex min-h-5 flex-wrap items-center gap-2 text-[.72rem]">
+                        {!request ? (
+                          <span className={loadingPlaceholder(true, "label", "medium")} data-placeholder="label" data-placeholder-width="medium">Loading submitted email</span>
+                        ) : profileEmailIssue(issuesFor(request)) ? (
+                          <>
+                            {request.payload.publicEmail ? (
+                              <span className="text-danger">{request.payload.publicEmail}</span>
+                            ) : null}
+                            <SemanticStatus tone="error">Invalid submitted email</SemanticStatus>
+                          </>
+                        ) : request.payload.publicEmail ? (
+                          <span className="text-ink-muted">{request.payload.publicEmail}</span>
+                        ) : (
+                          <SemanticStatus tone="warning">Not provided</SemanticStatus>
+                        )}
+                        {request ? nonEmailIssue(issuesFor(request)) ? (
+                          <SemanticStatus tone={nonEmailIssue(issuesFor(request))?.tone ?? "error"}>
+                            {nonEmailIssue(issuesFor(request))?.message}
+                          </SemanticStatus>
+                        ) : null : null}
+                      </div>
                     </DataTableCell>
-                    <DataTableCell className={loadingPlaceholder(!request, "value")} data-placeholder="value">{request ? profileChangeCount(request) : 0} fields</DataTableCell>
+                    <DataTableCell className={loadingPlaceholder(loading, "value")} data-placeholder="value">{request ? profileChangeCount(request) : 0} fields</DataTableCell>
                     <DataTableCell className="font-mono text-[.7rem] text-ink-muted">
-                      <time className={loadingPlaceholder(!request, "label", "medium")} data-placeholder="label" data-placeholder-width="medium" dateTime={request?.submittedAt}>
+                      <time className={loadingPlaceholder(loading, "label", "medium")} data-placeholder="label" data-placeholder-width="medium" dateTime={request?.submittedAt}>
                         {request?.submittedAt ? new Date(request.submittedAt).toLocaleDateString() : "Loading date"}
                       </time>
+                    </DataTableCell>
+                    <DataTableCell className="relative w-[48px] p-0">
+                      {request ? <ReviewIssueStamp className="right-2 top-1/2 -translate-y-1/2" issue={issuesFor(request)[0]} /> : null}
                     </DataTableCell>
                   </DataTableRow>
                 ))}
@@ -245,7 +301,7 @@ export function ProfileReviewQueue() {
               setPage(nextPage);
             }}
             page={result?.page ?? page}
-            pageSize={result?.pageSize ?? 20}
+            pageSize={result?.pageSize ?? 10}
             total={result?.total ?? 0}
             totalPages={result?.totalPages ?? 1}
           />
@@ -260,6 +316,14 @@ export function ProfileReviewQueue() {
       )}
     </DataTableShell>
   );
+}
+
+function profileEmailIssue(issues: ReviewIssue[]): ReviewIssue | undefined {
+  return issues.find(({ field, code }) => field === "publicEmail" || code === "INVALID_PUBLIC_EMAIL");
+}
+
+function nonEmailIssue(issues: ReviewIssue[]): ReviewIssue | undefined {
+  return issues.find(({ field, code }) => field !== "publicEmail" && code !== "INVALID_PUBLIC_EMAIL");
 }
 
 function profileChangeCount(request: ProfileEditRequest): number {
@@ -282,7 +346,7 @@ function profileChangeCount(request: ProfileEditRequest): number {
         subsections: subsections?.length
           ? subsections
           : content
-            ? [{ heading: null, entries: [content] }]
+            ? [{ heading: null, entries: [{ label: null, content }] }]
             : [],
         title,
         type,

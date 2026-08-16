@@ -21,6 +21,8 @@ export class ApplicationQueryDto extends PaginationQueryDto {
 
   @IsOptional()
   @IsIn([
+    ApplicationStatus.PARSING,
+    ApplicationStatus.PARSE_FAILED,
     ApplicationStatus.NEEDS_REVIEW,
     ApplicationStatus.ACCEPTED,
     ApplicationStatus.REJECTED,
