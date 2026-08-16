@@ -118,11 +118,11 @@ export function ProfileReviewDetail({ id }: { id: string }) {
         <div>
           <p className="m-0 mb-4 font-[var(--font-sans)] text-[.75rem] font-extrabold uppercase tracking-[.12em] text-brand">Latest request only</p>
           <h2 className={cn("font-serif text-[clamp(1.6rem,3vw,2.4rem)] font-medium leading-[1.08]", loadingPlaceholder(loading, "text", "long"))} data-placeholder="text" data-placeholder-width="long">{currentPerson?.fullName ?? "Loading member profile"}</h2>
-          <div className="mt-2">{loading ? <span className={cn("block h-5 w-28", loadingPlaceholder(true, "label", "medium"))} data-placeholder="label" data-placeholder-width="medium" /> : request ? <SemanticStatus tone={request.status === "APPROVED" ? "success" : request.status === "REJECTED" ? "error" : "pending"}>{request.status.replaceAll("_", " ").toLowerCase()}</SemanticStatus> : null}</div>
+          <div className="mt-2">{loading ? <span className={cn("block h-5 w-28", loadingPlaceholder(true, "label", "medium"))} data-placeholder="label" data-placeholder-width="medium" /> : request ? <SemanticStatus loading={loading} tone={request.status === "APPROVED" ? "success" : request.status === "REJECTED" ? "error" : "pending"}>{request.status.replaceAll("_", " ").toLowerCase()}</SemanticStatus> : null}</div>
           {reviewIssues.length ? (
             <div className="mt-3 flex flex-wrap gap-2">
               {reviewIssues.map((issue, index) => (
-                <SemanticStatus key={`${issue.code ?? issue.message}-${index}`} tone={issue.tone ?? "error"}>{issue.message}</SemanticStatus>
+                <SemanticStatus key={`${issue.code ?? issue.message}-${index}`} loading={loading} tone={issue.tone ?? "error"}>{issue.message}</SemanticStatus>
               ))}
             </div>
           ) : null}

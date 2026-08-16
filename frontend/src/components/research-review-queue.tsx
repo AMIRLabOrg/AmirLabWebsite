@@ -622,39 +622,41 @@ export function ResearchReviewQueue({ selectedId }: { selectedId?: string }) {
             </div>
             {renderedItems.length ? (
               <div className="min-h-0 overflow-y-auto pr-1 [scrollbar-color:var(--ink-faint)_transparent] [scrollbar-width:thin]" data-loading={loadingRows || undefined}>
-                {renderedItems.map((candidate) => (
-                  <div
-                    className={`relative grid min-w-0 grid-cols-[auto_minmax(0,1fr)] items-stretch overflow-hidden rounded-panel border ${candidate.id === selected ? "border-brand bg-brand-soft" : "border-line bg-surface"}`}
-                    key={candidate.id}
-                  >
-                    {!loadingRows ? <ReviewIssueStamp className="right-2 top-2" issue={issuesFor(candidate)[0]} /> : null}
-                    <div className="grid place-items-center px-3">
-                      {loadingRows ? (
-                        <span className={loadingPlaceholder(true, "control")} data-placeholder="control" />
-                      ) : (
-                        <CheckboxControl
-                          ariaLabel={`Select ${researchLabel(candidate)} review`}
-                          checked={bulk.isSelected(candidate.id)}
-                          className="gap-0"
-                          id={`research-review-select-${candidate.id}`}
-                          onCheckedChange={(checked) => bulk.toggle(candidate.id, checked)}
-                        />
-                      )}
-                    </div>
-                    <button
-                      className="grid min-h-[88px] w-full min-w-0 cursor-pointer gap-[.4rem] overflow-hidden border-0 bg-transparent p-[.85rem_.9rem] pr-10 text-left"
-                      disabled={loadingRows}
-                      onClick={() => setSelected(candidate.id)}
-                      type="button"
+                <div className="flex flex-col divide-y divide-line rounded-panel border border-line overflow-hidden">
+                  {renderedItems.map((candidate) => (
+                    <div
+                      className={`relative grid min-w-0 grid-cols-[auto_minmax(0,1fr)] items-stretch overflow-hidden transition-colors ${candidate.id === selected ? "bg-brand-soft" : "bg-surface hover:bg-surface-subtle"}`}
+                      key={candidate.id}
                     >
-                      <span className={loadingPlaceholder(loadingRows, "label", "short")} data-placeholder={loadingRows ? "label" : undefined} data-placeholder-width="short">{candidate.type.toLowerCase()}</span>
-                      <span className={cn("line-clamp-2 [overflow-wrap:anywhere] font-sans text-[.95rem] font-normal normal-case leading-[1.35] tracking-normal text-ink", loadingPlaceholder(loadingRows, "text", "long"))} data-placeholder={loadingRows ? "text" : undefined} data-placeholder-width="long">{researchLabel(candidate)}</span>
-                      {!loadingRows && issuesFor(candidate)[0] ? (
-                        <SemanticStatus tone={issuesFor(candidate)[0].tone ?? "pending"}>{issuesFor(candidate)[0].message}</SemanticStatus>
-                      ) : null}
-                    </button>
-                  </div>
-                ))}
+                      {!loadingRows ? <ReviewIssueStamp className="right-2 top-2" issue={issuesFor(candidate)[0]} /> : null}
+                      <div className="grid place-items-center px-3">
+                        {loadingRows ? (
+                          <span className={loadingPlaceholder(true, "control")} data-placeholder="control" />
+                        ) : (
+                          <CheckboxControl
+                            ariaLabel={`Select ${researchLabel(candidate)} review`}
+                            checked={bulk.isSelected(candidate.id)}
+                            className="gap-0"
+                            id={`research-review-select-${candidate.id}`}
+                            onCheckedChange={(checked) => bulk.toggle(candidate.id, checked)}
+                          />
+                        )}
+                      </div>
+                      <button
+                        className="grid min-h-[88px] w-full min-w-0 cursor-pointer gap-[.4rem] border-0 bg-transparent p-[.85rem_.9rem] pr-10 text-left"
+                        disabled={loadingRows}
+                        onClick={() => setSelected(candidate.id)}
+                        type="button"
+                      >
+                        <div className="w-fit capitalize"><Badge tone="info" loading={loadingRows}>{candidate.type.toLowerCase()}</Badge></div>
+                        <span className={cn("line-clamp-2 [overflow-wrap:anywhere] font-sans text-[.95rem] font-normal normal-case leading-[1.35] tracking-normal text-ink", loadingPlaceholder(loadingRows, "text", "long"))} data-placeholder={loadingRows ? "text" : undefined} data-placeholder-width="long">{researchLabel(candidate)}</span>
+                        {!loadingRows && issuesFor(candidate)[0] ? (
+                          <SemanticStatus tone={issuesFor(candidate)[0].tone ?? "pending"}>{issuesFor(candidate)[0].message}</SemanticStatus>
+                        ) : null}
+                      </button>
+                    </div>
+                  ))}
+                </div>
               </div>
             ) : (
               <p className="m-0 text-[.82rem] leading-[1.5] text-ink-muted">No submissions match these filters.</p>
@@ -665,7 +667,7 @@ export function ResearchReviewQueue({ selectedId }: { selectedId?: string }) {
               <>
                 <header className="grid gap-[.65rem]">
                   <div className="flex flex-wrap items-center gap-[.7rem] text-[.82rem] text-ink-muted">
-                    <Badge loading={loadingDetail}>{item.type.toLowerCase()}</Badge>
+                    <div className="capitalize"><Badge tone="info" loading={loadingDetail}>{item.type.toLowerCase()}</Badge></div>
                     <span className={cn("font-mono text-[.75rem] text-ink-muted", loadingPlaceholder(loadingDetail, "label", "long"))} data-placeholder={loadingDetail ? "label" : undefined} data-placeholder-width="long">
                       Submitted by{" "}
                       {item.submittedBy?.person?.fullName ??
@@ -676,9 +678,9 @@ export function ResearchReviewQueue({ selectedId }: { selectedId?: string }) {
                   <h2 className={cn("m-0 font-serif text-[clamp(1.75rem,2.7vw,2.45rem)] leading-[1.08] [overflow-wrap:anywhere]", loadingPlaceholder(loadingDetail, "text", "full"))} data-placeholder={loadingDetail ? "text" : undefined} data-placeholder-width="full">{researchLabel(item)}</h2>
                   {item.summary ? <p className={cn("m-0 text-[.95rem] leading-[1.55] text-ink-muted", loadingPlaceholder(loadingDetail, "text", "full"))} data-placeholder={loadingDetail ? "text" : undefined} data-placeholder-width="full">{item.summary}</p> : null}
                   <div className="flex flex-wrap items-center gap-2">
-                    <Badge tone={item.reviewStatus === "PUBLISHED" ? "success" : item.reviewStatus === "REJECTED" ? "error" : "warning"}>{item.reviewStatus.replaceAll("_", " ").toLowerCase()}</Badge>
+                    <Badge loading={loadingDetail} tone={item.reviewStatus === "PUBLISHED" ? "success" : item.reviewStatus === "REJECTED" ? "error" : "warning"}>{item.reviewStatus.replaceAll("_", " ").toLowerCase()}</Badge>
                     {issuesFor(item).map((issue, index) => (
-                      <SemanticStatus key={`${issue.code ?? issue.message}-${index}`} tone={issue.tone ?? "pending"}>{issue.message}</SemanticStatus>
+                      <SemanticStatus key={`${issue.code ?? issue.message}-${index}`} loading={loadingDetail} tone={issue.tone ?? "pending"}>{issue.message}</SemanticStatus>
                     ))}
                     <ButtonControl compact disabled={loadingDetail} onClick={() => setEditingId((current) => (current === item.id ? undefined : item.id))} variant="secondary">{editing ? "Close editor" : "Edit record"}</ButtonControl>
                   </div>
@@ -703,18 +705,18 @@ export function ResearchReviewQueue({ selectedId }: { selectedId?: string }) {
                     </ButtonControl>
                   </div>
                   {!item.canonicalUrl ? (
-                    <SemanticStatus tone="warning">No canonical source URL was submitted. Contributor relationships can still be verified manually.</SemanticStatus>
+                    <SemanticStatus loading={loadingDetail} tone="warning">No canonical source URL was submitted. Contributor relationships can still be verified manually.</SemanticStatus>
                   ) : !item.sourceSnapshot ? (
-                    <SemanticStatus tone="info">The canonical source has not been checked yet.</SemanticStatus>
+                    <SemanticStatus loading={loadingDetail} tone="info">The canonical source has not been checked yet.</SemanticStatus>
                   ) : item.sourceSnapshot.status === "PENDING" ? (
-                    <SemanticStatus tone="pending">Canonical source metadata is being checked.</SemanticStatus>
+                    <SemanticStatus loading={loadingDetail} tone="pending">Canonical source metadata is being checked.</SemanticStatus>
                   ) : item.sourceSnapshot.status === "FAILED" ? (
-                    <SemanticStatus tone="error">The canonical source check failed. Check the source URL or try again.</SemanticStatus>
+                    <SemanticStatus loading={loadingDetail} tone="error">The canonical source check failed. Check the source URL or try again.</SemanticStatus>
                   ) : item.sourceSnapshot.status === "UNAVAILABLE" ? (
-                    <SemanticStatus tone="warning">No machine-readable source metadata was available. Manual review is still possible.</SemanticStatus>
+                    <SemanticStatus loading={loadingDetail} tone="warning">No machine-readable source metadata was available. Manual review is still possible.</SemanticStatus>
                   ) : sourceAuthorsDiffer(item) ? (
                     <div className="grid gap-[.65rem]">
-                      <SemanticStatus tone="warning">Source metadata differs</SemanticStatus>
+                      <SemanticStatus loading={loadingDetail} tone="warning">Source metadata differs</SemanticStatus>
                       <div className="flex flex-wrap gap-[.45rem] text-[.75rem] text-ink-muted">
                         {item.sourceSnapshot.metadata?.authors?.map(({ name }, index) => (
                           <span key={name}>{index ? ` · ${name}` : name}</span>
@@ -722,7 +724,7 @@ export function ResearchReviewQueue({ selectedId }: { selectedId?: string }) {
                       </div>
                     </div>
                   ) : item.sourceSnapshot.metadata?.authors?.length ? null : (
-                    <SemanticStatus tone="warning">No machine-readable contributor metadata was found. Manual linking remains available.</SemanticStatus>
+                    <SemanticStatus loading={loadingDetail} tone="warning">No machine-readable contributor metadata was found. Manual linking remains available.</SemanticStatus>
                   )}
                 </section>
                 <section className="grid gap-4 rounded-panel border border-line bg-surface p-[clamp(1rem,2vw,1.35rem)]" aria-label="Contributor verification">
@@ -831,11 +833,11 @@ export function ResearchReviewQueue({ selectedId }: { selectedId?: string }) {
                         </div>
                         <div className="grid min-w-0 grid-cols-[minmax(180px,.72fr)_minmax(0,1fr)] items-start gap-[.65rem] max-[720px]:grid-cols-1">
                           <div className="flex flex-wrap items-center gap-2">
-                            <Badge dot tone={statusTone}>{statusLabel}</Badge>
-                            <Badge tone="neutral">Author</Badge>
+                            <Badge dot loading={loadingDetail} tone={statusTone}>{statusLabel}</Badge>
+                            <Badge loading={loadingDetail} tone="neutral">Author</Badge>
                           </div>
                           <div className="grid min-w-0 gap-1">
-                            <span className={cn("text-[.78rem] leading-[1.45]", selectedMatch?.confidence === 1 ? "text-success" : selectedMatch ? "text-warning" : "text-ink-muted")}>
+                            <span className={cn("text-[.78rem] leading-[1.45]", loadingPlaceholder(loadingDetail, "text", "long"), selectedMatch?.confidence === 1 ? "text-success" : selectedMatch ? "text-warning" : "text-ink-muted")} data-placeholder={loadingDetail ? "text" : undefined} data-placeholder-width="long">
                               {metadata}
                             </span>
                           </div>
@@ -849,7 +851,7 @@ export function ResearchReviewQueue({ selectedId }: { selectedId?: string }) {
                     {item.canonicalUrl ? "Open canonical source" : "Open import source"}
                   </ButtonAnchor>
                 ) : (
-                  <SemanticStatus tone="warning">No external source URL was provided. Manual source verification is required.</SemanticStatus>
+                  <SemanticStatus loading={loadingDetail} tone="warning">No external source URL was provided. Manual source verification is required.</SemanticStatus>
                 )}
                 {error ? <p className="m-0 flex items-center gap-[.45rem] text-[.82rem] leading-[1.5] text-ink-muted rounded-panel bg-danger-soft p-[.8rem] text-danger">{error}</p> : null}
                 {item.reviewStatus === "PUBLISHED" || item.reviewStatus === "REJECTED" ? (

@@ -229,7 +229,7 @@ export function WeeklyReportReview() {
                     <strong className={loadingPlaceholder(!report, "text", "long")} data-placeholder={!report ? "text" : undefined} data-placeholder-width="long">{report?.author.person?.fullName ?? report?.author.email ?? "Researcher name"}</strong>
                     <small className={cn("text-[.7rem] text-ink-muted", loadingPlaceholder(!report, "label", "medium"))} data-placeholder={!report ? "label" : undefined} data-placeholder-width="medium">{report ? reportWeek(report.weekStart) : "Reporting week"}</small>
                     {report && reviewIssues.forItem(report.id)[0] ? (
-                      <SemanticStatus tone={reviewIssues.forItem(report.id)[0].tone ?? "warning"}>{reviewIssues.forItem(report.id)[0].message}</SemanticStatus>
+                      <SemanticStatus loading={!report} tone={reviewIssues.forItem(report.id)[0].tone ?? "warning"}>{reviewIssues.forItem(report.id)[0].message}</SemanticStatus>
                     ) : null}
                   </span>
                   <Badge loading={!report} tone={report ? statusTone(report.status) : "neutral"}>{report ? reportStatusLabel(report.status) : "Submitted"}</Badge>
@@ -262,7 +262,7 @@ export function WeeklyReportReview() {
               <ReportSection label="Plan for next week" loading={!reports} value={selected?.nextWeekPlan ?? "Expected research outcomes for the next reporting week."} />
               {selected && reviewIssues.forItem(selected.id)[0] ? (
                 <div className="border-t border-line px-6 py-4 max-[640px]:p-5">
-                  <SemanticStatus tone={reviewIssues.forItem(selected.id)[0].tone ?? "warning"}>
+                  <SemanticStatus loading={!reports} tone={reviewIssues.forItem(selected.id)[0].tone ?? "warning"}>
                     {reviewIssues.forItem(selected.id)[0].message}
                   </SemanticStatus>
                 </div>

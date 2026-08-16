@@ -204,11 +204,11 @@ export function ProjectReviewQueue() {
                     {item ? <>Submitted by {item.submittedBy.person?.fullName ?? item.submittedBy.email ?? "member"} ·{" "}{new Date(item.submittedAt).toLocaleString()}</> : "Loading submission provenance"}
                   </p>
                   {item && issuesFor(item)[0] ? (
-                    <SemanticStatus tone={issuesFor(item)[0].tone ?? "warning"}>{issuesFor(item)[0].message}</SemanticStatus>
+                    <SemanticStatus loading={loading} tone={issuesFor(item)[0].tone ?? "warning"}>{issuesFor(item)[0].message}</SemanticStatus>
                   ) : null}
                   <section className="mt-[.4rem] grid gap-3 border-t border-line pt-[.8rem]" aria-label="Proposed project changes">
                     <h3 className={cn("text-[.82rem] font-[750]", loadingPlaceholder(loading, "label"))} data-placeholder={loading ? "label" : undefined}>Proposed changes</h3>
-                    {item ? <ProjectChangePreview kind={item.kind} payload={item.payload} /> : <div className={loadingPlaceholder(true, "text", "full")} data-placeholder="text" data-placeholder-width="full">Loading proposed changes</div>}
+                    {item ? <ProjectChangePreview kind={item.kind} loading={loading} payload={item.payload} /> : <div className={loadingPlaceholder(true, "text", "full")} data-placeholder="text" data-placeholder-width="full">Loading proposed changes</div>}
                   </section>
                 </div>
                 <ReviewActions
@@ -258,7 +258,7 @@ export function ProjectReviewQueue() {
   );
 }
 
-function ProjectChangePreview({ kind, payload }: { kind: string; payload: unknown }) {
+function ProjectChangePreview({ kind, payload, loading = false }: { kind: string; payload: unknown; loading?: boolean }) {
   const record = asRecord(payload);
   const entries = Object.entries(record).filter(
     ([key]) => key !== "publishNow" && key !== "overrideReason",
@@ -279,21 +279,21 @@ function ProjectChangePreview({ kind, payload }: { kind: string; payload: unknow
   return (
     <dl className="grid grid-cols-2 gap-x-5 gap-y-3 rounded-panel bg-surface-subtle p-4 max-[700px]:grid-cols-1">
       {entries.map(([key, value]) => (
-        <ProjectChangeField key={key} label={humanizeKey(key)} value={value} />
+        <ProjectChangeField key={key} label={humanizeKey(key)} loading={loading} value={value} />
       ))}
     </dl>
   );
 }
 
-function ProjectChangeField({ label, value }: { label: string; value: unknown }) {
+function ProjectChangeField({ label, value, loading = false }: { label: string; value: unknown; loading?: boolean }) {
   if (Array.isArray(value)) {
     return (
       <div className="col-span-full grid gap-2 border-t border-line pt-3 first:border-t-0 first:pt-0">
         <dt className="font-mono text-[.62rem] font-semibold uppercase tracking-[.07em] text-ink-muted">{label}</dt>
         <dd className="m-0 grid gap-2">
           {value.length ? value.map((entry, index) => (
-            <ProjectChangeListEntry entry={entry} index={index} key={index} />
-          )) : <span className="text-[.78rem] text-ink-muted">None</span>}
+            <ProjectChangeListEntry entry={entry} index={index} key={index} loading={loading} />
+          )) : <span className={cn("text-[.78rem] text-ink-muted", loadingPlaceholder(loading, "text", "short"))} data-placeholder={loading ? "text" : undefined} data-placeholder-width="short">None</span>}
         </dd>
       </div>
     );
@@ -302,27 +302,27 @@ function ProjectChangeField({ label, value }: { label: string; value: unknown })
   return (
     <div className="grid min-w-0 content-start gap-1 border-t border-line pt-3 first:border-t-0 first:pt-0">
       <dt className="font-mono text-[.62rem] font-semibold uppercase tracking-[.07em] text-ink-muted">{label}</dt>
-      <dd className="m-0 min-w-0 text-[.82rem] leading-[1.5] [overflow-wrap:anywhere]">{renderProjectChangeValue(value)}</dd>
+      <dd className={cn("m-0 min-w-0 text-[.82rem] leading-[1.5] [overflow-wrap:anywhere]", loadingPlaceholder(loading, "text", "long"))} data-placeholder={loading ? "text" : undefined} data-placeholder-width="long">{renderProjectChangeValue(value, loading)}</dd>
     </div>
   );
 }
 
-function ProjectChangeListEntry({ entry, index }: { entry: unknown; index: number }) {
+function ProjectChangeListEntry({ entry, index, loading = false }: { entry: unknown; index: number; loading?: boolean }) {
   if (!entry || Array.isArray(entry) || typeof entry !== "object") {
-    return <div className="rounded-control border border-line bg-surface px-3 py-2 text-[.78rem]">{renderProjectChangeValue(entry)}</div>;
+    return <div className="rounded-control border border-line bg-surface px-3 py-2 text-[.78rem]">{renderProjectChangeValue(entry, loading)}</div>;
   }
   const record = entry as Record<string, unknown>;
   const heading = stringValue(record.title) ?? stringValue(record.label) ?? `Item ${index + 1}`;
   const entries = Object.entries(record).filter(([key]) => key !== "title" && key !== "label" && key !== "id");
   return (
     <article className="grid gap-2 rounded-control border border-line bg-surface p-3">
-      <strong className="text-[.84rem]">{heading}</strong>
+      <strong className={cn("text-[.84rem]", loadingPlaceholder(loading, "text", "long"))} data-placeholder={loading ? "text" : undefined} data-placeholder-width="long">{heading}</strong>
       {entries.length ? (
         <dl className="grid grid-cols-2 gap-x-4 gap-y-2 max-[640px]:grid-cols-1">
           {entries.map(([key, value]) => (
             <div className="grid gap-[.15rem]" key={key}>
               <dt className="font-mono text-[.58rem] uppercase tracking-[.05em] text-ink-muted">{humanizeKey(key)}</dt>
-              <dd className="m-0 text-[.76rem] leading-[1.45] [overflow-wrap:anywhere]">{renderProjectChangeValue(value)}</dd>
+              <dd className={cn("m-0 text-[.76rem] leading-[1.45] [overflow-wrap:anywhere]", loadingPlaceholder(loading, "text", "long"))} data-placeholder={loading ? "text" : undefined} data-placeholder-width="long">{renderProjectChangeValue(value, loading)}</dd>
             </div>
           ))}
         </dl>
@@ -331,12 +331,12 @@ function ProjectChangeListEntry({ entry, index }: { entry: unknown; index: numbe
   );
 }
 
-function renderProjectChangeValue(value: unknown) {
+function renderProjectChangeValue(value: unknown, loading: boolean = false) {
   if (value === null || value === undefined || value === "") {
     return <span className="text-ink-muted">Not set</span>;
   }
   if (typeof value === "boolean") {
-    return <Badge tone={value ? "success" : "neutral"}>{value ? "Enabled" : "Disabled"}</Badge>;
+    return <Badge loading={loading} tone={value ? "success" : "neutral"}>{value ? "Enabled" : "Disabled"}</Badge>;
   }
   if (typeof value === "number") return String(value);
   if (typeof value === "string") {

@@ -149,7 +149,7 @@ export function PositionAdminList() {
                   <strong className={cn("block leading-[1.35]", loadingPlaceholder(loading, "text", "long"))} data-placeholder="text" data-placeholder-width="long">{position?.title ?? "Loading position"}</strong>
                   <div className="mt-[.25rem] flex flex-wrap items-center gap-2">
                     <span className={cn("text-[.72rem] capitalize text-ink-muted", loadingPlaceholder(loading, "label", "medium"))} data-placeholder="label" data-placeholder-width="medium">{position ? positionTypeLabel(position.positionType) : "Loading type"}</span>
-                    {issue ? <SemanticStatus tone={issue.tone ?? "error"}>{issue.message}</SemanticStatus> : null}
+                    {issue ? <SemanticStatus loading={loading} tone={issue.tone ?? "error"}>{issue.message}</SemanticStatus> : null}
                   </div>
                 </div>
                 <span className={cn("text-[.72rem] capitalize text-ink-muted", loadingPlaceholder(loading, "label", "medium"))} data-placeholder="label" data-placeholder-width="medium">{position ? (position._count?.applications ?? 0) : 0} applications</span>

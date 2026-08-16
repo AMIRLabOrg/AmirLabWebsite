@@ -2,6 +2,7 @@ import { CircleAlert } from "lucide-react";
 import type { ReactNode } from "react";
 import { cn } from "@/lib/cn";
 import type { ReviewIssue, ReviewIssueTone } from "@/lib/review-issues";
+import { loadingPlaceholder } from "@/lib/loading-style";
 
 const toneClasses: Record<ReviewIssueTone, string> = {
   error: "bg-danger-soft text-danger",
@@ -16,18 +17,23 @@ export function SemanticStatus({
   children,
   className,
   tone = "neutral",
+  loading = false,
 }: {
   children: ReactNode;
   className?: string;
   tone?: ReviewIssueTone;
+  loading?: boolean;
 }) {
   return (
     <span
       className={cn(
         "inline-flex w-fit items-center rounded-small px-[.42rem] py-[.18rem] text-[.7rem] font-medium leading-[1.35]",
         toneClasses[tone],
+        loading && loadingPlaceholder(true, "label", "long"),
         className,
       )}
+      data-loading={loading || undefined}
+      data-placeholder={loading ? "label" : undefined}
     >
       {children}
     </span>

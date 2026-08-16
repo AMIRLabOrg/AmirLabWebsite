@@ -60,10 +60,16 @@ export function WorkspaceShell({ children }: { children: ReactNode }) {
         )}
       >
         <aside className="sticky top-0 flex h-screen min-w-0 flex-col overflow-y-auto overflow-x-hidden border-r border-line bg-paper pt-[.85rem] pb-4 max-[820px]:static max-[820px]:h-auto max-[820px]:w-full max-[820px]:overflow-visible max-[820px]:border-r-0 max-[820px]:border-b max-[820px]:pt-[.65rem] max-[820px]:pb-0">
-          <div className={cn("flex items-center gap-2 border-b border-line-strong pt-[.1rem] pb-[.85rem] max-[820px]:border-b-0 max-[820px]:pb-[.55rem]", sidebarOpen ? "justify-center" : "justify-center px-0")}>
-            <Link aria-label="AMIRLab public website" className="flex items-center gap-[.55rem] shrink-0 justify-center" href="/">
-              {sidebarOpen ? <BrandLockup compact /> : <BrandMark compact />}
-            </Link>
+          <div className={cn("flex items-center gap-2 border-b border-line-strong pt-[.1rem] pb-[.85rem] max-[820px]:border-b-0 max-[820px]:pb-[.55rem] min-h-[51px]", sidebarOpen ? "justify-between px-[.85rem]" : "justify-center px-0")}>
+            {sidebarOpen ? <strong className="text-[.9rem]">Workspace</strong> : null}
+            <button
+              aria-label={sidebarOpen ? "Close sidebar" : "Open sidebar"}
+              className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-control text-ink-muted transition-colors hover:bg-brand-faint hover:text-brand max-[820px]:hidden"
+              onClick={toggleSidebar}
+              type="button"
+            >
+              {sidebarOpen ? <PanelLeftClose aria-hidden="true" size={18} /> : <PanelLeftOpen aria-hidden="true" size={18} />}
+            </button>
           </div>
           <nav aria-label="Workspace navigation" className={cn("mt-[.55rem] grid gap-[.55rem] max-[820px]:-mx-4 max-[820px]:mt-0 max-[820px]:flex max-[820px]:gap-0 max-[820px]:overflow-x-auto max-[820px]:px-4 max-[820px]:[scrollbar-width:none]", sidebarOpen ? "px-[.85rem]" : "px-[.4rem]")}>
             {navigationGroups.map((group) => (
@@ -121,14 +127,6 @@ export function WorkspaceShell({ children }: { children: ReactNode }) {
         <div className="grid min-w-0 grid-rows-[52px_minmax(0,1fr)] max-[820px]:grid-rows-[65px_minmax(0,1fr)]">
           <header className="sticky top-0 z-30 flex min-h-[52px] items-center justify-between border-b border-line bg-[color-mix(in_srgb,var(--canvas)_96%,transparent)] px-[clamp(1rem,2vw,1.8rem)] py-[.45rem]">
             <div className="flex items-center gap-[clamp(.5rem,2vw,1rem)]">
-              <button
-                aria-label={sidebarOpen ? "Close sidebar" : "Open sidebar"}
-                className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-control text-ink-muted transition-colors hover:bg-brand-faint hover:text-brand max-[820px]:hidden"
-                onClick={toggleSidebar}
-                type="button"
-              >
-                {sidebarOpen ? <PanelLeftClose aria-hidden="true" size={18} /> : <PanelLeftOpen aria-hidden="true" size={18} />}
-              </button>
               <div className="grid gap-[.12rem]">
                 <span className={cn("font-mono text-[.5rem] tracking-[.07em] text-ink-muted uppercase", loadingPlaceholder(loading || !user, "text"))} data-placeholder={loading || !user ? "text" : undefined}>Lab operating system</span>
                 <strong className={cn("text-[.76rem]", loadingPlaceholder(loading || !user, "text"))} data-placeholder={loading || !user ? "text" : undefined}>{loading || !user ? "Workspace" : currentLabel}</strong>

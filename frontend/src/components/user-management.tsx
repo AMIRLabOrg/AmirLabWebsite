@@ -291,7 +291,7 @@ export function UserManagement() {
                     {loading || account?.person?.rank ? (
                       <Badge loading={loading} tone="info">{account?.person?.rank ? readable(account.person.rank) : "rank"}</Badge>
                     ) : null}
-                    {issue ? <SemanticStatus tone={issue.tone ?? "error"}>{issue.message}</SemanticStatus> : null}
+                    {issue ? <SemanticStatus loading={loading} tone={issue.tone ?? "error"}>{issue.message}</SemanticStatus> : null}
                   </div>
                 </div>
                 <div className="grid min-w-0 gap-[.35rem]">
@@ -301,7 +301,7 @@ export function UserManagement() {
                   ) : account?.email ? (
                     <strong className="text-[.82rem] font-semibold [overflow-wrap:anywhere]">{account.email}</strong>
                   ) : (
-                    <SemanticStatus tone="warning">Not provided</SemanticStatus>
+                    <SemanticStatus loading={loading} tone="warning">Not provided</SemanticStatus>
                   )}
                 </div>
                 <div className="flex items-center justify-end gap-2 max-[1180px]:col-span-full max-[1180px]:justify-start max-[700px]:grid max-[700px]:grid-cols-1">

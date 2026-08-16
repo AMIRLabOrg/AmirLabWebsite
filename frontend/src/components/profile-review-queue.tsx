@@ -266,15 +266,15 @@ export function ProfileReviewQueue() {
                             {request.payload.publicEmail ? (
                               <span className="text-danger">{request.payload.publicEmail}</span>
                             ) : null}
-                            <SemanticStatus tone="error">Invalid submitted email</SemanticStatus>
+                            <SemanticStatus loading={loading} tone="error">Invalid submitted email</SemanticStatus>
                           </>
                         ) : request.payload.publicEmail ? (
                           <span className="text-ink-muted">{request.payload.publicEmail}</span>
                         ) : (
-                          <SemanticStatus tone="warning">Not provided</SemanticStatus>
+                          <SemanticStatus loading={loading} tone="warning">Not provided</SemanticStatus>
                         )}
                         {request ? nonEmailIssue(issuesFor(request)) ? (
-                          <SemanticStatus tone={nonEmailIssue(issuesFor(request))?.tone ?? "error"}>
+                          <SemanticStatus loading={loading} tone={nonEmailIssue(issuesFor(request))?.tone ?? "error"}>
                             {nonEmailIssue(issuesFor(request))?.message}
                           </SemanticStatus>
                         ) : null : null}
