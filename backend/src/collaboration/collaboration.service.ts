@@ -14,7 +14,7 @@ export class CollaborationService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly redis: RedisService,
-  ) { }
+  ) {}
 
   async presence(userId: string) {
     const conversations = await this.prisma.conversation.findMany({

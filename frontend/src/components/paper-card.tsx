@@ -56,5 +56,5 @@ function authorsFromCitation(citation: string | null | undefined, title: string)
   const cleanTitle = title.replace(/[.,;:]$/, "");
   const index = citation.toLocaleLowerCase().indexOf(cleanTitle.toLocaleLowerCase());
   if (index <= 0) return "";
-  return citation.slice(0, index).replace(/^\s*\d+[.)]\s*/, "").replace(/\s*\(?\d{4}\)?\s*$/, "").replace(/[\s,:;“”"'‘’-—-]+$/, "").trim();
+  return citation.slice(0, index).replace(/^\s*\d+[.)]\s*/, "").replace(/\s*\(?\d{4}\)?\s*$/, "").replace(/[\s,:;“”"'‘’—-]+$/, "").trim();
 }
