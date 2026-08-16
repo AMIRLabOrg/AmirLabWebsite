@@ -5,10 +5,115 @@ on:
   pull_request:
 
 jobs:
-  backend:
+  changes:
     runs-on: ubuntu-latest
-    env:
-      DATABASE_URL: postgresql://amirl:amirl@127.0.0.1:5433/amirl
+    outputs:
+      backend: ${{ steps.filter.outputs.backend }}
+      frontend: ${{ steps.filter.outputs.frontend }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            backend:
+              - 'backend/**'
+              - 'package.json'
+            frontend:
+              - 'frontend/**'
+              - 'package.json'
+
+  lint:
+    needs: changes
+    if: ${{ needs.changes.outputs.backend == 'true' || needs.changes.outputs.frontend == 'true' }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        project: [backend, frontend]
+    steps:
+      - if: ${{ needs.changes.outputs[matrix.project] == 'true' }}
+        uses: actions/checkout@v4
+      - if: ${{ needs.changes.outputs[matrix.project] == 'true' }}
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.34.5
+      - if: ${{ needs.changes.outputs[matrix.project] == 'true' }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: ${{ matrix.project }}/pnpm-lock.yaml
+      - if: ${{ needs.changes.outputs[matrix.project] == 'true' }}
+        run: pnpm install --frozen-lockfile
+        working-directory: ${{ matrix.project }}
+      - if: ${{ needs.changes.outputs[matrix.project] == 'true' }}
+        run: pnpm run lint
+        working-directory: ${{ matrix.project }}
+
+  typecheck:
+    needs: changes
+    if: ${{ needs.changes.outputs.backend == 'true' || needs.changes.outputs.frontend == 'true' }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        project: [backend, frontend]
+    steps:
+      - if: ${{ needs.changes.outputs[matrix.project] == 'true' }}
+        uses: actions/checkout@v4
+      - if: ${{ needs.changes.outputs[matrix.project] == 'true' }}
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.34.5
+      - if: ${{ needs.changes.outputs[matrix.project] == 'true' }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: ${{ matrix.project }}/pnpm-lock.yaml
+      - if: ${{ needs.changes.outputs[matrix.project] == 'true' }}
+        run: pnpm install --frozen-lockfile
+        working-directory: ${{ matrix.project }}
+      - if: ${{ needs.changes.outputs[matrix.project] == 'true' }}
+        run: pnpm run typecheck
+        working-directory: ${{ matrix.project }}
+
+  verify:
+    needs: changes
+    if: ${{ needs.changes.outputs.backend == 'true' || needs.changes.outputs.frontend == 'true' }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        project: [backend, frontend]
+    steps:
+      - if: ${{ needs.changes.outputs[matrix.project] == 'true' }}
+        uses: actions/checkout@v4
+      - if: ${{ needs.changes.outputs[matrix.project] == 'true' }}
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.34.5
+      - if: ${{ needs.changes.outputs[matrix.project] == 'true' }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: ${{ matrix.project }}/pnpm-lock.yaml
+      - if: ${{ needs.changes.outputs[matrix.project] == 'true' }}
+        run: pnpm install --frozen-lockfile
+        working-directory: ${{ matrix.project }}
+      - if: ${{ needs.changes.outputs[matrix.project] == 'true' && matrix.project == 'backend' }}
+        run: pnpm run verify:safety && pnpm run verify:api-boundary && pnpm run verify:recovery-research
+        working-directory: backend
+      - if: ${{ needs.changes.outputs[matrix.project] == 'true' && matrix.project == 'frontend' }}
+        run: pnpm run verify && pnpm run verify:safety
+        working-directory: frontend
+
+  test:
+    needs: changes
+    if: ${{ needs.changes.outputs.backend == 'true' }}
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -21,22 +126,33 @@ jobs:
           cache-dependency-path: backend/pnpm-lock.yaml
       - run: pnpm install --frozen-lockfile
         working-directory: backend
-      - run: pnpm run verify:production
+      - run: pnpm run test --runInBand
         working-directory: backend
 
-  frontend:
+  build:
+    needs: [changes, lint, typecheck, verify, test]
+    if: ${{ needs.changes.outputs.backend == 'true' || needs.changes.outputs.frontend == 'true' }}
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        project: [backend, frontend]
     steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
+      - if: ${{ needs.changes.outputs[matrix.project] == 'true' }}
+        uses: actions/checkout@v4
+      - if: ${{ needs.changes.outputs[matrix.project] == 'true' }}
+        uses: pnpm/action-setup@v4
         with:
           version: 10.34.5
-      - uses: actions/setup-node@v4
+      - if: ${{ needs.changes.outputs[matrix.project] == 'true' }}
+        uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: pnpm
-          cache-dependency-path: frontend/pnpm-lock.yaml
-      - run: pnpm install --frozen-lockfile
-        working-directory: frontend
-      - run: pnpm run verify:production
-        working-directory: frontend
+          cache-dependency-path: ${{ matrix.project }}/pnpm-lock.yaml
+      - if: ${{ needs.changes.outputs[matrix.project] == 'true' }}
+        run: pnpm install --frozen-lockfile
+        working-directory: ${{ matrix.project }}
+      - if: ${{ needs.changes.outputs[matrix.project] == 'true' }}
+        run: pnpm run build
+        working-directory: ${{ matrix.project }}
