@@ -25,7 +25,11 @@ import {
   PublicationQueryDto,
   PublicationSort,
 } from './dto/publication-query.dto';
-import type { BulkReviewResearchDto, ReviewResearchDto, SubmitResearchDto } from './dto/research.dto';
+import type {
+  BulkReviewResearchDto,
+  ReviewResearchDto,
+  SubmitResearchDto,
+} from './dto/research.dto';
 import {
   ResearchReviewQueryDto,
   ResearchReviewSort,
@@ -424,7 +428,9 @@ export class ResearchService {
       reviewStatus: query.status ?? {
         in: [ReviewStatus.NEEDS_REVIEW, ReviewStatus.CHANGES_REQUESTED],
       },
-      type: query.type ?? { in: [ResearchItemType.PAPER, ResearchItemType.DATASET] },
+      type: query.type ?? {
+        in: [ResearchItemType.PAPER, ResearchItemType.DATASET],
+      },
       ...(search
         ? {
             OR: [
@@ -554,7 +560,11 @@ export class ResearchService {
         where: {
           id: dto.submitterPersonId,
           user: {
-            is: { status: { in: [AccountStatus.ACTIVE, AccountStatus.PENDING_SETUP] } },
+            is: {
+              status: {
+                in: [AccountStatus.ACTIVE, AccountStatus.PENDING_SETUP],
+              },
+            },
           },
         },
         select: { id: true, userId: true },
@@ -566,8 +576,13 @@ export class ResearchService {
       }
       submittedById = submitter.userId;
       submittedForPersonId = submitter.id;
-    } else if (dto.submitterPersonId && dto.submitterPersonId !== user.person?.id) {
-      throw new BadRequestException('Members can only submit research for themselves');
+    } else if (
+      dto.submitterPersonId &&
+      dto.submitterPersonId !== user.person?.id
+    ) {
+      throw new BadRequestException(
+        'Members can only submit research for themselves',
+      );
     }
 
     const slugBase = dto.title
@@ -586,7 +601,8 @@ export class ResearchService {
     if (dto.publishNow && !dto.overrideReason?.trim()) {
       throw new BadRequestException('A publish-now override requires a reason');
     }
-    const publishesDirectly = dto.publishNow === true || (!staff && mode === 'AUTOMATIC');
+    const publishesDirectly =
+      dto.publishNow === true || (!staff && mode === 'AUTOMATIC');
     const item = await this.prisma.$transaction(async (transaction) => {
       const created = await transaction.researchItem.create({
         data: {
@@ -687,13 +703,16 @@ export class ResearchService {
     if (!item.canonicalUrl) {
       throw new BadRequestException({
         code: 'CANONICAL_SOURCE_MISSING',
-        publicMessage: 'This research record does not have a canonical source URL to check.',
-        issues: [{
-          code: 'CANONICAL_SOURCE_MISSING',
-          itemId: item.id,
-          message: 'No canonical source URL was provided for this record.',
-          tone: 'warning',
-        }],
+        publicMessage:
+          'This research record does not have a canonical source URL to check.',
+        issues: [
+          {
+            code: 'CANONICAL_SOURCE_MISSING',
+            itemId: item.id,
+            message: 'No canonical source URL was provided for this record.',
+            tone: 'warning',
+          },
+        ],
       });
     }
     if (item.sourceSnapshot?.status === SourceFetchStatus.PENDING) {
@@ -718,13 +737,12 @@ export class ResearchService {
     };
   }
 
-  async bulkReview(
-    dto: BulkReviewResearchDto,
-    reviewer: AuthenticatedUser,
-  ) {
+  async bulkReview(dto: BulkReviewResearchDto, reviewer: AuthenticatedUser) {
     const ids = [...new Set(dto.ids)];
     if (ids.length !== dto.ids.length) {
-      throw new BadRequestException('Duplicate research review IDs are not allowed');
+      throw new BadRequestException(
+        'Duplicate research review IDs are not allowed',
+      );
     }
     const items = await this.prisma.researchItem.findMany({
       where: { id: { in: ids } },
@@ -776,7 +794,8 @@ export class ResearchService {
     }
     if (dto.status === ReviewStatus.PUBLISHED) {
       const pendingSourceItems = items.filter(
-        ({ sourceSnapshot }) => sourceSnapshot?.status === SourceFetchStatus.PENDING,
+        ({ sourceSnapshot }) =>
+          sourceSnapshot?.status === SourceFetchStatus.PENDING,
       );
       if (pendingSourceItems.length) {
         throw reviewConflict(
@@ -793,7 +812,9 @@ export class ResearchService {
     if (dto.status === ReviewStatus.PUBLISHED) {
       const unresolvedContributorItems = items.filter(({ contributors }) =>
         contributors.some(({ matches }) =>
-          matches.some(({ status }) => status === ContributorMatchStatus.PROPOSED),
+          matches.some(
+            ({ status }) => status === ContributorMatchStatus.PROPOSED,
+          ),
         ),
       );
       if (unresolvedContributorItems.length) {
@@ -802,7 +823,8 @@ export class ResearchService {
           unresolvedContributorItems.map(({ id }) => ({
             code: 'CONTRIBUTOR_MATCH_PENDING',
             itemId: id,
-            message: 'A proposed registered-person contributor match still needs review.',
+            message:
+              'A proposed registered-person contributor match still needs review.',
             tone: 'pending',
           })),
         );
@@ -817,8 +839,9 @@ export class ResearchService {
 
     const reviewedAt = new Date();
     await this.prisma.$transaction(async (transaction) => {
-      const rows = items.map(({ id, reviewStatus }) =>
-        Prisma.sql`(${id}::uuid, ${reviewStatus}::"ReviewStatus")`,
+      const rows = items.map(
+        ({ id, reviewStatus }) =>
+          Prisma.sql`(${id}::uuid, ${reviewStatus}::"ReviewStatus")`,
       );
       const publishGuards =
         dto.status === ReviewStatus.PUBLISHED
@@ -864,7 +887,8 @@ export class ResearchService {
             .map(({ id }) => ({
               code: 'RESEARCH_REVIEW_CHANGED',
               itemId: id,
-              message: 'This research record changed or no longer passes the review checks.',
+              message:
+                'This research record changed or no longer passes the review checks.',
               tone: 'warning',
             })),
         );
@@ -913,7 +937,9 @@ export class ResearchService {
           items
             .filter(({ type }) => type === ResearchItemType.PAPER)
             .flatMap(({ contributors }) =>
-              contributors.flatMap(({ personId }) => (personId ? [personId] : [])),
+              contributors.flatMap(({ personId }) =>
+                personId ? [personId] : [],
+              ),
             ),
         ),
       ];
@@ -953,12 +979,15 @@ export class ResearchService {
       ) {
         throw reviewConflict(
           'This research record cannot be reopened from its current state.',
-          [{
-            code: 'RESEARCH_REVIEW_CHANGED',
-            itemId: item.id,
-            message: 'This research record cannot be reopened from its current state.',
-            tone: 'warning',
-          }],
+          [
+            {
+              code: 'RESEARCH_REVIEW_CHANGED',
+              itemId: item.id,
+              message:
+                'This research record cannot be reopened from its current state.',
+              tone: 'warning',
+            },
+          ],
         );
       }
     } else if (
@@ -967,12 +996,15 @@ export class ResearchService {
     ) {
       throw reviewConflict(
         'This research record is no longer awaiting this review decision.',
-        [{
-          code: 'RESEARCH_REVIEW_CHANGED',
-          itemId: item.id,
-          message: 'This research record is no longer awaiting this review decision.',
-          tone: 'warning',
-        }],
+        [
+          {
+            code: 'RESEARCH_REVIEW_CHANGED',
+            itemId: item.id,
+            message:
+              'This research record is no longer awaiting this review decision.',
+            tone: 'warning',
+          },
+        ],
       );
     }
 
@@ -980,15 +1012,14 @@ export class ResearchService {
       dto.status === ReviewStatus.PUBLISHED &&
       item.sourceSnapshot?.status === SourceFetchStatus.PENDING
     ) {
-      throw reviewConflict(
-        'Canonical source discovery is still in progress.',
-        [{
+      throw reviewConflict('Canonical source discovery is still in progress.', [
+        {
           code: 'SOURCE_DISCOVERY_PENDING',
           itemId: item.id,
           message: 'Canonical source discovery is still in progress.',
           tone: 'pending',
-        }],
-      );
+        },
+      ]);
     }
     if (
       dto.status === ReviewStatus.PUBLISHED &&
@@ -1000,12 +1031,15 @@ export class ResearchService {
     ) {
       throw reviewConflict(
         'Resolve proposed registered-person contributor matches before publishing.',
-        [{
-          code: 'CONTRIBUTOR_MATCH_PENDING',
-          itemId: item.id,
-          message: 'A proposed registered-person contributor match still needs review.',
-          tone: 'pending',
-        }],
+        [
+          {
+            code: 'CONTRIBUTOR_MATCH_PENDING',
+            itemId: item.id,
+            message:
+              'A proposed registered-person contributor match still needs review.',
+            tone: 'pending',
+          },
+        ],
       );
     }
 
@@ -1019,7 +1053,8 @@ export class ResearchService {
       const result = await transaction.researchItem.update({
         where: { id },
         data: {
-          publishedAt: dto.status === ReviewStatus.PUBLISHED ? new Date() : null,
+          publishedAt:
+            dto.status === ReviewStatus.PUBLISHED ? new Date() : null,
           reviewNote: reviewNote ?? null,
           reviewedById: reviewer.id,
           reviewStatus: dto.status,
@@ -1046,7 +1081,9 @@ export class ResearchService {
     if (item.submittedById) {
       await this.notifications.create(item.submittedById, {
         type: NotificationType.RESEARCH_REVIEWED,
-        title: reopening ? 'Research record reopened' : 'Research submission reviewed',
+        title: reopening
+          ? 'Research record reopened'
+          : 'Research submission reviewed',
         body: `${item.title ?? 'Untitled research item'}: ${dto.status}`,
         actionUrl: `/workspace/research/${item.id}`,
       });
@@ -1085,7 +1122,9 @@ export class ResearchService {
       item.type !== ResearchItemType.PAPER &&
       item.type !== ResearchItemType.DATASET
     ) {
-      throw new BadRequestException('Only papers and datasets can be edited here');
+      throw new BadRequestException(
+        'Only papers and datasets can be edited here',
+      );
     }
     if (dto.type !== item.type) {
       throw new BadRequestException('Research record type cannot be changed');
@@ -1095,7 +1134,8 @@ export class ResearchService {
       where: { canonicalUrl, id: { not: id } },
       select: { id: true },
     });
-    if (duplicate) throw new ConflictException('This URL is already registered');
+    if (duplicate)
+      throw new ConflictException('This URL is already registered');
 
     await this.prisma.$transaction(async (transaction) => {
       await transaction.researchItem.update({
@@ -1110,7 +1150,8 @@ export class ResearchService {
             })),
           },
           publishedAt: null,
-          reviewNote: 'Record edited by moderator; verification must be repeated.',
+          reviewNote:
+            'Record edited by moderator; verification must be repeated.',
           reviewedById: reviewer.id,
           reviewStatus: ReviewStatus.NEEDS_REVIEW,
           reviews: {
@@ -1168,7 +1209,6 @@ export class ResearchService {
   async recalculateRank(personId: string, actorId: string): Promise<void> {
     await this.rankings.recalculate(personId, actorId);
   }
-
 }
 
 function researchReviewIssues(item: {
@@ -1189,7 +1229,8 @@ function researchReviewIssues(item: {
     issues.push({
       code: 'CANONICAL_SOURCE_MISSING',
       itemId: item.id,
-      message: 'No canonical source URL was provided. Manual source review is required.',
+      message:
+        'No canonical source URL was provided. Manual source review is required.',
       tone: 'warning',
     });
   } else if (item.sourceSnapshot?.status === SourceFetchStatus.PENDING) {
@@ -1203,14 +1244,16 @@ function researchReviewIssues(item: {
     issues.push({
       code: 'SOURCE_DISCOVERY_FAILED',
       itemId: item.id,
-      message: 'Canonical source discovery failed. Verify the source manually or retry.',
+      message:
+        'Canonical source discovery failed. Verify the source manually or retry.',
       tone: 'error',
     });
   } else if (item.sourceSnapshot?.status === SourceFetchStatus.UNAVAILABLE) {
     issues.push({
       code: 'SOURCE_METADATA_UNAVAILABLE',
       itemId: item.id,
-      message: 'No machine-readable source metadata was found. Manual verification is available.',
+      message:
+        'No machine-readable source metadata was found. Manual verification is available.',
       tone: 'warning',
     });
   }
@@ -1222,7 +1265,8 @@ function researchReviewIssues(item: {
     issues.push({
       code: 'CONTRIBUTOR_MATCH_PENDING',
       itemId: item.id,
-      message: 'A proposed registered-person contributor match still needs review.',
+      message:
+        'A proposed registered-person contributor match still needs review.',
       tone: 'pending',
     });
   }

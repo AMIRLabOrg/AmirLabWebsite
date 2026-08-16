@@ -123,7 +123,9 @@ export async function readSeedData(): Promise<AmirSeedData> {
 
 export function validateSeedData(data: AmirSeedData): void {
   if (data.schemaVersion !== 4) {
-    throw new Error(`Unsupported seed schema version ${String(data.schemaVersion)}; expected 4`);
+    throw new Error(
+      `Unsupported seed schema version ${String(data.schemaVersion)}; expected 4`,
+    );
   }
   if (!data.source?.site || !data.source?.capturedAt) {
     throw new Error('Seed source metadata is incomplete');
@@ -139,7 +141,11 @@ export function validateSeedData(data: AmirSeedData): void {
   unique(data.departments, (item) => item.sourceId, 'department sourceId');
   unique(data.papers, (item) => item.sourceId, 'paper sourceId');
   uniqueOptional(data.papers, (item) => item.doi, 'paper DOI');
-  uniqueOptional(data.papers, (item) => item.canonicalUrl, 'paper canonical URL');
+  uniqueOptional(
+    data.papers,
+    (item) => item.canonicalUrl,
+    'paper canonical URL',
+  );
   unique(data.positions, (item) => item.slug, 'position slug');
 
   const people = new Set(data.people.map((person) => person.sourceId));
@@ -163,16 +169,28 @@ export function validateSeedData(data: AmirSeedData): void {
     rejectImportedJunk(person.headline, `person ${person.slug} headline`);
     rejectImportedJunk(person.biography, `person ${person.slug} biography`);
     unique(person.links, (link) => link.url, `link URL for ${person.slug}`);
-    uniqueNumber(person.links, (link) => link.sortOrder, `link sortOrder for ${person.slug}`);
+    uniqueNumber(
+      person.links,
+      (link) => link.sortOrder,
+      `link sortOrder for ${person.slug}`,
+    );
     for (const section of person.profileSections) {
-      ensureMeaningfulText(section.title, `profile section title for ${person.slug}`);
+      ensureMeaningfulText(
+        section.title,
+        `profile section title for ${person.slug}`,
+      );
       for (const subsection of section.subsections) {
         if (subsection.heading !== null) {
-          ensureMeaningfulText(subsection.heading, `profile subsection heading for ${person.slug}/${section.title}`);
+          ensureMeaningfulText(
+            subsection.heading,
+            `profile subsection heading for ${person.slug}/${section.title}`,
+          );
         }
         for (const entry of subsection.entries) {
           if (!entry || typeof entry !== 'object' || Array.isArray(entry)) {
-            throw new Error(`Profile entry for ${person.slug}/${section.title} must be an object`);
+            throw new Error(
+              `Profile entry for ${person.slug}/${section.title} must be an object`,
+            );
           }
           if (entry.label !== null) {
             ensureMeaningfulText(
@@ -230,14 +248,19 @@ export function validateSeedData(data: AmirSeedData): void {
     ensureMeaningfulText(paper.title, `paper ${paper.sourceId} title`);
     rejectImportedJunk(paper.title, `paper ${paper.sourceId} title`);
     rejectImportedJunk(paper.citation, `paper ${paper.sourceId} citation`);
-    if (paper.canonicalUrl) ensureUrl(paper.canonicalUrl, `paper ${paper.sourceId} canonicalUrl`);
+    if (paper.canonicalUrl)
+      ensureUrl(paper.canonicalUrl, `paper ${paper.sourceId} canonicalUrl`);
     const contributors = new Set<string>();
     for (const contributor of paper.contributorSourceIds) {
       if (!people.has(contributor)) {
-        throw new Error(`Paper ${paper.sourceId} references unknown contributor ${contributor}`);
+        throw new Error(
+          `Paper ${paper.sourceId} references unknown contributor ${contributor}`,
+        );
       }
       if (contributors.has(contributor)) {
-        throw new Error(`Paper ${paper.sourceId} repeats contributor ${contributor}`);
+        throw new Error(
+          `Paper ${paper.sourceId} repeats contributor ${contributor}`,
+        );
       }
       contributors.add(contributor);
     }
@@ -247,11 +270,24 @@ export function validateSeedData(data: AmirSeedData): void {
     ensureUrl(project.sourceUrl, `project ${project.sourceId} sourceUrl`);
     ensureMeaningfulText(project.title, `project ${project.sourceId} title`);
     rejectImportedJunk(project.summary, `project ${project.sourceId} summary`);
-    rejectImportedJunk(project.objective, `project ${project.sourceId} objective`);
-    if (project.publicPageEnabled && !project.summary?.trim() && !project.objective?.trim()) {
-      throw new Error(`Public project ${project.sourceId} needs a summary or objective`);
+    rejectImportedJunk(
+      project.objective,
+      `project ${project.sourceId} objective`,
+    );
+    if (
+      project.publicPageEnabled &&
+      !project.summary?.trim() &&
+      !project.objective?.trim()
+    ) {
+      throw new Error(
+        `Public project ${project.sourceId} needs a summary or objective`,
+      );
     }
-    if (project.canonicalUrl) ensureUrl(project.canonicalUrl, `project ${project.sourceId} canonicalUrl`);
+    if (project.canonicalUrl)
+      ensureUrl(
+        project.canonicalUrl,
+        `project ${project.sourceId} canonicalUrl`,
+      );
     ensureEnum(
       project.status,
       ['PLANNED', 'ACTIVE', 'PAUSED', 'COMPLETED'],
@@ -263,9 +299,15 @@ export function validateSeedData(data: AmirSeedData): void {
     ensureMeaningfulText(position.title, `position ${position.slug} title`);
     ensureMeaningfulText(position.summary, `position ${position.slug} summary`);
     rejectImportedJunk(position.summary, `position ${position.slug} summary`);
-    rejectImportedJunk(position.description, `position ${position.slug} description`);
+    rejectImportedJunk(
+      position.description,
+      `position ${position.slug} description`,
+    );
     for (const requirement of position.requirements) {
-      ensureMeaningfulText(requirement, `position ${position.slug} requirement`);
+      ensureMeaningfulText(
+        requirement,
+        `position ${position.slug} requirement`,
+      );
       rejectImportedJunk(requirement, `position ${position.slug} requirement`);
     }
     ensureEnum(
@@ -283,7 +325,15 @@ export function validateSeedData(data: AmirSeedData): void {
     );
     ensureEnum(
       position.positionType,
-      ['INTERNSHIP', 'RESEARCH_ASSISTANT', 'PROJECT_ASSISTANT', 'FELLOW', 'STAFF', 'VOLUNTEER', 'OTHER'],
+      [
+        'INTERNSHIP',
+        'RESEARCH_ASSISTANT',
+        'PROJECT_ASSISTANT',
+        'FELLOW',
+        'STAFF',
+        'VOLUNTEER',
+        'OTHER',
+      ],
       `position ${position.slug} positionType`,
     );
     ensureEnum(
@@ -309,19 +359,30 @@ const importedJunkPatterns: readonly RegExp[] = [
   /\bsource profile\b/i,
 ];
 
-function ensureMeaningfulText(value: string | null | undefined, label: string): void {
+function ensureMeaningfulText(
+  value: string | null | undefined,
+  label: string,
+): void {
   if (!value?.trim()) throw new Error(`Empty ${label}`);
 }
 
-function rejectImportedJunk(value: string | null | undefined, label: string): void {
+function rejectImportedJunk(
+  value: string | null | undefined,
+  label: string,
+): void {
   if (!value) return;
-  const pattern = importedJunkPatterns.find((candidate) => candidate.test(value));
-  if (pattern) throw new Error(`Imported source artifact remains in ${label}: ${value}`);
+  const pattern = importedJunkPatterns.find((candidate) =>
+    candidate.test(value),
+  );
+  if (pattern)
+    throw new Error(`Imported source artifact remains in ${label}: ${value}`);
 }
 
 function isDateOnlyProfileEntry(value: string): boolean {
   const normalized = value.trim();
-  return /^(?:(?:Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:t(?:ember)?)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\s+)?\d{4}(?:\s*[–—-]\s*(?:(?:Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:t(?:ember)?)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\s+)?(?:\d{4}|Present))?$/i.test(normalized);
+  return /^(?:(?:Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:t(?:ember)?)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\s+)?\d{4}(?:\s*[-—-]\s*(?:(?:Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:t(?:ember)?)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\s+)?(?:\d{4}|Present))?$/i.test(
+    normalized,
+  );
 }
 
 export async function missingSeedAvatarFiles(
@@ -363,7 +424,8 @@ function uniqueNumber<T>(
   const seen = new Set<number>();
   for (const item of values) {
     const value = selector(item);
-    if (seen.has(value)) throw new Error(`Duplicate ${label}: ${String(value)}`);
+    if (seen.has(value))
+      throw new Error(`Duplicate ${label}: ${String(value)}`);
     seen.add(value);
   }
 }

@@ -22,7 +22,7 @@ export function PageIntro({
       aria-busy={loading || undefined}
       className={cn(
         "relative mx-auto grid min-h-[220px] w-full max-w-[var(--public-wide)] grid-cols-[minmax(0,1fr)] items-stretch border-b border-line-strong px-[clamp(1rem,3.2vw,3rem)] pt-[clamp(2.3rem,4.5vw,4.2rem)] pb-[2.2rem] max-[640px]:min-h-0 max-[640px]:px-4 max-[640px]:pt-8 max-[640px]:pb-6",
-        aside && "grid-cols-[minmax(0,1fr)_minmax(240px,31%)] max-[900px]:grid-cols-1",
+        !!aside && "grid-cols-[minmax(0,1fr)_minmax(240px,31%)] max-[900px]:grid-cols-1",
       )}
       data-loading={loading || undefined}
     >

@@ -242,7 +242,9 @@ export class ResearchDiscoveryService implements OnModuleInit {
       }
 
       const confidence = identifierMatch ? 1 : (fuzzyMatch?.confidence ?? 1);
-      const reason = identifierMatch ? 'ORCID' : (fuzzyMatch?.reason ?? 'Exact normalized name');
+      const reason = identifierMatch
+        ? 'ORCID'
+        : (fuzzyMatch?.reason ?? 'Exact normalized name');
       const status = ContributorMatchStatus.PROPOSED;
       await this.prisma.$transaction(async (transaction) => {
         await transaction.contributorMatch.upsert({
@@ -454,7 +456,9 @@ function bestPersonNameMatch<T extends { fullName: string }>(
       const evidence = personNameMatchEvidence(authorName, person.fullName);
       return evidence ? [{ evidence, person }] : [];
     })
-    .sort((left, right) => right.evidence.confidence - left.evidence.confidence);
+    .sort(
+      (left, right) => right.evidence.confidence - left.evidence.confidence,
+    );
   const best = matches[0];
   if (!best) return undefined;
   if (matches[1]?.evidence.confidence === best.evidence.confidence) {
@@ -494,7 +498,9 @@ function serializableMetadata(
   };
 }
 
-function requiredEvidenceObject(value: Prisma.JsonValue): Prisma.InputJsonObject {
+function requiredEvidenceObject(
+  value: Prisma.JsonValue,
+): Prisma.InputJsonObject {
   if (!value || Array.isArray(value) || typeof value !== 'object') {
     throw new Error('Contributor match evidence must be a JSON object');
   }

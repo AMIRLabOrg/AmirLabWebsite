@@ -31,10 +31,15 @@ async function serviceWith(assets: object, prisma: object) {
 }
 
 function pdfTextResult(text: string): TextResult {
-  const result = new TextResult(1);
-  result.pages = [{ num: 1, text }];
-  result.text = text;
-  return result;
+  return {
+    numpages: 1,
+    numrender: 1,
+    info: {},
+    metadata: null,
+    version: '1.10.100',
+    text,
+    pages: [{ num: 1, text }],
+  } as unknown as TextResult;
 }
 
 describe('ApplicationsService submission parsing', () => {

@@ -93,7 +93,9 @@ async function main() {
         where: { status: ProjectChangeStatus.NEEDS_REVIEW },
       }),
       prisma.position.count(),
-      prisma.position.count({ where: { status: { not: PositionStatus.DRAFT } } }),
+      prisma.position.count({
+        where: { status: { not: PositionStatus.DRAFT } },
+      }),
       prisma.asset.findMany({ where: { kind: AssetKind.AVATAR } }),
       prisma.siteSetting.findMany({ select: { key: true } }),
       prisma.personDepartment.count(),
@@ -104,10 +106,26 @@ async function main() {
       prisma.researchSourceSnapshot.count(),
     ]);
 
-    expect('imported people identity records', importedPeople, seed.people.length);
-    expect('registered imported accounts', importedAccounts, seed.people.length);
-    expect('profile requests awaiting manual review', pendingProfiles, seed.people.length);
-    expect('imported people published before review', publishedImportedPeople, 0);
+    expect(
+      'imported people identity records',
+      importedPeople,
+      seed.people.length,
+    );
+    expect(
+      'registered imported accounts',
+      importedAccounts,
+      seed.people.length,
+    );
+    expect(
+      'profile requests awaiting manual review',
+      pendingProfiles,
+      seed.people.length,
+    );
+    expect(
+      'imported people published before review',
+      publishedImportedPeople,
+      0,
+    );
     expect(
       'published departments',
       departments,
@@ -116,19 +134,52 @@ async function main() {
     expect('papers', papers, seed.papers.length);
     expect('papers awaiting manual review', pendingPapers, seed.papers.length);
     expect('papers published before review', publishedPapers, 0);
-    expect('contributors directly linked before verification', directContributorLinks, 0);
-    expect('proposed contributor identity matches', proposedMatches, expectedProposedMatches);
+    expect(
+      'contributors directly linked before verification',
+      directContributorLinks,
+      0,
+    );
+    expect(
+      'proposed contributor identity matches',
+      proposedMatches,
+      expectedProposedMatches,
+    );
     expect('projects', projects, expectedProjects);
-    expect('project imports awaiting review', pendingProjectChanges, expectedProjects);
+    expect(
+      'project imports awaiting review',
+      pendingProjectChanges,
+      expectedProjects,
+    );
     expect('positions', positions, seed.positions.length);
-    expect('imported positions opened without manual decision', nonDraftPositions, 0);
-    expect('department memberships', departmentMemberships, expectedMemberships);
-    expect('avatar assets staged for profile review', avatars.length, expectedAvatars);
-    if (!adminProfile?.user?.email || adminProfile.publicEmail !== adminProfile.user.email) {
-      throw new Error('Admin public profile email must match the administrator login email');
+    expect(
+      'imported positions opened without manual decision',
+      nonDraftPositions,
+      0,
+    );
+    expect(
+      'department memberships',
+      departmentMemberships,
+      expectedMemberships,
+    );
+    expect(
+      'avatar assets staged for profile review',
+      avatars.length,
+      expectedAvatars,
+    );
+    if (
+      !adminProfile?.user?.email ||
+      adminProfile.publicEmail !== adminProfile.user.email
+    ) {
+      throw new Error(
+        'Admin public profile email must match the administrator login email',
+      );
     }
     console.log(`[verify] admin profile email: ${adminProfile.publicEmail}`);
-    expect('source checks staged without a discovery job', seededSourceSnapshots, 0);
+    expect(
+      'source checks staged without a discovery job',
+      seededSourceSnapshots,
+      0,
+    );
 
     const badAvatarKeys = avatars.filter(
       (asset) =>
@@ -150,7 +201,11 @@ async function main() {
     const liveAvatarLinks = await prisma.person.count({
       where: { legacySourceId: { not: null }, avatarId: { not: null } },
     });
-    expect('imported avatars published before profile approval', liveAvatarLinks, 0);
+    expect(
+      'imported avatars published before profile approval',
+      liveAvatarLinks,
+      0,
+    );
 
     const stagedAvatarLinks = await prisma.profileEditRequest.count({
       where: {
@@ -158,7 +213,11 @@ async function main() {
         avatarAssetId: { not: null },
       },
     });
-    expect('profile requests with staged avatar', stagedAvatarLinks, expectedAvatars);
+    expect(
+      'profile requests with staged avatar',
+      stagedAvatarLinks,
+      expectedAvatars,
+    );
 
     const requiredSettings = [
       'page.home',
@@ -179,9 +238,15 @@ async function main() {
     }
 
     console.log('[verify] Canonical import is staged for manual review.');
-    console.log('[verify] Registered people are available to internal workflows.');
-    console.log('[verify] Paper contributor relationships remain proposed until reviewed.');
-    console.log('[verify] All imported avatar files exist under storage/peoples.');
+    console.log(
+      '[verify] Registered people are available to internal workflows.',
+    );
+    console.log(
+      '[verify] Paper contributor relationships remain proposed until reviewed.',
+    );
+    console.log(
+      '[verify] All imported avatar files exist under storage/peoples.',
+    );
   } finally {
     await prisma.$disconnect();
   }
@@ -195,6 +260,8 @@ function expect(label: string, actual: number, expected: number) {
 }
 
 void main().catch((error) => {
-  console.error(error instanceof Error ? error.stack ?? error.message : String(error));
+  console.error(
+    error instanceof Error ? (error.stack ?? error.message) : String(error),
+  );
   process.exitCode = 1;
 });

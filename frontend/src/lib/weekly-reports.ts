@@ -60,5 +60,5 @@ export function reportWeek(value: string): string {
     month: "short",
     timeZone: "UTC",
   });
-  return `${format.format(start)} – ${format.format(end)}`;
+  return `${format.format(start)} - ${format.format(end)}`;
 }

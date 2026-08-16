@@ -45,7 +45,8 @@ describe('ResearchProgramsService', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    prisma.$transaction.mockImplementation((work) => work(prisma));
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-call
+    prisma.$transaction.mockImplementation((work: any) => work(prisma));
   });
 
   it('keeps archived programs out of the active registry', async () => {
@@ -65,9 +66,7 @@ describe('ResearchProgramsService', () => {
 
   it('creates one program around canonical project and output identities', async () => {
     prisma.department.count.mockResolvedValue(1);
-    prisma.researchItem.count
-      .mockResolvedValueOnce(1)
-      .mockResolvedValueOnce(1);
+    prisma.researchItem.count.mockResolvedValueOnce(1).mockResolvedValueOnce(1);
     prisma.person.findFirst.mockResolvedValue({ id: dto.leadPersonId });
     prisma.researchProgram.findUnique
       .mockResolvedValueOnce(null)
@@ -80,6 +79,7 @@ describe('ResearchProgramsService', () => {
     await service.create(dto, user);
 
     expect(prisma.researchProgram.create).toHaveBeenCalledWith({
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       data: expect.objectContaining({
         items: {
           create: [
@@ -90,15 +90,14 @@ describe('ResearchProgramsService', () => {
       }),
     });
     expect(prisma.auditRecord.create).toHaveBeenCalledWith({
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       data: expect.objectContaining({ action: 'research-program.created' }),
     });
   });
 
   it('rejects a paper or dataset id supplied as a project', async () => {
     prisma.department.count.mockResolvedValue(1);
-    prisma.researchItem.count
-      .mockResolvedValueOnce(0)
-      .mockResolvedValueOnce(1);
+    prisma.researchItem.count.mockResolvedValueOnce(0).mockResolvedValueOnce(1);
     prisma.person.findFirst.mockResolvedValue({ id: dto.leadPersonId });
     const service = await resolveService(ResearchProgramsService, [
       { provide: PrismaService, useValue: prisma },

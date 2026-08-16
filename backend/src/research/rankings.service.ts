@@ -168,13 +168,17 @@ export class RankingsService implements OnModuleInit, OnModuleDestroy {
         nextEffective: effectiveRank(person.appointedRank, nextEarned),
         paperCount,
         person,
-        previousEffective: effectiveRank(person.appointedRank, person.earnedRank),
+        previousEffective: effectiveRank(
+          person.appointedRank,
+          person.earnedRank,
+        ),
       };
     });
 
     await this.prisma.$transaction(async (transaction) => {
-      const metricRows = changes.map(({ paperCount, person }) =>
-        Prisma.sql`(${person.id}::uuid, ${paperCount}::integer, NOW(), NOW())`,
+      const metricRows = changes.map(
+        ({ paperCount, person }) =>
+          Prisma.sql`(${person.id}::uuid, ${paperCount}::integer, NOW(), NOW())`,
       );
       await transaction.$executeRaw(
         Prisma.sql`
@@ -192,8 +196,9 @@ export class RankingsService implements OnModuleInit, OnModuleDestroy {
         `,
       );
 
-      const rankRows = changes.map(({ nextEarned, person }) =>
-        Prisma.sql`(${person.id}::uuid, ${nextEarned}::"AcademicRank")`,
+      const rankRows = changes.map(
+        ({ nextEarned, person }) =>
+          Prisma.sql`(${person.id}::uuid, ${nextEarned}::"AcademicRank")`,
       );
       await transaction.$executeRaw(
         Prisma.sql`
@@ -207,21 +212,22 @@ export class RankingsService implements OnModuleInit, OnModuleDestroy {
       );
 
       await transaction.auditRecord.createMany({
-        data: changes.map(({ citationCount, nextEarned, paperCount, person }) => ({
-          action: 'person.rank-recalculated',
-          actorId,
-          entityId: person.id,
-          entityType: 'Person',
-          details: {
-            appointedRank: person.appointedRank,
-            bulk: true,
-            citationCount,
-            earnedRank: { from: person.earnedRank, to: nextEarned },
-            paperCount,
-          },
-        })),
+        data: changes.map(
+          ({ citationCount, nextEarned, paperCount, person }) => ({
+            action: 'person.rank-recalculated',
+            actorId,
+            entityId: person.id,
+            entityType: 'Person',
+            details: {
+              appointedRank: person.appointedRank,
+              bulk: true,
+              citationCount,
+              earnedRank: { from: person.earnedRank, to: nextEarned },
+              paperCount,
+            },
+          }),
+        ),
       });
-
     });
 
     await this.notifications.createMany(

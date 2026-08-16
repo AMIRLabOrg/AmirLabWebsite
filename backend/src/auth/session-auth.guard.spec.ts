@@ -67,7 +67,9 @@ describe('SessionAuthGuard CSRF recovery', () => {
     );
 
     await expect(
-      (await guard()).canActivate(executionContext as ExecutionContext),
+      (await guard()).canActivate(
+        executionContext as unknown as ExecutionContext,
+      ),
     ).resolves.toBe(true);
     expect(request).toHaveProperty('user', user);
   });
@@ -76,7 +78,9 @@ describe('SessionAuthGuard CSRF recovery', () => {
     const { executionContext } = context('PATCH');
 
     await expect(
-      (await guard()).canActivate(executionContext as ExecutionContext),
+      (await guard()).canActivate(
+        executionContext as unknown as ExecutionContext,
+      ),
     ).rejects.toThrow('CSRF token required');
   });
 
@@ -84,7 +88,9 @@ describe('SessionAuthGuard CSRF recovery', () => {
     const { executionContext } = context('POST', 'wrong-token');
 
     await expect(
-      (await guard()).canActivate(executionContext as ExecutionContext),
+      (await guard()).canActivate(
+        executionContext as unknown as ExecutionContext,
+      ),
     ).rejects.toThrow('CSRF token is invalid');
   });
 });

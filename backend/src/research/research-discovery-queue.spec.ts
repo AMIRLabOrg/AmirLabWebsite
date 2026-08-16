@@ -7,10 +7,10 @@ import {
 } from '../../generated/prisma/client';
 import { NotificationsService } from '../notifications/notifications.service';
 import { PrismaService } from '../database/prisma.service';
-import { RankingsService } from '../rankings/rankings.service';
+import { RankingsService } from './rankings.service';
 import { SettingsService } from '../settings/settings.service';
 import { JobsService } from '../jobs/jobs.service';
-import { SafeSourceFetcher } from './safe-source-fetcher.service';
+import { SafeSourceFetcher } from './safe-source-fetcher';
 import { ResearchDiscoveryService } from './research-discovery.service';
 import { ResearchProfileSyncService } from './research-profile-sync.service';
 import { ResearchService } from './research.service';
@@ -156,6 +156,7 @@ describe('research source discovery queue', () => {
         findUnique: jest.fn().mockResolvedValue({
           contributors: [],
           id: '0f52c8f1-1bd0-40c6-9724-6b14c2f6fe58',
+          type: 'PAPER',
           reviewStatus: ReviewStatus.NEEDS_REVIEW,
           sourceSnapshot: { status: SourceFetchStatus.PENDING },
         }),

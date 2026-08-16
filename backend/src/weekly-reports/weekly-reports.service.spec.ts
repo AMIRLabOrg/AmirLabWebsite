@@ -53,9 +53,19 @@ describe('WeeklyReportsService', () => {
     },
   };
 
+  beforeAll(() => {
+    jest.useFakeTimers();
+    jest.setSystemTime(new Date('2026-07-29T12:00:00Z'));
+  });
+
+  afterAll(() => {
+    jest.useRealTimers();
+  });
+
   beforeEach(() => {
     jest.clearAllMocks();
-    prisma.$transaction.mockImplementation((work) => work(prisma));
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-call
+    prisma.$transaction.mockImplementation((work: any) => work(prisma));
   });
 
   it('builds current-week evidence only from accessible project tasks', async () => {

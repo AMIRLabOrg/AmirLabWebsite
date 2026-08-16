@@ -80,7 +80,7 @@ export function ProfileReviewQueue() {
   );
   const commonBulkActions = selectedRequests.length && selectedRequests.every(({ status }) => status === "NEEDS_REVIEW")
     ? [
-        ...(selectedCanApprove ? [
+      ...(selectedCanApprove ? [
         {
           confirmDescription: `Approve the ${selectedRequests.length} selected profile change request${selectedRequests.length === 1 ? "" : "s"}. Each request is guarded by its current revision.`,
           confirmLabel: "Approve selected",
@@ -89,17 +89,17 @@ export function ProfileReviewQueue() {
           status: "APPROVED" as const,
           tone: "primary" as const,
         }] : []),
-        {
-          confirmDescription: `Reject the ${selectedRequests.length} selected profile change request${selectedRequests.length === 1 ? "" : "s"} with the same reviewer note.`,
-          confirmLabel: "Reject selected",
-          confirmTitle: "Reject selected profile changes?",
-          label: "Reject selected",
-          notePlaceholder: "Explain what these members need to fix.",
-          requiresNote: true,
-          status: "REJECTED" as const,
-          tone: "danger" as const,
-        },
-      ]
+      {
+        confirmDescription: `Reject the ${selectedRequests.length} selected profile change request${selectedRequests.length === 1 ? "" : "s"} with the same reviewer note.`,
+        confirmLabel: "Reject selected",
+        confirmTitle: "Reject selected profile changes?",
+        label: "Reject selected",
+        notePlaceholder: "Explain what these members need to fix.",
+        requiresNote: true,
+        status: "REJECTED" as const,
+        tone: "danger" as const,
+      },
+    ]
     : [];
 
   function captureReviewError(error: ApiRequestError) {
@@ -171,7 +171,7 @@ export function ProfileReviewQueue() {
             options={[
               { label: "Oldest first", value: "OLDEST" },
               { label: "Newest first", value: "NEWEST" },
-              { label: "Name A–Z", value: "NAME" },
+              { label: "Name A-Z", value: "NAME" },
             ]}
             value={sort}
           />

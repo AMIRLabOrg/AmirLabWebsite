@@ -41,7 +41,9 @@ async function main() {
   const data = await readSeedData();
   const missingFiles = await missingSeedAvatarFiles(data);
   if (missingFiles.length) {
-    throw new Error(`Seed references ${missingFiles.length} missing avatar file(s)`);
+    throw new Error(
+      `Seed references ${missingFiles.length} missing avatar file(s)`,
+    );
   }
 
   const prisma = createCliPrisma();
@@ -209,7 +211,9 @@ async function main() {
             departmentId,
             isPrimary: index === 0 && membership.role === 'HEAD',
             personId,
-            role: enumValue(DepartmentRole, membership.role) ?? DepartmentRole.MEMBER,
+            role:
+              enumValue(DepartmentRole, membership.role) ??
+              DepartmentRole.MEMBER,
             sortOrder: membership.sortOrder,
           },
         });
@@ -242,7 +246,10 @@ async function main() {
         },
       });
 
-      for (const [sortOrder, sourceId] of paper.contributorSourceIds.entries()) {
+      for (const [
+        sortOrder,
+        sourceId,
+      ] of paper.contributorSourceIds.entries()) {
         const personId = personIdBySource.get(sourceId);
         const displayName = personNameBySource.get(sourceId);
         if (!personId || !displayName) continue;
@@ -315,9 +322,11 @@ async function main() {
         data: {
           description: position.description,
           engagementType:
-            enumValue(EngagementType, position.engagementType) ?? EngagementType.FLEXIBLE,
+            enumValue(EngagementType, position.engagementType) ??
+            EngagementType.FLEXIBLE,
           positionType:
-            enumValue(PositionType, position.positionType) ?? PositionType.OTHER,
+            enumValue(PositionType, position.positionType) ??
+            PositionType.OTHER,
           requirements: position.requirements,
           responsibilities: [],
           slug: position.slug,
@@ -350,7 +359,9 @@ async function main() {
     console.log(`[db] Projects: ${data.projects.length}`);
     console.log(`[db] Positions: ${data.positions.length}`);
     console.log(`[db] Admin login: ${adminEmail}`);
-    console.log('[db] Run `pnpm run db:verify` to verify database and storage integrity.');
+    console.log(
+      '[db] Run `pnpm run db:verify` to verify database and storage integrity.',
+    );
   } finally {
     await prisma.$disconnect();
   }
@@ -432,7 +443,10 @@ function stableSlug(label: string, stableKey: string): string {
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/(^-|-$)/g, '')
     .slice(0, 72);
-  const suffix = createHash('sha1').update(stableKey).digest('hex').slice(0, 10);
+  const suffix = createHash('sha1')
+    .update(stableKey)
+    .digest('hex')
+    .slice(0, 10);
   return `${readable || 'research-record'}-${suffix}`;
 }
 
@@ -452,7 +466,9 @@ function required<T>(value: T | undefined, message: string): T {
 }
 
 void main().catch((error) => {
-  console.error(error instanceof Error ? error.stack ?? error.message : String(error));
+  console.error(
+    error instanceof Error ? (error.stack ?? error.message) : String(error),
+  );
   process.exitCode = 1;
 });
 

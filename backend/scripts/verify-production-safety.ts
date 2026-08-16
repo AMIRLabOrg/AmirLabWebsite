@@ -102,18 +102,14 @@ function containsPromiseAll(node: ts.Node): boolean {
 
 function fail(file: string, node: ts.Node, message: string): void {
   const source = node.getSourceFile();
-  const { line } = source.getLineAndCharacterOfPosition(
-    node.getStart(source),
-  );
+  const { line } = source.getLineAndCharacterOfPosition(node.getStart(source));
   failures.push(`${path.relative(root, file)}:${line + 1}: ${message}`);
 }
 
 function walk(directory: string): string[] {
   if (!fs.existsSync(directory)) return [];
-  return fs
-    .readdirSync(directory, { withFileTypes: true })
-    .flatMap((entry) => {
-      const target = path.join(directory, entry.name);
-      return entry.isDirectory() ? walk(target) : [target];
-    });
+  return fs.readdirSync(directory, { withFileTypes: true }).flatMap((entry) => {
+    const target = path.join(directory, entry.name);
+    return entry.isDirectory() ? walk(target) : [target];
+  });
 }

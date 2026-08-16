@@ -247,7 +247,7 @@ export function UserManagement() {
             options={[
               { label: "Newest first", value: "NEWEST" },
               { label: "Oldest first", value: "OLDEST" },
-              { label: "Name A–Z", value: "NAME" },
+              { label: "Name A-Z", value: "NAME" },
             ]}
             value={sort}
           />

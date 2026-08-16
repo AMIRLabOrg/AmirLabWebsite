@@ -6,7 +6,12 @@ import type { Environment } from '../config/environment';
 import { AuthService } from './auth.service';
 import { CurrentUser, Public } from './auth.decorators';
 import type { AuthenticatedUser } from './auth.types';
-import { LoginDto, RequestPasswordResetDto, ResetPasswordDto, SetupAccountDto } from './dto/auth.dto';
+import {
+  LoginDto,
+  RequestPasswordResetDto,
+  ResetPasswordDto,
+  SetupAccountDto,
+} from './dto/auth.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -59,9 +64,7 @@ export class AuthController {
     @Res({ passthrough: true }) response: Response,
   ): Promise<{ reset: true }> {
     await this.auth.resetPassword(body.token, body.password);
-    response.clearCookie(
-      this.config.get('sessionCookieName', { infer: true }),
-    );
+    response.clearCookie(this.config.get('sessionCookieName', { infer: true }));
     return { reset: true };
   }
 

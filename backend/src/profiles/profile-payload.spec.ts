@@ -54,9 +54,9 @@ describe('parseProfilePayload', () => {
         },
       ],
     };
-    expect(parseProfilePayload(legacy).sections[0].subsections[0].entries).toEqual([
-      { label: null, content: 'Legacy profile detail' },
-    ]);
+    expect(
+      parseProfilePayload(legacy).sections[0].subsections[0].entries,
+    ).toEqual([{ label: null, content: 'Legacy profile detail' }]);
   });
 
   it('round-trips the internal removal flag for reviewer approval', () => {

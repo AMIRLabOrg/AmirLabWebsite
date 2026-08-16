@@ -109,7 +109,9 @@ export class AssetsService {
 
   async storeUniversityLogo(file: Express.Multer.File) {
     if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.mimetype)) {
-      throw new BadRequestException('University logo must be JPEG, PNG, or WebP');
+      throw new BadRequestException(
+        'University logo must be JPEG, PNG, or WebP',
+      );
     }
 
     let image: { data: Buffer; info: sharp.OutputInfo };

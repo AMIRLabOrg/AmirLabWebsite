@@ -5,10 +5,7 @@ import {
 } from '@nestjs/common';
 import { AssetsService } from '../assets/assets.service';
 import { PrismaService } from '../database/prisma.service';
-import type {
-  UniversityDto,
-  UpdateUniversityDto,
-} from './dto/university.dto';
+import type { UniversityDto, UpdateUniversityDto } from './dto/university.dto';
 
 @Injectable()
 export class UniversitiesService {

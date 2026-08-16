@@ -14,7 +14,11 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { CurrentUser, RequireRole } from '../auth/auth.decorators';
 import type { AuthenticatedUser } from '../auth/auth.types';
 import { PlatformRole } from '../../generated/prisma/client';
-import { BulkReviewProfileEditsDto, ReviewProfileEditDto, SubmitProfileEditDto } from './dto/profile.dto';
+import {
+  BulkReviewProfileEditsDto,
+  ReviewProfileEditDto,
+  SubmitProfileEditDto,
+} from './dto/profile.dto';
 import { ProfileReviewQueryDto } from './dto/profile-review-query.dto';
 import { ProfilesService } from './profiles.service';
 

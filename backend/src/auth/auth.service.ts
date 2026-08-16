@@ -326,6 +326,7 @@ export class AuthService {
 function invalidPasswordResetLink(): UnauthorizedException {
   return new UnauthorizedException({
     code: 'PASSWORD_RESET_INVALID',
-    publicMessage: 'This reset link is invalid or has expired. Request a new one.',
+    publicMessage:
+      'This reset link is invalid or has expired. Request a new one.',
   });
 }

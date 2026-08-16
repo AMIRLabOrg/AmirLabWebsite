@@ -216,7 +216,8 @@ export class NotificationsService {
         title: notification.title,
         type: notification.type,
       };
-      for (const subscriber of this.subscribers.get(notification.recipientId) ?? []) {
+      for (const subscriber of this.subscribers.get(notification.recipientId) ??
+        []) {
         subscriber.next({ data: event });
       }
     }

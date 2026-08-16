@@ -5,7 +5,7 @@ import { loadingPlaceholder } from "@/lib/loading-style";
 
 export const formControlClass = "h-[var(--control-height)] min-h-[var(--control-height)] w-full rounded-control border border-line bg-surface px-4 py-0 text-[.9rem] font-normal leading-[1.45] text-ink transition-[border-color,box-shadow,background] duration-150 hover:not-disabled:border-[color-mix(in_srgb,var(--brand)_42%,var(--line))] focus-visible:border-brand focus-visible:shadow-[var(--focus-ring)] aria-invalid:border-danger disabled:cursor-not-allowed disabled:bg-surface-subtle disabled:text-ink-faint motion-reduce:transition-none";
 
-export const InputControl = forwardRef<HTMLInputElement, ComponentPropsWithRef<"input"> & { loading?: boolean }>(
+export const InputControl = forwardRef<HTMLInputElement, ComponentPropsWithRef<"input"> & { loading?: boolean; "data-placeholder"?: string }>(
   function InputControl({ className, loading = false, ...props }, ref) {
     return (
       <input
@@ -20,7 +20,7 @@ export const InputControl = forwardRef<HTMLInputElement, ComponentPropsWithRef<"
 
 export const TextareaControl = forwardRef<
   HTMLTextAreaElement,
-  ComponentPropsWithRef<"textarea"> & { loading?: boolean }
+  ComponentPropsWithRef<"textarea"> & { loading?: boolean; "data-placeholder"?: string }
 >(function TextareaControl({ className, loading = false, ...props }, ref) {
   return (
     <textarea

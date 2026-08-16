@@ -1,4 +1,7 @@
-import { PersonSectionType, ResearchItemType } from '../../generated/prisma/client';
+import {
+  PersonSectionType,
+  ResearchItemType,
+} from '../../generated/prisma/client';
 import {
   matchesProfileOutput,
   prunePendingProfile,
@@ -23,7 +26,9 @@ describe('research profile output normalization', () => {
   });
 
   it('does not match unrelated profile text', () => {
-    expect(matchesProfileOutput('Machine learning and computer vision', paper)).toBe(false);
+    expect(
+      matchesProfileOutput('Machine learning and computer vision', paper),
+    ).toBe(false);
   });
 
   it('removes only the duplicate publication entry from a pending profile payload', () => {

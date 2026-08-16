@@ -279,13 +279,17 @@ export class ResearchRelationshipsService {
       );
     }
     const reviewNote =
-      dto.status === ContributorMatchStatus.REJECTED ? dto.note?.trim() : undefined;
+      dto.status === ContributorMatchStatus.REJECTED
+        ? dto.note?.trim()
+        : undefined;
     if (
       dto.status === ContributorMatchStatus.REJECTED &&
       match.source === ContributorMatchSource.USER_CLAIM &&
       !reviewNote
     ) {
-      throw new BadRequestException('A reviewer note is required for a member claim');
+      throw new BadRequestException(
+        'A reviewer note is required for a member claim',
+      );
     }
 
     await this.prisma.$transaction(async (transaction) => {
@@ -338,7 +342,10 @@ export class ResearchRelationshipsService {
           actorId: reviewer.id,
           entityId: match.id,
           entityType: 'ContributorMatch',
-          details: { ...(reviewNote ? { note: reviewNote } : {}), status: dto.status },
+          details: {
+            ...(reviewNote ? { note: reviewNote } : {}),
+            status: dto.status,
+          },
         },
       });
     });

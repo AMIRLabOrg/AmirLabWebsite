@@ -9,6 +9,10 @@ import {
 } from '@nestjs/websockets';
 import { createHash } from 'node:crypto';
 import type { Server, Socket } from 'socket.io';
+
+interface AuthenticatedSocket extends Socket {
+  data: { userId?: string };
+}
 import { AccountStatus } from '../../generated/prisma/client';
 import type { Environment } from '../config/environment';
 import { PrismaService } from '../database/prisma.service';
@@ -31,18 +35,18 @@ export class CollaborationGateway {
     private readonly push: PushService,
   ) {}
 
-  async handleConnection(socket: Socket) {
+  async handleConnection(socket: AuthenticatedSocket) {
     const user = await this.userForCookie(socket.handshake.headers.cookie);
     if (!user) return socket.disconnect(true);
     socket.data.userId = user.id;
-    socket.join(`user:${user.id}`);
+    void socket.join(`user:${user.id}`);
     this.connections.set(user.id, (this.connections.get(user.id) ?? 0) + 1);
     await this.redis.setPresence(user.id);
     this.server.emit('presence.updated', { userId: user.id, status: 'ONLINE' });
   }
 
-  async handleDisconnect(socket: Socket) {
-    const userId = socket.data.userId as string | undefined;
+  async handleDisconnect(socket: AuthenticatedSocket) {
+    const userId = socket.data.userId;
     if (!userId) return;
     const count = Math.max(0, (this.connections.get(userId) ?? 1) - 1);
     if (count) this.connections.set(userId, count);
@@ -67,7 +71,9 @@ export class CollaborationGateway {
     messages: readonly T[],
   ): Promise<void> {
     if (!messages.length) return;
-    const conversationIds = [...new Set(messages.map(({ conversationId }) => conversationId))];
+    const conversationIds = [
+      ...new Set(messages.map(({ conversationId }) => conversationId)),
+    ];
     const members = await this.prisma.conversationMember.findMany({
       where: { conversationId: { in: conversationIds } },
       select: { conversationId: true, userId: true },
@@ -86,13 +92,13 @@ export class CollaborationGateway {
   }
 
   @SubscribeMessage('presence.heartbeat')
-  async heartbeat(@ConnectedSocket() socket: Socket) {
+  async heartbeat(@ConnectedSocket() socket: AuthenticatedSocket) {
     if (socket.data.userId) await this.redis.setPresence(socket.data.userId);
   }
 
   @SubscribeMessage('message.send')
   async message(
-    @ConnectedSocket() socket: Socket,
+    @ConnectedSocket() socket: AuthenticatedSocket,
     @MessageBody()
     body: { conversationId?: string; body?: string; replyToId?: string },
   ) {
@@ -121,7 +127,7 @@ export class CollaborationGateway {
 
   @SubscribeMessage('typing')
   async typing(
-    @ConnectedSocket() socket: Socket,
+    @ConnectedSocket() socket: AuthenticatedSocket,
     @MessageBody() body: { conversationId?: string; active?: boolean },
   ) {
     if (!socket.data.userId || !body?.conversationId) return;
@@ -137,17 +143,15 @@ export class CollaborationGateway {
       select: { userId: true },
     });
     for (const { userId } of members)
-      this.server
-        .to(`user:${userId}`)
-        .emit('typing', {
-          userId: socket.data.userId,
-          active: Boolean(body.active),
-        });
+      this.server.to(`user:${userId}`).emit('typing', {
+        userId: socket.data.userId,
+        active: Boolean(body.active),
+      });
   }
 
   @SubscribeMessage('message.react')
   async reaction(
-    @ConnectedSocket() socket: Socket,
+    @ConnectedSocket() socket: AuthenticatedSocket,
     @MessageBody() body: { messageId?: string; emoji?: string },
   ) {
     if (!socket.data.userId || !body?.messageId || !body.emoji) return;

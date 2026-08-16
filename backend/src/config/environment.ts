@@ -65,10 +65,7 @@ export function validateEnvironment(
       10,
       'PASSWORD_RESET_MINUTES',
     ),
-    smtpFrom: optionalString(
-      source.SMTP_FROM,
-      'AMIR Lab <noreply@amirl.org>',
-    ),
+    smtpFrom: optionalString(source.SMTP_FROM, 'AMIR Lab <noreply@amirl.org>'),
     smtpHost,
     smtpPort: positiveInteger(source.SMTP_PORT, 2525, 'SMTP_PORT'),
     smtpUser,

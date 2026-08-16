@@ -21,6 +21,7 @@ describe('DepartmentsService', () => {
     });
 
     expect(prisma.department.create).toHaveBeenCalledWith({
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       data: expect.objectContaining({
         abbreviation: 'DAIBI',
         slug: 'artificial-intelligence-and-biomedical-imaging',
@@ -49,6 +50,7 @@ describe('DepartmentsService', () => {
     });
 
     expect(prisma.department.create).toHaveBeenCalledWith({
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       data: expect.objectContaining({ slug: 'computer-vision-2' }),
     });
   });
@@ -69,6 +71,7 @@ describe('DepartmentsService', () => {
     });
 
     expect(prisma.department.update).toHaveBeenCalledWith({
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       data: expect.objectContaining({
         abbreviation: 'DNLP',
         slug: 'natural-language-processing',

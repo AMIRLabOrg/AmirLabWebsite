@@ -43,7 +43,11 @@ export class MailService implements OnModuleInit {
   }
 
   async queue(message: MailMessage, uniqueKey?: string): Promise<void> {
-    await this.jobs.enqueue('SEND_EMAIL', mailMessageToJson(message), uniqueKey);
+    await this.jobs.enqueue(
+      'SEND_EMAIL',
+      mailMessageToJson(message),
+      uniqueKey,
+    );
   }
 
   /** Send immediately when a one-time secret must never be persisted in the job payload. */

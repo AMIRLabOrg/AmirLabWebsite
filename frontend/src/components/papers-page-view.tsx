@@ -1,4 +1,4 @@
-import { Suspense } from "react";
+
 import { IntroRegister, PageIntro } from "@/components/page-intro";
 import { PublicationExplorer } from "@/components/publication-explorer";
 import type { ResearchItem } from "@/lib/types";
@@ -6,7 +6,7 @@ import type { ResearchItem } from "@/lib/types";
 export function PapersPageView({ papers, loading = false }: { papers?: ResearchItem[]; loading?: boolean }) {
   const list = papers ?? [];
   const years = list.map((item) => item.paper?.year).filter((value): value is number => typeof value === "number");
-  const coverage = years.length ? `${Math.min(...years)}–${Math.max(...years)}` : "Archive";
+  const coverage = years.length ? `${Math.min(...years)}-${Math.max(...years)}` : "Archive";
 
   return (
     <div>
@@ -16,7 +16,7 @@ export function PapersPageView({ papers, loading = false }: { papers?: ResearchI
             loading={loading}
             items={[
               { label: "Publications", value: loading ? "00" : list.length },
-              { label: "Coverage", value: loading ? "0000–0000" : coverage },
+              { label: "Coverage", value: loading ? "0000-0000" : coverage },
               { label: "Links", value: "DOI / source" },
               { label: "Types", value: "Journal / conference" },
             ]}
@@ -29,9 +29,7 @@ export function PapersPageView({ papers, loading = false }: { papers?: ResearchI
       >
         Papers, conference proceedings, and book chapters published by AMIR Lab researchers and collaborators.
       </PageIntro>
-      <Suspense fallback={<PublicationExplorer staticLoading />}>
-        <PublicationExplorer staticLoading={loading} />
-      </Suspense>
+      <PublicationExplorer staticLoading={loading} />
     </div>
   );
 }

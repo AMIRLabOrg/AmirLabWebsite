@@ -201,7 +201,8 @@ export class WorkspaceService {
       milestones: upcomingMilestones.map((milestone) => ({
         id: milestone.id,
         projectId: milestone.projectId,
-        projectTitle: milestone.project.researchItem.title ?? 'Untitled project',
+        projectTitle:
+          milestone.project.researchItem.title ?? 'Untitled project',
         title: milestone.title,
         status: milestone.status,
         progress: milestone.progress,
@@ -237,7 +238,9 @@ export class WorkspaceService {
 
   async tasks(user: AuthenticatedUser) {
     if (user.role !== PlatformRole.MEMBER) {
-      throw new ForbiddenException('Task registers are only available to member accounts');
+      throw new ForbiddenException(
+        'Task registers are only available to member accounts',
+      );
     }
     if (!user.person) return [];
     return this.prisma.projectTask.findMany({

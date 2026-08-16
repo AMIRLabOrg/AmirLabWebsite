@@ -211,9 +211,10 @@ export class ApplicationsService implements OnModuleInit {
     }
     return {
       ...application,
-      parseFeedback: application.status === ApplicationStatus.PARSE_FAILED
-        ? 'The uploaded PDF could not be processed automatically.'
-        : application.parseFeedback,
+      parseFeedback:
+        application.status === ApplicationStatus.PARSE_FAILED
+          ? 'The uploaded PDF could not be processed automatically.'
+          : application.parseFeedback,
       events: application.events.map((event) => ({
         ...event,
         note:
@@ -256,12 +257,14 @@ export class ApplicationsService implements OnModuleInit {
     if (application.status !== ApplicationStatus.NEEDS_REVIEW) {
       throw reviewConflict(
         'This application is no longer awaiting a decision.',
-        [{
-          code: 'APPLICATION_REVIEW_CHANGED',
-          itemId: application.id,
-          message: 'This application is no longer awaiting a decision.',
-          tone: 'warning',
-        }],
+        [
+          {
+            code: 'APPLICATION_REVIEW_CHANGED',
+            itemId: application.id,
+            message: 'This application is no longer awaiting a decision.',
+            tone: 'warning',
+          },
+        ],
       );
     }
 
@@ -483,7 +486,10 @@ export class ApplicationsService implements OnModuleInit {
 
 function parsedResumeToJson(resume: ParsedResumeText): Prisma.InputJsonObject {
   const sections = Object.fromEntries(
-    Object.entries(resume.sections).map(([name, entries]) => [name, [...entries]]),
+    Object.entries(resume.sections).map(([name, entries]) => [
+      name,
+      [...entries],
+    ]),
   );
   return {
     parser: resume.parser,

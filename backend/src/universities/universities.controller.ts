@@ -13,10 +13,7 @@ import {
 import { FileInterceptor } from '@nestjs/platform-express';
 import { PlatformRole } from '../../generated/prisma/client';
 import { Public, RequireRole } from '../auth/auth.decorators';
-import {
-  UniversityDto,
-  UpdateUniversityDto,
-} from './dto/university.dto';
+import { UniversityDto, UpdateUniversityDto } from './dto/university.dto';
 import { UniversitiesService } from './universities.service';
 
 @Controller('universities')

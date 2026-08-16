@@ -2,7 +2,7 @@ import { Test } from '@nestjs/testing';
 import { PositionStatus } from '../../generated/prisma/client';
 import { PrismaService } from '../database/prisma.service';
 import { NotificationsService } from '../notifications/notifications.service';
-import { RankingsService } from '../rankings/rankings.service';
+import { RankingsService } from './rankings.service';
 import { SettingsService } from '../settings/settings.service';
 import { ResearchDiscoveryService } from './research-discovery.service';
 import { ResearchProfileSyncService } from './research-profile-sync.service';
@@ -35,7 +35,9 @@ describe('job post lifecycle', () => {
       },
     };
 
-    await (await service(prisma)).createPosition({
+    await (
+      await service(prisma)
+    ).createPosition({
       engagementDurationLabel: 'Six months',
       requirements: ['Strong research skills'],
       summary: 'Support the lab with reproducible research and documentation.',

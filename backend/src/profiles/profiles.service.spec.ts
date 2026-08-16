@@ -95,7 +95,9 @@ describe('ProfilesService review', () => {
       notifications,
       prisma,
       profileSync: {
-        normalizePublishedOutputsForPeople: jest.fn().mockResolvedValue(undefined),
+        normalizePublishedOutputsForPeople: jest
+          .fn()
+          .mockResolvedValue(undefined),
       },
       settings,
     });
@@ -119,6 +121,7 @@ describe('ProfilesService review', () => {
     expect(personUpdateInput?.data.avatarId).toBe('existing-avatar');
     expect(transaction.profileEditRequest.updateMany).toHaveBeenCalledWith(
       expect.objectContaining({
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
         data: expect.objectContaining({ note: null }),
       }),
     );

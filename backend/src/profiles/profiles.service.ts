@@ -15,7 +15,11 @@ import type { AuthenticatedUser } from '../auth/auth.types';
 import { PrismaService } from '../database/prisma.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { ResearchProfileSyncService } from '../research/research-profile-sync.service';
-import { reviewBadRequest, reviewConflict, type ReviewIssue } from '../common/review-problem';
+import {
+  reviewBadRequest,
+  reviewConflict,
+  type ReviewIssue,
+} from '../common/review-problem';
 import { SettingsService } from '../settings/settings.service';
 import type {
   BulkReviewProfileEditsDto,
@@ -363,10 +367,14 @@ export class ProfilesService {
     }
     const ids = dto.items.map(({ id }) => id);
     if (new Set(ids).size !== ids.length) {
-      throw new BadRequestException('Duplicate profile review IDs are not allowed');
+      throw new BadRequestException(
+        'Duplicate profile review IDs are not allowed',
+      );
     }
     const reviewNote =
-      dto.status === ProfileReviewStatus.REJECTED ? dto.note?.trim() : undefined;
+      dto.status === ProfileReviewStatus.REJECTED
+        ? dto.note?.trim()
+        : undefined;
     if (dto.status === ProfileReviewStatus.REJECTED && !reviewNote) {
       throw new BadRequestException('A reviewer note is required');
     }
@@ -482,8 +490,8 @@ export class ProfilesService {
 
     const reviewedAt = new Date();
     await this.prisma.$transaction(async (transaction) => {
-      const claimRows = dto.items.map(({ id, revision }) =>
-        Prisma.sql`(${id}::uuid, ${revision}::integer)`,
+      const claimRows = dto.items.map(
+        ({ id, revision }) => Prisma.sql`(${id}::uuid, ${revision}::integer)`,
       );
       const claimed = await transaction.$queryRaw<Array<{ id: string }>>(
         Prisma.sql`
@@ -509,15 +517,17 @@ export class ProfilesService {
             .map(({ id }) => ({
               code: 'PROFILE_REVIEW_CHANGED',
               itemId: id,
-              message: 'This profile review changed while the decision was being saved.',
+              message:
+                'This profile review changed while the decision was being saved.',
               tone: 'warning',
             })),
         );
       }
 
       if (dto.status === ProfileReviewStatus.APPROVED) {
-        const personRows = approved.map(({ request, target }) =>
-          Prisma.sql`(
+        const personRows = approved.map(
+          ({ request, target }) =>
+            Prisma.sql`(
             ${request.personId}::uuid,
             ${target.avatarId}::uuid,
             ${target.biography},
@@ -598,8 +608,9 @@ export class ProfilesService {
           );
           if (sections.length) {
             await transaction.personProfileSection.createMany({
-              data: sections.map(({ subsections: _subsections, ...section }) =>
-                section,
+              data: sections.map(
+                // eslint-disable-next-line @typescript-eslint/no-unused-vars
+                ({ subsections: _subsections, ...section }) => section,
               ),
             });
             const subsections = sections.flatMap((section) =>
@@ -613,8 +624,9 @@ export class ProfilesService {
             );
             if (subsections.length) {
               await transaction.personProfileSubsection.createMany({
-                data: subsections.map(({ entries: _entries, ...subsection }) =>
-                  subsection,
+                data: subsections.map(
+                  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+                  ({ entries: _entries, ...subsection }) => subsection,
                 ),
               });
               const entries = subsections.flatMap((subsection) =>
@@ -626,7 +638,9 @@ export class ProfilesService {
                 })),
               );
               if (entries.length) {
-                await transaction.personProfileEntry.createMany({ data: entries });
+                await transaction.personProfileEntry.createMany({
+                  data: entries,
+                });
               }
             }
           }
@@ -772,7 +786,8 @@ export class ProfilesService {
             {
               code: 'PROFILE_REVIEW_CHANGED',
               itemId: request.id,
-              message: 'This profile review changed while the decision was being saved.',
+              message:
+                'This profile review changed while the decision was being saved.',
               tone: 'warning',
             },
           ],
@@ -938,7 +953,7 @@ function profilePayloadIssue(itemId: string, error: unknown): ReviewIssue {
     typeof detail === 'string'
       ? detail
       : detail && typeof detail === 'object' && 'message' in detail
-        ? String((detail as { message?: unknown }).message ?? '')
+        ? String((detail as { message?: string }).message ?? '')
         : '';
   if (raw.includes('publicEmail')) {
     return {

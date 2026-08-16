@@ -98,7 +98,9 @@ export class ResearchProfileSyncService {
     const personIds = [
       ...new Set(
         items.flatMap((item) =>
-          item.contributors.flatMap(({ personId }) => (personId ? [personId] : [])),
+          item.contributors.flatMap(({ personId }) =>
+            personId ? [personId] : [],
+          ),
         ),
       ),
     ];
@@ -108,7 +110,9 @@ export class ResearchProfileSyncService {
       where: { id: { in: personIds } },
       select: {
         id: true,
-        profileEditRequest: { select: { id: true, payload: true, status: true } },
+        profileEditRequest: {
+          select: { id: true, payload: true, status: true },
+        },
         profileSections: {
           orderBy: { sortOrder: 'asc' },
           select: {
@@ -342,31 +346,40 @@ export function prunePendingProfile(
 
   let removed = 0;
   const sections = sourceSections.flatMap((sectionValue) => {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     if (!isJsonObject(sectionValue)) return [sectionValue];
     const section = { ...sectionValue };
     const type = typeof section.type === 'string' ? section.type : '';
     const title = typeof section.title === 'string' ? section.title : '';
     if (!isPendingOutputSection(type, title, identity.type)) return [section];
 
-    const subsections = Array.isArray(section.subsections) ? section.subsections : [];
+    const subsections = Array.isArray(section.subsections)
+      ? section.subsections
+      : [];
     if (matchesProfileOutput(title, identity)) {
       removed += countPendingEntries(subsections);
       return [];
     }
 
     const nextSubsections = subsections.flatMap((subsectionValue) => {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-return
       if (!isJsonObject(subsectionValue)) return [subsectionValue];
       const subsection = { ...subsectionValue };
-      const heading = typeof subsection.heading === 'string' ? subsection.heading : null;
-      const entries = Array.isArray(subsection.entries) ? subsection.entries : [];
+      const heading =
+        typeof subsection.heading === 'string' ? subsection.heading : null;
+      const entries = Array.isArray(subsection.entries)
+        ? subsection.entries
+        : [];
       if (heading && matchesProfileOutput(heading, identity)) {
         removed += entries.length;
         return [];
       }
       const nextEntries = entries.filter((entryValue) => {
         if (!isJsonObject(entryValue)) return true;
-        const label = typeof entryValue.label === 'string' ? entryValue.label : '';
-        const content = typeof entryValue.content === 'string' ? entryValue.content : '';
+        const label =
+          typeof entryValue.label === 'string' ? entryValue.label : '';
+        const content =
+          typeof entryValue.content === 'string' ? entryValue.content : '';
         if (
           !matchesProfileOutput(label, identity) &&
           !matchesProfileOutput(content, identity) &&

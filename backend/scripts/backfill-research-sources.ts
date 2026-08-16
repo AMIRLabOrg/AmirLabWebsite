@@ -65,7 +65,9 @@ async function main(): Promise<void> {
     });
     queued += 1;
   }
-  console.log(`Queued ${queued} of ${papers.length} review papers for metadata recovery.`);
+  console.log(
+    `Queued ${queued} of ${papers.length} review papers for metadata recovery.`,
+  );
 }
 
 void main()

@@ -20,7 +20,11 @@ import {
 } from './dto/contributor-match.dto';
 import { CreatePositionDto, UpdatePositionDto } from './dto/position.dto';
 import { PublicationQueryDto } from './dto/publication-query.dto';
-import { BulkReviewResearchDto, ReviewResearchDto, SubmitResearchDto } from './dto/research.dto';
+import {
+  BulkReviewResearchDto,
+  ReviewResearchDto,
+  SubmitResearchDto,
+} from './dto/research.dto';
 import { ResearchReviewQueryDto } from './dto/research-review-query.dto';
 import { ResearchRelationshipsService } from './research-relationships.service';
 import { ResearchService } from './research.service';

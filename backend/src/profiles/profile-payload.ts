@@ -134,7 +134,9 @@ export function profilePayloadToJson(
     publicEmail: payload.publicEmail,
     phone: payload.phone,
     contactAddress: payload.contactAddress,
-    ...(payload.roleTitle !== undefined ? { roleTitle: payload.roleTitle } : {}),
+    ...(payload.roleTitle !== undefined
+      ? { roleTitle: payload.roleTitle }
+      : {}),
     expertise: payload.expertise,
     links: payload.links.map(({ label, type, url }) => ({ label, type, url })),
     sections: payload.sections.map(({ subsections, title, type }) => ({

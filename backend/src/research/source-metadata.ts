@@ -35,7 +35,11 @@ export function personNameMatchEvidence(
   sourceName: string,
   personName: string,
 ):
-  | { confidence: number; reason: 'Exact normalized name' | 'Initials + surname' | 'Fuzzy full name' }
+  | {
+      confidence: number;
+      reason:
+        'Exact normalized name' | 'Initials + surname' | 'Fuzzy full name';
+    }
   | undefined {
   const sourceKey = personNameTokenKey(sourceName);
   if (

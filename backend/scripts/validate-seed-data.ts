@@ -27,7 +27,9 @@ async function main() {
   );
   if (peopleWithoutSourceImage.length) {
     console.log(
-      peopleWithoutSourceImage.map((person) => `  - ${person.fullName}`).join('\n'),
+      peopleWithoutSourceImage
+        .map((person) => `  - ${person.fullName}`)
+        .join('\n'),
     );
   }
 }

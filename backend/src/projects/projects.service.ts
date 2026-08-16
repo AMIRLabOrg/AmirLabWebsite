@@ -525,7 +525,8 @@ export class ProjectsService {
               {
                 code: 'STALE_PROJECT_CHANGE',
                 itemId: request.id,
-                message: 'The project changed after this request was submitted.',
+                message:
+                  'The project changed after this request was submitted.',
                 tone: 'warning' as const,
               },
             ]
@@ -545,10 +546,14 @@ export class ProjectsService {
     }
     const ids = [...new Set(dto.ids)];
     if (ids.length !== dto.ids.length) {
-      throw new BadRequestException('Duplicate project review IDs are not allowed');
+      throw new BadRequestException(
+        'Duplicate project review IDs are not allowed',
+      );
     }
     const reviewNote =
-      dto.status === ProjectChangeStatus.REJECTED ? dto.note?.trim() : undefined;
+      dto.status === ProjectChangeStatus.REJECTED
+        ? dto.note?.trim()
+        : undefined;
     if (dto.status === ProjectChangeStatus.REJECTED && !reviewNote) {
       throw new BadRequestException('A reviewer note is required');
     }
@@ -599,7 +604,8 @@ export class ProjectsService {
             requests.map(({ id }) => ({
               code: 'PROJECT_REVIEW_CHANGED',
               itemId: id,
-              message: 'This project change may have changed while the decision was being saved.',
+              message:
+                'This project change may have changed while the decision was being saved.',
               tone: 'warning',
             })),
           );
@@ -717,7 +723,8 @@ export class ProjectsService {
           requests.map(({ id }) => ({
             code: 'PROJECT_REVIEW_CHANGED',
             itemId: id,
-            message: 'This project change may have changed while the decision was being saved.',
+            message:
+              'This project change may have changed while the decision was being saved.',
             tone: 'warning',
           })),
         );
@@ -797,12 +804,14 @@ export class ProjectsService {
         });
         throw reviewConflict(
           'This project change is stale because the project changed after submission.',
-          [{
-            code: 'STALE_PROJECT_CHANGE',
-            itemId: request.id,
-            message: 'The project changed after this request was submitted.',
-            tone: 'warning',
-          }],
+          [
+            {
+              code: 'STALE_PROJECT_CHANGE',
+              itemId: request.id,
+              message: 'The project changed after this request was submitted.',
+              tone: 'warning',
+            },
+          ],
         );
       }
       await this.applyChange(
@@ -960,17 +969,17 @@ export class ProjectsService {
       });
       const objectives = details.flatMap((request) => {
         const payload = asRecord(request.payload);
-        return (Array.isArray(payload.objectives) ? payload.objectives : []).map(
-          (value, sortOrder) => {
-            const objective = asRecord(value);
-            return {
-              description: optionalString(objective.description),
-              projectId: request.projectId,
-              sortOrder,
-              title: requiredString(objective.title),
-            };
-          },
-        );
+        return (
+          Array.isArray(payload.objectives) ? payload.objectives : []
+        ).map((value, sortOrder) => {
+          const objective = asRecord(value);
+          return {
+            description: optionalString(objective.description),
+            projectId: request.projectId,
+            sortOrder,
+            title: requiredString(objective.title),
+          };
+        });
       });
       if (objectives.length) {
         await transaction.projectObjective.createMany({ data: objectives });
@@ -998,34 +1007,34 @@ export class ProjectsService {
       });
       const milestones = milestoneRequests.flatMap((request) => {
         const payload = asRecord(request.payload);
-        return (Array.isArray(payload.milestones) ? payload.milestones : []).map(
-          (value, sortOrder) => {
-            const milestone = asRecord(value);
-            const status = requiredEnumValue<ProjectMilestoneStatus>(
-              milestone.status,
-              Object.values(ProjectMilestoneStatus),
-            );
-            return {
-              completedAt:
-                status === ProjectMilestoneStatus.COMPLETE ? now : null,
-              description: optionalString(milestone.description),
-              dueAt: optionalDate(milestone.dueAt),
-              ownerId: optionalString(milestone.ownerId),
-              progress:
-                status === ProjectMilestoneStatus.COMPLETE
-                  ? 100
-                  : status === ProjectMilestoneStatus.PLANNED ||
-                      status === ProjectMilestoneStatus.BLOCKED
-                    ? 0
-                    : Number(milestone.progress),
-              projectId: request.projectId,
-              sortOrder,
-              status,
-              title: requiredString(milestone.title),
-              weight: Number(milestone.weight),
-            };
-          },
-        );
+        return (
+          Array.isArray(payload.milestones) ? payload.milestones : []
+        ).map((value, sortOrder) => {
+          const milestone = asRecord(value);
+          const status = requiredEnumValue<ProjectMilestoneStatus>(
+            milestone.status,
+            Object.values(ProjectMilestoneStatus),
+          );
+          return {
+            completedAt:
+              status === ProjectMilestoneStatus.COMPLETE ? now : null,
+            description: optionalString(milestone.description),
+            dueAt: optionalDate(milestone.dueAt),
+            ownerId: optionalString(milestone.ownerId),
+            progress:
+              status === ProjectMilestoneStatus.COMPLETE
+                ? 100
+                : status === ProjectMilestoneStatus.PLANNED ||
+                    status === ProjectMilestoneStatus.BLOCKED
+                  ? 0
+                  : Number(milestone.progress),
+            projectId: request.projectId,
+            sortOrder,
+            status,
+            title: requiredString(milestone.title),
+            weight: Number(milestone.weight),
+          };
+        });
       });
       if (milestones.length) {
         await transaction.projectMilestone.createMany({ data: milestones });
@@ -1240,7 +1249,9 @@ export class ProjectsService {
         });
         const accountByEmail = new Map(
           accounts.flatMap((account) =>
-            account.email ? [[account.email.toLowerCase(), account.id] as const] : [],
+            account.email
+              ? [[account.email.toLowerCase(), account.id] as const]
+              : [],
           ),
         );
         const frontend = this.config.get('frontendOrigins', { infer: true })[0];
@@ -1284,7 +1295,9 @@ export class ProjectsService {
 
       await transaction.project.updateMany({
         where: {
-          researchItemId: { in: teamRequests.map(({ projectId }) => projectId) },
+          researchItemId: {
+            in: teamRequests.map(({ projectId }) => projectId),
+          },
         },
         data: { version: { increment: 1 } },
       });
@@ -1360,7 +1373,9 @@ export class ProjectsService {
       ProjectChangeKind.TEAM,
       ProjectChangeKind.UPDATE,
     ]);
-    const unsupported = requests.filter(({ kind }) => !supportedKinds.has(kind));
+    const unsupported = requests.filter(
+      ({ kind }) => !supportedKinds.has(kind),
+    );
     if (unsupported.length) {
       throw new BadRequestException(
         `Unsupported project change: ${unsupported[0].kind}`,
@@ -1407,7 +1422,9 @@ export class ProjectsService {
     if (messages.length) {
       await transaction.message.createMany({ data: messages });
       await transaction.conversation.updateMany({
-        where: { id: { in: messages.map(({ conversationId }) => conversationId) } },
+        where: {
+          id: { in: messages.map(({ conversationId }) => conversationId) },
+        },
         data: { updatedAt: now },
       });
     }

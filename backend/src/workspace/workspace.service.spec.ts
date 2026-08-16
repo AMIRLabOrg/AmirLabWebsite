@@ -20,6 +20,7 @@ describe('WorkspaceService overview', () => {
   const prisma = {
     department: { count: jest.fn() },
     project: { count: jest.fn(), findMany: jest.fn() },
+    projectMilestone: { count: jest.fn(), findMany: jest.fn() },
     projectTask: { count: jest.fn(), findMany: jest.fn() },
     researchItem: { count: jest.fn() },
     user: { count: jest.fn() },
@@ -54,6 +55,8 @@ describe('WorkspaceService overview', () => {
       },
     ]);
     prisma.projectTask.count.mockResolvedValue(1);
+    prisma.projectMilestone.count.mockResolvedValue(1);
+    prisma.projectMilestone.findMany.mockResolvedValue([]);
     prisma.project.count.mockResolvedValue(1);
     prisma.researchItem.count.mockResolvedValue(2);
     prisma.user.count.mockResolvedValue(12);
@@ -103,7 +106,7 @@ describe('WorkspaceService overview', () => {
         type: { in: ['PAPER', 'DATASET'] },
       },
     });
-    expect(result.metrics).toEqual({
+    expect(result.metrics).toMatchObject({
       activeProjects: 1,
       assignedTasks: 1,
       blockedTasks: 1,

@@ -4,7 +4,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { ConversationKind, Prisma } from '../../generated/prisma/client';
+import { ConversationKind } from '../../generated/prisma/client';
 import type { AuthenticatedUser } from '../auth/auth.types';
 import { PrismaService } from '../database/prisma.service';
 import { RedisService } from './redis.service';
@@ -14,7 +14,7 @@ export class CollaborationService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly redis: RedisService,
-  ) {}
+  ) { }
 
   async presence(userId: string) {
     const conversations = await this.prisma.conversation.findMany({
@@ -121,7 +121,7 @@ export class CollaborationService {
   ) {
     const text = body.trim();
     if (!text || text.length > 4000)
-      throw new BadRequestException('Message must be 1–4000 characters');
+      throw new BadRequestException('Message must be 1-4000 characters');
     await this.assertMember(userId, conversationId);
     if (replyToId) {
       const reply = await this.prisma.message.findFirst({

@@ -219,7 +219,11 @@ export class WeeklyReportsService {
           actorId: user.id,
           entityId: saved.id,
           entityType: 'WeeklyReport',
-          details: { outputIds, projectIds, weekStart: weekStart.toISOString() },
+          details: {
+            outputIds,
+            projectIds,
+            weekStart: weekStart.toISOString(),
+          },
         },
       });
       return saved;
@@ -280,19 +284,15 @@ export class WeeklyReportsService {
     });
   }
 
-  async bulkReview(
-    dto: BulkReviewWeeklyReportsDto,
-    user: AuthenticatedUser,
-  ) {
+  async bulkReview(dto: BulkReviewWeeklyReportsDto, user: AuthenticatedUser) {
     const ids = [...new Set(dto.ids)];
     if (ids.length !== dto.ids.length) {
-      throw new BadRequestException('Duplicate weekly report IDs are not allowed');
+      throw new BadRequestException(
+        'Duplicate weekly report IDs are not allowed',
+      );
     }
     const reviewNote = dto.note?.trim() || null;
-    if (
-      dto.status === WeeklyReportStatus.CHANGES_REQUESTED &&
-      !reviewNote
-    ) {
+    if (dto.status === WeeklyReportStatus.CHANGES_REQUESTED && !reviewNote) {
       throw new BadRequestException(
         'Explain what must change before returning the reports',
       );
@@ -340,7 +340,8 @@ export class WeeklyReportsService {
           reports.map(({ id }) => ({
             code: 'WEEKLY_REPORT_CHANGED',
             itemId: id,
-            message: 'This weekly report may have changed while the decision was being saved.',
+            message:
+              'This weekly report may have changed while the decision was being saved.',
             tone: 'warning',
           })),
         );
@@ -385,15 +386,14 @@ export class WeeklyReportsService {
     });
     if (!report) throw new NotFoundException('Weekly report not found');
     if (report.status !== WeeklyReportStatus.SUBMITTED) {
-      throw reviewConflict(
-        'This weekly report is no longer awaiting review.',
-        [{
+      throw reviewConflict('This weekly report is no longer awaiting review.', [
+        {
           code: 'WEEKLY_REPORT_CHANGED',
           itemId: id,
           message: 'This weekly report is no longer awaiting review.',
           tone: 'warning',
-        }],
-      );
+        },
+      ]);
     }
     if (
       dto.status === WeeklyReportStatus.CHANGES_REQUESTED &&
@@ -442,7 +442,9 @@ export class WeeklyReportsService {
 
   private requireMember(user: AuthenticatedUser) {
     if (user.role !== PlatformRole.MEMBER) {
-      throw new ForbiddenException('Weekly reports are only available to member accounts');
+      throw new ForbiddenException(
+        'Weekly reports are only available to member accounts',
+      );
     }
   }
 
