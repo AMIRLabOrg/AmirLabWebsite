@@ -143,13 +143,15 @@ export class UniversitiesService {
   private normalizedDto(
     dto: UniversityDto | UpdateUniversityDto,
   ): Partial<UniversityDto> {
-    return {
+    const normalized: any = {
       ...dto,
       ...('websiteUrl' in dto && dto.websiteUrl !== undefined
         ? { websiteUrl: dto.websiteUrl?.trim() || null }
         : {}),
       ...('isPublished' in dto ? { isPublished: dto.isPublished } : {}),
     };
+    delete normalized.removeLogo;
+    return normalized;
   }
 }
 
