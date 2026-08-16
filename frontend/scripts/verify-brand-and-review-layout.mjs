@@ -58,7 +58,7 @@ expect(
   "Contributor match confidence must be visible as a percentage.",
 );
 expect(
-  review.includes("selectedIsSuggestion ? selectedMatch : undefined"),
+  /selectedIsSuggestion\s*\?\s*selectedMatch\s*:\s*undefined/.test(review),
   "Reject must apply to the currently selected proposed match.",
 );
 expect(
@@ -66,9 +66,7 @@ expect(
   "A preselected automatic match must be verified as the existing proposal, not rewritten as a manual link.",
 );
 expect(
-  review.includes(
-    "verifyContributor(item.id, contributor.sortOrder, selectedPersonId, selectedMatch)",
-  ),
+  /verifyContributor\(\s*item\.id,\s*contributor\.sortOrder,\s*selectedPersonId,\s*selectedMatch,?\s*\)/.test(review),
   "Verify must act on the currently selected searchable-person value.",
 );
 expect(
