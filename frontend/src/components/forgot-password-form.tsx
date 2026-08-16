@@ -28,7 +28,8 @@ export function ForgotPasswordForm() {
       setSent(true);
     } catch (caught) {
       setError(
-        caught instanceof ApiRequestError && caught.code === "NETWORK_UNAVAILABLE"
+        caught instanceof ApiRequestError &&
+          caught.code === "NETWORK_UNAVAILABLE"
           ? "Unable to reach the server. Check your connection and try again."
           : "The reset request could not be sent. Try again.",
       );

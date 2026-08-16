@@ -1,5 +1,8 @@
 export function profileValuesEqual(left: unknown, right: unknown): boolean {
-  return JSON.stringify(canonicalValue(left)) === JSON.stringify(canonicalValue(right));
+  return (
+    JSON.stringify(canonicalValue(left)) ===
+    JSON.stringify(canonicalValue(right))
+  );
 }
 
 function canonicalValue(value: unknown): unknown {

@@ -79,13 +79,17 @@ export function DateRangePicker({ from, onChange, to }: DateRangePickerProps) {
   function continueSelection(day: Date) {
     const start = draftStartRef.current;
     if ((!draggingRef.current && !selectingRef.current) || !start) return;
-    if (draggingRef.current && !sameDay(day, start)) dragMovedRef.current = true;
+    if (draggingRef.current && !sameDay(day, start))
+      dragMovedRef.current = true;
     draftEndRef.current = day;
     setDraftEnd(day);
   }
 
   function chooseDay(day: Date) {
-    if (!draftStart || (draftStart && draftEnd && sameDay(draftStart, draftEnd))) {
+    if (
+      !draftStart ||
+      (draftStart && draftEnd && sameDay(draftStart, draftEnd))
+    ) {
       updateDraft(day, undefined);
       return;
     }
@@ -113,16 +117,29 @@ export function DateRangePicker({ from, onChange, to }: DateRangePickerProps) {
       }}
       open={open}
     >
-      <Popover.Trigger className="inline-flex h-[var(--control-height)] min-h-[var(--control-height)] w-full min-w-[220px] cursor-pointer items-center justify-center gap-[.55rem] whitespace-nowrap rounded-control border border-line bg-surface px-[.8rem] py-0 text-[.82rem] text-ink transition-[border-color,box-shadow,background] duration-150 hover:border-[color-mix(in_srgb,var(--brand)_42%,var(--line))] data-[state=open]:border-brand focus-visible:border-brand focus-visible:shadow-[var(--focus-ring)] motion-reduce:transition-none" type="button">
-        <CalendarDays aria-hidden="true" className="shrink-0 text-ink-muted" size={16} />
+      <Popover.Trigger
+        className="inline-flex h-[var(--control-height)] min-h-[var(--control-height)] w-full min-w-[220px] cursor-pointer items-center justify-center gap-[.55rem] whitespace-nowrap rounded-control border border-line bg-surface px-[.8rem] py-0 text-[.82rem] text-ink transition-[border-color,box-shadow,background] duration-150 hover:border-[color-mix(in_srgb,var(--brand)_42%,var(--line))] data-[state=open]:border-brand focus-visible:border-brand focus-visible:shadow-[var(--focus-ring)] motion-reduce:transition-none"
+        type="button"
+      >
+        <CalendarDays
+          aria-hidden="true"
+          className="shrink-0 text-ink-muted"
+          size={16}
+        />
         <span className="min-w-0 overflow-hidden text-ellipsis">{label}</span>
       </Popover.Trigger>
       <Popover.Portal>
-        <Popover.Content align="end" className="z-[100] grid w-[min(680px,calc(100vw-2rem))] gap-[.9rem] rounded-[4px] border border-line bg-surface p-4 shadow-[0_24px_60px_color-mix(in_srgb,var(--brand-hover)_16%,transparent)] max-[720px]:w-[min(360px,calc(100vw-2rem))]" sideOffset={8}>
+        <Popover.Content
+          align="end"
+          className="z-[100] grid w-[min(680px,calc(100vw-2rem))] gap-[.9rem] rounded-[4px] border border-line bg-surface p-4 shadow-[0_24px_60px_color-mix(in_srgb,var(--brand-hover)_16%,transparent)] max-[720px]:w-[min(360px,calc(100vw-2rem))]"
+          sideOffset={8}
+        >
           <div className="flex items-center justify-end">
             <button
               aria-label="Previous month"
-              onClick={() => setVisibleMonth((current) => addMonths(current, -1))}
+              onClick={() =>
+                setVisibleMonth((current) => addMonths(current, -1))
+              }
               className="inline-flex h-[34px] w-[34px] cursor-pointer items-center justify-center rounded-control border-0 bg-transparent text-ink hover:bg-brand-soft hover:text-brand"
               type="button"
             >
@@ -130,7 +147,9 @@ export function DateRangePicker({ from, onChange, to }: DateRangePickerProps) {
             </button>
             <button
               aria-label="Next month"
-              onClick={() => setVisibleMonth((current) => addMonths(current, 1))}
+              onClick={() =>
+                setVisibleMonth((current) => addMonths(current, 1))
+              }
               className="inline-flex h-[34px] w-[34px] cursor-pointer items-center justify-center rounded-control border-0 bg-transparent text-ink hover:bg-brand-soft hover:text-brand"
               type="button"
             >
@@ -151,7 +170,13 @@ export function DateRangePicker({ from, onChange, to }: DateRangePickerProps) {
             ))}
           </div>
           <div className="flex items-center justify-between border-t border-line pt-[.7rem]">
-            <button className="inline-flex min-h-[34px] cursor-pointer items-center justify-center rounded-control border-0 bg-transparent px-[.65rem] py-[.35rem] text-[.78rem] text-brand hover:bg-brand-soft" onClick={clearRange} type="button">Clear</button>
+            <button
+              className="inline-flex min-h-[34px] cursor-pointer items-center justify-center rounded-control border-0 bg-transparent px-[.65rem] py-[.35rem] text-[.78rem] text-brand hover:bg-brand-soft"
+              onClick={clearRange}
+              type="button"
+            >
+              Clear
+            </button>
             <button
               className="inline-flex min-h-[34px] cursor-pointer items-center justify-center rounded-control border-0 bg-transparent px-[.65rem] py-[.35rem] text-[.78rem] text-brand hover:bg-brand-soft"
               onClick={() => {
@@ -188,24 +213,45 @@ function MonthView({
 }) {
   const days = monthGrid(month);
   const [rangeStart, rangeEnd] =
-    draftStart && draftEnd ? orderDates(draftStart, draftEnd) : [draftStart, draftEnd];
+    draftStart && draftEnd
+      ? orderDates(draftStart, draftEnd)
+      : [draftStart, draftEnd];
 
   return (
     <section className="grid gap-[.8rem]">
-      <h3 className="m-0 text-center text-[.9rem] font-semibold">{month.toLocaleDateString("en", { month: "long", year: "numeric" })}</h3>
+      <h3 className="m-0 text-center text-[.9rem] font-semibold">
+        {month.toLocaleDateString("en", { month: "long", year: "numeric" })}
+      </h3>
       <div className="grid grid-cols-7">
-        {WEEKDAYS.map((weekday, index) => <span className="py-[.35rem] text-center font-mono text-[.62rem] text-ink-muted" key={`${weekday}-${index}`}>{weekday}</span>)}
+        {WEEKDAYS.map((weekday, index) => (
+          <span
+            className="py-[.35rem] text-center font-mono text-[.62rem] text-ink-muted"
+            key={`${weekday}-${index}`}
+          >
+            {weekday}
+          </span>
+        ))}
       </div>
       <div className="grid grid-cols-7 gap-y-1">
         {days.map((day, index) => {
           const outside = day.getMonth() !== month.getMonth();
           if (outside) {
-            return <span aria-hidden="true" className="relative flex h-[38px] select-none items-center justify-center text-[.78rem]" key={toIsoDate(day)} />;
+            return (
+              <span
+                aria-hidden="true"
+                className="relative flex h-[38px] select-none items-center justify-center text-[.78rem]"
+                key={toIsoDate(day)}
+              />
+            );
           }
           const selectedStart = Boolean(rangeStart && sameDay(day, rangeStart));
           const selectedEnd = Boolean(rangeEnd && sameDay(day, rangeEnd));
-          const inRange = Boolean(rangeStart && rangeEnd && day > rangeStart && day < rangeEnd);
-          const hasRange = Boolean(rangeStart && rangeEnd && !sameDay(rangeStart, rangeEnd));
+          const inRange = Boolean(
+            rangeStart && rangeEnd && day > rangeStart && day < rangeEnd,
+          );
+          const hasRange = Boolean(
+            rangeStart && rangeEnd && !sameDay(rangeStart, rangeEnd),
+          );
           const rowStart = index % 7 === 0;
           const rowEnd = index % 7 === 6;
           const className = cn(
@@ -213,7 +259,8 @@ function MonthView({
             inRange && "bg-surface-subtle",
             inRange && rowStart && "rounded-l-full",
             inRange && rowEnd && "rounded-r-full",
-            (selectedStart || selectedEnd) && "font-semibold text-on-accent hover:text-on-accent",
+            (selectedStart || selectedEnd) &&
+              "font-semibold text-on-accent hover:text-on-accent",
           );
           return (
             <button
@@ -232,9 +279,24 @@ function MonthView({
               onPointerEnter={() => onContinueSelection(day)}
               type="button"
             >
-              {hasRange && selectedStart && !rowEnd ? <span aria-hidden="true" className="absolute inset-y-0 left-1/2 right-0 -z-20 bg-surface-subtle" /> : null}
-              {hasRange && selectedEnd && !rowStart ? <span aria-hidden="true" className="absolute inset-y-0 left-0 right-1/2 -z-20 bg-surface-subtle" /> : null}
-              {selectedStart || selectedEnd ? <span aria-hidden="true" className="absolute left-1/2 top-1/2 -z-10 h-[38px] w-[38px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-brand" /> : null}
+              {hasRange && selectedStart && !rowEnd ? (
+                <span
+                  aria-hidden="true"
+                  className="absolute inset-y-0 left-1/2 right-0 -z-20 bg-surface-subtle"
+                />
+              ) : null}
+              {hasRange && selectedEnd && !rowStart ? (
+                <span
+                  aria-hidden="true"
+                  className="absolute inset-y-0 left-0 right-1/2 -z-20 bg-surface-subtle"
+                />
+              ) : null}
+              {selectedStart || selectedEnd ? (
+                <span
+                  aria-hidden="true"
+                  className="absolute left-1/2 top-1/2 -z-10 h-[38px] w-[38px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-brand"
+                />
+              ) : null}
               <span className="relative">{day.getDate()}</span>
             </button>
           );
@@ -284,7 +346,11 @@ function addMonths(value: Date, months: number): Date {
 }
 
 function addDays(value: Date, days: number): Date {
-  return new Date(value.getFullYear(), value.getMonth(), value.getDate() + days);
+  return new Date(
+    value.getFullYear(),
+    value.getMonth(),
+    value.getDate() + days,
+  );
 }
 
 function orderDates(left: Date, right: Date): [Date, Date] {

@@ -15,7 +15,10 @@ import { InputControl } from "@/components/ui/form-controls";
 import { FormField, FormMessage } from "@/components/ui/form-field";
 import type { PaginatedResponse } from "@/lib/types";
 import { useNotifications } from "@/components/notification-provider";
-import { ReviewIssueStamp, SemanticStatus } from "@/components/ui/semantic-status";
+import {
+  ReviewIssueStamp,
+  SemanticStatus,
+} from "@/components/ui/semantic-status";
 import { useReviewIssues } from "@/lib/use-review-issues";
 
 const ROLES = ["MEMBER", "MODERATOR", "ADMIN"] as const;
@@ -140,14 +143,20 @@ export function UserManagement() {
       });
       setPendingAccess(undefined);
     } catch (caught) {
-      const requestError = caught instanceof ApiRequestError ? caught : undefined;
+      const requestError =
+        caught instanceof ApiRequestError ? caught : undefined;
       if (requestError?.issues.length) actionIssues.capture(requestError);
-      else actionIssues.setOne(account.id, {
-        code: "ACCESS_EMAIL_QUEUE_FAILED",
-        message: "The access email could not be queued for this account.",
+      else
+        actionIssues.setOne(account.id, {
+          code: "ACCESS_EMAIL_QUEUE_FAILED",
+          message: "The access email could not be queued for this account.",
+          tone: "error",
+        });
+      showToast({
+        body: requestError?.message ?? "Unable to send access email.",
+        title: "Access email was not sent",
         tone: "error",
       });
-      showToast({ body: requestError?.message ?? "Unable to send access email.", title: "Access email was not sent", tone: "error" });
     } finally {
       setActiveId(undefined);
     }
@@ -155,9 +164,18 @@ export function UserManagement() {
 
   return (
     <div className="grid gap-4">
-      <div className="flex items-center justify-between gap-4 max-[640px]:flex-col max-[640px]:items-stretch" data-loading={loading || undefined}>
-        <p className={loadingPlaceholder(loading, "label", "medium")} data-placeholder={loading ? "label" : undefined} data-placeholder-width="medium">
-          {result ? `${result.total} account${result.total === 1 ? "" : "s"}` : "Member accounts"}
+      <div
+        className="flex items-center justify-between gap-4 max-[640px]:flex-col max-[640px]:items-stretch"
+        data-loading={loading || undefined}
+      >
+        <p
+          className={loadingPlaceholder(loading, "label", "medium")}
+          data-placeholder={loading ? "label" : undefined}
+          data-placeholder-width="medium"
+        >
+          {result
+            ? `${result.total} account${result.total === 1 ? "" : "s"}`
+            : "Member accounts"}
         </p>
         <ButtonLink href="/workspace/users/new" variant="primary">
           <Plus aria-hidden="true" size={16} /> New account
@@ -167,11 +185,20 @@ export function UserManagement() {
       {error && result ? <FormMessage>{error}</FormMessage> : null}
 
       <div className="grid min-w-0 grid-cols-[minmax(210px,1.5fr)_repeat(4,minmax(120px,.65fr))] items-end gap-[.8rem] rounded-panel border border-line bg-surface p-4 max-[980px]:grid-cols-2 max-[640px]:grid-cols-1">
-        <FormField className="min-w-0" htmlFor="account-search" label="Search accounts">
+        <FormField
+          className="min-w-0"
+          htmlFor="account-search"
+          label="Search accounts"
+        >
           <div className="relative grid items-center">
-            <Search aria-hidden="true" className="pointer-events-none absolute left-3 z-[1] text-ink-muted" size={17} />
+            <Search
+              aria-hidden="true"
+              className="pointer-events-none absolute left-3 z-[1] text-ink-muted"
+              size={17}
+            />
             <InputControl
-              className="pl-10" id="account-search"
+              className="pl-10"
+              id="account-search"
               onChange={(event) => {
                 beginRefresh();
                 setSearch(event.target.value);
@@ -274,57 +301,123 @@ export function UserManagement() {
         />
       ) : (
         <section className="grid gap-4" data-loading={loading || undefined}>
-          {(loading && !accounts.length ? Array.from({ length: 4 }, () => undefined) : accounts).map((account, index) => {
-            const issue = account ? actionIssues.forItem(account.id)[0] : undefined;
+          {(loading && !accounts.length
+            ? Array.from({ length: 4 }, () => undefined)
+            : accounts
+          ).map((account, index) => {
+            const issue = account
+              ? actionIssues.forItem(account.id)[0]
+              : undefined;
             return (
-              <article className="relative grid min-w-0 grid-cols-[minmax(220px,4fr)_minmax(260px,5fr)_minmax(360px,3fr)] items-center gap-4 rounded-panel border border-line bg-surface p-4 pr-10 max-[1180px]:grid-cols-2 max-[700px]:grid-cols-1" key={account?.id ?? `account-loading-${index}`}>
+              <article
+                className="relative grid min-w-0 grid-cols-[minmax(220px,4fr)_minmax(260px,5fr)_minmax(360px,3fr)] items-center gap-4 rounded-panel border border-line bg-surface p-4 pr-10 max-[1180px]:grid-cols-2 max-[700px]:grid-cols-1"
+                key={account?.id ?? `account-loading-${index}`}
+              >
                 {account ? <ReviewIssueStamp issue={issue} /> : null}
                 <div className="grid min-w-0 gap-[.35rem] [overflow-wrap:anywhere]">
-                  <strong className={cn("text-[.95rem] font-semibold leading-[1.35]", loadingPlaceholder(loading, "text", "long"))} data-placeholder="text" data-placeholder-width="long">
-                    {account?.person?.fullName ?? (loading ? "Loading account" : "Account without profile")}
+                  <strong
+                    className={cn(
+                      "text-[.95rem] font-semibold leading-[1.35]",
+                      loadingPlaceholder(loading, "text", "long"),
+                    )}
+                    data-placeholder="text"
+                    data-placeholder-width="long"
+                  >
+                    {account?.person?.fullName ??
+                      (loading ? "Loading account" : "Account without profile")}
                   </strong>
                   <div className="flex flex-wrap items-center gap-[.35rem]">
-                    <Badge loading={loading}>{account ? readable(account.role) : "member"}</Badge>
-                    <Badge dot loading={loading} tone={account ? accountStatusTone(account.status) : "neutral"}>
+                    <Badge loading={loading}>
+                      {account ? readable(account.role) : "member"}
+                    </Badge>
+                    <Badge
+                      dot
+                      loading={loading}
+                      tone={
+                        account ? accountStatusTone(account.status) : "neutral"
+                      }
+                    >
                       {account ? accountStatusLabel(account.status) : "loading"}
                     </Badge>
                     {loading || account?.person?.rank ? (
-                      <Badge loading={loading} tone="info">{account?.person?.rank ? readable(account.person.rank) : "rank"}</Badge>
+                      <Badge loading={loading} tone="info">
+                        {account?.person?.rank
+                          ? readable(account.person.rank)
+                          : "rank"}
+                      </Badge>
                     ) : null}
-                    {issue ? <SemanticStatus loading={loading} tone={issue.tone ?? "error"}>{issue.message}</SemanticStatus> : null}
+                    {issue ? (
+                      <SemanticStatus
+                        loading={loading}
+                        tone={issue.tone ?? "error"}
+                      >
+                        {issue.message}
+                      </SemanticStatus>
+                    ) : null}
                   </div>
                 </div>
                 <div className="grid min-w-0 gap-[.35rem]">
-                  <span className="text-[.68rem] text-ink-muted">Account email</span>
+                  <span className="text-[.68rem] text-ink-muted">
+                    Account email
+                  </span>
                   {loading ? (
-                    <strong className={cn("text-[.82rem] font-semibold [overflow-wrap:anywhere]", loadingPlaceholder(true, "text", "long"))} data-placeholder="text" data-placeholder-width="long">loading@example.org</strong>
+                    <strong
+                      className={cn(
+                        "text-[.82rem] font-semibold [overflow-wrap:anywhere]",
+                        loadingPlaceholder(true, "text", "long"),
+                      )}
+                      data-placeholder="text"
+                      data-placeholder-width="long"
+                    >
+                      loading@example.org
+                    </strong>
                   ) : account?.email ? (
-                    <strong className="text-[.82rem] font-semibold [overflow-wrap:anywhere]">{account.email}</strong>
+                    <strong className="text-[.82rem] font-semibold [overflow-wrap:anywhere]">
+                      {account.email}
+                    </strong>
                   ) : (
-                    <SemanticStatus loading={loading} tone="warning">Not provided</SemanticStatus>
+                    <SemanticStatus loading={loading} tone="warning">
+                      Not provided
+                    </SemanticStatus>
                   )}
                 </div>
                 <div className="flex items-center justify-end gap-2 max-[1180px]:col-span-full max-[1180px]:justify-start max-[700px]:grid max-[700px]:grid-cols-1">
-                  <ButtonLink href={account ? `/workspace/users/${account.id}/edit` : "#"} loading={loading || !account} variant="secondary">
+                  <ButtonLink
+                    href={account ? `/workspace/users/${account.id}/edit` : "#"}
+                    loading={loading || !account}
+                    variant="secondary"
+                  >
                     <Pencil aria-hidden="true" size={15} /> Edit
                   </ButtonLink>
-                  <ButtonControl disabled={!account} loading={loading} onClick={() => account && setDeletePending(account.id)} variant="danger">
+                  <ButtonControl
+                    disabled={!account}
+                    loading={loading}
+                    onClick={() => account && setDeletePending(account.id)}
+                    variant="danger"
+                  >
                     <Trash2 size={15} /> Delete
                   </ButtonControl>
                   {loading || account?.status === "PENDING_SETUP" ? (
                     <ButtonControl
-                      disabled={!account || activeId === account?.id || !account?.email}
+                      disabled={
+                        !account || activeId === account?.id || !account?.email
+                      }
                       loading={loading}
                       onClick={() => account && setPendingAccess(account)}
                       variant="primary"
                     >
-                      {account?.setupEmailQueuedAt ? "Resend access email" : "Send access email"}
+                      {account?.setupEmailQueuedAt
+                        ? "Resend access email"
+                        : "Send access email"}
                     </ButtonControl>
                   ) : null}
                 </div>
-                {!loading && account?.status === "PENDING_SETUP" && account.setupEmailQueuedAt ? (
+                {!loading &&
+                account?.status === "PENDING_SETUP" &&
+                account.setupEmailQueuedAt ? (
                   <p className="m-0 text-[.82rem] leading-[1.5] text-ink-muted">
-                    Last queued {new Date(account.setupEmailQueuedAt).toLocaleString()}
+                    Last queued{" "}
+                    {new Date(account.setupEmailQueuedAt).toLocaleString()}
                   </p>
                 ) : null}
               </article>
@@ -332,7 +425,7 @@ export function UserManagement() {
           })}
         </section>
       )}
-      {(loading || result) ? (
+      {loading || result ? (
         <PaginationControls
           loading={loading}
           onPageChange={(nextPage) => {
@@ -369,7 +462,11 @@ export function UserManagement() {
         description="This account will be permanently removed."
         onCancel={() => setDeletePending(undefined)}
         onConfirm={() => {
-          showToast({ body: "Account deletion is not yet implemented.", title: "Not implemented", tone: "error" });
+          showToast({
+            body: "Account deletion is not yet implemented.",
+            title: "Not implemented",
+            tone: "error",
+          });
           setDeletePending(undefined);
         }}
         open={Boolean(deletePending)}

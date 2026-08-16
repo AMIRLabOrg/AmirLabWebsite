@@ -24,7 +24,9 @@ async function main() {
     `);
 
     if (!rows[0]?.hasLegacyEntries) {
-      console.log('Profile entry schema is already current or the profile tables do not exist yet.');
+      console.log(
+        'Profile entry schema is already current or the profile tables do not exist yet.',
+      );
       return;
     }
 
@@ -78,9 +80,13 @@ async function main() {
         WHERE existing."subsectionId" = subsection."id"
       )
     `);
-    await client.query('ALTER TABLE "PersonProfileSubsection" DROP COLUMN "entries"');
+    await client.query(
+      'ALTER TABLE "PersonProfileSubsection" DROP COLUMN "entries"',
+    );
     await client.query('COMMIT');
-    console.log('Migrated profile subsection string entries to labeled profile entry records.');
+    console.log(
+      'Migrated profile subsection string entries to labeled profile entry records.',
+    );
   } catch (error) {
     await client.query('ROLLBACK').catch(() => undefined);
     throw error;

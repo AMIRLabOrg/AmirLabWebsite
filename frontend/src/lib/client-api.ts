@@ -83,11 +83,15 @@ function isIssueTone(value: unknown): value is ReviewIssue["tone"] {
 }
 
 function safeStatusMessage(status: number): string {
-  if (status === 400) return "The submitted data could not be accepted. Check the form and try again.";
+  if (status === 400)
+    return "The submitted data could not be accepted. Check the form and try again.";
   if (status === 401) return "Authentication is required to continue.";
-  if (status === 403) return "You do not have permission to perform this action.";
+  if (status === 403)
+    return "You do not have permission to perform this action.";
   if (status === 404) return "The requested record could not be found.";
-  if (status === 409) return "This record changed while you were working. Reload and try again.";
-  if (status >= 500) return "The server could not complete the request. Try again.";
+  if (status === 409)
+    return "This record changed while you were working. Reload and try again.";
+  if (status >= 500)
+    return "The server could not complete the request. Try again.";
   return "The request could not be completed.";
 }

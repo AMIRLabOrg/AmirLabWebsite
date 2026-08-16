@@ -43,7 +43,9 @@ export function DateTimeField({
   const [visibleMonth, setVisibleMonth] = useState(() =>
     startOfMonth(selected ?? new Date()),
   );
-  const [draft, setDraft] = useState<Date>(() => selected ?? roundHour(new Date()));
+  const [draft, setDraft] = useState<Date>(
+    () => selected ?? roundHour(new Date()),
+  );
   const includesTime = mode === "datetime";
   const triggerLabel = useMemo(
     () => formatValue(value, includesTime),
@@ -53,7 +55,9 @@ export function DateTimeField({
   function commit(next: Date) {
     const validNext = clampDate(next, minDate, maxDate);
     setDraft(validNext);
-    onChange(includesTime ? toDateTimeValue(validNext) : toDateValue(validNext));
+    onChange(
+      includesTime ? toDateTimeValue(validNext) : toDateValue(validNext),
+    );
   }
 
   function openPicker(nextOpen: boolean) {
@@ -70,19 +74,38 @@ export function DateTimeField({
         aria-label={label}
         className={cn(
           "grid w-full cursor-pointer grid-cols-[auto_minmax(0,1fr)] items-center rounded-control border border-line bg-surface px-[.8rem] text-left text-ink transition-[border-color,box-shadow,background] duration-150 hover:border-[color-mix(in_srgb,var(--brand)_42%,var(--line))] data-[state=open]:border-brand focus-visible:border-brand focus-visible:shadow-[var(--focus-ring)] disabled:cursor-not-allowed disabled:bg-surface-subtle disabled:text-ink-faint motion-reduce:transition-none",
-          showInlineLabel ? "min-h-[var(--control-height)] py-[.4rem]" : "h-[var(--control-height)] min-h-[var(--control-height)] py-0",
+          showInlineLabel
+            ? "min-h-[var(--control-height)] py-[.4rem]"
+            : "h-[var(--control-height)] min-h-[var(--control-height)] py-0",
           loadingPlaceholder(loading, "control"),
         )}
         data-placeholder={loading ? "control" : undefined}
         disabled={disabled || loading}
         type="button"
       >
-        <CalendarDays aria-hidden="true" className={cn("mr-[.6rem] text-ink-muted", showInlineLabel && "row-span-2")} size={17} />
-        {showInlineLabel ? <span className="text-[.68rem] font-bold text-ink-muted">{label}</span> : null}
-        <strong className="overflow-hidden text-ellipsis whitespace-nowrap text-[.95rem] font-normal leading-[1.45]">{triggerLabel}</strong>
+        <CalendarDays
+          aria-hidden="true"
+          className={cn(
+            "mr-[.6rem] text-ink-muted",
+            showInlineLabel && "row-span-2",
+          )}
+          size={17}
+        />
+        {showInlineLabel ? (
+          <span className="text-[.68rem] font-bold text-ink-muted">
+            {label}
+          </span>
+        ) : null}
+        <strong className="overflow-hidden text-ellipsis whitespace-nowrap text-[.95rem] font-normal leading-[1.45]">
+          {triggerLabel}
+        </strong>
       </Popover.Trigger>
       <Popover.Portal>
-        <Popover.Content align="start" className="z-[100] grid w-[min(420px,calc(100vw-2rem))] gap-[.9rem] rounded-[4px] border border-line bg-surface p-4 shadow-[0_24px_60px_color-mix(in_srgb,var(--brand-hover)_16%,transparent)]" sideOffset={8}>
+        <Popover.Content
+          align="start"
+          className="z-[100] grid w-[min(420px,calc(100vw-2rem))] gap-[.9rem] rounded-[4px] border border-line bg-surface p-4 shadow-[0_24px_60px_color-mix(in_srgb,var(--brand-hover)_16%,transparent)]"
+          sideOffset={8}
+        >
           <DatePicker
             onChange={(day) => {
               const next = withDate(draft, day);
@@ -104,7 +127,11 @@ export function DateTimeField({
             />
           ) : null}
           <div className="flex items-center justify-between border-t border-line pt-3">
-            <button className="min-h-[34px] cursor-pointer rounded-control border-0 bg-transparent px-[.55rem] py-[.35rem] text-[.78rem] text-brand hover:bg-brand-soft" onClick={() => onChange("")} type="button">
+            <button
+              className="min-h-[34px] cursor-pointer rounded-control border-0 bg-transparent px-[.55rem] py-[.35rem] text-[.78rem] text-brand hover:bg-brand-soft"
+              onClick={() => onChange("")}
+              type="button"
+            >
               Clear
             </button>
             <button
@@ -194,7 +221,12 @@ function DatePicker({
       </div>
       <div className="grid grid-cols-7">
         {WEEKDAYS.map((weekday, index) => (
-          <span className="py-[.35rem] text-center font-mono text-[.62rem] text-ink-muted" key={`${weekday}-${index}`}>{weekday}</span>
+          <span
+            className="py-[.35rem] text-center font-mono text-[.62rem] text-ink-muted"
+            key={`${weekday}-${index}`}
+          >
+            {weekday}
+          </span>
         ))}
       </div>
       <div className="grid grid-cols-7">
@@ -205,7 +237,10 @@ function DatePicker({
             <button
               aria-disabled={disabled}
               aria-pressed={sameDay(day, selected)}
-              className={cn("flex h-9 w-9 cursor-pointer items-center justify-center justify-self-center rounded-full border-0 bg-transparent text-[.78rem] text-ink hover:bg-brand-soft hover:text-brand disabled:cursor-not-allowed disabled:bg-transparent disabled:text-ink-faint disabled:opacity-45 aria-pressed:bg-brand aria-pressed:font-bold aria-pressed:text-on-accent", outside && "text-ink-faint")}
+              className={cn(
+                "flex h-9 w-9 cursor-pointer items-center justify-center justify-self-center rounded-full border-0 bg-transparent text-[.78rem] text-ink hover:bg-brand-soft hover:text-brand disabled:cursor-not-allowed disabled:bg-transparent disabled:text-ink-faint disabled:opacity-45 aria-pressed:bg-brand aria-pressed:font-bold aria-pressed:text-on-accent",
+                outside && "text-ink-faint",
+              )}
               disabled={disabled}
               key={toDateValue(day)}
               onClick={() => onChange(day)}
@@ -238,7 +273,9 @@ function TimePicker({
     <div className="grid gap-3 border-t border-line pt-[.85rem]">
       <header className="flex items-center gap-[.45rem]">
         <Clock aria-hidden="true" size={15} />
-        <span className="text-[.68rem] font-bold text-ink-muted">Local time</span>
+        <span className="text-[.68rem] font-bold text-ink-muted">
+          Local time
+        </span>
       </header>
       <div className="grid grid-cols-3 gap-[.6rem]">
         <TimeStepper
@@ -287,7 +324,9 @@ function TimePicker({
                   )
                 }
                 key={item}
-                onClick={() => onChange(to24Hour(hour, item), value.getMinutes())}
+                onClick={() =>
+                  onChange(to24Hour(hour, item), value.getMinutes())
+                }
                 type="button"
               >
                 {item}
@@ -354,17 +393,27 @@ function TimeStepper({
         <button
           aria-label={`Decrease ${label.toLowerCase()}`}
           className="h-full cursor-pointer border-0 bg-transparent text-ink-muted hover:bg-brand-soft hover:text-brand disabled:cursor-not-allowed disabled:opacity-45"
-          disabled={selectable ? !selectable(stepValue(value, -step, min, max, step)) : false}
+          disabled={
+            selectable
+              ? !selectable(stepValue(value, -step, min, max, step))
+              : false
+          }
           onClick={() => move(-step)}
           type="button"
         >
           -
         </button>
-        <strong className="text-center font-mono text-[.78rem]">{String(value).padStart(2, "0")}</strong>
+        <strong className="text-center font-mono text-[.78rem]">
+          {String(value).padStart(2, "0")}
+        </strong>
         <button
           aria-label={`Increase ${label.toLowerCase()}`}
           className="h-full cursor-pointer border-0 bg-transparent text-ink-muted hover:bg-brand-soft hover:text-brand disabled:cursor-not-allowed disabled:opacity-45"
-          disabled={selectable ? !selectable(stepValue(value, step, min, max, step)) : false}
+          disabled={
+            selectable
+              ? !selectable(stepValue(value, step, min, max, step))
+              : false
+          }
           onClick={() => move(step)}
           type="button"
         >
@@ -376,7 +425,9 @@ function TimeStepper({
 }
 
 function parseValue(value: string): Date | undefined {
-  const match = value.match(/^(\d{4})-(\d{2})-(\d{2})(?:[ T](\d{2}):(\d{2}))?$/);
+  const match = value.match(
+    /^(\d{4})-(\d{2})-(\d{2})(?:[ T](\d{2}):(\d{2}))?$/,
+  );
   if (!match) return undefined;
   const [, year, month, day, hour = "09", minute = "00"] = match;
   const date = new Date(

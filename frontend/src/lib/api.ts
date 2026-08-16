@@ -76,9 +76,12 @@ export function getUniversities(): Promise<University[]> {
 
 export async function getDepartment(slug: string): Promise<Department | null> {
   try {
-    const response = await fetch(`${API_URL}/departments/${encodeURIComponent(slug)}`, {
-      next: { revalidate: 60 },
-    });
+    const response = await fetch(
+      `${API_URL}/departments/${encodeURIComponent(slug)}`,
+      {
+        next: { revalidate: 60 },
+      },
+    );
     if (response.status === 404) return null;
     if (!response.ok) throw new Error(`API returned ${response.status}`);
     return (await response.json()) as Department;
@@ -88,11 +91,16 @@ export async function getDepartment(slug: string): Promise<Department | null> {
   }
 }
 
-export async function getResearchItem(slug: string): Promise<ResearchItem | null> {
+export async function getResearchItem(
+  slug: string,
+): Promise<ResearchItem | null> {
   try {
-    const response = await fetch(`${API_URL}/research/${encodeURIComponent(slug)}`, {
-      next: { revalidate: 30 },
-    });
+    const response = await fetch(
+      `${API_URL}/research/${encodeURIComponent(slug)}`,
+      {
+        next: { revalidate: 30 },
+      },
+    );
     if (response.status === 404) return null;
     if (!response.ok) throw new Error(`API returned ${response.status}`);
     return (await response.json()) as ResearchItem;

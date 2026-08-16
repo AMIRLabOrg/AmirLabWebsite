@@ -61,7 +61,9 @@ export function AccountForm({ accountId }: { accountId?: string }) {
       .catch((caught: unknown) => {
         if (active) {
           setLoadError(
-            caught instanceof Error ? caught.message : "Unable to load account.",
+            caught instanceof Error
+              ? caught.message
+              : "Unable to load account.",
           );
         }
       })
@@ -97,13 +99,16 @@ export function AccountForm({ accountId }: { accountId?: string }) {
       router.push("/workspace/users");
       router.refresh();
     } catch (caught) {
-      const message = caught instanceof Error
-        ? caught.message
-        : `Unable to ${accountId ? "update" : "create"} account.`;
+      const message =
+        caught instanceof Error
+          ? caught.message
+          : `Unable to ${accountId ? "update" : "create"} account.`;
       setError(message);
       showToast({
         body: message,
-        title: accountId ? "Account was not updated" : "Account was not created",
+        title: accountId
+          ? "Account was not updated"
+          : "Account was not created",
         tone: "error",
       });
     } finally {
@@ -113,7 +118,12 @@ export function AccountForm({ accountId }: { accountId?: string }) {
 
   if (loadError && !loading) {
     return (
-      <WorkspaceRecord backHref="/workspace/users" backLabel="Accounts" eyebrow="Account record" title="Account unavailable">
+      <WorkspaceRecord
+        backHref="/workspace/users"
+        backLabel="Accounts"
+        eyebrow="Account record"
+        title="Account unavailable"
+      >
         <StatePanel
           body="The account record could not be retrieved."
           title={loadError}
@@ -129,10 +139,28 @@ export function AccountForm({ accountId }: { accountId?: string }) {
       backLabel="Accounts"
       description="Create a registered account, then send the one-time access email when it is ready."
       eyebrow="Account record"
-      title={loading ? "Account record" : accountId ? fullName || "Edit account" : "New account"}
+      title={
+        loading
+          ? "Account record"
+          : accountId
+            ? fullName || "Edit account"
+            : "New account"
+      }
     >
-      <form aria-busy={loading || undefined} className="mx-auto grid w-full max-w-[820px] gap-[1.35rem] rounded-panel border border-line bg-surface p-[clamp(1.25rem,3vw,2rem)] gap-[1.2rem]" data-loading={loading || undefined} onSubmit={submit}>
-        <header className="grid gap-[.35rem] border-b border-line pb-[1.15rem]"><p className="m-0 font-mono text-[.62rem] font-semibold uppercase tracking-[.1em] text-brand">Account details</p><h2 className="m-0 font-serif text-[clamp(1.4rem,2.4vw,2rem)] font-normal leading-[1.1]">Identity and access</h2></header>
+      <form
+        aria-busy={loading || undefined}
+        className="mx-auto grid w-full max-w-[820px] gap-[1.35rem] rounded-panel border border-line bg-surface p-[clamp(1.25rem,3vw,2rem)] gap-[1.2rem]"
+        data-loading={loading || undefined}
+        onSubmit={submit}
+      >
+        <header className="grid gap-[.35rem] border-b border-line pb-[1.15rem]">
+          <p className="m-0 font-mono text-[.62rem] font-semibold uppercase tracking-[.1em] text-brand">
+            Account details
+          </p>
+          <h2 className="m-0 font-serif text-[clamp(1.4rem,2.4vw,2rem)] font-normal leading-[1.1]">
+            Identity and access
+          </h2>
+        </header>
         <FormField htmlFor="account-name" label="Full name">
           <InputControl
             loading={loading}
@@ -191,9 +219,16 @@ export function AccountForm({ accountId }: { accountId?: string }) {
         {error ? <FormMessage>{error}</FormMessage> : null}
         <div className="flex flex-wrap justify-end gap-[.65rem] max-[640px]:justify-start">
           <ButtonLink href="/workspace/users">Cancel</ButtonLink>
-          <ButtonControl loading={loading} disabled={saving} type="submit" variant="primary">
+          <ButtonControl
+            loading={loading}
+            disabled={saving}
+            type="submit"
+            variant="primary"
+          >
             {saving ? (
-              <><LoaderCircle aria-hidden="true" size={15} /> Saving…</>
+              <>
+                <LoaderCircle aria-hidden="true" size={15} /> Saving…
+              </>
             ) : accountId ? (
               "Save account"
             ) : (

@@ -14,8 +14,18 @@ export function GuestOnly({ children }: { children: ReactNode }) {
 
   const checkingSession = loading || Boolean(user);
   return (
-    <div aria-busy={checkingSession || undefined} className="grid min-h-svh w-full place-items-center py-[clamp(1.5rem,5vh,3.5rem)]" data-loading={checkingSession || undefined}>
-      <div aria-hidden={Boolean(user) || undefined} className={`w-full ${checkingSession ? "pointer-events-none opacity-70" : ""}`} inert={checkingSession || undefined}>{children}</div>
+    <div
+      aria-busy={checkingSession || undefined}
+      className="grid min-h-svh w-full place-items-center py-[clamp(1.5rem,5vh,3.5rem)]"
+      data-loading={checkingSession || undefined}
+    >
+      <div
+        aria-hidden={Boolean(user) || undefined}
+        className={`w-full ${checkingSession ? "pointer-events-none opacity-70" : ""}`}
+        inert={checkingSession || undefined}
+      >
+        {children}
+      </div>
     </div>
   );
 }

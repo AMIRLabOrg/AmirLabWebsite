@@ -14,19 +14,25 @@ export function useReviewIssues() {
       const grouped = new Map<string, ReviewIssue[]>();
       for (const issue of error.issues) {
         if (!issue.itemId) continue;
-        grouped.set(issue.itemId, [...(grouped.get(issue.itemId) ?? []), issue]);
+        grouped.set(issue.itemId, [
+          ...(grouped.get(issue.itemId) ?? []),
+          issue,
+        ]);
       }
       for (const [itemId, itemIssues] of grouped) next[itemId] = itemIssues;
       return next;
     });
   }, []);
 
-  const setOne = useCallback((itemId: string, issue: Omit<ReviewIssue, "itemId">) => {
-    setIssues((current) => ({
-      ...current,
-      [itemId]: [{ ...issue, itemId }],
-    }));
-  }, []);
+  const setOne = useCallback(
+    (itemId: string, issue: Omit<ReviewIssue, "itemId">) => {
+      setIssues((current) => ({
+        ...current,
+        [itemId]: [{ ...issue, itemId }],
+      }));
+    },
+    [],
+  );
 
   const clear = useCallback(() => setIssues({}), []);
   const clearOne = useCallback((itemId: string) => {

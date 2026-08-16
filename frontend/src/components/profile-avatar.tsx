@@ -42,7 +42,21 @@ export function ProfileAvatar({
       data-placeholder={loading ? "portrait" : undefined}
     >
       {!loading && (src || avatarId) ? (
-        <Image alt="" fill sizes={size === "lg" ? "44px" : size === "md" ? "38px" : size === "sm" ? "32px" : "20px"} className="object-cover" src={src || `${API_URL}/assets/${avatarId}`} />
+        <Image
+          alt=""
+          fill
+          sizes={
+            size === "lg"
+              ? "44px"
+              : size === "md"
+                ? "38px"
+                : size === "sm"
+                  ? "32px"
+                  : "20px"
+          }
+          className="object-cover"
+          src={src || `${API_URL}/assets/${avatarId}`}
+        />
       ) : (
         <span>{initial}</span>
       )}

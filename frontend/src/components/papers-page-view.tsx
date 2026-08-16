@@ -1,12 +1,21 @@
-
 import { IntroRegister, PageIntro } from "@/components/page-intro";
 import { PublicationExplorer } from "@/components/publication-explorer";
 import type { ResearchItem } from "@/lib/types";
 
-export function PapersPageView({ papers, loading = false }: { papers?: ResearchItem[]; loading?: boolean }) {
+export function PapersPageView({
+  papers,
+  loading = false,
+}: {
+  papers?: ResearchItem[];
+  loading?: boolean;
+}) {
   const list = papers ?? [];
-  const years = list.map((item) => item.paper?.year).filter((value): value is number => typeof value === "number");
-  const coverage = years.length ? `${Math.min(...years)}-${Math.max(...years)}` : "Archive";
+  const years = list
+    .map((item) => item.paper?.year)
+    .filter((value): value is number => typeof value === "number");
+  const coverage = years.length
+    ? `${Math.min(...years)}-${Math.max(...years)}`
+    : "Archive";
 
   return (
     <div>
@@ -24,10 +33,16 @@ export function PapersPageView({ papers, loading = false }: { papers?: ResearchI
           />
         }
         eyebrow="Publications"
-        meta={<><span>Journal · Conference · Book chapter</span><span>DOI and source links where available</span></>}
+        meta={
+          <>
+            <span>Journal · Conference · Book chapter</span>
+            <span>DOI and source links where available</span>
+          </>
+        }
         title="Publications"
       >
-        Papers, conference proceedings, and book chapters published by AMIR Lab researchers and collaborators.
+        Papers, conference proceedings, and book chapters published by AMIR Lab
+        researchers and collaborators.
       </PageIntro>
       <PublicationExplorer staticLoading={loading} />
     </div>

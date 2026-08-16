@@ -16,8 +16,8 @@ export default function ResetPasswordPage() {
               Choose a new password
             </h1>
             <p className="mt-[.9rem] max-w-[470px] text-[.82rem] leading-[1.6] text-ink-muted">
-              The reset link is one-time use. A successful reset signs out existing
-              sessions for this account.
+              The reset link is one-time use. A successful reset signs out
+              existing sessions for this account.
             </p>
           </div>
           <ResetPasswordForm />

@@ -350,7 +350,7 @@ export class ResearchRelationshipsService {
       });
     });
 
-    if (match.requestedById) {
+    if (match.requestedById && match.requestedById !== reviewer.id) {
       await this.notifications.create(match.requestedById, {
         type: NotificationType.RELATION_REVIEWED,
         title: 'Research connection reviewed',

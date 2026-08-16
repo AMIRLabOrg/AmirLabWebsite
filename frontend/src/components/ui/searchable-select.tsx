@@ -51,14 +51,21 @@ export function SearchableSelect({
     const needle = query.trim().toLowerCase();
     if (!needle) return options;
     return options.filter((option) =>
-      `${option.label} ${option.description ?? ""}`.toLowerCase().includes(needle),
+      `${option.label} ${option.description ?? ""}`
+        .toLowerCase()
+        .includes(needle),
     );
   }, [filterOptions, options, query]);
-  const resolvedActiveIndex = Math.min(activeIndex, Math.max(filtered.length - 1, 0));
+  const resolvedActiveIndex = Math.min(
+    activeIndex,
+    Math.max(filtered.length - 1, 0),
+  );
 
   useEffect(() => {
     if (!open || !filtered.length) return;
-    document.getElementById(`${listId}-option-${resolvedActiveIndex}`)?.scrollIntoView({ block: "nearest" });
+    document
+      .getElementById(`${listId}-option-${resolvedActiveIndex}`)
+      ?.scrollIntoView({ block: "nearest" });
   }, [filtered.length, listId, open, resolvedActiveIndex]);
 
   function select(option: SearchableSelectOption) {
@@ -74,7 +81,9 @@ export function SearchableSelect({
           setQuery("");
           return;
         }
-        const selectedIndex = options.findIndex((option) => option.value === value);
+        const selectedIndex = options.findIndex(
+          (option) => option.value === value,
+        );
         setActiveIndex(Math.max(selectedIndex, 0));
       }}
       open={open}
@@ -110,7 +119,11 @@ export function SearchableSelect({
           <div className="mb-[.35rem] grid grid-cols-[20px_minmax(0,1fr)] items-center rounded-[3px] border border-line px-[.55rem]">
             <Search aria-hidden="true" className="text-ink-muted" size={15} />
             <input
-              aria-activedescendant={filtered.length ? `${listId}-option-${resolvedActiveIndex}` : undefined}
+              aria-activedescendant={
+                filtered.length
+                  ? `${listId}-option-${resolvedActiveIndex}`
+                  : undefined
+              }
               aria-autocomplete="list"
               aria-controls={listId}
               aria-expanded={open}
@@ -123,14 +136,25 @@ export function SearchableSelect({
                 onQueryChange?.(event.target.value);
               }}
               onKeyDown={(event) => {
-                if (!filtered.length && (event.key === "ArrowDown" || event.key === "ArrowUp" || event.key === "Enter")) return;
+                if (
+                  !filtered.length &&
+                  (event.key === "ArrowDown" ||
+                    event.key === "ArrowUp" ||
+                    event.key === "Enter")
+                )
+                  return;
                 if (event.key === "ArrowDown") {
                   event.preventDefault();
-                  setActiveIndex(Math.min(resolvedActiveIndex + 1, filtered.length - 1));
+                  setActiveIndex(
+                    Math.min(resolvedActiveIndex + 1, filtered.length - 1),
+                  );
                 } else if (event.key === "ArrowUp") {
                   event.preventDefault();
                   setActiveIndex(Math.max(resolvedActiveIndex - 1, 0));
-                } else if (event.key === "Enter" && filtered[resolvedActiveIndex]) {
+                } else if (
+                  event.key === "Enter" &&
+                  filtered[resolvedActiveIndex]
+                ) {
                   event.preventDefault();
                   select(filtered[resolvedActiveIndex]);
                 } else if (event.key === "Escape") {
@@ -149,7 +173,9 @@ export function SearchableSelect({
             role="listbox"
           >
             {loading ? (
-              <p className="m-0 p-[.8rem] text-[.8rem] text-ink-muted">{loadingMessage}</p>
+              <p className="m-0 p-[.8rem] text-[.8rem] text-ink-muted">
+                {loadingMessage}
+              </p>
             ) : filtered.length ? (
               filtered.map((option, index) => (
                 <button
@@ -165,13 +191,21 @@ export function SearchableSelect({
                 >
                   <span className="grid min-w-0 gap-[.15rem] [overflow-wrap:anywhere]">
                     {option.label}
-                    {option.description ? <small className="text-[.7rem] font-normal text-ink-muted">{option.description}</small> : null}
+                    {option.description ? (
+                      <small className="text-[.7rem] font-normal text-ink-muted">
+                        {option.description}
+                      </small>
+                    ) : null}
                   </span>
-                  {option.value === value ? <Check aria-hidden="true" size={14} /> : null}
+                  {option.value === value ? (
+                    <Check aria-hidden="true" size={14} />
+                  ) : null}
                 </button>
               ))
             ) : (
-              <p className="m-0 p-[.8rem] text-[.8rem] text-ink-muted">{emptyMessage}</p>
+              <p className="m-0 p-[.8rem] text-[.8rem] text-ink-muted">
+                {emptyMessage}
+              </p>
             )}
           </div>
         </Popover.Content>

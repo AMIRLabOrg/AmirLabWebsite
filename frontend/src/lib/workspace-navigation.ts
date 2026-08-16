@@ -131,7 +131,10 @@ export function workspaceNavigation(
   role: AuthenticatedUser["role"] | undefined,
 ): WorkspaceNavigationGroup[] {
   return [
-    { label: role === "MEMBER" ? "My work" : "Staff", items: role === "MEMBER" ? MEMBER_WORK : STAFF_WORK },
+    {
+      label: role === "MEMBER" ? "My work" : "Staff",
+      items: role === "MEMBER" ? MEMBER_WORK : STAFF_WORK,
+    },
     { label: "Research", items: RESEARCH },
     ...(role && role !== "MEMBER" ? [{ label: "Review", items: REVIEW }] : []),
     ...(role === "ADMIN"
@@ -149,7 +152,9 @@ export function workspaceNavigationItem(
 ): WorkspaceNavigationItem | undefined {
   return groups
     .flatMap(({ items }) => items)
-    .find(({ href, match }) => isWorkspaceNavigationActive(pathname, href, match));
+    .find(({ href, match }) =>
+      isWorkspaceNavigationActive(pathname, href, match),
+    );
 }
 
 export function isWorkspaceNavigationActive(
@@ -159,6 +164,8 @@ export function isWorkspaceNavigationActive(
 ): boolean {
   return (
     pathname === href ||
-    (match !== "exact" && href !== "/workspace" && pathname.startsWith(`${href}/`))
+    (match !== "exact" &&
+      href !== "/workspace" &&
+      pathname.startsWith(`${href}/`))
   );
 }

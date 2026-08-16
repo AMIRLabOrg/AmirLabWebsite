@@ -49,9 +49,11 @@ export function SegmentedControl({
             aria-checked={selected}
             className={cn(
               "min-h-9 cursor-pointer whitespace-nowrap rounded-control border-0 px-[.7rem] py-2 text-xs font-semibold text-ink-muted transition-[background,color,box-shadow] duration-[140ms] focus-visible:shadow-[0_0_0_3px_color-mix(in_srgb,var(--brand)_14%,transparent)] disabled:cursor-not-allowed disabled:opacity-55 motion-reduce:transition-none",
-              !selected && "bg-transparent hover:bg-[color-mix(in_srgb,var(--surface)_70%,transparent)] hover:text-ink",
+              !selected &&
+                "bg-transparent hover:bg-[color-mix(in_srgb,var(--surface)_70%,transparent)] hover:text-ink",
               selected && activeToneClass[option.tone ?? "brand"],
-              selected && "shadow-[0_2px_10px_color-mix(in_srgb,var(--ink)_10%,transparent)]",
+              selected &&
+                "shadow-[0_2px_10px_color-mix(in_srgb,var(--ink)_10%,transparent)]",
             )}
             disabled={disabled || loading}
             key={option.value}

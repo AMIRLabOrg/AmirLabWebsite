@@ -13,7 +13,10 @@ import { useBulkSelection } from "@/lib/use-bulk-selection";
 import { ApiRequestError, apiRequest } from "@/lib/client-api";
 import { useReviewIssues } from "@/lib/use-review-issues";
 import type { ReviewIssue } from "@/lib/review-issues";
-import { ReviewIssueStamp, SemanticStatus } from "@/components/ui/semantic-status";
+import {
+  ReviewIssueStamp,
+  SemanticStatus,
+} from "@/components/ui/semantic-status";
 
 interface ChangeRequest {
   id: string;
@@ -35,7 +38,9 @@ export function ProjectReviewQueue() {
 
   function load() {
     setLoading(true);
-    return apiRequest<ChangeRequest[]>("/project-change-reviews", { method: "GET" })
+    return apiRequest<ChangeRequest[]>("/project-change-reviews", {
+      method: "GET",
+    })
       .then((nextItems) => {
         setItems(nextItems);
         reviewIssues.clear();
@@ -47,7 +52,9 @@ export function ProjectReviewQueue() {
 
   useEffect(() => {
     let active = true;
-    void apiRequest<ChangeRequest[]>("/project-change-reviews", { method: "GET" })
+    void apiRequest<ChangeRequest[]>("/project-change-reviews", {
+      method: "GET",
+    })
       .then((nextItems) => {
         if (active) setItems(nextItems);
       })
@@ -64,10 +71,18 @@ export function ProjectReviewQueue() {
 
   function captureItemError(itemId: string, error: ApiRequestError) {
     if (error.issues.length) reviewIssues.capture(error);
-    else reviewIssues.setOne(itemId, { code: "PROJECT_REVIEW_FAILED", message: "This project change decision could not be saved.", tone: "error" });
+    else
+      reviewIssues.setOne(itemId, {
+        code: "PROJECT_REVIEW_FAILED",
+        message: "This project change decision could not be saved.",
+        tone: "error",
+      });
   }
 
-  async function decide(id: string, { note, status }: { note?: string; status: "APPROVED" | "REJECTED" }) {
+  async function decide(
+    id: string,
+    { note, status }: { note?: string; status: "APPROVED" | "REJECTED" },
+  ) {
     await apiRequest(`/project-change-reviews/${id}/review`, {
       body: JSON.stringify({ ...(note ? { note } : {}), status }),
       headers: { "content-type": "application/json" },
@@ -82,7 +97,9 @@ export function ProjectReviewQueue() {
     counts.set(item.projectId, (counts.get(item.projectId) ?? 0) + 1);
     return counts;
   }, new Map<string, number>());
-  const hasDuplicateProjects = [...selectedProjectCounts.values()].some((count) => count > 1);
+  const hasDuplicateProjects = [...selectedProjectCounts.values()].some(
+    (count) => count > 1,
+  );
   const itemReviewIssues = (item: ChangeRequest): ReviewIssue[] => [
     ...(item.reviewIssues ?? []),
     ...reviewIssues.forItem(item.id),
@@ -90,26 +107,36 @@ export function ProjectReviewQueue() {
   const issuesFor = (item: ChangeRequest): ReviewIssue[] => [
     ...itemReviewIssues(item),
     ...((selectedProjectCounts.get(item.projectId) ?? 0) > 1
-      ? [{
-          code: "MULTIPLE_CHANGES_FOR_PROJECT",
-          itemId: item.id,
-          message: "Another selected change belongs to the same project.",
-          tone: "warning" as const,
-        }]
+      ? [
+          {
+            code: "MULTIPLE_CHANGES_FOR_PROJECT",
+            itemId: item.id,
+            message: "Another selected change belongs to the same project.",
+            tone: "warning" as const,
+          },
+        ]
       : []),
   ];
-  const selectedAttentionCount = selectedItems.filter((item) => issuesFor(item).length > 0).length;
-  const selectedCanApprove = selectedItems.every((item) => issuesFor(item).length === 0);
+  const selectedAttentionCount = selectedItems.filter(
+    (item) => issuesFor(item).length > 0,
+  ).length;
+  const selectedCanApprove = selectedItems.every(
+    (item) => issuesFor(item).length === 0,
+  );
   const commonBulkActions = selectedItems.length
     ? [
-        ...(selectedCanApprove && !hasDuplicateProjects ? [{
-          confirmDescription: `Apply and publish the ${selectedItems.length} selected project change${selectedItems.length === 1 ? "" : "s"}. Version guards still apply to every request.`,
-          confirmLabel: "Approve selected",
-          confirmTitle: "Approve selected project changes?",
-          label: "Approve selected",
-          status: "APPROVED" as const,
-          tone: "primary" as const,
-        }] : []),
+        ...(selectedCanApprove && !hasDuplicateProjects
+          ? [
+              {
+                confirmDescription: `Apply and publish the ${selectedItems.length} selected project change${selectedItems.length === 1 ? "" : "s"}. Version guards still apply to every request.`,
+                confirmLabel: "Approve selected",
+                confirmTitle: "Approve selected project changes?",
+                label: "Approve selected",
+                status: "APPROVED" as const,
+                tone: "primary" as const,
+              },
+            ]
+          : []),
         {
           confirmDescription: `Reject the ${selectedItems.length} selected project change${selectedItems.length === 1 ? "" : "s"} with the same reviewer note.`,
           confirmLabel: "Reject selected",
@@ -123,7 +150,13 @@ export function ProjectReviewQueue() {
       ]
     : [];
 
-  async function decideBulk({ note, status }: { note?: string; status: "APPROVED" | "REJECTED" }) {
+  async function decideBulk({
+    note,
+    status,
+  }: {
+    note?: string;
+    status: "APPROVED" | "REJECTED";
+  }) {
     if (!selectedItems.length) return;
     await apiRequest("/project-change-reviews/bulk-review", {
       body: JSON.stringify({
@@ -142,11 +175,20 @@ export function ProjectReviewQueue() {
     <section className="grid min-w-0 gap-4">
       <div className="flex items-center justify-between gap-4 rounded-panel border border-line bg-surface p-5 max-[640px]:flex-col max-[640px]:items-start">
         <div>
-          <p className="m-0 mb-4 font-[var(--font-sans)] text-[.75rem] font-extrabold uppercase tracking-[.12em] text-brand">Review queue</p>
-          <h2 className="mt-[.35rem] font-serif text-[clamp(1.5rem,2.6vw,2.2rem)] font-normal leading-[1.05]">Project change moderation</h2>
-          <p className="mt-[.55rem] max-w-[720px] text-[.82rem] leading-[1.55] text-ink-muted">Review member-submitted changes to milestones, team records, outputs, resources, and project settings before they publish.</p>
+          <p className="m-0 mb-4 font-[var(--font-sans)] text-[.75rem] font-extrabold uppercase tracking-[.12em] text-brand">
+            Review queue
+          </p>
+          <h2 className="mt-[.35rem] font-serif text-[clamp(1.5rem,2.6vw,2.2rem)] font-normal leading-[1.05]">
+            Project change moderation
+          </h2>
+          <p className="mt-[.55rem] max-w-[720px] text-[.82rem] leading-[1.55] text-ink-muted">
+            Review member-submitted changes to milestones, team records,
+            outputs, resources, and project settings before they publish.
+          </p>
         </div>
-        <Badge loading={loading}>{loading ? "Loading" : `${items.length} pending`}</Badge>
+        <Badge loading={loading}>
+          {loading ? "Loading" : `${items.length} pending`}
+        </Badge>
       </div>
 
       {loading || items.length ? (
@@ -162,12 +204,18 @@ export function ProjectReviewQueue() {
           selectAllState={bulk.selectAllState}
           selectableCount={items.length}
           selectedCount={bulk.selectedCount}
-          successBody={(status) => `${selectedItems.length} project review${selectedItems.length === 1 ? "" : "s"} ${status === "APPROVED" ? "approved" : "rejected"}.`}
+          successBody={(status) =>
+            `${selectedItems.length} project review${selectedItems.length === 1 ? "" : "s"} ${status === "APPROVED" ? "approved" : "rejected"}.`
+          }
           successTitle="Bulk project review saved"
         />
       ) : null}
 
-      {error && items.length ? <p className="m-0 flex items-center gap-[.45rem] text-[.82rem] leading-[1.5] text-ink-muted rounded-panel bg-danger-soft p-[.8rem] text-danger">{error}</p> : null}
+      {error && items.length ? (
+        <p className="m-0 flex items-center gap-[.45rem] text-[.82rem] leading-[1.5] text-ink-muted rounded-panel bg-danger-soft p-[.8rem] text-danger">
+          {error}
+        </p>
+      ) : null}
 
       <div className="grid min-w-0 gap-4" data-loading={loading || undefined}>
         {error && !items.length && !loading ? (
@@ -184,7 +232,10 @@ export function ProjectReviewQueue() {
               ? Array.from({ length: 4 }, () => undefined)
               : items
             ).map((item, index) => (
-              <article className="relative grid grid-cols-[auto_minmax(0,1fr)_auto] items-start gap-4 rounded-panel border border-line bg-surface p-[clamp(1rem,2vw,1.4rem)] pr-10 max-[720px]:grid-cols-[auto_minmax(0,1fr)]" key={item?.id ?? `project-review-loading-${index}`}>
+              <article
+                className="relative grid grid-cols-[auto_minmax(0,1fr)_auto] items-start gap-4 rounded-panel border border-line bg-surface p-[clamp(1rem,2vw,1.4rem)] pr-10 max-[720px]:grid-cols-[auto_minmax(0,1fr)]"
+                key={item?.id ?? `project-review-loading-${index}`}
+              >
                 {item ? <ReviewIssueStamp issue={issuesFor(item)[0]} /> : null}
                 <div className="pt-1">
                   {item ? (
@@ -193,22 +244,95 @@ export function ProjectReviewQueue() {
                       checked={bulk.isSelected(item.id)}
                       className="gap-0"
                       id={`project-review-select-${item.id}`}
-                      onCheckedChange={(checked) => bulk.toggle(item.id, checked)}
+                      onCheckedChange={(checked) =>
+                        bulk.toggle(item.id, checked)
+                      }
                     />
-                  ) : <span className={loadingPlaceholder(true, "control")} data-placeholder="control" />}
+                  ) : (
+                    <span
+                      className={loadingPlaceholder(true, "control")}
+                      data-placeholder="control"
+                    />
+                  )}
                 </div>
                 <div className="grid min-w-0 gap-[.55rem]">
-                  <span className={cn("font-mono text-[.68rem] uppercase tracking-[.08em] text-brand", loadingPlaceholder(loading, "label", "medium"))} data-placeholder="label" data-placeholder-width="medium">{item?.kind.replaceAll("_", " ") ?? "Loading change type"}</span>
-                  <h2 className={cn("font-serif text-[clamp(1.35rem,2.4vw,2.1rem)] font-[430] leading-[1.08] [overflow-wrap:anywhere]", loadingPlaceholder(loading, "text", "long"))} data-placeholder="text" data-placeholder-width="long">{item?.project.researchItem.title ?? "Loading project title"}</h2>
-                  <p className={cn("m-0 text-[.86rem] text-ink-muted", loadingPlaceholder(loading, "text", "full"))} data-placeholder="text" data-placeholder-width="full">
-                    {item ? <>Submitted by {item.submittedBy.person?.fullName ?? item.submittedBy.email ?? "member"} ·{" "}{new Date(item.submittedAt).toLocaleString()}</> : "Loading submission provenance"}
+                  <span
+                    className={cn(
+                      "font-mono text-[.68rem] uppercase tracking-[.08em] text-brand",
+                      loadingPlaceholder(loading, "label", "medium"),
+                    )}
+                    data-placeholder="label"
+                    data-placeholder-width="medium"
+                  >
+                    {item?.kind.replaceAll("_", " ") ?? "Loading change type"}
+                  </span>
+                  <h2
+                    className={cn(
+                      "font-serif text-[clamp(1.35rem,2.4vw,2.1rem)] font-[430] leading-[1.08] [overflow-wrap:anywhere]",
+                      loadingPlaceholder(loading, "text", "long"),
+                    )}
+                    data-placeholder="text"
+                    data-placeholder-width="long"
+                  >
+                    {item?.project.researchItem.title ??
+                      "Loading project title"}
+                  </h2>
+                  <p
+                    className={cn(
+                      "m-0 text-[.86rem] text-ink-muted",
+                      loadingPlaceholder(loading, "text", "full"),
+                    )}
+                    data-placeholder="text"
+                    data-placeholder-width="full"
+                  >
+                    {item ? (
+                      <>
+                        Submitted by{" "}
+                        {item.submittedBy.person?.fullName ??
+                          item.submittedBy.email ??
+                          "member"}{" "}
+                        · {new Date(item.submittedAt).toLocaleString()}
+                      </>
+                    ) : (
+                      "Loading submission provenance"
+                    )}
                   </p>
                   {item && issuesFor(item)[0] ? (
-                    <SemanticStatus loading={loading} tone={issuesFor(item)[0].tone ?? "warning"}>{issuesFor(item)[0].message}</SemanticStatus>
+                    <SemanticStatus
+                      loading={loading}
+                      tone={issuesFor(item)[0].tone ?? "warning"}
+                    >
+                      {issuesFor(item)[0].message}
+                    </SemanticStatus>
                   ) : null}
-                  <section className="mt-[.4rem] grid gap-3 border-t border-line pt-[.8rem]" aria-label="Proposed project changes">
-                    <h3 className={cn("text-[.82rem] font-[750]", loadingPlaceholder(loading, "label"))} data-placeholder={loading ? "label" : undefined}>Proposed changes</h3>
-                    {item ? <ProjectChangePreview kind={item.kind} loading={loading} payload={item.payload} /> : <div className={loadingPlaceholder(true, "text", "full")} data-placeholder="text" data-placeholder-width="full">Loading proposed changes</div>}
+                  <section
+                    className="mt-[.4rem] grid gap-3 border-t border-line pt-[.8rem]"
+                    aria-label="Proposed project changes"
+                  >
+                    <h3
+                      className={cn(
+                        "text-[.82rem] font-[750]",
+                        loadingPlaceholder(loading, "label"),
+                      )}
+                      data-placeholder={loading ? "label" : undefined}
+                    >
+                      Proposed changes
+                    </h3>
+                    {item ? (
+                      <ProjectChangePreview
+                        kind={item.kind}
+                        loading={loading}
+                        payload={item.payload}
+                      />
+                    ) : (
+                      <div
+                        className={loadingPlaceholder(true, "text", "full")}
+                        data-placeholder="text"
+                        data-placeholder-width="full"
+                      >
+                        Loading proposed changes
+                      </div>
+                    )}
                   </section>
                 </div>
                 <ReviewActions
@@ -216,29 +340,41 @@ export function ProjectReviewQueue() {
                   loading={loading}
                   actions={[
                     {
-                      confirmDescription: "Apply this project change and publish it to the workspace record.",
+                      confirmDescription:
+                        "Apply this project change and publish it to the workspace record.",
                       confirmLabel: "Approve change",
                       confirmTitle: "Approve this project change?",
                       disabled: Boolean(item && itemReviewIssues(item).length),
-                      label: item && itemReviewIssues(item).length ? "Needs attention" : "Approve",
+                      label:
+                        item && itemReviewIssues(item).length
+                          ? "Needs attention"
+                          : "Approve",
                       status: "APPROVED",
                       tone: "primary",
                     },
                     {
-                      confirmDescription: "Reject this project change and show the reviewer note to the submitting member.",
+                      confirmDescription:
+                        "Reject this project change and show the reviewer note to the submitting member.",
                       confirmLabel: "Reject change",
                       confirmTitle: "Reject this project change?",
                       label: "Reject",
-                      notePlaceholder: "Explain why this project change was rejected.",
+                      notePlaceholder:
+                        "Explain why this project change was rejected.",
                       requiresNote: true,
                       status: "REJECTED",
                       tone: "danger",
                     },
                   ]}
-                  onError={(requestError) => item && captureItemError(item.id, requestError)}
-                  onSubmit={(decision) => item ? decide(item.id, decision) : Promise.resolve()}
+                  onError={(requestError) =>
+                    item && captureItemError(item.id, requestError)
+                  }
+                  onSubmit={(decision) =>
+                    item ? decide(item.id, decision) : Promise.resolve()
+                  }
                   onSuccess={() => item && reviewIssues.clearOne(item.id)}
-                  successBody={(status) => `The project change was ${status.toLowerCase()}.`}
+                  successBody={(status) =>
+                    `The project change was ${status.toLowerCase()}.`
+                  }
                   successTitle="Project review saved"
                 />
               </article>
@@ -258,7 +394,15 @@ export function ProjectReviewQueue() {
   );
 }
 
-function ProjectChangePreview({ kind, payload, loading = false }: { kind: string; payload: unknown; loading?: boolean }) {
+function ProjectChangePreview({
+  kind,
+  payload,
+  loading = false,
+}: {
+  kind: string;
+  payload: unknown;
+  loading?: boolean;
+}) {
   const record = asRecord(payload);
   const entries = Object.entries(record).filter(
     ([key]) => key !== "publishNow" && key !== "overrideReason",
@@ -273,27 +417,64 @@ function ProjectChangePreview({ kind, payload, loading = false }: { kind: string
   }
 
   if (!entries.length) {
-    return <p className="m-0 text-[.8rem] text-ink-muted">No additional values were submitted with this change.</p>;
+    return (
+      <p className="m-0 text-[.8rem] text-ink-muted">
+        No additional values were submitted with this change.
+      </p>
+    );
   }
 
   return (
     <dl className="grid grid-cols-2 gap-x-5 gap-y-3 rounded-panel bg-surface-subtle p-4 max-[700px]:grid-cols-1">
       {entries.map(([key, value]) => (
-        <ProjectChangeField key={key} label={humanizeKey(key)} loading={loading} value={value} />
+        <ProjectChangeField
+          key={key}
+          label={humanizeKey(key)}
+          loading={loading}
+          value={value}
+        />
       ))}
     </dl>
   );
 }
 
-function ProjectChangeField({ label, value, loading = false }: { label: string; value: unknown; loading?: boolean }) {
+function ProjectChangeField({
+  label,
+  value,
+  loading = false,
+}: {
+  label: string;
+  value: unknown;
+  loading?: boolean;
+}) {
   if (Array.isArray(value)) {
     return (
       <div className="col-span-full grid gap-2 border-t border-line pt-3 first:border-t-0 first:pt-0">
-        <dt className="font-mono text-[.62rem] font-semibold uppercase tracking-[.07em] text-ink-muted">{label}</dt>
+        <dt className="font-mono text-[.62rem] font-semibold uppercase tracking-[.07em] text-ink-muted">
+          {label}
+        </dt>
         <dd className="m-0 grid gap-2">
-          {value.length ? value.map((entry, index) => (
-            <ProjectChangeListEntry entry={entry} index={index} key={index} loading={loading} />
-          )) : <span className={cn("text-[.78rem] text-ink-muted", loadingPlaceholder(loading, "text", "short"))} data-placeholder={loading ? "text" : undefined} data-placeholder-width="short">None</span>}
+          {value.length ? (
+            value.map((entry, index) => (
+              <ProjectChangeListEntry
+                entry={entry}
+                index={index}
+                key={index}
+                loading={loading}
+              />
+            ))
+          ) : (
+            <span
+              className={cn(
+                "text-[.78rem] text-ink-muted",
+                loadingPlaceholder(loading, "text", "short"),
+              )}
+              data-placeholder={loading ? "text" : undefined}
+              data-placeholder-width="short"
+            >
+              None
+            </span>
+          )}
         </dd>
       </div>
     );
@@ -301,28 +482,76 @@ function ProjectChangeField({ label, value, loading = false }: { label: string; 
 
   return (
     <div className="grid min-w-0 content-start gap-1 border-t border-line pt-3 first:border-t-0 first:pt-0">
-      <dt className="font-mono text-[.62rem] font-semibold uppercase tracking-[.07em] text-ink-muted">{label}</dt>
-      <dd className={cn("m-0 min-w-0 text-[.82rem] leading-[1.5] [overflow-wrap:anywhere]", loadingPlaceholder(loading, "text", "long"))} data-placeholder={loading ? "text" : undefined} data-placeholder-width="long">{renderProjectChangeValue(value, loading)}</dd>
+      <dt className="font-mono text-[.62rem] font-semibold uppercase tracking-[.07em] text-ink-muted">
+        {label}
+      </dt>
+      <dd
+        className={cn(
+          "m-0 min-w-0 text-[.82rem] leading-[1.5] [overflow-wrap:anywhere]",
+          loadingPlaceholder(loading, "text", "long"),
+        )}
+        data-placeholder={loading ? "text" : undefined}
+        data-placeholder-width="long"
+      >
+        {renderProjectChangeValue(value, loading)}
+      </dd>
     </div>
   );
 }
 
-function ProjectChangeListEntry({ entry, index, loading = false }: { entry: unknown; index: number; loading?: boolean }) {
+function ProjectChangeListEntry({
+  entry,
+  index,
+  loading = false,
+}: {
+  entry: unknown;
+  index: number;
+  loading?: boolean;
+}) {
   if (!entry || Array.isArray(entry) || typeof entry !== "object") {
-    return <div className="rounded-control border border-line bg-surface px-3 py-2 text-[.78rem]">{renderProjectChangeValue(entry, loading)}</div>;
+    return (
+      <div className="rounded-control border border-line bg-surface px-3 py-2 text-[.78rem]">
+        {renderProjectChangeValue(entry, loading)}
+      </div>
+    );
   }
   const record = entry as Record<string, unknown>;
-  const heading = stringValue(record.title) ?? stringValue(record.label) ?? `Item ${index + 1}`;
-  const entries = Object.entries(record).filter(([key]) => key !== "title" && key !== "label" && key !== "id");
+  const heading =
+    stringValue(record.title) ??
+    stringValue(record.label) ??
+    `Item ${index + 1}`;
+  const entries = Object.entries(record).filter(
+    ([key]) => key !== "title" && key !== "label" && key !== "id",
+  );
   return (
     <article className="grid gap-2 rounded-control border border-line bg-surface p-3">
-      <strong className={cn("text-[.84rem]", loadingPlaceholder(loading, "text", "long"))} data-placeholder={loading ? "text" : undefined} data-placeholder-width="long">{heading}</strong>
+      <strong
+        className={cn(
+          "text-[.84rem]",
+          loadingPlaceholder(loading, "text", "long"),
+        )}
+        data-placeholder={loading ? "text" : undefined}
+        data-placeholder-width="long"
+      >
+        {heading}
+      </strong>
       {entries.length ? (
         <dl className="grid grid-cols-2 gap-x-4 gap-y-2 max-[640px]:grid-cols-1">
           {entries.map(([key, value]) => (
             <div className="grid gap-[.15rem]" key={key}>
-              <dt className="font-mono text-[.58rem] uppercase tracking-[.05em] text-ink-muted">{humanizeKey(key)}</dt>
-              <dd className={cn("m-0 text-[.76rem] leading-[1.45] [overflow-wrap:anywhere]", loadingPlaceholder(loading, "text", "long"))} data-placeholder={loading ? "text" : undefined} data-placeholder-width="long">{renderProjectChangeValue(value, loading)}</dd>
+              <dt className="font-mono text-[.58rem] uppercase tracking-[.05em] text-ink-muted">
+                {humanizeKey(key)}
+              </dt>
+              <dd
+                className={cn(
+                  "m-0 text-[.76rem] leading-[1.45] [overflow-wrap:anywhere]",
+                  loadingPlaceholder(loading, "text", "long"),
+                )}
+                data-placeholder={loading ? "text" : undefined}
+                data-placeholder-width="long"
+              >
+                {renderProjectChangeValue(value, loading)}
+              </dd>
             </div>
           ))}
         </dl>
@@ -336,12 +565,26 @@ function renderProjectChangeValue(value: unknown, loading: boolean = false) {
     return <span className="text-ink-muted">Not set</span>;
   }
   if (typeof value === "boolean") {
-    return <Badge loading={loading} tone={value ? "success" : "neutral"}>{value ? "Enabled" : "Disabled"}</Badge>;
+    return (
+      <Badge loading={loading} tone={value ? "success" : "neutral"}>
+        {value ? "Enabled" : "Disabled"}
+      </Badge>
+    );
   }
   if (typeof value === "number") return String(value);
   if (typeof value === "string") {
     if (/^https?:\/\//i.test(value)) {
-      return <ButtonAnchor compact href={value} rel="noreferrer" target="_blank" variant="ghost">Open link</ButtonAnchor>;
+      return (
+        <ButtonAnchor
+          compact
+          href={value}
+          rel="noreferrer"
+          target="_blank"
+          variant="ghost"
+        >
+          Open link
+        </ButtonAnchor>
+      );
     }
     if (/^\d{4}-\d{2}-\d{2}(?:T|$)/.test(value)) {
       const date = new Date(value);
@@ -352,10 +595,18 @@ function renderProjectChangeValue(value: unknown, loading: boolean = false) {
     }
     return value;
   }
-  if (Array.isArray(value)) return `${value.length} item${value.length === 1 ? "" : "s"}`;
+  if (Array.isArray(value))
+    return `${value.length} item${value.length === 1 ? "" : "s"}`;
   if (typeof value === "object") {
     const entries = Object.entries(value as Record<string, unknown>);
-    return entries.length ? entries.map(([key, item]) => `${humanizeKey(key)}: ${plainProjectChangeValue(item)}`).join(" · ") : "None";
+    return entries.length
+      ? entries
+          .map(
+            ([key, item]) =>
+              `${humanizeKey(key)}: ${plainProjectChangeValue(item)}`,
+          )
+          .join(" · ")
+      : "None";
   }
   return String(value);
 }
@@ -363,14 +614,16 @@ function renderProjectChangeValue(value: unknown, loading: boolean = false) {
 function plainProjectChangeValue(value: unknown): string {
   if (value === null || value === undefined || value === "") return "Not set";
   if (typeof value === "boolean") return value ? "Enabled" : "Disabled";
-  if (typeof value === "string" && /^[A-Z][A-Z0-9_]+$/.test(value)) return value.replaceAll("_", " ").toLowerCase();
-  if (Array.isArray(value)) return `${value.length} item${value.length === 1 ? "" : "s"}`;
+  if (typeof value === "string" && /^[A-Z][A-Z0-9_]+$/.test(value))
+    return value.replaceAll("_", " ").toLowerCase();
+  if (Array.isArray(value))
+    return `${value.length} item${value.length === 1 ? "" : "s"}`;
   return String(value);
 }
 
 function asRecord(value: unknown): Record<string, unknown> {
   return value && !Array.isArray(value) && typeof value === "object"
-    ? value as Record<string, unknown>
+    ? (value as Record<string, unknown>)
     : {};
 }
 
@@ -383,5 +636,7 @@ function humanizeKey(value: string): string {
     .replace(/([a-z0-9])([A-Z])/g, "$1 $2")
     .replaceAll("_", " ")
     .trim();
-  return spaced ? spaced.charAt(0).toUpperCase() + spaced.slice(1).toLowerCase() : value;
+  return spaced
+    ? spaced.charAt(0).toUpperCase() + spaced.slice(1).toLowerCase()
+    : value;
 }

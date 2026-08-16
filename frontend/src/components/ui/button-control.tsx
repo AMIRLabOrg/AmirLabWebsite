@@ -20,16 +20,24 @@ export type ActionVariant =
 
 const variantClass: Record<ActionVariant, string> = {
   primary: "border-transparent bg-brand text-on-accent hover:bg-brand-hover",
-  secondary: "border-line-strong bg-surface text-ink hover:border-brand hover:bg-brand-faint hover:text-brand",
-  ghost: "border-transparent bg-transparent text-ink hover:bg-brand-faint hover:text-brand",
-  dashed: "border-dashed border-[color-mix(in_srgb,var(--brand)_48%,var(--line))] bg-transparent text-brand hover:border-brand hover:bg-brand-soft",
-  dotted: "border-dotted border-[color-mix(in_srgb,var(--brand)_48%,var(--line))] bg-transparent text-brand hover:border-brand hover:bg-brand-soft",
+  secondary:
+    "border-line-strong bg-surface text-ink hover:border-brand hover:bg-brand-faint hover:text-brand",
+  ghost:
+    "border-transparent bg-transparent text-ink hover:bg-brand-faint hover:text-brand",
+  dashed:
+    "border-dashed border-[color-mix(in_srgb,var(--brand)_48%,var(--line))] bg-transparent text-brand hover:border-brand hover:bg-brand-soft",
+  dotted:
+    "border-dotted border-[color-mix(in_srgb,var(--brand)_48%,var(--line))] bg-transparent text-brand hover:border-brand hover:bg-brand-soft",
   danger: "border-transparent bg-danger text-on-accent hover:bg-danger-hover",
-  "danger-ghost": "border-transparent bg-transparent text-danger hover:bg-danger-soft hover:text-danger-hover",
+  "danger-ghost":
+    "border-transparent bg-transparent text-danger hover:bg-danger-soft hover:text-danger-hover",
   dark: "border-dark-line bg-transparent text-dark-ink hover:border-dark-ink hover:bg-dark-ink hover:text-dark-surface",
-  "dark-outline": "border-dark-line bg-transparent text-dark-ink hover:border-dark-ink",
-  "add-empty": "border-dashed border-[color-mix(in_srgb,var(--brand)_48%,var(--line))] bg-transparent text-brand hover:border-brand hover:bg-brand-soft",
-  "add-another": "border-transparent bg-brand-soft text-brand hover:bg-[color-mix(in_srgb,var(--brand)_16%,var(--surface))]",
+  "dark-outline":
+    "border-dark-line bg-transparent text-dark-ink hover:border-dark-ink",
+  "add-empty":
+    "border-dashed border-[color-mix(in_srgb,var(--brand)_48%,var(--line))] bg-transparent text-brand hover:border-brand hover:bg-brand-soft",
+  "add-another":
+    "border-transparent bg-brand-soft text-brand hover:bg-[color-mix(in_srgb,var(--brand)_16%,var(--surface))]",
 };
 
 function actionClassName({

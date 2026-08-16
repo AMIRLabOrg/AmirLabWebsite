@@ -21,7 +21,11 @@ interface NotificationState {
   unreadCount: number;
   markOneRead: () => void;
   refreshUnreadCount: () => Promise<void>;
-  showToast: (toast: { body: string; title: string; tone?: "error" | "success" }) => void;
+  showToast: (toast: {
+    body: string;
+    title: string;
+    tone?: "error" | "success";
+  }) => void;
 }
 
 export interface WorkspaceQueueCounts {
@@ -61,7 +65,15 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
   const [toasts, setToasts] = useState<NotificationRecord[]>([]);
 
   const showToast = useCallback(
-    ({ body, title, tone = "success" }: { body: string; title: string; tone?: "error" | "success" }) => {
+    ({
+      body,
+      title,
+      tone = "success",
+    }: {
+      body: string;
+      title: string;
+      tone?: "error" | "success";
+    }) => {
       const toast: NotificationRecord = {
         actionUrl: null,
         body,
@@ -94,27 +106,31 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
     });
   }, [user]);
 
-  const openToast = useCallback(async (notification: NotificationRecord) => {
-    if (!notification.actionUrl) return;
-    setToasts((current) => current.filter(({ id }) => id !== notification.id));
-    try {
-      if (!notification.readAt && !notification.id.startsWith("local-")) {
-        const response = await apiRequest<{ updated: boolean }>(
-          `/notifications/${notification.id}/read`,
-          { method: "PATCH" },
-        );
-        if (response.updated) {
-          setUnreadCount((current) => Math.max(0, current - 1));
+  const openToast = useCallback(
+    async (notification: NotificationRecord) => {
+      if (!notification.actionUrl) return;
+      setToasts((current) =>
+        current.filter(({ id }) => id !== notification.id),
+      );
+      try {
+        if (!notification.readAt && !notification.id.startsWith("local-")) {
+          const response = await apiRequest<{ updated: boolean }>(
+            `/notifications/${notification.id}/read`,
+            { method: "PATCH" },
+          );
+          if (response.updated) {
+            setUnreadCount((current) => Math.max(0, current - 1));
+          }
         }
+        await refreshUnreadCount();
+      } catch {
+        void refreshUnreadCount().catch(() => undefined);
+      } finally {
+        router.push(notification.actionUrl);
       }
-      await refreshUnreadCount();
-    } catch {
-      void refreshUnreadCount().catch(() => undefined);
-    } finally {
-      router.push(notification.actionUrl);
-    }
-  }, [refreshUnreadCount, router]);
-
+    },
+    [refreshUnreadCount, router],
+  );
 
   useEffect(() => {
     if (authLoading || !user) return;
@@ -152,10 +168,15 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
         setUnreadCount((current) => current + 1);
         void refreshUnreadCount().catch(() => undefined);
         setToasts((current) =>
-          [notification, ...current.filter(({ id }) => id !== notification.id)].slice(0, 3),
+          [
+            notification,
+            ...current.filter(({ id }) => id !== notification.id),
+          ].slice(0, 3),
         );
         window.setTimeout(() => {
-          setToasts((current) => current.filter(({ id }) => id !== notification.id));
+          setToasts((current) =>
+            current.filter(({ id }) => id !== notification.id),
+          );
         }, 7000);
       } catch {
         void refreshUnreadCount().catch(() => undefined);
@@ -189,10 +210,19 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
       }}
     >
       {children}
-      <div aria-live="polite" aria-relevant="additions" className="pointer-events-none fixed bottom-4 right-4 z-[90] grid w-[min(360px,calc(100vw-2rem))] gap-[.65rem]">
+      <div
+        aria-live="polite"
+        aria-relevant="additions"
+        className="pointer-events-none fixed bottom-4 right-4 z-[90] grid w-[min(360px,calc(100vw-2rem))] gap-[.65rem]"
+      >
         {toasts.map((notification) => (
-          <article className="pointer-events-auto grid grid-cols-[8px_minmax(0,1fr)_28px] items-start gap-[.7rem] rounded-panel bg-ink py-[.9rem] pl-4 pr-[.8rem] text-[var(--toast-ink)] shadow-[0_20px_55px_color-mix(in_srgb,var(--ink)_28%,transparent)] animate-[toast-enter_260ms_ease-out_both] motion-reduce:animate-none" key={notification.id}>
-            <span className={`mt-[.3rem] h-2 w-2 rounded-full ${notification.type === "ERROR" ? "bg-danger" : notification.type === "SUCCESS" || notification.type === "RESEARCH_REVIEWED" ? "bg-success" : "bg-gold animate-[status-pulse_2s_infinite] motion-reduce:animate-none"}`} />
+          <article
+            className="pointer-events-auto grid grid-cols-[8px_minmax(0,1fr)_28px] items-start gap-[.7rem] rounded-panel bg-ink py-[.9rem] pl-4 pr-[.8rem] text-[var(--toast-ink)] shadow-[0_20px_55px_color-mix(in_srgb,var(--ink)_28%,transparent)] animate-[toast-enter_260ms_ease-out_both] motion-reduce:animate-none"
+            key={notification.id}
+          >
+            <span
+              className={`mt-[.3rem] h-2 w-2 rounded-full ${notification.type === "ERROR" ? "bg-danger" : notification.type === "SUCCESS" || notification.type === "RESEARCH_REVIEWED" ? "bg-success" : "bg-gold animate-[status-pulse_2s_infinite] motion-reduce:animate-none"}`}
+            />
             <div>
               {notification.actionUrl ? (
                 <button
@@ -203,14 +233,22 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
                   {notification.title}
                 </button>
               ) : (
-                <strong className="text-[.82rem] font-bold">{notification.title}</strong>
+                <strong className="text-[.82rem] font-bold">
+                  {notification.title}
+                </strong>
               )}
-              <p className="mt-[.22rem] text-[.74rem] leading-[1.5] text-[var(--toast-muted)]">{notification.body}</p>
+              <p className="mt-[.22rem] text-[.74rem] leading-[1.5] text-[var(--toast-muted)]">
+                {notification.body}
+              </p>
             </div>
             <button
               aria-label="Dismiss notification"
               className="flex h-7 w-7 cursor-pointer items-center justify-center border-0 bg-transparent p-0 text-[var(--toast-muted)]"
-              onClick={() => setToasts((current) => current.filter(({ id }) => id !== notification.id))}
+              onClick={() =>
+                setToasts((current) =>
+                  current.filter(({ id }) => id !== notification.id),
+                )
+              }
               type="button"
             >
               <X aria-hidden="true" size={15} />

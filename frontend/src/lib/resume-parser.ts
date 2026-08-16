@@ -230,8 +230,7 @@ function asProfileImageCandidate(value: unknown): PdfImageCandidate | null {
     ...image,
     height,
     score:
-      Math.min(width * height, 1_000_000) *
-      (1 - Math.abs(ratio - 0.82) * 0.35),
+      Math.min(width * height, 1_000_000) * (1 - Math.abs(ratio - 0.82) * 0.35),
     width,
   };
 }
@@ -250,7 +249,11 @@ async function imageToJpeg(
     context.drawImage(image.bitmap, 0, 0, image.width, image.height);
   } else if (image.data && image.kind === imageKinds.RGBA_32BPP) {
     context.putImageData(
-      new ImageData(new Uint8ClampedArray(image.data), image.width, image.height),
+      new ImageData(
+        new Uint8ClampedArray(image.data),
+        image.width,
+        image.height,
+      ),
       0,
       0,
     );
@@ -287,13 +290,16 @@ function reconstructPageLines(
     if (!Array.isArray(item.transform) || item.transform.length < 6) return [];
     const [scaleX, , , scaleY, x, y] = item.transform.map(Number);
     if (![x, y].every(Number.isFinite)) return [];
-    return [{
-      text: item.str.replace(/[\u0000-\u001f]/g, " "),
-      x,
-      y,
-      width: Number(item.width) || 0,
-      height: Number(item.height) || Math.abs(scaleY) || Math.abs(scaleX) || 10,
-    }];
+    return [
+      {
+        text: item.str.replace(/[\u0000-\u001f]/g, " "),
+        x,
+        y,
+        width: Number(item.width) || 0,
+        height:
+          Number(item.height) || Math.abs(scaleY) || Math.abs(scaleX) || 10,
+      },
+    ];
   });
   positioned.sort((left, right) => right.y - left.y || left.x - right.x);
 
@@ -328,13 +334,15 @@ function reconstructPageLines(
     return segments.flatMap((segment): ResumeLine[] => {
       const text = joinTextItems(segment);
       if (!text) return [];
-      return [{
-        text,
-        x: segment[0].x,
-        y: Math.max(...segment.map((item) => item.y)),
-        fontSize: Math.max(...segment.map((item) => item.height)),
-        page,
-      }];
+      return [
+        {
+          text,
+          x: segment[0].x,
+          y: Math.max(...segment.map((item) => item.y)),
+          fontSize: Math.max(...segment.map((item) => item.height)),
+          page,
+        },
+      ];
     });
   });
 }
@@ -388,7 +396,9 @@ function parseResumeLines(
       ? "Too little selectable text was found."
       : null,
     !email ? "No readable email address was found." : null,
-    !fullName ? "No readable name was found near the top of the document." : null,
+    !fullName
+      ? "No readable name was found near the top of the document."
+      : null,
     recognizedSections < 2
       ? "Use clear headings such as Education, Experience, Skills, Projects, or Publications."
       : null,
@@ -427,12 +437,16 @@ function findEmail(text: string): string | null {
   const normalized = text
     .replace(/\s*@\s*/g, "@")
     .replace(/\s+\.\s+(?=[A-Za-z]{2,}\b)/g, ".");
-  return normalized.match(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i)?.[0] ?? null;
+  return (
+    normalized.match(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i)?.[0] ?? null
+  );
 }
 
 function findPhone(lines: ResumeLine[]): string | null {
   const candidates = lines.slice(0, 40).flatMap((line, index) =>
-    [...line.text.matchAll(/(?:(?:\+?\d)|(?:\(\d{2,4}\)))[\d .()/-]{6,}\d/g)].flatMap((match) => {
+    [
+      ...line.text.matchAll(/(?:(?:\+?\d)|(?:\(\d{2,4}\)))[\d .()/-]{6,}\d/g),
+    ].flatMap((match) => {
       const value = match[0].trim();
       const digits = value.replace(/\D/g, "");
       if (digits.length < 8 || digits.length > 15) return [];
@@ -457,12 +471,12 @@ function findCandidateName(lines: ResumeLine[]): string | null {
   const medianFontSize = median(candidates.map((line) => line.fontSize)) || 10;
 
   const scored = candidates.flatMap((source, index) => {
-    const line = stripContactDetails(source.text)
-      .replace(/\s+/g, " ")
-      .trim();
+    const line = stripContactDetails(source.text).replace(/\s+/g, " ").trim();
     const words = line.split(" ");
     const normalized = normalizeHeading(line);
-    const letterCount = [...line].filter((character) => /\p{L}/u.test(character)).length;
+    const letterCount = [...line].filter((character) =>
+      /\p{L}/u.test(character),
+    ).length;
     if (
       line.length < 3 ||
       line.length > 80 ||
@@ -479,9 +493,12 @@ function findCandidateName(lines: ResumeLine[]): string | null {
     const titleCaseWords = words.filter((word) =>
       /^[\p{Lu}][\p{L}.'’_-]*$/u.test(word),
     ).length;
-    const rolePenalty = /\b(?:engineer|developer|researcher|scientist|student|manager|analyst|architect|professor|consultant)\b/i.test(line)
-      ? 8
-      : 0;
+    const rolePenalty =
+      /\b(?:engineer|developer|researcher|scientist|student|manager|analyst|architect|professor|consultant)\b/i.test(
+        line,
+      )
+        ? 8
+        : 0;
     const score =
       (source.fontSize / medianFontSize) * 8 +
       (titleCaseWords / words.length) * 3 +
@@ -503,7 +520,9 @@ function stripContactDetails(value: string): string {
 }
 
 function median(values: number[]): number {
-  const sorted = values.filter(Number.isFinite).sort((left, right) => left - right);
+  const sorted = values
+    .filter(Number.isFinite)
+    .sort((left, right) => left - right);
   if (!sorted.length) return 0;
   const middle = Math.floor(sorted.length / 2);
   return sorted.length % 2

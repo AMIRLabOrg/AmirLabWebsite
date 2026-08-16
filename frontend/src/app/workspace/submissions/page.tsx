@@ -7,7 +7,11 @@ export default function SubmissionsPage() {
   return (
     <WorkspacePageShell
       description="Canonical URLs and contributor relationships"
-      action={<ButtonLink href="/workspace/submissions/new" variant="primary"><Plus aria-hidden="true" size={16} /> New paper or dataset</ButtonLink>}
+      action={
+        <ButtonLink href="/workspace/submissions/new" variant="primary">
+          <Plus aria-hidden="true" size={16} /> New paper or dataset
+        </ButtonLink>
+      }
     >
       <ResearchConnectionsPanel />
     </WorkspacePageShell>

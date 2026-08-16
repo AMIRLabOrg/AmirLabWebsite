@@ -3,9 +3,25 @@
 import * as Tabs from "@radix-ui/react-tabs";
 import { cn } from "@/lib/cn";
 
-export function TabsControl({ ariaLabel, className, onValueChange, options, value }: { ariaLabel: string; className?: string; onValueChange: (value: string) => void; options: Array<{ count?: number; label: string; value: string }>; value: string; }) {
+export function TabsControl({
+  ariaLabel,
+  className,
+  onValueChange,
+  options,
+  value,
+}: {
+  ariaLabel: string;
+  className?: string;
+  onValueChange: (value: string) => void;
+  options: Array<{ count?: number; label: string; value: string }>;
+  value: string;
+}) {
   return (
-    <Tabs.Root className={cn("min-w-0", className)} onValueChange={onValueChange} value={value}>
+    <Tabs.Root
+      className={cn("min-w-0", className)}
+      onValueChange={onValueChange}
+      value={value}
+    >
       <Tabs.List aria-label={ariaLabel} className="flex min-w-max gap-0">
         {options.map((option) => (
           <Tabs.Trigger
@@ -14,7 +30,11 @@ export function TabsControl({ ariaLabel, className, onValueChange, options, valu
             value={option.value}
           >
             {option.label}
-            {option.count === undefined ? null : <span className="font-mono text-[.6rem] text-ink-muted">{option.count}</span>}
+            {option.count === undefined ? null : (
+              <span className="font-mono text-[.6rem] text-ink-muted">
+                {option.count}
+              </span>
+            )}
           </Tabs.Trigger>
         ))}
       </Tabs.List>

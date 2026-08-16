@@ -39,17 +39,19 @@ export function normalizeProfileSection(section: {
         entries: subsection.entries.map(normalizeProfileEntry),
       }))
     : section.content
-      ? [{ heading: null, entries: [{ label: null, content: section.content }] }]
+      ? [
+          {
+            heading: null,
+            entries: [{ label: null, content: section.content }],
+          },
+        ]
       : [];
   return {
     id: section.id,
     title: section.title,
     type: profileSectionLabel(section.type, section.title),
     blocks,
-    entryCount: blocks.reduce(
-      (total, item) => total + item.entries.length,
-      0,
-    ),
+    entryCount: blocks.reduce((total, item) => total + item.entries.length, 0),
   };
 }
 
@@ -58,8 +60,17 @@ function profileSectionLabel(type: string, title: string): string {
   if (type === "OTHER") {
     const normalizedTitle = title.toLowerCase();
     if (normalizedTitle.includes("project")) return "PROJECTS";
-    if (normalizedTitle.includes("training") || normalizedTitle.includes("course") || normalizedTitle.includes("certification")) return "TRAINING & CERTIFICATIONS";
-    if (normalizedTitle.includes("interest") || normalizedTitle.includes("skill")) return "INTERESTS & SKILLS";
+    if (
+      normalizedTitle.includes("training") ||
+      normalizedTitle.includes("course") ||
+      normalizedTitle.includes("certification")
+    )
+      return "TRAINING & CERTIFICATIONS";
+    if (
+      normalizedTitle.includes("interest") ||
+      normalizedTitle.includes("skill")
+    )
+      return "INTERESTS & SKILLS";
     if (normalizedTitle.includes("research")) return "RESEARCH";
     return "ADDITIONAL PROFILE";
   }

@@ -9,7 +9,12 @@ import { InputControl, TextareaControl } from "@/components/ui/form-controls";
 import { FormField, FormMessage } from "@/components/ui/form-field";
 import { useAuth } from "@/components/auth-provider";
 import { useNotifications } from "@/components/notification-provider";
-import { WorkspaceRecord, WorkspaceRecordForm, WorkspaceRecordPanelHeader, WorkspaceRecordPanelTitle } from "@/components/workspace-record";
+import {
+  WorkspaceRecord,
+  WorkspaceRecordForm,
+  WorkspaceRecordPanelHeader,
+  WorkspaceRecordPanelTitle,
+} from "@/components/workspace-record";
 const researchOutputOptions = [
   { label: "Paper", value: "PAPER" },
   { label: "Dataset", value: "DATASET" },
@@ -21,20 +26,39 @@ export function ResearchSubmissionForm() {
   const staff = Boolean(user && user.role !== "MEMBER");
   const [error, setError] = useState<string>();
   const [loading, setLoading] = useState(false);
-  const [people, setPeople] = useState<Array<{ id: string; fullName: string; roleTitle: string | null; headline: string | null }>>();
+  const [people, setPeople] =
+    useState<
+      Array<{
+        id: string;
+        fullName: string;
+        roleTitle: string | null;
+        headline: string | null;
+      }>
+    >();
   const [submitterPersonId, setSubmitterPersonId] = useState("");
 
   useEffect(() => {
     if (!staff) return;
     let active = true;
-    void apiRequest<{ people: Array<{ id: string; fullName: string; roleTitle: string | null; headline: string | null }> }>("/projects/options", { method: "GET" })
+    void apiRequest<{
+      people: Array<{
+        id: string;
+        fullName: string;
+        roleTitle: string | null;
+        headline: string | null;
+      }>;
+    }>("/projects/options", { method: "GET" })
       .then((result) => {
         if (active) setPeople(result.people);
       })
       .catch((caught) => {
         if (!active) return;
         setPeople([]);
-        setError(caught instanceof Error ? caught.message : "Registered people could not be loaded.");
+        setError(
+          caught instanceof Error
+            ? caught.message
+            : "Registered people could not be loaded.",
+        );
       });
     return () => {
       active = false;
@@ -42,7 +66,9 @@ export function ResearchSubmissionForm() {
   }, [staff]);
   const loadingPeople = staff && people === undefined;
   const availablePeople = people ?? [];
-  const effectiveSubmitterPersonId = staff ? submitterPersonId : (user?.person?.id ?? "");
+  const effectiveSubmitterPersonId = staff
+    ? submitterPersonId
+    : (user?.person?.id ?? "");
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -50,7 +76,9 @@ export function ResearchSubmissionForm() {
     setLoading(true);
     const form = new FormData(event.currentTarget);
     if (staff && !effectiveSubmitterPersonId) {
-      setError("Select the registered person this record is being submitted for.");
+      setError(
+        "Select the registered person this record is being submitted for.",
+      );
       setLoading(false);
       return;
     }
@@ -81,7 +109,9 @@ export function ResearchSubmissionForm() {
       event.currentTarget.reset();
       showToast({
         body: "The source and registered contributor matches are being checked before review.",
-        title: staff ? "Research record submitted on behalf" : "Research output submitted",
+        title: staff
+          ? "Research record submitted on behalf"
+          : "Research output submitted",
       });
     } catch (caught) {
       const message =
@@ -107,8 +137,12 @@ export function ResearchSubmissionForm() {
     >
       <WorkspaceRecordForm onSubmit={submit}>
         <WorkspaceRecordPanelHeader>
-          <p className="m-0 font-sans text-[.65rem] font-semibold uppercase tracking-[.1em] text-brand">Source details</p>
-          <WorkspaceRecordPanelTitle>Publication information</WorkspaceRecordPanelTitle>
+          <p className="m-0 font-sans text-[.65rem] font-semibold uppercase tracking-[.1em] text-brand">
+            Source details
+          </p>
+          <WorkspaceRecordPanelTitle>
+            Publication information
+          </WorkspaceRecordPanelTitle>
         </WorkspaceRecordPanelHeader>
         {staff ? (
           <FormField label="Submit on behalf of">
@@ -122,11 +156,19 @@ export function ResearchSubmissionForm() {
                 label: person.fullName,
                 value: person.id,
               }))}
-              placeholder={loadingPeople ? "Loading registered people…" : "Select registered member…"}
+              placeholder={
+                loadingPeople
+                  ? "Loading registered people…"
+                  : "Select registered member…"
+              }
               searchPlaceholder="Search by name or role…"
               value={submitterPersonId}
             />
-            <p className="m-0 text-[.82rem] leading-[1.5] text-ink-muted">Your staff account records the action. The selected member is recorded as the submitter, and the record still enters manual review.</p>
+            <p className="m-0 text-[.82rem] leading-[1.5] text-ink-muted">
+              Your staff account records the action. The selected member is
+              recorded as the submitter, and the record still enters manual
+              review.
+            </p>
           </FormField>
         ) : null}
         <FormField htmlFor="research-type" label="Type">
@@ -154,15 +196,25 @@ export function ResearchSubmissionForm() {
         </FormField>
         <FormField htmlFor="contributors" label="Contributors">
           <InputControl id="contributors" name="contributors" required />
-          <p className="m-0 text-[.82rem] leading-[1.5] text-ink-muted">Comma-separated, in publication order.</p>
+          <p className="m-0 text-[.82rem] leading-[1.5] text-ink-muted">
+            Comma-separated, in publication order.
+          </p>
         </FormField>
         <FormField htmlFor="research-summary" label="Summary">
           <TextareaControl id="research-summary" name="summary" />
         </FormField>
         {error ? <FormMessage>{error}</FormMessage> : null}
         <div className="flex flex-wrap justify-end gap-[.65rem] max-[700px]:justify-start">
-          <ButtonControl disabled={loading || loadingPeople} type="submit" variant="primary">
-            {loading ? "Saving…" : staff ? "Submit on behalf for review" : "Submit for review"}
+          <ButtonControl
+            disabled={loading || loadingPeople}
+            type="submit"
+            variant="primary"
+          >
+            {loading
+              ? "Saving…"
+              : staff
+                ? "Submit on behalf for review"
+                : "Submit for review"}
           </ButtonControl>
         </div>
       </WorkspaceRecordForm>

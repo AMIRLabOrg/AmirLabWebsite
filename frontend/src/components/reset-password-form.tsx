@@ -25,9 +25,7 @@ function tokenFromLocation(): string | null {
 
 function readResetToken(): string | null {
   if (typeof window === "undefined") return null;
-  return (
-    tokenFromLocation() ?? sessionStorage.getItem(RESET_TOKEN_STORAGE_KEY)
-  );
+  return tokenFromLocation() ?? sessionStorage.getItem(RESET_TOKEN_STORAGE_KEY);
 }
 
 function subscribeToResetToken(onStoreChange: () => void) {

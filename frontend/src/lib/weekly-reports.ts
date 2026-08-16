@@ -1,8 +1,5 @@
 export type WeeklyReportStatus =
-  | "CHANGES_REQUESTED"
-  | "DRAFT"
-  | "REVIEWED"
-  | "SUBMITTED";
+  "CHANGES_REQUESTED" | "DRAFT" | "REVIEWED" | "SUBMITTED";
 
 export interface WeeklyReport {
   id: string;
@@ -48,7 +45,10 @@ export interface WeeklyReportContext {
 }
 
 export function reportStatusLabel(status: WeeklyReportStatus): string {
-  return status.replaceAll("_", " ").toLowerCase().replace(/^./, (letter) => letter.toUpperCase());
+  return status
+    .replaceAll("_", " ")
+    .toLowerCase()
+    .replace(/^./, (letter) => letter.toUpperCase());
 }
 
 export function reportWeek(value: string): string {

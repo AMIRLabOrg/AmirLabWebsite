@@ -15,7 +15,10 @@ import { ButtonControl } from "@/components/ui/button-control";
 import { ApiRequestError, apiRequest } from "@/lib/client-api";
 import type { NotificationRecord, PaginatedResponse } from "@/lib/types";
 import { StatePanel } from "@/components/state-panel";
-import { ReviewIssueStamp, SemanticStatus } from "@/components/ui/semantic-status";
+import {
+  ReviewIssueStamp,
+  SemanticStatus,
+} from "@/components/ui/semantic-status";
 import { useReviewIssues } from "@/lib/use-review-issues";
 
 interface NotificationPage extends PaginatedResponse<NotificationRecord> {
@@ -115,14 +118,16 @@ export function NotificationInbox() {
         }
       }
     } catch (caught) {
-      const requestError = caught instanceof ApiRequestError ? caught : undefined;
+      const requestError =
+        caught instanceof ApiRequestError ? caught : undefined;
       itemIssues.setOne(notification.id, {
         code: "NOTIFICATION_UPDATE_FAILED",
         message: "This notification could not be marked as read.",
         tone: "error",
       });
       showToast({
-        body: requestError?.message ?? "This notification could not be updated.",
+        body:
+          requestError?.message ?? "This notification could not be updated.",
         title: "Notification was not updated",
         tone: "error",
       });
@@ -145,17 +150,26 @@ export function NotificationInbox() {
           current
             ? {
                 ...current,
-                items: read === "READ"
-                  ? current.items.filter((item) => item.id !== notification.id)
-                  : current.items.map((item) =>
-                      item.id === notification.id
-                        ? { ...item, readAt: null }
-                        : item,
-                    ),
-                total: read === "READ" ? Math.max(0, current.total - 1) : current.total,
-                totalPages: read === "READ"
-                  ? Math.ceil(Math.max(0, current.total - 1) / current.pageSize)
-                  : current.totalPages,
+                items:
+                  read === "READ"
+                    ? current.items.filter(
+                        (item) => item.id !== notification.id,
+                      )
+                    : current.items.map((item) =>
+                        item.id === notification.id
+                          ? { ...item, readAt: null }
+                          : item,
+                      ),
+                total:
+                  read === "READ"
+                    ? Math.max(0, current.total - 1)
+                    : current.total,
+                totalPages:
+                  read === "READ"
+                    ? Math.ceil(
+                        Math.max(0, current.total - 1) / current.pageSize,
+                      )
+                    : current.totalPages,
                 unreadCount: current.unreadCount + 1,
               }
             : current,
@@ -164,14 +178,16 @@ export function NotificationInbox() {
         void refreshUnreadCount().catch(() => undefined);
       }
     } catch (caught) {
-      const requestError = caught instanceof ApiRequestError ? caught : undefined;
+      const requestError =
+        caught instanceof ApiRequestError ? caught : undefined;
       itemIssues.setOne(notification.id, {
         code: "NOTIFICATION_UPDATE_FAILED",
         message: "This notification could not be marked as unread.",
         tone: "error",
       });
       showToast({
-        body: requestError?.message ?? "This notification could not be updated.",
+        body:
+          requestError?.message ?? "This notification could not be updated.",
         title: "Notification was not updated",
         tone: "error",
       });
@@ -236,38 +252,80 @@ export function NotificationInbox() {
 
       {error && !result ? (
         <StatePanel
-          action={{ label: "Retry", onClick: () => { beginReload(); setReload((value) => value + 1); } }}
+          action={{
+            label: "Retry",
+            onClick: () => {
+              beginReload();
+              setReload((value) => value + 1);
+            },
+          }}
           body="The connection dropped. Nothing was lost; reconnect to continue."
           title="Could not load notifications"
           variant="error"
         />
       ) : loading || result?.items.length ? (
         <>
-          <div className="grid gap-3" aria-live="polite" data-loading={loading || undefined}>
+          <div
+            className="grid gap-3"
+            aria-live="polite"
+            data-loading={loading || undefined}
+          >
             {(loading && !result?.items.length
               ? Array.from({ length: 5 }, () => undefined)
-              : result?.items ?? []
+              : (result?.items ?? [])
             ).map((notification, index) => (
               <article
                 className={`relative grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-6 rounded-panel border bg-surface p-4 pr-10 [overflow-wrap:anywhere] max-[640px]:grid-cols-1 ${notification?.readAt ? "border-line" : "border-[color-mix(in_srgb,var(--brand)_45%,var(--line))] border-l-[3px] border-l-brand pl-[calc(1rem+3px)]"}`}
                 key={notification?.id ?? `notification-loading-${index}`}
               >
-                {notification ? <ReviewIssueStamp issue={itemIssues.forItem(notification.id)[0]} /> : null}
+                {notification ? (
+                  <ReviewIssueStamp
+                    issue={itemIssues.forItem(notification.id)[0]}
+                  />
+                ) : null}
                 <div>
                   <div className="flex flex-wrap items-center gap-[.65rem] text-[.72rem] text-ink-muted">
-                    <Badge loading={loading}>{notification?.readAt ? "Read" : "New"}</Badge>
+                    <Badge loading={loading}>
+                      {notification?.readAt ? "Read" : "New"}
+                    </Badge>
                     <time
-                      className={loadingPlaceholder(loading, "label", "medium")} data-placeholder="label"
+                      className={loadingPlaceholder(loading, "label", "medium")}
+                      data-placeholder="label"
                       data-placeholder-width="medium"
                       dateTime={notification?.createdAt}
                     >
-                      {notification?.createdAt ? new Date(notification.createdAt).toLocaleString() : "Loading date"}
+                      {notification?.createdAt
+                        ? new Date(notification.createdAt).toLocaleString()
+                        : "Loading date"}
                     </time>
                   </div>
-                  <h2 className={cn("mt-[.45rem] text-[1.15rem]", loadingPlaceholder(loading, "text", "long"))} data-placeholder="text" data-placeholder-width="long">{notification?.title ?? "Loading notification title"}</h2>
-                  <p className={cn("mt-[.45rem] leading-[1.55] text-ink-muted", loadingPlaceholder(loading, "text", "full"))} data-placeholder="text" data-placeholder-width="full">{notification?.body ?? "Loading notification details"}</p>
+                  <h2
+                    className={cn(
+                      "mt-[.45rem] text-[1.15rem]",
+                      loadingPlaceholder(loading, "text", "long"),
+                    )}
+                    data-placeholder="text"
+                    data-placeholder-width="long"
+                  >
+                    {notification?.title ?? "Loading notification title"}
+                  </h2>
+                  <p
+                    className={cn(
+                      "mt-[.45rem] leading-[1.55] text-ink-muted",
+                      loadingPlaceholder(loading, "text", "full"),
+                    )}
+                    data-placeholder="text"
+                    data-placeholder-width="full"
+                  >
+                    {notification?.body ?? "Loading notification details"}
+                  </p>
                   {notification && itemIssues.forItem(notification.id)[0] ? (
-                    <SemanticStatus className="mt-3" tone={itemIssues.forItem(notification.id)[0].tone ?? "error"}>
+                    <SemanticStatus
+                      className="mt-3"
+                      tone={
+                        itemIssues.forItem(notification.id)[0].tone ?? "error"
+                      }
+                    >
                       {itemIssues.forItem(notification.id)[0].message}
                     </SemanticStatus>
                   ) : null}
@@ -276,7 +334,12 @@ export function NotificationInbox() {
                   <ButtonControl
                     disabled={!notification || markingId === notification?.id}
                     loading={loading}
-                    onClick={() => notification && void (notification.readAt ? markUnread(notification) : markRead(notification))}
+                    onClick={() =>
+                      notification &&
+                      void (notification.readAt
+                        ? markUnread(notification)
+                        : markRead(notification))
+                    }
                     variant="secondary"
                   >
                     {notification?.readAt ? (
@@ -290,7 +353,9 @@ export function NotificationInbox() {
                     <ButtonControl
                       disabled={!notification || markingId === notification?.id}
                       loading={loading}
-                      onClick={() => notification && void openNotification(notification)}
+                      onClick={() =>
+                        notification && void openNotification(notification)
+                      }
                       variant="primary"
                     >
                       Open <ArrowUpRight aria-hidden="true" size={16} />
@@ -314,18 +379,30 @@ export function NotificationInbox() {
         </>
       ) : (
         <StatePanel
-          action={from || to || read !== "ALL" ? {
-            label: "Clear filters",
-            onClick: () => {
-              beginReload();
-              setFrom("");
-              setTo("");
-              setRead("ALL");
-              setPage(1);
-            },
-          } : undefined}
-          body={from || to || read !== "ALL" ? "Try a broader date range or clear the active filters." : "Account and research activity will appear here as it happens."}
-          title={from || to || read !== "ALL" ? "No matching notifications" : "No notifications yet"}
+          action={
+            from || to || read !== "ALL"
+              ? {
+                  label: "Clear filters",
+                  onClick: () => {
+                    beginReload();
+                    setFrom("");
+                    setTo("");
+                    setRead("ALL");
+                    setPage(1);
+                  },
+                }
+              : undefined
+          }
+          body={
+            from || to || read !== "ALL"
+              ? "Try a broader date range or clear the active filters."
+              : "Account and research activity will appear here as it happens."
+          }
+          title={
+            from || to || read !== "ALL"
+              ? "No matching notifications"
+              : "No notifications yet"
+          }
           variant={from || to || read !== "ALL" ? "filtered" : "empty"}
         />
       )}

@@ -30,7 +30,14 @@ export function SiteHeader() {
   return (
     <header className="sticky top-0 z-[60] border-b border-line-strong bg-[color-mix(in_srgb,var(--surface)_94%,transparent)] backdrop-blur-[12px]">
       <div className="mx-auto grid min-h-[62px] w-full max-w-[var(--public-wide)] grid-cols-[minmax(230px,.8fr)_minmax(0,1.5fr)_auto] items-center gap-[clamp(1rem,2.2vw,2.2rem)] px-[clamp(1rem,3.2vw,3rem)] max-[1050px]:grid-cols-[minmax(210px,1fr)_auto_auto] max-[560px]:min-h-[58px] max-[560px]:grid-cols-[minmax(0,1fr)_auto_auto] max-[560px]:gap-2">
-        <Link className="inline-flex w-fit min-w-0 items-center" href="/" onClick={() => setOpen(false)} prefetch={false}><BrandLockup /></Link>
+        <Link
+          className="inline-flex w-fit min-w-0 items-center"
+          href="/"
+          onClick={() => setOpen(false)}
+          prefetch={false}
+        >
+          <BrandLockup />
+        </Link>
         <nav
           aria-label="Main navigation"
           className={cn(
@@ -48,25 +55,72 @@ export function SiteHeader() {
               key={href}
               onClick={() => setOpen(false)}
               prefetch={false}
-            >{label}</Link>
+            >
+              {label}
+            </Link>
           ))}
         </nav>
         <div className="ml-auto flex min-w-16 justify-end">
           {loading ? (
-            <span aria-label="Loading account" className="pointer-events-none" role="status"><ProfileAvatar loading name="Account" shape="round" /></span>
+            <span
+              aria-label="Loading account"
+              className="pointer-events-none"
+              role="status"
+            >
+              <ProfileAvatar loading name="Account" shape="round" />
+            </span>
           ) : user ? (
             <div className="flex items-center gap-[.45rem]">
-              <Link aria-label={notificationsLoading ? "Notifications" : `${unreadCount} unread notification${unreadCount === 1 ? "" : "s"}`} className="relative flex h-[38px] w-[38px] items-center justify-center rounded-control border border-transparent text-ink-muted" href="/workspace/notifications" prefetch={false} title="Notifications">
+              <Link
+                aria-label={
+                  notificationsLoading
+                    ? "Notifications"
+                    : `${unreadCount} unread notification${unreadCount === 1 ? "" : "s"}`
+                }
+                className="relative flex h-[38px] w-[38px] items-center justify-center rounded-control border border-transparent text-ink-muted"
+                href="/workspace/notifications"
+                prefetch={false}
+                title="Notifications"
+              >
                 <Bell aria-hidden="true" size={21} />
-                {unreadCount > 0 ? <span className="absolute -top-1 -right-[5px] flex min-h-[18px] min-w-[18px] items-center justify-center rounded-full border-2 border-surface bg-danger font-mono text-[.52rem] text-white">{unreadCount > 99 ? "99+" : unreadCount}</span> : null}
+                {unreadCount > 0 ? (
+                  <span className="absolute -top-1 -right-[5px] flex min-h-[18px] min-w-[18px] items-center justify-center rounded-full border-2 border-surface bg-danger font-mono text-[.52rem] text-white">
+                    {unreadCount > 99 ? "99+" : unreadCount}
+                  </span>
+                ) : null}
               </Link>
-              <Link aria-label={`Manage ${accountName}`} href="/workspace" prefetch={false} title={accountName}><ProfileAvatar avatarId={user.person?.avatar?.id} name={accountName} shape="round" /></Link>
+              <Link
+                aria-label={`Manage ${accountName}`}
+                href="/workspace"
+                prefetch={false}
+                title={accountName}
+              >
+                <ProfileAvatar
+                  avatarId={user.person?.avatar?.id}
+                  name={accountName}
+                  shape="round"
+                />
+              </Link>
             </div>
           ) : (
-            <Link className="inline-flex min-h-9 items-center justify-center rounded-control border border-line-strong bg-transparent px-[.78rem] py-2 text-[.78rem] font-semibold hover:bg-brand-faint" href="/login" prefetch={false}>Log in</Link>
+            <Link
+              className="inline-flex min-h-9 items-center justify-center rounded-control border border-line-strong bg-transparent px-[.78rem] py-2 text-[.78rem] font-semibold hover:bg-brand-faint"
+              href="/login"
+              prefetch={false}
+            >
+              Log in
+            </Link>
           )}
         </div>
-        <button aria-expanded={open} aria-label={open ? "Close menu" : "Open menu"} className="hidden h-[38px] w-[38px] items-center justify-center rounded-control border border-line-strong bg-transparent p-0 max-[1050px]:inline-flex" onClick={() => setOpen((value) => !value)} type="button">{open ? <X aria-hidden="true" /> : <Menu aria-hidden="true" />}</button>
+        <button
+          aria-expanded={open}
+          aria-label={open ? "Close menu" : "Open menu"}
+          className="hidden h-[38px] w-[38px] items-center justify-center rounded-control border border-line-strong bg-transparent p-0 max-[1050px]:inline-flex"
+          onClick={() => setOpen((value) => !value)}
+          type="button"
+        >
+          {open ? <X aria-hidden="true" /> : <Menu aria-hidden="true" />}
+        </button>
       </div>
     </header>
   );

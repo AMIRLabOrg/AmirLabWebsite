@@ -5,7 +5,10 @@ import { useState, type InputHTMLAttributes } from "react";
 import { IconButton } from "./icon-button";
 import { InputControl } from "./form-controls";
 
-type PasswordFieldProps = Omit<InputHTMLAttributes<HTMLInputElement>, "type"> & { label: string };
+type PasswordFieldProps = Omit<
+  InputHTMLAttributes<HTMLInputElement>,
+  "type"
+> & { label: string };
 
 export function PasswordField({ id, label, ...props }: PasswordFieldProps) {
   const [visible, setVisible] = useState(false);
@@ -13,9 +16,19 @@ export function PasswordField({ id, label, ...props }: PasswordFieldProps) {
 
   return (
     <div className="field grid gap-[.38rem]">
-      <label className="font-mono text-[.62rem] font-semibold uppercase tracking-[.045em]" htmlFor={id}>{label}</label>
+      <label
+        className="font-mono text-[.62rem] font-semibold uppercase tracking-[.045em]"
+        htmlFor={id}
+      >
+        {label}
+      </label>
       <div className="relative">
-        <InputControl className="pr-[3rem]" id={id} {...props} type={visible ? "text" : "password"} />
+        <InputControl
+          className="pr-[3rem]"
+          id={id}
+          {...props}
+          type={visible ? "text" : "password"}
+        />
         <IconButton
           aria-label={buttonLabel}
           className="absolute right-[.35rem] top-1/2 -translate-y-1/2 text-ink-muted hover:text-brand"
@@ -25,7 +38,11 @@ export function PasswordField({ id, label, ...props }: PasswordFieldProps) {
           title={buttonLabel}
           variant="bare"
         >
-          {visible ? <EyeOff aria-hidden="true" size={17} /> : <Eye aria-hidden="true" size={17} />}
+          {visible ? (
+            <EyeOff aria-hidden="true" size={17} />
+          ) : (
+            <Eye aria-hidden="true" size={17} />
+          )}
         </IconButton>
       </div>
     </div>

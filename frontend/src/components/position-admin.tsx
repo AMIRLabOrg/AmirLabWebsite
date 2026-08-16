@@ -8,14 +8,21 @@ import { CircleOff, CirclePlay, Plus, Save, Trash2 } from "lucide-react";
 import { ConfirmDialog } from "@/components/confirm-dialog";
 import { SelectControl } from "@/components/ui/select-control";
 import { DateField, DateTimeField } from "@/components/ui/date-time-field";
-import { formControlClass, InputControl, TextareaControl } from "@/components/ui/form-controls";
+import {
+  formControlClass,
+  InputControl,
+  TextareaControl,
+} from "@/components/ui/form-controls";
 import { StatePanel } from "@/components/state-panel";
 import { useNotifications } from "@/components/notification-provider";
 import { ApiRequestError, apiRequest } from "@/lib/client-api";
 import type { Department, Position } from "@/lib/types";
 import { ButtonControl, ButtonLink } from "@/components/ui/button-control";
 import { SegmentedControl } from "@/components/ui/segmented-control";
-import { ReviewIssueStamp, SemanticStatus } from "@/components/ui/semantic-status";
+import {
+  ReviewIssueStamp,
+  SemanticStatus,
+} from "@/components/ui/semantic-status";
 import { useReviewIssues } from "@/lib/use-review-issues";
 
 const POSITION_TYPES = [
@@ -74,7 +81,9 @@ export function PositionAdminList() {
       })
       .catch((caught: unknown) => {
         const message =
-          caught instanceof Error ? caught.message : "Could not load positions.";
+          caught instanceof Error
+            ? caught.message
+            : "Could not load positions.";
         setError(message);
         showToast({
           body: message,
@@ -105,12 +114,17 @@ export function PositionAdminList() {
     } catch (error) {
       const requestError = error instanceof ApiRequestError ? error : undefined;
       if (requestError?.issues.length) actionIssues.capture(requestError);
-      else actionIssues.setOne(position.id, {
-        code: "POSITION_STATE_UPDATE_FAILED",
-        message: "This job post publication state could not be updated.",
+      else
+        actionIssues.setOne(position.id, {
+          code: "POSITION_STATE_UPDATE_FAILED",
+          message: "This job post publication state could not be updated.",
+          tone: "error",
+        });
+      showToast({
+        body: requestError?.message ?? "Could not update job post.",
+        title: "Update failed",
         tone: "error",
       });
-      showToast({ body: requestError?.message ?? "Could not update job post.", title: "Update failed", tone: "error" });
     } finally {
       setUpdatingId(undefined);
     }
@@ -120,10 +134,16 @@ export function PositionAdminList() {
     <div className="mx-auto grid w-full max-w-[1180px] min-w-0 gap-6">
       <header className="flex items-end justify-between gap-4 border-b border-line pb-[1.1rem] max-[760px]:flex-col max-[760px]:items-stretch">
         <div>
-          <p className="m-0 mb-4 font-[var(--font-sans)] text-[.75rem] font-extrabold uppercase tracking-[.12em] text-brand">Administration</p>
-          <h2 className="mt-[.35rem] font-serif text-[clamp(1.8rem,3vw,2.4rem)] font-normal leading-none">Job posts</h2>
+          <p className="m-0 mb-4 font-[var(--font-sans)] text-[.75rem] font-extrabold uppercase tracking-[.12em] text-brand">
+            Administration
+          </p>
+          <h2 className="mt-[.35rem] font-serif text-[clamp(1.8rem,3vw,2.4rem)] font-normal leading-none">
+            Job posts
+          </h2>
         </div>
-        <ButtonLink href="/workspace/positions/new" variant="primary"><Plus aria-hidden="true" size={16} /> Create job post</ButtonLink>
+        <ButtonLink href="/workspace/positions/new" variant="primary">
+          <Plus aria-hidden="true" size={16} /> Create job post
+        </ButtonLink>
       </header>
       {error && !positions.length && !loading ? (
         <StatePanel
@@ -139,24 +159,78 @@ export function PositionAdminList() {
           variant="error"
         />
       ) : loading || positions.length ? (
-        <div className="grid border-t border-line" data-loading={loading || undefined}>
-          {(loading && !positions.length ? Array.from({ length: 5 }, () => undefined) : positions).map((position, index) => {
-            const issue = position ? actionIssues.forItem(position.id)[0] : undefined;
+        <div
+          className="grid border-t border-line"
+          data-loading={loading || undefined}
+        >
+          {(loading && !positions.length
+            ? Array.from({ length: 5 }, () => undefined)
+            : positions
+          ).map((position, index) => {
+            const issue = position
+              ? actionIssues.forItem(position.id)[0]
+              : undefined;
             return (
-              <article className="relative grid grid-cols-[minmax(0,1fr)_130px_auto] items-center gap-4 border-b border-line py-4 pr-9 max-[760px]:grid-cols-1" key={position?.id ?? `position-loading-${index}`}>
+              <article
+                className="relative grid grid-cols-[minmax(0,1fr)_130px_auto] items-center gap-4 border-b border-line py-4 pr-9 max-[760px]:grid-cols-1"
+                key={position?.id ?? `position-loading-${index}`}
+              >
                 {position ? <ReviewIssueStamp issue={issue} /> : null}
                 <div>
-                  <strong className={cn("block leading-[1.35]", loadingPlaceholder(loading, "text", "long"))} data-placeholder="text" data-placeholder-width="long">{position?.title ?? "Loading position"}</strong>
+                  <strong
+                    className={cn(
+                      "block leading-[1.35]",
+                      loadingPlaceholder(loading, "text", "long"),
+                    )}
+                    data-placeholder="text"
+                    data-placeholder-width="long"
+                  >
+                    {position?.title ?? "Loading position"}
+                  </strong>
                   <div className="mt-[.25rem] flex flex-wrap items-center gap-2">
-                    <span className={cn("text-[.72rem] capitalize text-ink-muted", loadingPlaceholder(loading, "label", "medium"))} data-placeholder="label" data-placeholder-width="medium">{position ? positionTypeLabel(position.positionType) : "Loading type"}</span>
-                    {issue ? <SemanticStatus loading={loading} tone={issue.tone ?? "error"}>{issue.message}</SemanticStatus> : null}
+                    <span
+                      className={cn(
+                        "text-[.72rem] capitalize text-ink-muted",
+                        loadingPlaceholder(loading, "label", "medium"),
+                      )}
+                      data-placeholder="label"
+                      data-placeholder-width="medium"
+                    >
+                      {position
+                        ? positionTypeLabel(position.positionType)
+                        : "Loading type"}
+                    </span>
+                    {issue ? (
+                      <SemanticStatus
+                        loading={loading}
+                        tone={issue.tone ?? "error"}
+                      >
+                        {issue.message}
+                      </SemanticStatus>
+                    ) : null}
                   </div>
                 </div>
-                <span className={cn("text-[.72rem] capitalize text-ink-muted", loadingPlaceholder(loading, "label", "medium"))} data-placeholder="label" data-placeholder-width="medium">{position ? (position._count?.applications ?? 0) : 0} applications</span>
+                <span
+                  className={cn(
+                    "text-[.72rem] capitalize text-ink-muted",
+                    loadingPlaceholder(loading, "label", "medium"),
+                  )}
+                  data-placeholder="label"
+                  data-placeholder-width="medium"
+                >
+                  {position ? (position._count?.applications ?? 0) : 0}{" "}
+                  applications
+                </span>
                 <div className="flex items-center justify-end gap-[.85rem] max-[760px]:justify-start">
                   <SegmentedControl
-                    ariaLabel={position ? `${position.title} publication state` : "Job post publication state"}
-                    disabled={loading || !position || updatingId === position?.id}
+                    ariaLabel={
+                      position
+                        ? `${position.title} publication state`
+                        : "Job post publication state"
+                    }
+                    disabled={
+                      loading || !position || updatingId === position?.id
+                    }
                     loading={loading}
                     onValueChange={(value) => {
                       if (!position) return;
@@ -170,14 +244,25 @@ export function PositionAdminList() {
                     ]}
                     value={position?.status === "OPEN" ? "OPEN" : "DISABLED"}
                   />
-                  <ButtonLink compact href={position ? `/workspace/positions/${position.id}` : "#"} loading={loading || !position}>Edit</ButtonLink>
+                  <ButtonLink
+                    compact
+                    href={
+                      position ? `/workspace/positions/${position.id}` : "#"
+                    }
+                    loading={loading || !position}
+                  >
+                    Edit
+                  </ButtonLink>
                 </div>
               </article>
             );
           })}
         </div>
       ) : (
-        <StatePanel body="Create the first job post, then enable it when it is ready to accept applications." title="No job posts yet" />
+        <StatePanel
+          body="Create the first job post, then enable it when it is ready to accept applications."
+          title="No job posts yet"
+        />
       )}
     </div>
   );
@@ -241,18 +326,22 @@ export function PositionAdminEditor({ id }: { id?: string }) {
     }
     setSaving(true);
     try {
-      const saved = await apiRequest<Position>(id ? `/positions/${id}` : "/positions", {
-        body: JSON.stringify(formToPayload(form)),
-        headers: { "content-type": "application/json" },
-        method: id ? "PATCH" : "POST",
-      });
+      const saved = await apiRequest<Position>(
+        id ? `/positions/${id}` : "/positions",
+        {
+          body: JSON.stringify(formToPayload(form)),
+          headers: { "content-type": "application/json" },
+          method: id ? "PATCH" : "POST",
+        },
+      );
       showToast({
         body: `${saved.title} was ${id ? "updated" : "created"}.`,
         title: "Position saved",
       });
       router.push(`/workspace/positions/${saved.id}`);
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Could not save position.";
+      const message =
+        error instanceof Error ? error.message : "Could not save position.";
       setSubmitError(message);
       showToast({
         body: message,
@@ -269,11 +358,15 @@ export function PositionAdminEditor({ id }: { id?: string }) {
     setSaving(true);
     try {
       await apiRequest(`/positions/${id}`, { method: "DELETE" });
-      showToast({ body: "The job post was deleted.", title: "Job post deleted" });
+      showToast({
+        body: "The job post was deleted.",
+        title: "Job post deleted",
+      });
       router.push("/workspace/positions");
     } catch (error) {
       showToast({
-        body: error instanceof Error ? error.message : "Could not delete job post.",
+        body:
+          error instanceof Error ? error.message : "Could not delete job post.",
         title: "Delete failed",
         tone: "error",
       });
@@ -300,7 +393,8 @@ export function PositionAdminEditor({ id }: { id?: string }) {
       });
     } catch (error) {
       showToast({
-        body: error instanceof Error ? error.message : "Could not update job post.",
+        body:
+          error instanceof Error ? error.message : "Could not update job post.",
         title: "Update failed",
         tone: "error",
       });
@@ -325,145 +419,363 @@ export function PositionAdminEditor({ id }: { id?: string }) {
 
   return (
     <>
-    <form className="mx-auto grid w-full max-w-[1180px] gap-6 pb-20" data-loading={editorLoading || undefined} onSubmit={submit}>
-      <header className="flex items-end justify-between gap-4 border-b border-line pb-[1.1rem] max-[760px]:flex-col max-[760px]:items-stretch">
-        <div>
-          <p className="m-0 mb-4 font-[var(--font-sans)] text-[.75rem] font-extrabold uppercase tracking-[.12em] text-brand">Job posts</p>
-          <h2 className={cn("mt-[.35rem] font-serif text-[clamp(1.8rem,3vw,2.4rem)] font-normal leading-none", loadingPlaceholder(editorLoading, "text", "medium"))} data-placeholder={editorLoading ? "text" : undefined} data-placeholder-width="medium">{id ? "Edit job post" : "Create job post"}</h2>
-          <p className="mt-[.55rem] max-w-[680px] text-[.82rem] leading-[1.55] text-ink-muted">New posts stay disabled until you enable them. Application timing remains separate from the engagement period.</p>
-        </div>
-        <div className="flex flex-wrap justify-end gap-[.6rem] max-[760px]:justify-stretch">
-          {id ? (
-            <>
-              <ButtonControl compact className={loadingPlaceholder(editorLoading, "control")} data-placeholder={editorLoading ? "control" : undefined} disabled={editorLoading || saving} onClick={() => void toggleEnabled()} type="button" variant="secondary">
-                {enabled ? <CircleOff aria-hidden="true" size={16} /> : <CirclePlay aria-hidden="true" size={16} />}
-                {enabled ? "Disable" : "Enable"}
-              </ButtonControl>
-              <ButtonControl compact className={loadingPlaceholder(editorLoading, "control")} data-placeholder={editorLoading ? "control" : undefined} disabled={editorLoading || saving} onClick={() => setDeletePending(true)} type="button" variant="danger">
-                <Trash2 aria-hidden="true" size={16} /> Delete
-              </ButtonControl>
-            </>
-          ) : null}
-          <ButtonControl compact className={loadingPlaceholder(editorLoading, "control")} data-placeholder={editorLoading ? "control" : undefined} disabled={editorLoading || saving} type="submit">
-            <Save aria-hidden="true" size={16} /> {saving ? "Saving…" : id ? "Save changes" : "Create job post"}
-          </ButtonControl>
-        </div>
-      </header>
-      {submitError ? <p className="m-0 border-l-[3px] border-danger bg-danger-soft px-4 py-3 text-[.78rem] text-danger" role="alert">{submitError}</p> : null}
-      <section className="grid gap-6 rounded-panel border border-line bg-surface p-[clamp(1.25rem,3vw,2rem)] shadow-[0_10px_30px_color-mix(in_srgb,var(--ink)_4%,transparent)]">
-        <div className="grid gap-1 border-b border-line pb-[1.15rem]">
-          <h3 className="m-0 text-[clamp(1.35rem,2.5vw,1.8rem)]">Role basics</h3>
-          <p className="m-0 text-[.78rem] leading-[1.5] text-ink-muted">Public-facing role information and internal categorization.</p>
-        </div>
-      <div className="grid grid-cols-2 gap-4 max-[760px]:grid-cols-1">
-        <Field label="Title">
-          <InputControl loading={editorLoading} required maxLength={200} value={form.title} onChange={(event) => setForm({ ...form, title: event.target.value })} />
-        </Field>
-        <Field label="Position type">
-          <SelectControl loading={editorLoading} options={POSITION_TYPES.map(option)} value={form.positionType} onValueChange={(positionType) => setForm({ ...form, positionType })} />
-        </Field>
-        <Field label="Target rank">
-          <SelectControl loading={editorLoading} options={[{ label: "None", value: "NONE" }, ...RANKS.map(option)]} value={form.targetRank || "NONE"} onValueChange={(targetRank) => setForm({ ...form, targetRank: targetRank === "NONE" ? "" : targetRank })} />
-        </Field>
-        <Field label="Department">
-          <SelectControl loading={editorLoading} options={[{ label: "None", value: "NONE" }, ...departments.map((department) => ({ label: department.name, value: department.id }))]} value={form.departmentId || "NONE"} onValueChange={(departmentId) => setForm({ ...form, departmentId: departmentId === "NONE" ? "" : departmentId })} />
-        </Field>
-        <Field label="Engagement type">
-          <SelectControl loading={editorLoading} options={ENGAGEMENT_TYPES.map(option)} value={form.engagementType} onValueChange={(engagementType) => setForm({ ...form, engagementType, engagementEndsAt: engagementType === "OPEN_ENDED" ? "" : form.engagementEndsAt })} />
-        </Field>
-      </div>
-      </section>
-      <section className="grid gap-6 rounded-panel border border-line bg-surface p-[clamp(1.25rem,3vw,2rem)] shadow-[0_10px_30px_color-mix(in_srgb,var(--ink)_4%,transparent)]">
-        <div className="grid gap-1 border-b border-line pb-[1.15rem]">
-          <h3 className="m-0 text-[clamp(1.35rem,2.5vw,1.8rem)]">Timing</h3>
-          <p className="m-0 text-[.78rem] leading-[1.5] text-ink-muted">Use local time for application windows. Leave close date empty for rolling applications.</p>
-        </div>
-      <div className="grid grid-cols-2 gap-4 max-[760px]:grid-cols-1">
-        <Field label="Applications open">
-          <DateTimeField disabled={editorLoading} label="Applications open" loading={editorLoading} maxValue={form.closesAt} showInlineLabel={false} value={form.opensAt} onChange={(opensAt) => setForm({ ...form, opensAt })} />
-        </Field>
-        <Field label="Applications close">
-          <DateTimeField disabled={editorLoading} label="Applications close" loading={editorLoading} minValue={form.opensAt} showInlineLabel={false} value={form.closesAt} onChange={(closesAt) => setForm({ ...form, closesAt })} />
-        </Field>
-        <Field label="Engagement starts">
-          <DateField disabled={editorLoading} label="Engagement starts" loading={editorLoading} maxValue={form.engagementEndsAt} showInlineLabel={false} value={form.engagementStartsAt} onChange={(engagementStartsAt) => setForm({ ...form, engagementStartsAt })} />
-        </Field>
-        <Field label="Engagement ends">
-          {form.engagementType === "OPEN_ENDED" ? (
-            <div aria-disabled="true" className={cn(formControlClass, "flex items-center bg-surface-subtle text-ink-muted")}>
-              No end date for open-ended roles
-            </div>
-          ) : (
-            <DateField disabled={editorLoading} label="Engagement ends" loading={editorLoading} minValue={form.engagementStartsAt} showInlineLabel={false} value={form.engagementEndsAt} onChange={(engagementEndsAt) => setForm({ ...form, engagementEndsAt })} />
-          )}
-        </Field>
-        <Field label="Duration label">
-          <InputControl loading={editorLoading} maxLength={200} placeholder="6 months, summer term, rolling" value={form.engagementDurationLabel} onChange={(event) => setForm({ ...form, engagementDurationLabel: event.target.value })} />
-        </Field>
-        {timingError ? <p className="col-span-full m-0 rounded-panel border-l-[3px] border-danger bg-danger-soft px-[.9rem] py-3 text-[.78rem] leading-[1.45] text-danger" role="alert">{timingError}</p> : null}
-      </div>
-      </section>
-      <section className="grid gap-6 rounded-panel border border-line bg-surface p-[clamp(1.25rem,3vw,2rem)] shadow-[0_10px_30px_color-mix(in_srgb,var(--ink)_4%,transparent)]">
-        <div className="grid gap-1 border-b border-line pb-[1.15rem]">
-          <h3 className="m-0 text-[clamp(1.35rem,2.5vw,1.8rem)]">Public content</h3>
-          <p className="m-0 text-[.78rem] leading-[1.5] text-ink-muted">Keep the public posting scannable with one summary and focused lists.</p>
-        </div>
-      <div className="grid grid-cols-2 gap-4 max-[760px]:grid-cols-1">
-        <Field full label="Overview">
-          <TextareaControl loading={editorLoading} required maxLength={8000} rows={3} value={form.summary} onChange={(event) => setForm({ ...form, summary: event.target.value })} />
-        </Field>
-        {showDescription ? (
-          <Field full label="Additional context">
-            <TextareaControl loading={editorLoading} maxLength={20000} rows={4} value={form.description} onChange={(event) => setForm({ ...form, description: event.target.value })} />
-          </Field>
-        ) : (
-          <div className="col-span-full">
+      <form
+        className="mx-auto grid w-full max-w-[1180px] gap-6 pb-20"
+        data-loading={editorLoading || undefined}
+        onSubmit={submit}
+      >
+        <header className="flex items-end justify-between gap-4 border-b border-line pb-[1.1rem] max-[760px]:flex-col max-[760px]:items-stretch">
+          <div>
+            <p className="m-0 mb-4 font-[var(--font-sans)] text-[.75rem] font-extrabold uppercase tracking-[.12em] text-brand">
+              Job posts
+            </p>
+            <h2
+              className={cn(
+                "mt-[.35rem] font-serif text-[clamp(1.8rem,3vw,2.4rem)] font-normal leading-none",
+                loadingPlaceholder(editorLoading, "text", "medium"),
+              )}
+              data-placeholder={editorLoading ? "text" : undefined}
+              data-placeholder-width="medium"
+            >
+              {id ? "Edit job post" : "Create job post"}
+            </h2>
+            <p className="mt-[.55rem] max-w-[680px] text-[.82rem] leading-[1.55] text-ink-muted">
+              New posts stay disabled until you enable them. Application timing
+              remains separate from the engagement period.
+            </p>
+          </div>
+          <div className="flex flex-wrap justify-end gap-[.6rem] max-[760px]:justify-stretch">
+            {id ? (
+              <>
+                <ButtonControl
+                  compact
+                  className={loadingPlaceholder(editorLoading, "control")}
+                  data-placeholder={editorLoading ? "control" : undefined}
+                  disabled={editorLoading || saving}
+                  onClick={() => void toggleEnabled()}
+                  type="button"
+                  variant="secondary"
+                >
+                  {enabled ? (
+                    <CircleOff aria-hidden="true" size={16} />
+                  ) : (
+                    <CirclePlay aria-hidden="true" size={16} />
+                  )}
+                  {enabled ? "Disable" : "Enable"}
+                </ButtonControl>
+                <ButtonControl
+                  compact
+                  className={loadingPlaceholder(editorLoading, "control")}
+                  data-placeholder={editorLoading ? "control" : undefined}
+                  disabled={editorLoading || saving}
+                  onClick={() => setDeletePending(true)}
+                  type="button"
+                  variant="danger"
+                >
+                  <Trash2 aria-hidden="true" size={16} /> Delete
+                </ButtonControl>
+              </>
+            ) : null}
             <ButtonControl
               compact
-              disabled={editorLoading}
-              loading={editorLoading}
-              onClick={() => setDescriptionOpen(true)}
-              variant="dashed"
+              className={loadingPlaceholder(editorLoading, "control")}
+              data-placeholder={editorLoading ? "control" : undefined}
+              disabled={editorLoading || saving}
+              type="submit"
             >
-              <Plus aria-hidden="true" size={16} /> Add context
+              <Save aria-hidden="true" size={16} />{" "}
+              {saving ? "Saving…" : id ? "Save changes" : "Create job post"}
             </ButtonControl>
           </div>
-        )}
-        <ListEditor
-          loading={editorLoading}
-          label="Responsibilities"
-          onChange={(responsibilities) => setForm({ ...form, responsibilities })}
-          placeholder="Review papers, reproduce experiments, prepare weekly notes"
-          values={form.responsibilities}
-        />
-        <ListEditor
-          loading={editorLoading}
-          label="Requirements"
-          minimumItems={1}
-          onChange={(requirements) => setForm({ ...form, requirements })}
-          placeholder="Strong Python skills, prior ML coursework, weekly availability"
-          required
-          values={form.requirements}
-        />
-      </div>
-      </section>
-    </form>
-    <ConfirmDialog
-      busy={saving}
-      confirmLabel="Delete job post"
-      description="This permanently removes the job post. Posts with applications must be disabled instead so those records remain available."
-      onCancel={() => setDeletePending(false)}
-      onConfirm={() => void deletePost()}
-      open={deletePending}
-      title="Delete this job post?"
-      tone="danger"
-    />
+        </header>
+        {submitError ? (
+          <p
+            className="m-0 border-l-[3px] border-danger bg-danger-soft px-4 py-3 text-[.78rem] text-danger"
+            role="alert"
+          >
+            {submitError}
+          </p>
+        ) : null}
+        <section className="grid gap-6 rounded-panel border border-line bg-surface p-[clamp(1.25rem,3vw,2rem)] shadow-[0_10px_30px_color-mix(in_srgb,var(--ink)_4%,transparent)]">
+          <div className="grid gap-1 border-b border-line pb-[1.15rem]">
+            <h3 className="m-0 text-[clamp(1.35rem,2.5vw,1.8rem)]">
+              Role basics
+            </h3>
+            <p className="m-0 text-[.78rem] leading-[1.5] text-ink-muted">
+              Public-facing role information and internal categorization.
+            </p>
+          </div>
+          <div className="grid grid-cols-2 gap-4 max-[760px]:grid-cols-1">
+            <Field label="Title">
+              <InputControl
+                loading={editorLoading}
+                required
+                maxLength={200}
+                value={form.title}
+                onChange={(event) =>
+                  setForm({ ...form, title: event.target.value })
+                }
+              />
+            </Field>
+            <Field label="Position type">
+              <SelectControl
+                loading={editorLoading}
+                options={POSITION_TYPES.map(option)}
+                value={form.positionType}
+                onValueChange={(positionType) =>
+                  setForm({ ...form, positionType })
+                }
+              />
+            </Field>
+            <Field label="Target rank">
+              <SelectControl
+                loading={editorLoading}
+                options={[
+                  { label: "None", value: "NONE" },
+                  ...RANKS.map(option),
+                ]}
+                value={form.targetRank || "NONE"}
+                onValueChange={(targetRank) =>
+                  setForm({
+                    ...form,
+                    targetRank: targetRank === "NONE" ? "" : targetRank,
+                  })
+                }
+              />
+            </Field>
+            <Field label="Department">
+              <SelectControl
+                loading={editorLoading}
+                options={[
+                  { label: "None", value: "NONE" },
+                  ...departments.map((department) => ({
+                    label: department.name,
+                    value: department.id,
+                  })),
+                ]}
+                value={form.departmentId || "NONE"}
+                onValueChange={(departmentId) =>
+                  setForm({
+                    ...form,
+                    departmentId: departmentId === "NONE" ? "" : departmentId,
+                  })
+                }
+              />
+            </Field>
+            <Field label="Engagement type">
+              <SelectControl
+                loading={editorLoading}
+                options={ENGAGEMENT_TYPES.map(option)}
+                value={form.engagementType}
+                onValueChange={(engagementType) =>
+                  setForm({
+                    ...form,
+                    engagementType,
+                    engagementEndsAt:
+                      engagementType === "OPEN_ENDED"
+                        ? ""
+                        : form.engagementEndsAt,
+                  })
+                }
+              />
+            </Field>
+          </div>
+        </section>
+        <section className="grid gap-6 rounded-panel border border-line bg-surface p-[clamp(1.25rem,3vw,2rem)] shadow-[0_10px_30px_color-mix(in_srgb,var(--ink)_4%,transparent)]">
+          <div className="grid gap-1 border-b border-line pb-[1.15rem]">
+            <h3 className="m-0 text-[clamp(1.35rem,2.5vw,1.8rem)]">Timing</h3>
+            <p className="m-0 text-[.78rem] leading-[1.5] text-ink-muted">
+              Use local time for application windows. Leave close date empty for
+              rolling applications.
+            </p>
+          </div>
+          <div className="grid grid-cols-2 gap-4 max-[760px]:grid-cols-1">
+            <Field label="Applications open">
+              <DateTimeField
+                disabled={editorLoading}
+                label="Applications open"
+                loading={editorLoading}
+                maxValue={form.closesAt}
+                showInlineLabel={false}
+                value={form.opensAt}
+                onChange={(opensAt) => setForm({ ...form, opensAt })}
+              />
+            </Field>
+            <Field label="Applications close">
+              <DateTimeField
+                disabled={editorLoading}
+                label="Applications close"
+                loading={editorLoading}
+                minValue={form.opensAt}
+                showInlineLabel={false}
+                value={form.closesAt}
+                onChange={(closesAt) => setForm({ ...form, closesAt })}
+              />
+            </Field>
+            <Field label="Engagement starts">
+              <DateField
+                disabled={editorLoading}
+                label="Engagement starts"
+                loading={editorLoading}
+                maxValue={form.engagementEndsAt}
+                showInlineLabel={false}
+                value={form.engagementStartsAt}
+                onChange={(engagementStartsAt) =>
+                  setForm({ ...form, engagementStartsAt })
+                }
+              />
+            </Field>
+            <Field label="Engagement ends">
+              {form.engagementType === "OPEN_ENDED" ? (
+                <div
+                  aria-disabled="true"
+                  className={cn(
+                    formControlClass,
+                    "flex items-center bg-surface-subtle text-ink-muted",
+                  )}
+                >
+                  No end date for open-ended roles
+                </div>
+              ) : (
+                <DateField
+                  disabled={editorLoading}
+                  label="Engagement ends"
+                  loading={editorLoading}
+                  minValue={form.engagementStartsAt}
+                  showInlineLabel={false}
+                  value={form.engagementEndsAt}
+                  onChange={(engagementEndsAt) =>
+                    setForm({ ...form, engagementEndsAt })
+                  }
+                />
+              )}
+            </Field>
+            <Field label="Duration label">
+              <InputControl
+                loading={editorLoading}
+                maxLength={200}
+                placeholder="6 months, summer term, rolling"
+                value={form.engagementDurationLabel}
+                onChange={(event) =>
+                  setForm({
+                    ...form,
+                    engagementDurationLabel: event.target.value,
+                  })
+                }
+              />
+            </Field>
+            {timingError ? (
+              <p
+                className="col-span-full m-0 rounded-panel border-l-[3px] border-danger bg-danger-soft px-[.9rem] py-3 text-[.78rem] leading-[1.45] text-danger"
+                role="alert"
+              >
+                {timingError}
+              </p>
+            ) : null}
+          </div>
+        </section>
+        <section className="grid gap-6 rounded-panel border border-line bg-surface p-[clamp(1.25rem,3vw,2rem)] shadow-[0_10px_30px_color-mix(in_srgb,var(--ink)_4%,transparent)]">
+          <div className="grid gap-1 border-b border-line pb-[1.15rem]">
+            <h3 className="m-0 text-[clamp(1.35rem,2.5vw,1.8rem)]">
+              Public content
+            </h3>
+            <p className="m-0 text-[.78rem] leading-[1.5] text-ink-muted">
+              Keep the public posting scannable with one summary and focused
+              lists.
+            </p>
+          </div>
+          <div className="grid grid-cols-2 gap-4 max-[760px]:grid-cols-1">
+            <Field full label="Overview">
+              <TextareaControl
+                loading={editorLoading}
+                required
+                maxLength={8000}
+                rows={3}
+                value={form.summary}
+                onChange={(event) =>
+                  setForm({ ...form, summary: event.target.value })
+                }
+              />
+            </Field>
+            {showDescription ? (
+              <Field full label="Additional context">
+                <TextareaControl
+                  loading={editorLoading}
+                  maxLength={20000}
+                  rows={4}
+                  value={form.description}
+                  onChange={(event) =>
+                    setForm({ ...form, description: event.target.value })
+                  }
+                />
+              </Field>
+            ) : (
+              <div className="col-span-full">
+                <ButtonControl
+                  compact
+                  disabled={editorLoading}
+                  loading={editorLoading}
+                  onClick={() => setDescriptionOpen(true)}
+                  variant="dashed"
+                >
+                  <Plus aria-hidden="true" size={16} /> Add context
+                </ButtonControl>
+              </div>
+            )}
+            <ListEditor
+              loading={editorLoading}
+              label="Responsibilities"
+              onChange={(responsibilities) =>
+                setForm({ ...form, responsibilities })
+              }
+              placeholder="Review papers, reproduce experiments, prepare weekly notes"
+              values={form.responsibilities}
+            />
+            <ListEditor
+              loading={editorLoading}
+              label="Requirements"
+              minimumItems={1}
+              onChange={(requirements) => setForm({ ...form, requirements })}
+              placeholder="Strong Python skills, prior ML coursework, weekly availability"
+              required
+              values={form.requirements}
+            />
+          </div>
+        </section>
+      </form>
+      <ConfirmDialog
+        busy={saving}
+        confirmLabel="Delete job post"
+        description="This permanently removes the job post. Posts with applications must be disabled instead so those records remain available."
+        onCancel={() => setDeletePending(false)}
+        onConfirm={() => void deletePost()}
+        open={deletePending}
+        title="Delete this job post?"
+        tone="danger"
+      />
     </>
   );
 }
 
-function Field({ children, full, label }: { children: ReactNode; full?: boolean; label: string }) {
-  return <label className={`grid min-w-0 content-start gap-[.4rem] ${full ? "col-span-full max-[760px]:col-span-1" : ""}`}><span className="text-[.78rem] font-semibold leading-[1.35] text-ink">{label}</span>{children}</label>;
+function Field({
+  children,
+  full,
+  label,
+}: {
+  children: ReactNode;
+  full?: boolean;
+  label: string;
+}) {
+  return (
+    <label
+      className={`grid min-w-0 content-start gap-[.4rem] ${full ? "col-span-full max-[760px]:col-span-1" : ""}`}
+    >
+      <span className="text-[.78rem] font-semibold leading-[1.35] text-ink">
+        {label}
+      </span>
+      {children}
+    </label>
+  );
 }
 
 function ListEditor({
@@ -486,7 +798,9 @@ function ListEditor({
   const rows = values.length ? values : [""];
 
   function update(index: number, value: string) {
-    onChange(rows.map((item, itemIndex) => (itemIndex === index ? value : item)));
+    onChange(
+      rows.map((item, itemIndex) => (itemIndex === index ? value : item)),
+    );
   }
 
   function remove(index: number) {
@@ -496,12 +810,20 @@ function ListEditor({
 
   return (
     <div className="col-span-full grid min-w-0 content-start gap-[.4rem] max-[760px]:col-span-1">
-      <span className="text-[.78rem] font-semibold leading-[1.35] text-ink">{label}</span>
+      <span className="text-[.78rem] font-semibold leading-[1.35] text-ink">
+        {label}
+      </span>
       <div className="grid gap-[.55rem]">
         {rows.map((item, index) => (
-          <div className="grid grid-cols-[34px_minmax(0,1fr)_40px] items-center gap-[.65rem]" key={index}>
-            <span className="font-mono text-[.65rem] text-ink-faint">{String(index + 1).padStart(2, "0")}</span>
-            <InputControl loading={loading}
+          <div
+            className="grid grid-cols-[34px_minmax(0,1fr)_40px] items-center gap-[.65rem]"
+            key={index}
+          >
+            <span className="font-mono text-[.65rem] text-ink-faint">
+              {String(index + 1).padStart(2, "0")}
+            </span>
+            <InputControl
+              loading={loading}
               aria-label={`${label} ${index + 1}`}
               disabled={loading}
               onChange={(event) => update(index, event.target.value)}
@@ -511,7 +833,10 @@ function ListEditor({
             />
             <button
               aria-label={`Remove ${label.toLowerCase()} ${index + 1}`}
-              className={cn("flex h-10 w-10 cursor-pointer items-center justify-center rounded-full border border-line bg-transparent text-ink-muted hover:border-danger hover:text-danger disabled:cursor-not-allowed disabled:opacity-35", loadingPlaceholder(loading, "control"))}
+              className={cn(
+                "flex h-10 w-10 cursor-pointer items-center justify-center rounded-full border border-line bg-transparent text-ink-muted hover:border-danger hover:text-danger disabled:cursor-not-allowed disabled:opacity-35",
+                loadingPlaceholder(loading, "control"),
+              )}
               data-placeholder={loading ? "control" : undefined}
               disabled={loading || rows.length <= Math.max(1, minimumItems)}
               onClick={() => remove(index)}
@@ -530,7 +855,8 @@ function ListEditor({
         onClick={() => onChange([...rows, ""])}
         variant="add-another"
       >
-        <Plus aria-hidden="true" size={16} /> Add another {label === "Responsibilities" ? "responsibility" : "requirement"}
+        <Plus aria-hidden="true" size={16} /> Add another{" "}
+        {label === "Responsibilities" ? "responsibility" : "requirement"}
       </ButtonControl>
     </div>
   );
@@ -552,7 +878,9 @@ function positionToForm(position: Position): PositionFormState {
     opensAt: toDateTimeLocal(position.opensAt),
     positionType: position.positionType,
     requirements: position.requirements.length ? position.requirements : [""],
-    responsibilities: position.responsibilities.length ? position.responsibilities : [""],
+    responsibilities: position.responsibilities.length
+      ? position.responsibilities
+      : [""],
     summary: position.summary,
     targetRank: position.targetRank ?? "",
     title: position.title,
@@ -609,7 +937,9 @@ function validatePositionForm(
   requireCompleteness = true,
 ): string | undefined {
   const opensAt = form.opensAt ? parseDateTimeInput(form.opensAt) : undefined;
-  const closesAt = form.closesAt ? parseDateTimeInput(form.closesAt) : undefined;
+  const closesAt = form.closesAt
+    ? parseDateTimeInput(form.closesAt)
+    : undefined;
   const engagementStartsAt = form.engagementStartsAt
     ? parseDateInput(form.engagementStartsAt)
     : undefined;
@@ -617,8 +947,10 @@ function validatePositionForm(
     ? parseDateInput(form.engagementEndsAt)
     : undefined;
 
-  if (form.opensAt && !opensAt) return "Applications open must be a valid date and time.";
-  if (form.closesAt && !closesAt) return "Applications close must be a valid date and time.";
+  if (form.opensAt && !opensAt)
+    return "Applications open must be a valid date and time.";
+  if (form.closesAt && !closesAt)
+    return "Applications close must be a valid date and time.";
   if (opensAt && closesAt && closesAt <= opensAt) {
     return "Applications close must be after applications open.";
   }
@@ -628,7 +960,11 @@ function validatePositionForm(
   if (form.engagementEndsAt && !engagementEndsAt) {
     return "Engagement ends must be a valid date.";
   }
-  if (engagementStartsAt && engagementEndsAt && engagementEndsAt <= engagementStartsAt) {
+  if (
+    engagementStartsAt &&
+    engagementEndsAt &&
+    engagementEndsAt <= engagementStartsAt
+  ) {
     return "Engagement ends must be after engagement starts.";
   }
   if (
@@ -650,7 +986,8 @@ function validatePositionForm(
     return "Flexible positions need a duration label.";
   }
   if (requireCompleteness && !form.title.trim()) return "Title is required.";
-  if (requireCompleteness && !form.summary.trim()) return "Overview is required.";
+  if (requireCompleteness && !form.summary.trim())
+    return "Overview is required.";
   if (requireCompleteness && !cleanRows(form.requirements).length) {
     return "Add at least one requirement.";
   }
@@ -692,5 +1029,8 @@ function localDateValue(value: Date): string {
 }
 
 function positionTypeLabel(value: string): string {
-  return value.toLowerCase().replaceAll("_", " ").replace(/^./, (letter) => letter.toUpperCase());
+  return value
+    .toLowerCase()
+    .replaceAll("_", " ")
+    .replace(/^./, (letter) => letter.toUpperCase());
 }

@@ -48,11 +48,11 @@ export function FormMessage({
     <p
       className={cn(
         "m-0 text-[.82rem] leading-[1.5]",
-        tone === "error" && "rounded-panel bg-danger-soft p-[.8rem] text-danger",
+        tone === "error" &&
+          "rounded-panel bg-danger-soft p-[.8rem] text-danger",
         tone === "success" &&
           "rounded-panel bg-success-soft p-[.8rem] text-success",
-        tone === "info" &&
-          "rounded-panel bg-info-soft p-[.8rem] text-info",
+        tone === "info" && "rounded-panel bg-info-soft p-[.8rem] text-info",
         tone === "muted" && "text-ink-muted",
       )}
       role={

@@ -44,18 +44,22 @@ export function AccountSetupForm({ token }: { token?: string }) {
   if (!token) {
     return (
       <div className="rounded-panel border border-line bg-surface">
-        <p className="m-0 flex items-center gap-[.45rem] text-[.82rem] leading-[1.5] text-ink-muted rounded-panel bg-danger-soft p-[.8rem] text-danger" role="alert">
+        <p
+          className="m-0 flex items-center gap-[.45rem] text-[.82rem] leading-[1.5] text-ink-muted rounded-panel bg-danger-soft p-[.8rem] text-danger"
+          role="alert"
+        >
           This account setup link is missing its token.
         </p>
-        <ButtonLink href="/login">
-          Return to login
-        </ButtonLink>
+        <ButtonLink href="/login">Return to login</ButtonLink>
       </div>
     );
   }
 
   return (
-    <form className="rounded-panel border border-line bg-surface grid gap-[1.2rem]" onSubmit={submit}>
+    <form
+      className="rounded-panel border border-line bg-surface grid gap-[1.2rem]"
+      onSubmit={submit}
+    >
       <div>
         <PasswordField
           autoComplete="new-password"
@@ -81,7 +85,10 @@ export function AccountSetupForm({ token }: { token?: string }) {
         required
       />
       {error ? (
-        <p className="m-0 flex items-center gap-[.45rem] text-[.82rem] leading-[1.5] text-ink-muted rounded-panel bg-danger-soft p-[.8rem] text-danger" role="alert">
+        <p
+          className="m-0 flex items-center gap-[.45rem] text-[.82rem] leading-[1.5] text-ink-muted rounded-panel bg-danger-soft p-[.8rem] text-danger"
+          role="alert"
+        >
           {error}
         </p>
       ) : null}

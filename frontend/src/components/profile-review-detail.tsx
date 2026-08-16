@@ -12,7 +12,10 @@ import { ReviewActions } from "@/components/review-actions";
 import { StatePanel } from "@/components/state-panel";
 import { useNotifications } from "@/components/notification-provider";
 import { profileValuesEqual } from "@/lib/profile-changes";
-import { ReviewIssueStamp, SemanticStatus } from "@/components/ui/semantic-status";
+import {
+  ReviewIssueStamp,
+  SemanticStatus,
+} from "@/components/ui/semantic-status";
 import type { ReviewIssue } from "@/lib/review-issues";
 
 const EMPTY_PROFILE_PAYLOAD: ProfileEditPayload = {
@@ -52,16 +55,24 @@ export function ProfileReviewDetail({ id }: { id: string }) {
     setActionIssues(
       error.issues.length
         ? error.issues
-        : [{
-            code: "PROFILE_REVIEW_FAILED",
-            itemId: request?.id,
-            message: "This profile decision could not be saved.",
-            tone: "error",
-          }],
+        : [
+            {
+              code: "PROFILE_REVIEW_FAILED",
+              itemId: request?.id,
+              message: "This profile decision could not be saved.",
+              tone: "error",
+            },
+          ],
     );
   }
 
-  async function decide({ note, status }: { note?: string; status: "APPROVED" | "REJECTED" }) {
+  async function decide({
+    note,
+    status,
+  }: {
+    note?: string;
+    status: "APPROVED" | "REJECTED";
+  }) {
     if (!request) return;
     setMessage(undefined);
     await apiRequest(`/profile-reviews/${request.id}/review`, {
@@ -81,7 +92,10 @@ export function ProfileReviewDetail({ id }: { id: string }) {
   if (!request && message)
     return (
       <StatePanel
-        action={{ label: "Retry", onClick: () => setReload((value) => value + 1) }}
+        action={{
+          label: "Retry",
+          onClick: () => setReload((value) => value + 1),
+        }}
         body="The review record could not be retrieved."
         title={message}
         variant="error"
@@ -91,38 +105,97 @@ export function ProfileReviewDetail({ id }: { id: string }) {
   const loading = !request;
   const proposed = request?.payload ?? EMPTY_PROFILE_PAYLOAD;
   const currentPerson = request?.person;
-  const current: ProfileEditPayload = currentPerson ? {
-    fullName: currentPerson.fullName,
-    headline: currentPerson.headline,
-    biography: currentPerson.biography,
-    publicEmail: currentPerson.publicEmail,
-    phone: currentPerson.phone,
-    contactAddress: currentPerson.contactAddress,
-    expertise: currentPerson.expertise,
-    links: (currentPerson.links ?? []).map(({ label, type, url }) => ({ label, type, url })),
-    sections: (currentPerson.profileSections ?? []).map(({ content, subsections, title, type }) => ({
-      subsections: subsections?.length ? subsections : content ? [{ heading: null, entries: [{ label: null, content }] }] : [],
-      title,
-      type,
-    })),
-    removeAvatar: false,
-  } : EMPTY_PROFILE_PAYLOAD;
-  const proposedAvatar = request ? (proposed.removeAvatar ? null : (request.avatarAsset?.id ?? currentPerson?.avatar?.id)) : undefined;
+  const current: ProfileEditPayload = currentPerson
+    ? {
+        fullName: currentPerson.fullName,
+        headline: currentPerson.headline,
+        biography: currentPerson.biography,
+        publicEmail: currentPerson.publicEmail,
+        phone: currentPerson.phone,
+        contactAddress: currentPerson.contactAddress,
+        expertise: currentPerson.expertise,
+        links: (currentPerson.links ?? []).map(({ label, type, url }) => ({
+          label,
+          type,
+          url,
+        })),
+        sections: (currentPerson.profileSections ?? []).map(
+          ({ content, subsections, title, type }) => ({
+            subsections: subsections?.length
+              ? subsections
+              : content
+                ? [{ heading: null, entries: [{ label: null, content }] }]
+                : [],
+            title,
+            type,
+          }),
+        ),
+        removeAvatar: false,
+      }
+    : EMPTY_PROFILE_PAYLOAD;
+  const proposedAvatar = request
+    ? proposed.removeAvatar
+      ? null
+      : (request.avatarAsset?.id ?? currentPerson?.avatar?.id)
+    : undefined;
   const reviewIssues = [...(request?.reviewIssues ?? []), ...actionIssues];
-  const blockingIssue = reviewIssues.find(({ tone }) => (tone ?? "error") === "error");
+  const blockingIssue = reviewIssues.find(
+    ({ tone }) => (tone ?? "error") === "error",
+  );
 
   return (
     <div className="grid gap-4" data-loading={loading || undefined}>
       <section className="relative rounded-panel border border-line bg-surface p-5">
         <ReviewIssueStamp issue={reviewIssues[0]} />
         <div>
-          <p className="m-0 mb-4 font-[var(--font-sans)] text-[.75rem] font-extrabold uppercase tracking-[.12em] text-brand">Latest request only</p>
-          <h2 className={cn("font-serif text-[clamp(1.6rem,3vw,2.4rem)] font-medium leading-[1.08]", loadingPlaceholder(loading, "text", "long"))} data-placeholder="text" data-placeholder-width="long">{currentPerson?.fullName ?? "Loading member profile"}</h2>
-          <div className="mt-2">{loading ? <span className={cn("block h-5 w-28", loadingPlaceholder(true, "label", "medium"))} data-placeholder="label" data-placeholder-width="medium" /> : request ? <SemanticStatus loading={loading} tone={request.status === "APPROVED" ? "success" : request.status === "REJECTED" ? "error" : "pending"}>{request.status.replaceAll("_", " ").toLowerCase()}</SemanticStatus> : null}</div>
+          <p className="m-0 mb-4 font-[var(--font-sans)] text-[.75rem] font-extrabold uppercase tracking-[.12em] text-brand">
+            Latest request only
+          </p>
+          <h2
+            className={cn(
+              "font-serif text-[clamp(1.6rem,3vw,2.4rem)] font-medium leading-[1.08]",
+              loadingPlaceholder(loading, "text", "long"),
+            )}
+            data-placeholder="text"
+            data-placeholder-width="long"
+          >
+            {currentPerson?.fullName ?? "Loading member profile"}
+          </h2>
+          <div className="mt-2">
+            {loading ? (
+              <span
+                className={cn(
+                  "block h-5 w-28",
+                  loadingPlaceholder(true, "label", "medium"),
+                )}
+                data-placeholder="label"
+                data-placeholder-width="medium"
+              />
+            ) : request ? (
+              <SemanticStatus
+                loading={loading}
+                tone={
+                  request.status === "APPROVED"
+                    ? "success"
+                    : request.status === "REJECTED"
+                      ? "error"
+                      : "pending"
+                }
+              >
+                {request.status.replaceAll("_", " ").toLowerCase()}
+              </SemanticStatus>
+            ) : null}
+          </div>
           {reviewIssues.length ? (
             <div className="mt-3 flex flex-wrap gap-2">
               {reviewIssues.map((issue, index) => (
-                <SemanticStatus key={`${issue.code ?? issue.message}-${index}`} loading={loading} tone={issue.tone ?? "error"}>{issue.message}</SemanticStatus>
+                <SemanticStatus
+                  key={`${issue.code ?? issue.message}-${index}`}
+                  loading={loading}
+                  tone={issue.tone ?? "error"}
+                >
+                  {issue.message}
+                </SemanticStatus>
               ))}
             </div>
           ) : null}
@@ -143,7 +216,8 @@ export function ProfileReviewDetail({ id }: { id: string }) {
             loading={loading}
             actions={[
               {
-                confirmDescription: "These changes will atomically update the public profile. If the member saved again, the backend will refuse this stale decision.",
+                confirmDescription:
+                  "These changes will atomically update the public profile. If the member saved again, the backend will refuse this stale decision.",
                 confirmLabel: "Approve changes",
                 confirmTitle: "Approve the latest profile?",
                 disabled: Boolean(blockingIssue),
@@ -152,7 +226,8 @@ export function ProfileReviewDetail({ id }: { id: string }) {
                 tone: "primary",
               },
               {
-                confirmDescription: "These changes will be rejected with the reviewer note shown to the member.",
+                confirmDescription:
+                  "These changes will be rejected with the reviewer note shown to the member.",
                 confirmLabel: "Reject changes",
                 confirmTitle: "Reject these profile changes?",
                 label: "Reject",
@@ -165,12 +240,18 @@ export function ProfileReviewDetail({ id }: { id: string }) {
             onError={captureReviewError}
             onSubmit={request ? decide : () => Promise.resolve()}
             onSuccess={() => setActionIssues([])}
-            successBody={(status) => `The profile changes were ${status.toLowerCase()}.`}
+            successBody={(status) =>
+              `The profile changes were ${status.toLowerCase()}.`
+            }
             successTitle="Profile review saved"
           />
         </section>
       ) : null}
-      {message ? <p className="m-0 flex items-center gap-[.45rem] text-[.82rem] leading-[1.5] text-ink-muted">{message}</p> : null}
+      {message ? (
+        <p className="m-0 flex items-center gap-[.45rem] text-[.82rem] leading-[1.5] text-ink-muted">
+          {message}
+        </p>
+      ) : null}
     </div>
   );
 }
@@ -193,9 +274,13 @@ function ReviewPortrait({
           width={220}
         />
       ) : (
-        <span className="grid aspect-square w-full max-w-[220px] place-items-center rounded-[3px] border border-dashed border-line bg-surface-subtle text-[.75rem] text-ink-muted">No image</span>
+        <span className="grid aspect-square w-full max-w-[220px] place-items-center rounded-[3px] border border-dashed border-line bg-surface-subtle text-[.75rem] text-ink-muted">
+          No image
+        </span>
       )}
-      <figcaption className="font-mono text-[.62rem] uppercase tracking-[.06em] text-ink-muted">{label}</figcaption>
+      <figcaption className="font-mono text-[.62rem] uppercase tracking-[.06em] text-ink-muted">
+        {label}
+      </figcaption>
     </figure>
   );
 }
@@ -229,30 +314,60 @@ function ProfileDiff({
   ];
   const changes = loading
     ? fields.slice(0, 4)
-    : fields.filter(({ key }) => !profileValuesEqual(current[key], proposed[key]));
+    : fields.filter(
+        ({ key }) => !profileValuesEqual(current[key], proposed[key]),
+      );
   const imageChanged = !loading && currentAvatar !== proposedAvatar;
 
   return (
-    <section className="grid gap-4 rounded-panel border border-line bg-surface p-5" data-loading={loading || undefined}>
+    <section
+      className="grid gap-4 rounded-panel border border-line bg-surface p-5"
+      data-loading={loading || undefined}
+    >
       <div className="flex items-end justify-between gap-4 border-b border-line pb-4 max-[640px]:flex-col max-[640px]:items-start">
         <div>
-          <p className="m-0 mb-4 font-[var(--font-sans)] text-[.75rem] font-extrabold uppercase tracking-[.12em] text-brand">Requested changes</p>
-          <h2 className={cn("m-0 font-serif text-[clamp(1.4rem,2.4vw,2rem)] font-normal leading-[1.1]", loadingPlaceholder(loading, "text", "medium"))} data-placeholder={loading ? "text" : undefined} data-placeholder-width="medium">{changes.length + Number(imageChanged)} changed field{changes.length + Number(imageChanged) === 1 ? "" : "s"}</h2>
+          <p className="m-0 mb-4 font-[var(--font-sans)] text-[.75rem] font-extrabold uppercase tracking-[.12em] text-brand">
+            Requested changes
+          </p>
+          <h2
+            className={cn(
+              "m-0 font-serif text-[clamp(1.4rem,2.4vw,2rem)] font-normal leading-[1.1]",
+              loadingPlaceholder(loading, "text", "medium"),
+            )}
+            data-placeholder={loading ? "text" : undefined}
+            data-placeholder-width="medium"
+          >
+            {changes.length + Number(imageChanged)} changed field
+            {changes.length + Number(imageChanged) === 1 ? "" : "s"}
+          </h2>
         </div>
-        <span className="font-mono text-[.68rem] uppercase tracking-[.05em] text-ink-muted">− current&nbsp;&nbsp;+ proposed</span>
+        <span className="font-mono text-[.68rem] uppercase tracking-[.05em] text-ink-muted">
+          − current&nbsp;&nbsp;+ proposed
+        </span>
       </div>
       {imageChanged ? (
         <article className="grid grid-cols-[140px_minmax(0,1fr)] gap-4 border-b border-line py-4 max-[640px]:grid-cols-1">
-          <h3 className="m-0 font-mono text-[.7rem] font-semibold uppercase tracking-[.06em] text-ink-muted">Profile image</h3>
+          <h3 className="m-0 font-mono text-[.7rem] font-semibold uppercase tracking-[.06em] text-ink-muted">
+            Profile image
+          </h3>
           <div className="grid grid-cols-2 gap-4 max-[520px]:grid-cols-1">
-            <div className="grid grid-cols-[20px_minmax(0,1fr)] gap-2 rounded-small bg-danger-soft p-3 text-danger"><ReviewPortrait label="Current" assetId={currentAvatar} /></div>
-            <div className="grid grid-cols-[20px_minmax(0,1fr)] gap-2 rounded-small bg-success-soft p-3 text-success"><ReviewPortrait label="Proposed" assetId={proposedAvatar} /></div>
+            <div className="grid grid-cols-[20px_minmax(0,1fr)] gap-2 rounded-small bg-danger-soft p-3 text-danger">
+              <ReviewPortrait label="Current" assetId={currentAvatar} />
+            </div>
+            <div className="grid grid-cols-[20px_minmax(0,1fr)] gap-2 rounded-small bg-success-soft p-3 text-success">
+              <ReviewPortrait label="Proposed" assetId={proposedAvatar} />
+            </div>
           </div>
         </article>
       ) : null}
       {changes.map(({ key, label }) => (
-        <article className="grid grid-cols-[140px_minmax(0,1fr)_minmax(0,1fr)] gap-4 border-b border-line py-4 last:border-b-0 max-[760px]:grid-cols-1" key={key}>
-          <h3 className="m-0 font-mono text-[.7rem] font-semibold uppercase tracking-[.06em] text-ink-muted">{label}</h3>
+        <article
+          className="grid grid-cols-[140px_minmax(0,1fr)_minmax(0,1fr)] gap-4 border-b border-line py-4 last:border-b-0 max-[760px]:grid-cols-1"
+          key={key}
+        >
+          <h3 className="m-0 font-mono text-[.7rem] font-semibold uppercase tracking-[.06em] text-ink-muted">
+            {label}
+          </h3>
           <DiffValue
             after={formatProfileValue(key, proposed[key])}
             before={formatProfileValue(key, current[key])}
@@ -272,7 +387,9 @@ function ProfileDiff({
         </article>
       ))}
       {!changes.length && !imageChanged ? (
-        <p className="m-0 text-[.82rem] leading-[1.5] text-ink-muted">No public profile fields changed.</p>
+        <p className="m-0 text-[.82rem] leading-[1.5] text-ink-muted">
+          No public profile fields changed.
+        </p>
       ) : null}
     </section>
   );
@@ -296,18 +413,34 @@ function DiffValue({
   const chunks = compactDiff(diffText(before || "Empty", after || "Empty"));
   return (
     <div className={className}>
-      <span aria-hidden="true" className="font-mono font-bold">{marker}</span>
-      <p className={cn("m-0 min-w-0 whitespace-pre-wrap text-[.78rem] leading-[1.55] [overflow-wrap:anywhere]", loadingPlaceholder(loading, "text", "full"))} data-placeholder={loading ? "text" : undefined} data-placeholder-width="full">
-        {loading ? "Loading profile value" : chunks.flatMap((chunk, index) => {
-          if (chunk.kind === "added" && side === "before") return [];
-          if (chunk.kind === "removed" && side === "after") return [];
-          const changed = chunk.kind !== "equal";
-          return changed ? (
-            <mark className="rounded-[2px] bg-[color-mix(in_srgb,currentColor_12%,transparent)] px-[2px] text-inherit" key={index}>{chunk.value}</mark>
-          ) : (
-            <span key={index}>{chunk.value}</span>
-          );
-        })}
+      <span aria-hidden="true" className="font-mono font-bold">
+        {marker}
+      </span>
+      <p
+        className={cn(
+          "m-0 min-w-0 whitespace-pre-wrap text-[.78rem] leading-[1.55] [overflow-wrap:anywhere]",
+          loadingPlaceholder(loading, "text", "full"),
+        )}
+        data-placeholder={loading ? "text" : undefined}
+        data-placeholder-width="full"
+      >
+        {loading
+          ? "Loading profile value"
+          : chunks.flatMap((chunk, index) => {
+              if (chunk.kind === "added" && side === "before") return [];
+              if (chunk.kind === "removed" && side === "after") return [];
+              const changed = chunk.kind !== "equal";
+              return changed ? (
+                <mark
+                  className="rounded-[2px] bg-[color-mix(in_srgb,currentColor_12%,transparent)] px-[2px] text-inherit"
+                  key={index}
+                >
+                  {chunk.value}
+                </mark>
+              ) : (
+                <span key={index}>{chunk.value}</span>
+              );
+            })}
       </p>
     </div>
   );
@@ -319,8 +452,14 @@ function compactDiff(chunks: DiffChunk[]): DiffChunk[] {
   if (firstChange < 0) return chunks;
 
   const visible = chunks.slice(firstChange, lastChange + 1);
-  const prefix = chunks.slice(0, firstChange).map(({ value }) => value).join("");
-  const suffix = chunks.slice(lastChange + 1).map(({ value }) => value).join("");
+  const prefix = chunks
+    .slice(0, firstChange)
+    .map(({ value }) => value)
+    .join("");
+  const suffix = chunks
+    .slice(lastChange + 1)
+    .map(({ value }) => value)
+    .join("");
   if (prefix) {
     visible.unshift({
       kind: "equal",
@@ -373,8 +512,7 @@ function diffText(before: string, after: string): DiffChunk[] {
       leftIndex += 1;
       rightIndex += 1;
     } else if (
-      lengths[leftIndex + 1][rightIndex] >=
-      lengths[leftIndex][rightIndex + 1]
+      lengths[leftIndex + 1][rightIndex] >= lengths[leftIndex][rightIndex + 1]
     ) {
       appendChunk(chunks, "removed", left[leftIndex]);
       leftIndex += 1;
@@ -437,22 +575,31 @@ function formatProfileValue(
   if (key === "expertise" && Array.isArray(value)) return value.join(", ");
   if (key === "links" && Array.isArray(value)) {
     return (value as ProfileEditPayload["links"])
-      .map(({ label, type, url }) => `${label} [${type.replaceAll("_", " ").toLowerCase()}]\n${url}`)
+      .map(
+        ({ label, type, url }) =>
+          `${label} [${type.replaceAll("_", " ").toLowerCase()}]\n${url}`,
+      )
       .join("\n\n");
   }
   if (key === "sections" && Array.isArray(value)) {
     return (value as ProfileEditPayload["sections"])
-      .map(({ subsections, title, type }) =>
-        `${title} [${type.replaceAll("_", " ").toLowerCase()}]\n${(subsections ?? [])
-          .map(({ entries, heading }) =>
-            `${heading ?? "Details"}\n${entries
-              .map((entry) => {
-                if (typeof entry === "string") return entry;
-                return entry.label ? `${entry.label}\n${entry.content}` : entry.content;
-              })
-              .join("\n\n")}`,
+      .map(
+        ({ subsections, title, type }) =>
+          `${title} [${type.replaceAll("_", " ").toLowerCase()}]\n${(
+            subsections ?? []
           )
-          .join("\n\n")}`,
+            .map(
+              ({ entries, heading }) =>
+                `${heading ?? "Details"}\n${entries
+                  .map((entry) => {
+                    if (typeof entry === "string") return entry;
+                    return entry.label
+                      ? `${entry.label}\n${entry.content}`
+                      : entry.content;
+                  })
+                  .join("\n\n")}`,
+            )
+            .join("\n\n")}`,
       )
       .join("\n\n");
   }

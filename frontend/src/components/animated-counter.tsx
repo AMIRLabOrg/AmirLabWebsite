@@ -9,7 +9,9 @@ export function AnimatedCounter({ value }: { value: number }) {
   useEffect(() => {
     const node = ref.current;
     if (!node) return;
-    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const reduced = window.matchMedia(
+      "(prefers-reduced-motion: reduce)",
+    ).matches;
     if (reduced) {
       const reducedFrame = requestAnimationFrame(() => setDisplay(value));
       return () => cancelAnimationFrame(reducedFrame);

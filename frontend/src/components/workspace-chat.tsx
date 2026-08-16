@@ -250,7 +250,10 @@ export function WorkspaceChat() {
   return (
     <div className="grid h-full min-w-0">
       {error ? (
-        <p className="m-0 border-l-[3px] border-danger bg-danger-soft px-4 py-[.8rem] text-danger-hover" role="alert">
+        <p
+          className="m-0 border-l-[3px] border-danger bg-danger-soft px-4 py-[.8rem] text-danger-hover"
+          role="alert"
+        >
           {error}
         </p>
       ) : null}
@@ -270,7 +273,11 @@ export function WorkspaceChat() {
                 active={Boolean(conversation && conversation.id === selectedId)}
                 loading={loading && !conversation}
                 presence={presence}
-                onClick={conversation ? () => setSelectedId(conversation.id) : undefined}
+                onClick={
+                  conversation
+                    ? () => setSelectedId(conversation.id)
+                    : undefined
+                }
                 key={conversation?.id ?? `conversation-loading-${index}`}
               />
             ))}
@@ -278,21 +285,50 @@ export function WorkspaceChat() {
               <div className="flex min-h-[260px] flex-col items-center justify-center gap-[.55rem] p-6 text-center text-[.8rem] text-ink-muted [&>svg]:text-brand">
                 <MessageCircle size={20} />
                 <p>No conversations yet.</p>
-                <ButtonControl compact onClick={() => void createLabConversation()} variant="primary">
+                <ButtonControl
+                  compact
+                  onClick={() => void createLabConversation()}
+                  variant="primary"
+                >
                   Open lab channel
                 </ButtonControl>
               </div>
             ) : null}
           </div>
         </aside>
-        <section className="grid min-h-0 min-w-0 grid-rows-[auto_minmax(0,1fr)_auto]" aria-label="Conversation">
+        <section
+          className="grid min-h-0 min-w-0 grid-rows-[auto_minmax(0,1fr)_auto]"
+          aria-label="Conversation"
+        >
           {selected || loading ? (
             <>
-              <header className="flex min-h-[68px] items-center justify-between gap-4 border-b border-line px-6 py-[.6rem] max-[720px]:flex-col max-[720px]:items-start max-[720px]:gap-[.55rem]" data-loading={loading || undefined}>
+              <header
+                className="flex min-h-[68px] items-center justify-between gap-4 border-b border-line px-6 py-[.6rem] max-[720px]:flex-col max-[720px]:items-start max-[720px]:gap-[.55rem]"
+                data-loading={loading || undefined}
+              >
                 <div className="flex min-w-0 items-center gap-3">
-                  <ProfileAvatar avatarId={selected ? conversationPerson(selected)?.avatar?.id : undefined} loading={loading} name={selected ? conversationPerson(selected)?.fullName : undefined} size="lg" />
+                  <ProfileAvatar
+                    avatarId={
+                      selected
+                        ? conversationPerson(selected)?.avatar?.id
+                        : undefined
+                    }
+                    loading={loading}
+                    name={
+                      selected
+                        ? conversationPerson(selected)?.fullName
+                        : undefined
+                    }
+                    size="lg"
+                  />
                   <div className="min-w-0">
-                    <span className={cn("m-0 mb-4 font-[var(--font-sans)] text-[.75rem] font-extrabold uppercase tracking-[.12em] text-brand", loadingPlaceholder(loading, "label"))} data-placeholder={loading ? "label" : undefined}>
+                    <span
+                      className={cn(
+                        "m-0 mb-4 font-[var(--font-sans)] text-[.75rem] font-extrabold uppercase tracking-[.12em] text-brand",
+                        loadingPlaceholder(loading, "label"),
+                      )}
+                      data-placeholder={loading ? "label" : undefined}
+                    >
                       {selected
                         ? selected.kind === "PROJECT"
                           ? "Project channel"
@@ -301,10 +337,26 @@ export function WorkspaceChat() {
                             : "Lab channel"
                         : "Conversation type"}
                     </span>
-                    <h2 className={cn("mt-[.2rem] overflow-hidden text-ellipsis whitespace-nowrap font-serif text-[1.15rem]", loadingPlaceholder(loading, "text", "long"))} data-placeholder={loading ? "text" : undefined} data-placeholder-width="long">
-                      {selected ? selected.title ?? conversationLabel(selected) : "Conversation title"}
+                    <h2
+                      className={cn(
+                        "mt-[.2rem] overflow-hidden text-ellipsis whitespace-nowrap font-serif text-[1.15rem]",
+                        loadingPlaceholder(loading, "text", "long"),
+                      )}
+                      data-placeholder={loading ? "text" : undefined}
+                      data-placeholder-width="long"
+                    >
+                      {selected
+                        ? (selected.title ?? conversationLabel(selected))
+                        : "Conversation title"}
                     </h2>
-                    <small className={cn("mt-[.2rem] block text-[.7rem] text-ink-muted", loadingPlaceholder(loading, "label", "medium"))} data-placeholder={loading ? "label" : undefined} data-placeholder-width="medium">
+                    <small
+                      className={cn(
+                        "mt-[.2rem] block text-[.7rem] text-ink-muted",
+                        loadingPlaceholder(loading, "label", "medium"),
+                      )}
+                      data-placeholder={loading ? "label" : undefined}
+                      data-placeholder-width="medium"
+                    >
                       {selected
                         ? activeCount
                           ? `${activeCount} active now`
@@ -314,11 +366,21 @@ export function WorkspaceChat() {
                   </div>
                 </div>
                 <div className="flex items-center gap-[.85rem] max-[720px]:flex-wrap max-[720px]:items-start max-[720px]:pl-[3.05rem]">
-                  <span className={cn("inline-flex items-center gap-[.45rem] font-mono text-[.65rem] uppercase text-brand max-[720px]:text-[.58rem]", loadingPlaceholder(loading, "label"))} data-placeholder={loading ? "label" : undefined}>
-                    <i className="h-1.5 w-1.5 rounded-full bg-brand animate-[status-pulse_2.2s_infinite] motion-reduce:animate-none" /> Live
+                  <span
+                    className={cn(
+                      "inline-flex items-center gap-[.45rem] font-mono text-[.65rem] uppercase text-brand max-[720px]:text-[.58rem]",
+                      loadingPlaceholder(loading, "label"),
+                    )}
+                    data-placeholder={loading ? "label" : undefined}
+                  >
+                    <i className="h-1.5 w-1.5 rounded-full bg-brand animate-[status-pulse_2.2s_infinite] motion-reduce:animate-none" />{" "}
+                    Live
                   </span>
                   <button
-                    className={cn("cursor-pointer border-0 bg-transparent py-[.3rem] text-[.7rem] text-ink-muted hover:text-brand", loadingPlaceholder(loading, "control"))}
+                    className={cn(
+                      "cursor-pointer border-0 bg-transparent py-[.3rem] text-[.7rem] text-ink-muted hover:text-brand",
+                      loadingPlaceholder(loading, "control"),
+                    )}
                     data-placeholder={loading ? "control" : undefined}
                     disabled={loading}
                     onClick={() => void enablePush(setPushState)}
@@ -337,7 +399,9 @@ export function WorkspaceChat() {
                     ).map((participant, index) => (
                       <span
                         className="relative -ml-[.45rem] first:ml-0"
-                        key={participant?.userId ?? `participant-loading-${index}`}
+                        key={
+                          participant?.userId ?? `participant-loading-${index}`
+                        }
                       >
                         <ProfileAvatar
                           avatarId={participant?.user.person?.avatar?.id}
@@ -345,13 +409,20 @@ export function WorkspaceChat() {
                           name={participant?.user.person?.fullName}
                           size="sm"
                         />
-                        {participant && presence[participant.userId] === "ONLINE" ? <i className="absolute -right-px -bottom-px h-2 w-2 rounded-full border-2 border-surface bg-success" /> : null}
+                        {participant &&
+                        presence[participant.userId] === "ONLINE" ? (
+                          <i className="absolute -right-px -bottom-px h-2 w-2 rounded-full border-2 border-surface bg-success" />
+                        ) : null}
                       </span>
                     ))}
                   </div>
                 </div>
               </header>
-              <div className="flex min-h-0 flex-col gap-[.52rem] overflow-auto bg-[color-mix(in_srgb,var(--canvas)_82%,var(--surface))] px-[clamp(1rem,3vw,2.2rem)] pt-[1.4rem] pb-8 max-[720px]:px-3 max-[720px]:pt-4 max-[720px]:pb-6" data-loading={loading || undefined} ref={messagesRef}>
+              <div
+                className="flex min-h-0 flex-col gap-[.52rem] overflow-auto bg-[color-mix(in_srgb,var(--canvas)_82%,var(--surface))] px-[clamp(1rem,3vw,2.2rem)] pt-[1.4rem] pb-8 max-[720px]:px-3 max-[720px]:pt-4 max-[720px]:pb-6"
+                data-loading={loading || undefined}
+                ref={messagesRef}
+              >
                 {loading && !selected ? (
                   Array.from({ length: 4 }, (_, index) => (
                     <MessageBubble
@@ -414,7 +485,8 @@ export function WorkspaceChat() {
                   <div className="flex items-center gap-[.2rem] py-[.3rem] text-[.7rem] text-ink-muted">
                     <span className="h-1 w-1 rounded-full bg-brand animate-[status-pulse_1.2s_infinite] motion-reduce:animate-none" />
                     <span className="h-1 w-1 rounded-full bg-brand animate-[status-pulse_1.2s_infinite_120ms] motion-reduce:animate-none" />
-                    <span className="mr-1 h-1 w-1 rounded-full bg-brand animate-[status-pulse_1.2s_infinite_240ms] motion-reduce:animate-none" /> Someone is typing
+                    <span className="mr-1 h-1 w-1 rounded-full bg-brand animate-[status-pulse_1.2s_infinite_240ms] motion-reduce:animate-none" />{" "}
+                    Someone is typing
                   </div>
                 ) : null}
                 <div ref={messagesEndRef} />
@@ -422,7 +494,7 @@ export function WorkspaceChat() {
               <form
                 className="grid gap-[.65rem] border-t border-line bg-surface px-[clamp(1rem,3vw,2.2rem)] pt-[.8rem] pb-4 max-[720px]:px-[.7rem]"
                 data-loading={loading || undefined}
-               
+
                 onSubmit={submit}
               >
                 {replyTo ? (
@@ -522,25 +594,51 @@ function ConversationRow({
   const last = conversation?.messages[0];
   return (
     <button
-      className={cn("flex w-full cursor-pointer items-center gap-[.7rem] border-0 border-b border-line bg-transparent px-[.35rem] py-[.9rem] text-left text-ink hover:bg-brand-soft disabled:cursor-default", active && "bg-brand-soft")}
+      className={cn(
+        "flex w-full cursor-pointer items-center gap-[.7rem] border-0 border-b border-line bg-transparent px-[.35rem] py-[.9rem] text-left text-ink hover:bg-brand-soft disabled:cursor-default",
+        active && "bg-brand-soft",
+      )}
       data-loading={loading || undefined}
       disabled={loading || !conversation}
       onClick={onClick}
       type="button"
     >
       <span className="relative inline-flex">
-        <ProfileAvatar avatarId={person?.avatar?.id} className="h-[42px] w-[42px]" loading={loading} name={person?.fullName} size="lg" />
-        {!loading && conversation?.members.some(
+        <ProfileAvatar
+          avatarId={person?.avatar?.id}
+          className="h-[42px] w-[42px]"
+          loading={loading}
+          name={person?.fullName}
+          size="lg"
+        />
+        {!loading &&
+        conversation?.members.some(
           ({ userId }) => presence[userId] === "ONLINE",
         ) ? (
           <i className="absolute -right-px bottom-0 h-2.5 w-2.5 rounded-full border-2 border-surface bg-success" />
         ) : null}
       </span>
       <span className="grid min-w-0 gap-1">
-        <strong className={cn("overflow-hidden text-ellipsis whitespace-nowrap text-[.86rem]", loadingPlaceholder(loading, "text", "long"))} data-placeholder={loading ? "text" : undefined} data-placeholder-width="long">
-          {conversation ? conversationLabel(conversation) : "Conversation title"}
+        <strong
+          className={cn(
+            "overflow-hidden text-ellipsis whitespace-nowrap text-[.86rem]",
+            loadingPlaceholder(loading, "text", "long"),
+          )}
+          data-placeholder={loading ? "text" : undefined}
+          data-placeholder-width="long"
+        >
+          {conversation
+            ? conversationLabel(conversation)
+            : "Conversation title"}
         </strong>
-        <small className={cn("text-[.7rem] text-ink-muted", loadingPlaceholder(loading, "text", "full"))} data-placeholder={loading ? "text" : undefined} data-placeholder-width="full">
+        <small
+          className={cn(
+            "text-[.7rem] text-ink-muted",
+            loadingPlaceholder(loading, "text", "full"),
+          )}
+          data-placeholder={loading ? "text" : undefined}
+          data-placeholder-width="full"
+        >
           {conversation
             ? last
               ? last.kind === "SYSTEM"
@@ -552,7 +650,14 @@ function ConversationRow({
             : "Latest message from this conversation"}
         </small>
       </span>
-      <time className={cn("ml-auto font-mono text-[.58rem] text-ink-faint", loadingPlaceholder(loading, "label", "short"))} data-placeholder={loading ? "label" : undefined} data-placeholder-width="short">
+      <time
+        className={cn(
+          "ml-auto font-mono text-[.58rem] text-ink-faint",
+          loadingPlaceholder(loading, "label", "short"),
+        )}
+        data-placeholder={loading ? "label" : undefined}
+        data-placeholder-width="short"
+      >
         {last ? formatTime(last.createdAt) : loading ? "00:00" : ""}
       </time>
     </button>
@@ -562,8 +667,12 @@ function ConversationRow({
 function SystemMessage({ message }: { message: CollaborationMessage }) {
   return (
     <div className="mx-auto my-[.8rem] flex max-w-[80%] items-center justify-center gap-[.45rem] text-center text-[.72rem] text-ink-muted">
-      <span className="rounded-[999px] border border-line bg-[color-mix(in_srgb,var(--surface)_84%,transparent)] px-[.7rem] py-[.4rem]">{message.body}</span>
-      <time className="font-mono text-[.58rem] text-ink-faint">{formatTime(message.createdAt)}</time>
+      <span className="rounded-[999px] border border-line bg-[color-mix(in_srgb,var(--surface)_84%,transparent)] px-[.7rem] py-[.4rem]">
+        {message.body}
+      </span>
+      <time className="font-mono text-[.58rem] text-ink-faint">
+        {formatTime(message.createdAt)}
+      </time>
     </div>
   );
 }
@@ -600,25 +709,51 @@ function MessageBubble({
       className={cn(
         "max-w-[min(70%,650px)] max-[720px]:max-w-[88%]",
         mine ? "ml-auto self-end" : "mr-auto self-start",
-        position === "group-middle" || position === "group-last" ? "-mt-[.42rem]" : "",
+        position === "group-middle" || position === "group-last"
+          ? "-mt-[.42rem]"
+          : "",
       )}
       data-loading={loading || undefined}
     >
       <div className={cn("flex items-end gap-2", mine && "flex-row-reverse")}>
         {!mine ? (
           last ? (
-            <ProfileAvatar avatarId={message?.sender.person?.avatar?.id} loading={loading} name={message?.sender.person?.fullName} size="sm" />
+            <ProfileAvatar
+              avatarId={message?.sender.person?.avatar?.id}
+              loading={loading}
+              name={message?.sender.person?.fullName}
+              size="sm"
+            />
           ) : (
             <span className="w-[30px] shrink-0" />
           )
         ) : null}
-        <div className={cn("relative min-w-0 max-w-full", mine && "w-full text-right")}>
+        <div
+          className={cn(
+            "relative min-w-0 max-w-full",
+            mine && "w-full text-right",
+          )}
+        >
           {!mine && first ? (
-            <small className={cn("mb-[.3rem] ml-[.1rem] block font-mono text-[.6rem] tracking-[.01em] text-ink-muted", loadingPlaceholder(loading, "label"))} data-placeholder={loading ? "label" : undefined}>{message?.sender.person?.fullName ?? "Lab member"}</small>
+            <small
+              className={cn(
+                "mb-[.3rem] ml-[.1rem] block font-mono text-[.6rem] tracking-[.01em] text-ink-muted",
+                loadingPlaceholder(loading, "label"),
+              )}
+              data-placeholder={loading ? "label" : undefined}
+            >
+              {message?.sender.person?.fullName ?? "Lab member"}
+            </small>
           ) : null}
           <div className="group relative inline-block max-w-full text-left">
             {message?.replyTo ? (
-              <div className={cn("mb-[2px] flex max-w-full items-start gap-[.35rem] rounded-[10px_10px_4px_4px] border-l-[3px] border-brand bg-[color-mix(in_srgb,var(--ink)_7%,var(--surface))] px-[.58rem] py-[.42rem] text-[.68rem] leading-[1.3] text-ink-muted", mine && "border-l-[color-mix(in_srgb,var(--on-accent)_68%,transparent)] bg-[color-mix(in_srgb,var(--brand)_77%,var(--surface))] text-[color-mix(in_srgb,var(--on-accent)_82%,transparent)]")}>
+              <div
+                className={cn(
+                  "mb-[2px] flex max-w-full items-start gap-[.35rem] rounded-[10px_10px_4px_4px] border-l-[3px] border-brand bg-[color-mix(in_srgb,var(--ink)_7%,var(--surface))] px-[.58rem] py-[.42rem] text-[.68rem] leading-[1.3] text-ink-muted",
+                  mine &&
+                    "border-l-[color-mix(in_srgb,var(--on-accent)_68%,transparent)] bg-[color-mix(in_srgb,var(--brand)_77%,var(--surface))] text-[color-mix(in_srgb,var(--on-accent)_82%,transparent)]",
+                )}
+              >
                 <Reply size={12} />
                 <span>
                   <strong className={mine ? "text-on-accent" : undefined}>
@@ -630,36 +765,87 @@ function MessageBubble({
               </div>
             ) : null}
             <p
-              className={cn(cn(
-                "m-0 whitespace-pre-wrap border border-[color-mix(in_srgb,var(--line)_72%,transparent)] bg-surface px-[.8rem] py-[.58rem] leading-[1.42] shadow-[0_1px_1px_color-mix(in_srgb,var(--ink)_4%,transparent)] [overflow-wrap:anywhere]",
-                mine && "border-brand bg-brand text-on-accent",
-                !mine && position === "group-single" && "rounded-panel",
-                !mine && position === "group-first" && "rounded-[16px_16px_16px_6px]",
-                !mine && position === "group-middle" && "rounded-[6px_16px_16px_6px]",
-                !mine && position === "group-last" && "rounded-[6px_16px_16px_16px]",
-                mine && position === "group-single" && "rounded-panel",
-                mine && position === "group-first" && "rounded-[16px_16px_6px_16px]",
-                mine && position === "group-middle" && "rounded-[16px_6px_6px_16px]",
-                mine && position === "group-last" && "rounded-[16px_6px_16px_16px]",
-              ), loadingPlaceholder(loading, "text", "full"))}
+              className={cn(
+                cn(
+                  "m-0 whitespace-pre-wrap border border-[color-mix(in_srgb,var(--line)_72%,transparent)] bg-surface px-[.8rem] py-[.58rem] leading-[1.42] shadow-[0_1px_1px_color-mix(in_srgb,var(--ink)_4%,transparent)] [overflow-wrap:anywhere]",
+                  mine && "border-brand bg-brand text-on-accent",
+                  !mine && position === "group-single" && "rounded-panel",
+                  !mine &&
+                    position === "group-first" &&
+                    "rounded-[16px_16px_16px_6px]",
+                  !mine &&
+                    position === "group-middle" &&
+                    "rounded-[6px_16px_16px_6px]",
+                  !mine &&
+                    position === "group-last" &&
+                    "rounded-[6px_16px_16px_16px]",
+                  mine && position === "group-single" && "rounded-panel",
+                  mine &&
+                    position === "group-first" &&
+                    "rounded-[16px_16px_6px_16px]",
+                  mine &&
+                    position === "group-middle" &&
+                    "rounded-[16px_6px_6px_16px]",
+                  mine &&
+                    position === "group-last" &&
+                    "rounded-[16px_6px_16px_16px]",
+                ),
+                loadingPlaceholder(loading, "text", "full"),
+              )}
               data-placeholder={loading ? "text" : undefined}
               data-placeholder-width="full"
-            >{message?.body ?? "Message content is loading for this conversation."}</p>
+            >
+              {message?.body ??
+                "Message content is loading for this conversation."}
+            </p>
             {!loading && reactions.length ? (
-              <div className={cn("relative z-[1] -mt-[.42rem] ml-[.42rem] flex gap-1", mine && "mr-[.42rem] ml-0 justify-end")}>
+              <div
+                className={cn(
+                  "relative z-[1] -mt-[.42rem] ml-[.42rem] flex gap-1",
+                  mine && "mr-[.42rem] ml-0 justify-end",
+                )}
+              >
                 {reactions.map((emoji, index) => (
-                  <span className="rounded-[999px] border border-line bg-surface px-[.35rem] py-[.15rem] text-[.75rem]" key={`${emoji}-${index}`}>{emoji}</span>
+                  <span
+                    className="rounded-[999px] border border-line bg-surface px-[.35rem] py-[.15rem] text-[.75rem]"
+                    key={`${emoji}-${index}`}
+                  >
+                    {emoji}
+                  </span>
                 ))}
               </div>
             ) : null}
-            <div className={cn("absolute right-[.15rem] top-[.1rem] flex -translate-y-full gap-[.15rem] opacity-0 transition-opacity duration-[120ms] group-hover:opacity-100 focus-within:opacity-100", mine && "right-auto left-[.15rem]")} aria-hidden={loading || undefined}>
-              <IconButton aria-label="Reply" onClick={onReply} shape="round" size="sm" variant="bordered">
+            <div
+              className={cn(
+                "absolute right-[.15rem] top-[.1rem] flex -translate-y-full gap-[.15rem] opacity-0 transition-opacity duration-[120ms] group-hover:opacity-100 focus-within:opacity-100",
+                mine && "right-auto left-[.15rem]",
+              )}
+              aria-hidden={loading || undefined}
+            >
+              <IconButton
+                aria-label="Reply"
+                onClick={onReply}
+                shape="round"
+                size="sm"
+                variant="bordered"
+              >
                 <Reply size={13} />
               </IconButton>
-              <IconButton aria-label="React" onClick={onReact} shape="round" size="sm" variant="bordered">
+              <IconButton
+                aria-label="React"
+                onClick={onReact}
+                shape="round"
+                size="sm"
+                variant="bordered"
+              >
                 <Smile size={13} />
               </IconButton>
-              <IconButton aria-label="More actions" shape="round" size="sm" variant="bordered">
+              <IconButton
+                aria-label="More actions"
+                shape="round"
+                size="sm"
+                variant="bordered"
+              >
                 <MoreHorizontal size={13} />
               </IconButton>
             </div>
@@ -669,7 +855,13 @@ function MessageBubble({
       {mine && last ? (
         <div className="mt-[.22rem] flex items-center justify-end gap-[.35rem] text-brand">
           <CheckCheck size={13} />
-          <ProfileAvatar avatarId={message?.sender.person?.avatar?.id} className="opacity-90" loading={loading} name={message?.sender.person?.fullName} size="xs" />
+          <ProfileAvatar
+            avatarId={message?.sender.person?.avatar?.id}
+            className="opacity-90"
+            loading={loading}
+            name={message?.sender.person?.fullName}
+            size="xs"
+          />
         </div>
       ) : null}
     </article>

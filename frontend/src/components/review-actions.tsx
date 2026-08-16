@@ -93,30 +93,47 @@ export function ReviewActions<Status extends string>({
   }
 
   return (
-    <div className={cn("grid gap-4", className)} data-loading={loading || undefined}>
+    <div
+      className={cn("grid gap-4", className)}
+      data-loading={loading || undefined}
+    >
       {!loading && active?.requiresNote ? (
-        <FormField className="min-w-0" htmlFor={`review-note-${active.status}`} label={noteLabel}>
+        <FormField
+          className="min-w-0"
+          htmlFor={`review-note-${active.status}`}
+          label={noteLabel}
+        >
           <TextareaControl
             id={`review-note-${active.status}`}
             onChange={(event) => {
               setNote(event.target.value);
               if (event.target.value.trim()) setNoteError(undefined);
             }}
-            placeholder={active.notePlaceholder ?? "Explain the decision clearly."}
+            placeholder={
+              active.notePlaceholder ?? "Explain the decision clearly."
+            }
             rows={4}
             value={note}
           />
         </FormField>
       ) : null}
       {noteError ? (
-        <p className="m-0 rounded-panel bg-warning-soft p-[.8rem] text-[.82rem] leading-[1.5] text-warning" role="alert">
+        <p
+          className="m-0 rounded-panel bg-warning-soft p-[.8rem] text-[.82rem] leading-[1.5] text-warning"
+          role="alert"
+        >
           {noteError}
         </p>
       ) : null}
       <div className="flex flex-wrap justify-end gap-3">
         {actions.map((action) => {
-          const awaitingNote = action.requiresNote && active?.status === action.status;
-          const disabled = loading || busy || action.disabled || Boolean(awaitingNote && !note.trim());
+          const awaitingNote =
+            action.requiresNote && active?.status === action.status;
+          const disabled =
+            loading ||
+            busy ||
+            action.disabled ||
+            Boolean(awaitingNote && !note.trim());
           return (
             <ButtonControl
               compact={className.includes("compact")}
@@ -126,7 +143,9 @@ export function ReviewActions<Status extends string>({
               onClick={() => choose(action)}
               variant={action.tone}
             >
-              {awaitingNote ? (action.pendingLabel ?? "Send review") : action.label}
+              {awaitingNote
+                ? (action.pendingLabel ?? "Send review")
+                : action.label}
             </ButtonControl>
           );
         })}

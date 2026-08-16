@@ -40,7 +40,10 @@ export function BulkReviewBar<Status extends string>({
   if (!selectableCount && !loading) return null;
 
   return (
-    <section className="grid min-w-0 grid-cols-[minmax(160px,auto)_minmax(0,1fr)] items-center gap-4 rounded-panel border border-line bg-surface px-4 py-3 max-[720px]:grid-cols-1" aria-label="Bulk review actions">
+    <section
+      className="grid min-w-0 grid-cols-[minmax(160px,auto)_minmax(0,1fr)] items-center gap-4 rounded-panel border border-line bg-surface px-4 py-3 max-[720px]:grid-cols-1"
+      aria-label="Bulk review actions"
+    >
       <div className="flex min-w-0 flex-wrap items-center gap-3">
         <CheckboxControl
           checked={selectAllState}
@@ -72,12 +75,21 @@ export function BulkReviewBar<Status extends string>({
             successTitle={successTitle}
           />
         ) : selectedCount ? (
-          <span className="text-[.78rem] leading-[1.45] text-ink-muted">No common action is available for this selection.</span>
+          <span className="text-[.78rem] leading-[1.45] text-ink-muted">
+            No common action is available for this selection.
+          </span>
         ) : (
-          <span className="text-[.78rem] leading-[1.45] text-ink-muted">Select review items to act on them together.</span>
+          <span className="text-[.78rem] leading-[1.45] text-ink-muted">
+            Select review items to act on them together.
+          </span>
         )}
         {selectedCount ? (
-          <ButtonControl compact disabled={loading} onClick={onClear} variant="ghost">
+          <ButtonControl
+            compact
+            disabled={loading}
+            onClick={onClear}
+            variant="ghost"
+          >
             Clear selection
           </ButtonControl>
         ) : null}

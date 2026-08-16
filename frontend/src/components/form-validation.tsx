@@ -51,9 +51,12 @@ export function FormValidation() {
   return null;
 }
 
-type ValidatedControl = HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement;
+type ValidatedControl =
+  HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement;
 
-function isValidatedControl(value: EventTarget | null): value is ValidatedControl {
+function isValidatedControl(
+  value: EventTarget | null,
+): value is ValidatedControl {
   return (
     value instanceof HTMLInputElement ||
     value instanceof HTMLSelectElement ||

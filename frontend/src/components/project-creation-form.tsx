@@ -12,7 +12,12 @@ import { ButtonControl } from "@/components/ui/button-control";
 import { DateField } from "@/components/ui/date-time-field";
 import { SearchableSelect } from "@/components/ui/searchable-select";
 import { SelectControl } from "@/components/ui/select-control";
-import { WorkspaceRecord, WorkspaceRecordForm, WorkspaceRecordPanelHeader, WorkspaceRecordPanelTitle } from "@/components/workspace-record";
+import {
+  WorkspaceRecord,
+  WorkspaceRecordForm,
+  WorkspaceRecordPanelHeader,
+  WorkspaceRecordPanelTitle,
+} from "@/components/workspace-record";
 import { apiRequest } from "@/lib/client-api";
 
 interface ProjectPerson {
@@ -70,7 +75,8 @@ export function ProjectCreationForm() {
         setOwnerPersonId(owner?.id ?? "");
         setContributorIds(owner ? [owner.id] : []);
         setDepartmentId(
-          owner?.departments.find((department) => department.isPrimary)?.departmentId ??
+          owner?.departments.find((department) => department.isPrimary)
+            ?.departmentId ??
             owner?.departments[0]?.departmentId ??
             "",
         );
@@ -106,10 +112,14 @@ export function ProjectCreationForm() {
   function chooseOwner(personId: string) {
     const owner = options.people.find((person) => person.id === personId);
     setOwnerPersonId(personId);
-    setContributorIds((current) => [personId, ...current.filter((id) => id !== personId && id !== ownerPersonId)]);
+    setContributorIds((current) => [
+      personId,
+      ...current.filter((id) => id !== personId && id !== ownerPersonId),
+    ]);
     if (owner) {
       setDepartmentId(
-        owner.departments.find((department) => department.isPrimary)?.departmentId ??
+        owner.departments.find((department) => department.isPrimary)
+          ?.departmentId ??
           owner.departments[0]?.departmentId ??
           departmentId,
       );
@@ -124,7 +134,11 @@ export function ProjectCreationForm() {
       return;
     }
     if (!ownerPersonId) {
-      setError(staff ? "Select the registered person this project is being created for." : "A registered project owner is required.");
+      setError(
+        staff
+          ? "Select the registered person this project is being created for."
+          : "A registered project owner is required.",
+      );
       return;
     }
     if (!contributorIds.includes(ownerPersonId)) {
@@ -185,8 +199,12 @@ export function ProjectCreationForm() {
     >
       <WorkspaceRecordForm onSubmit={submit}>
         <WorkspaceRecordPanelHeader>
-          <p className="m-0 font-sans text-[.65rem] font-semibold uppercase tracking-[.1em] text-brand">Project foundation</p>
-          <WorkspaceRecordPanelTitle>Scope and ownership</WorkspaceRecordPanelTitle>
+          <p className="m-0 font-sans text-[.65rem] font-semibold uppercase tracking-[.1em] text-brand">
+            Project foundation
+          </p>
+          <WorkspaceRecordPanelTitle>
+            Scope and ownership
+          </WorkspaceRecordPanelTitle>
           <p className="m-0 text-[.84rem] leading-[1.5] text-ink-muted">
             Define who owns the work and where it belongs before planning
             milestones.
@@ -196,7 +214,11 @@ export function ProjectCreationForm() {
         <FormField htmlFor="project-title" label="Working title">
           <InputControl id="project-title" name="title" required />
         </FormField>
-        <FormField description="State the concrete research outcome this project exists to achieve." htmlFor="project-objective" label="Primary objective">
+        <FormField
+          description="State the concrete research outcome this project exists to achieve."
+          htmlFor="project-objective"
+          label="Primary objective"
+        >
           <TextareaControl id="project-objective" name="objective" required />
         </FormField>
         <FormField htmlFor="project-summary" label="Internal summary">
@@ -215,11 +237,18 @@ export function ProjectCreationForm() {
                 label: person.fullName,
                 value: person.id,
               }))}
-              placeholder={loadingOptions ? "Loading registered people…" : "Select registered owner…"}
+              placeholder={
+                loadingOptions
+                  ? "Loading registered people…"
+                  : "Select registered owner…"
+              }
               searchPlaceholder="Search by name or role…"
               value={ownerPersonId}
             />
-            <p className="m-0 text-[.82rem] leading-[1.5] text-ink-muted">The selected member is the project owner. Your staff account records the administrative action but is not added as an owner.</p>
+            <p className="m-0 text-[.82rem] leading-[1.5] text-ink-muted">
+              The selected member is the project owner. Your staff account
+              records the administrative action but is not added as an owner.
+            </p>
           </FormField>
         ) : null}
 
@@ -297,9 +326,14 @@ export function ProjectCreationForm() {
                 {contributors.map((person, index) => {
                   const owner = person.id === ownerPersonId;
                   return (
-                    <div className="grid grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-3 border-b border-line py-[.7rem]" key={person.id}>
+                    <div
+                      className="grid grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-3 border-b border-line py-[.7rem]"
+                      key={person.id}
+                    >
                       <span className="grid gap-[.15rem]">
-                        <strong className="text-[.9rem] font-semibold">{person.fullName}</strong>
+                        <strong className="text-[.9rem] font-semibold">
+                          {person.fullName}
+                        </strong>
                         <small className="text-[.7rem] text-ink-muted">
                           {owner
                             ? "Owner · manage access"
@@ -320,9 +354,18 @@ export function ProjectCreationForm() {
                           <X size={14} />
                         </IconButton>
                       ) : (
-                        <i aria-hidden="true" className="font-mono text-[.65rem] not-italic text-ink-faint">1</i>
+                        <i
+                          aria-hidden="true"
+                          className="font-mono text-[.65rem] not-italic text-ink-faint"
+                        >
+                          1
+                        </i>
                       )}
-                      {!owner ? <i className="font-mono text-[.65rem] not-italic text-ink-faint">{index + 1}</i> : null}
+                      {!owner ? (
+                        <i className="font-mono text-[.65rem] not-italic text-ink-faint">
+                          {index + 1}
+                        </i>
+                      ) : null}
                     </div>
                   );
                 })}
@@ -338,7 +381,9 @@ export function ProjectCreationForm() {
         <div className="flex items-start gap-3 rounded-panel border border-[color-mix(in_srgb,var(--brand)_24%,var(--line))] bg-brand-soft p-4 text-brand">
           <LockKeyhole aria-hidden="true" size={18} />
           <div>
-            <strong className="text-[.88rem] text-ink">Private by default</strong>
+            <strong className="text-[.88rem] text-ink">
+              Private by default
+            </strong>
             <p className="m-0 text-[.8rem] leading-[1.5] text-ink-muted">
               This creates an internal workspace. Nothing appears on the public
               website until public settings are enabled and approved.
@@ -347,8 +392,16 @@ export function ProjectCreationForm() {
         </div>
         {error ? <FormMessage>{error}</FormMessage> : null}
         <div className="flex flex-wrap justify-end gap-[.65rem] max-[700px]:justify-start">
-          <ButtonControl disabled={saving || loadingOptions} type="submit" variant="primary">
-            {saving ? "Creating workspace…" : staff ? "Create workspace on behalf" : "Create project workspace"}
+          <ButtonControl
+            disabled={saving || loadingOptions}
+            type="submit"
+            variant="primary"
+          >
+            {saving
+              ? "Creating workspace…"
+              : staff
+                ? "Create workspace on behalf"
+                : "Create project workspace"}
           </ButtonControl>
         </div>
       </WorkspaceRecordForm>

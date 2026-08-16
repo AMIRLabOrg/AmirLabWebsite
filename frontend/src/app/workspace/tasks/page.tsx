@@ -5,6 +5,9 @@ import { MemberOnly } from "@/components/member-only";
 export const metadata: Metadata = { title: "My tasks" };
 
 export default function WorkspaceTasksPage() {
-  return <MemberOnly><WorkspaceTasks /></MemberOnly>;
+  return (
+    <MemberOnly>
+      <WorkspaceTasks />
+    </MemberOnly>
+  );
 }
-

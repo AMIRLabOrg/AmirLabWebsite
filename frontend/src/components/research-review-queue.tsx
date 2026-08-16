@@ -7,7 +7,10 @@ import { useRouter } from "next/navigation";
 import { ApiRequestError, apiRequest } from "@/lib/client-api";
 import { useReviewIssues } from "@/lib/use-review-issues";
 import type { ReviewIssue } from "@/lib/review-issues";
-import { ReviewIssueStamp, SemanticStatus } from "@/components/ui/semantic-status";
+import {
+  ReviewIssueStamp,
+  SemanticStatus,
+} from "@/components/ui/semantic-status";
 import { PaginationControls } from "@/components/pagination-controls";
 import { SelectControl } from "@/components/ui/select-control";
 import { InputControl, TextareaControl } from "@/components/ui/form-controls";
@@ -80,7 +83,8 @@ interface LinkablePerson {
   slug: string;
 }
 
-type ResearchDecision = "NEEDS_REVIEW" | "PUBLISHED" | "CHANGES_REQUESTED" | "REJECTED";
+type ResearchDecision =
+  "NEEDS_REVIEW" | "PUBLISHED" | "CHANGES_REQUESTED" | "REJECTED";
 
 function researchLabel(item: ReviewResearch): string {
   return item.title ?? item.paper?.citation ?? "Untitled research item";
@@ -105,9 +109,20 @@ function loadingResearchItem(index = 0): ReviewResearch {
     legacyUrl: null,
     type: "PAPER",
     reviewStatus: "NEEDS_REVIEW",
-    paper: { citation: "Loading citation", doi: null, publicationType: null, venue: null, year: null },
+    paper: {
+      citation: "Loading citation",
+      doi: null,
+      publicationType: null,
+      venue: null,
+      year: null,
+    },
     dataset: null,
-    sourceSnapshot: { status: "PENDING", failureReason: null, fetchedAt: null, metadata: null },
+    sourceSnapshot: {
+      status: "PENDING",
+      failureReason: null,
+      fetchedAt: null,
+      metadata: null,
+    },
     reviewIssues: [],
     contributors: Array.from({ length: 4 }, (_, contributorIndex) => ({
       displayName: "Loading contributor",
@@ -154,7 +169,9 @@ export function ResearchReviewQueue({ selectedId }: { selectedId?: string }) {
   useEffect(() => {
     void apiRequest<LinkablePerson[]>("/research-connections/people", {
       method: "GET",
-    }).then(setPeople).catch(() => setPeople([]));
+    })
+      .then(setPeople)
+      .catch(() => setPeople([]));
   }, []);
 
   useEffect(() => {
@@ -177,8 +194,8 @@ export function ResearchReviewQueue({ selectedId }: { selectedId?: string }) {
       );
       const focusRequest = selectedId
         ? apiRequest<ReviewResearch>(`/research-review/${selectedId}`, {
-          method: "GET",
-        }).catch(() => undefined)
+            method: "GET",
+          }).catch(() => undefined)
         : Promise.resolve(undefined);
 
       void Promise.all([queueRequest, focusRequest])
@@ -249,13 +266,23 @@ export function ResearchReviewQueue({ selectedId }: { selectedId?: string }) {
     };
   }, [pendingSourceId, sourcePollTick]);
 
-
   function captureItemError(itemId: string, error: ApiRequestError) {
     if (error.issues.length) actionIssues.capture(error);
-    else actionIssues.setOne(itemId, { code: "RESEARCH_REVIEW_FAILED", message: "This research review decision could not be saved.", tone: "error" });
+    else
+      actionIssues.setOne(itemId, {
+        code: "RESEARCH_REVIEW_FAILED",
+        message: "This research review decision could not be saved.",
+        tone: "error",
+      });
   }
 
-  async function decide({ note, status }: { note?: string; status: ResearchDecision }) {
+  async function decide({
+    note,
+    status,
+  }: {
+    note?: string;
+    status: ResearchDecision;
+  }) {
     if (!selected) return;
     setError(undefined);
     await apiRequest(`/research/${selected}/review`, {
@@ -318,21 +345,43 @@ export function ResearchReviewQueue({ selectedId }: { selectedId?: string }) {
         method: "PATCH",
       });
       setFocusedItem(updated);
-      setItems((current) => current.map((candidate) => candidate.id === updated.id ? updated : candidate));
+      setItems((current) =>
+        current.map((candidate) =>
+          candidate.id === updated.id ? updated : candidate,
+        ),
+      );
       setEditingId(undefined);
       setReload((current) => current + 1);
-      showToast({ body: "The record was returned to manual review and source/contributor verification was restarted.", title: "Research record updated" });
+      showToast({
+        body: "The record was returned to manual review and source/contributor verification was restarted.",
+        title: "Research record updated",
+      });
     } catch (caught) {
-      const requestError = caught instanceof ApiRequestError ? caught : undefined;
+      const requestError =
+        caught instanceof ApiRequestError ? caught : undefined;
       if (requestError?.issues.length) actionIssues.capture(requestError);
-      else actionIssues.setOne(item.id, { code: "RESEARCH_EDIT_FAILED", message: "This research record could not be updated.", tone: "error" });
-      showToast({ body: requestError?.message ?? "The research record could not be updated.", title: "Research record was not updated", tone: "error" });
+      else
+        actionIssues.setOne(item.id, {
+          code: "RESEARCH_EDIT_FAILED",
+          message: "This research record could not be updated.",
+          tone: "error",
+        });
+      showToast({
+        body:
+          requestError?.message ?? "The research record could not be updated.",
+        title: "Research record was not updated",
+        tone: "error",
+      });
     } finally {
       setEditSaving(false);
     }
   }
 
-  async function reviewMatch(itemId: string, id: string, { note, status }: { note?: string; status: "VERIFIED" | "REJECTED" }) {
+  async function reviewMatch(
+    itemId: string,
+    id: string,
+    { note, status }: { note?: string; status: "VERIFIED" | "REJECTED" },
+  ) {
     setRelationBusy(id);
     setError(undefined);
     try {
@@ -344,8 +393,14 @@ export function ResearchReviewQueue({ selectedId }: { selectedId?: string }) {
       actionIssues.clearOne(itemId);
       setReload((current) => current + 1);
     } catch (caught) {
-      if (caught instanceof ApiRequestError && caught.issues.length) actionIssues.capture(caught);
-      else actionIssues.setOne(itemId, { code: "CONTRIBUTOR_REVIEW_FAILED", message: "A contributor relationship could not be reviewed.", tone: "error" });
+      if (caught instanceof ApiRequestError && caught.issues.length)
+        actionIssues.capture(caught);
+      else
+        actionIssues.setOne(itemId, {
+          code: "CONTRIBUTOR_REVIEW_FAILED",
+          message: "A contributor relationship could not be reviewed.",
+          tone: "error",
+        });
       throw caught;
     } finally {
       setRelationBusy(undefined);
@@ -377,7 +432,11 @@ export function ResearchReviewQueue({ selectedId }: { selectedId?: string }) {
     await linkContributor(itemId, sortOrder, personId);
   }
 
-  async function linkContributor(itemId: string, sortOrder: number, personId: string) {
+  async function linkContributor(
+    itemId: string,
+    sortOrder: number,
+    personId: string,
+  ) {
     const key = `${itemId}:${sortOrder}`;
     if (!personId) return;
     setRelationBusy(key);
@@ -395,12 +454,25 @@ export function ResearchReviewQueue({ selectedId }: { selectedId?: string }) {
       });
       actionIssues.clearOne(itemId);
       setReload((current) => current + 1);
-      showToast({ body: "The contributor is now linked to the verified person record.", title: "Contributor linked" });
+      showToast({
+        body: "The contributor is now linked to the verified person record.",
+        title: "Contributor linked",
+      });
     } catch (caught) {
-      const requestError = caught instanceof ApiRequestError ? caught : undefined;
+      const requestError =
+        caught instanceof ApiRequestError ? caught : undefined;
       if (requestError?.issues.length) actionIssues.capture(requestError);
-      else actionIssues.setOne(itemId, { code: "CONTRIBUTOR_LINK_FAILED", message: "A contributor could not be linked to this record.", tone: "error" });
-      showToast({ body: requestError?.message ?? "The contributor could not be linked.", title: "Contributor was not linked", tone: "error" });
+      else
+        actionIssues.setOne(itemId, {
+          code: "CONTRIBUTOR_LINK_FAILED",
+          message: "A contributor could not be linked to this record.",
+          tone: "error",
+        });
+      showToast({
+        body: requestError?.message ?? "The contributor could not be linked.",
+        title: "Contributor was not linked",
+        tone: "error",
+      });
     } finally {
       setRelationBusy(undefined);
     }
@@ -414,41 +486,53 @@ export function ResearchReviewQueue({ selectedId }: { selectedId?: string }) {
       const markPending = (candidate: ReviewResearch): ReviewResearch =>
         candidate.id === itemId
           ? {
-            ...candidate,
-            reviewIssues: [
-              ...(candidate.reviewIssues ?? []).filter(
-                ({ code }) => ![
-                  "SOURCE_DISCOVERY_FAILED",
-                  "SOURCE_METADATA_UNAVAILABLE",
-                  "SOURCE_DISCOVERY_PENDING",
-                ].includes(code ?? ""),
-              ),
-              {
-                code: "SOURCE_DISCOVERY_PENDING",
-                itemId,
-                message: "Canonical source discovery is still in progress.",
-                tone: "pending",
+              ...candidate,
+              reviewIssues: [
+                ...(candidate.reviewIssues ?? []).filter(
+                  ({ code }) =>
+                    ![
+                      "SOURCE_DISCOVERY_FAILED",
+                      "SOURCE_METADATA_UNAVAILABLE",
+                      "SOURCE_DISCOVERY_PENDING",
+                    ].includes(code ?? ""),
+                ),
+                {
+                  code: "SOURCE_DISCOVERY_PENDING",
+                  itemId,
+                  message: "Canonical source discovery is still in progress.",
+                  tone: "pending",
+                },
+              ],
+              sourceSnapshot: {
+                failureReason: null,
+                fetchedAt: candidate.sourceSnapshot?.fetchedAt ?? null,
+                metadata: candidate.sourceSnapshot?.metadata ?? null,
+                status: "PENDING",
               },
-            ],
-            sourceSnapshot: {
-              failureReason: null,
-              fetchedAt: candidate.sourceSnapshot?.fetchedAt ?? null,
-              metadata: candidate.sourceSnapshot?.metadata ?? null,
-              status: "PENDING",
-            },
-          }
+            }
           : candidate;
       setItems((current) => current.map(markPending));
-      setFocusedItem((current) =>
-        current ? markPending(current) : current,
-      );
+      setFocusedItem((current) => (current ? markPending(current) : current));
       actionIssues.clearOne(itemId);
-      showToast({ body: "Canonical source evidence is being checked in the background.", title: "Source check started" });
+      showToast({
+        body: "Canonical source evidence is being checked in the background.",
+        title: "Source check started",
+      });
     } catch (caught) {
-      const requestError = caught instanceof ApiRequestError ? caught : undefined;
+      const requestError =
+        caught instanceof ApiRequestError ? caught : undefined;
       if (requestError?.issues.length) actionIssues.capture(requestError);
-      else actionIssues.setOne(itemId, { code: "SOURCE_CHECK_FAILED", message: "The canonical source check could not be started.", tone: "error" });
-      showToast({ body: requestError?.message ?? "The source check could not be started.", title: "Source check was not started", tone: "error" });
+      else
+        actionIssues.setOne(itemId, {
+          code: "SOURCE_CHECK_FAILED",
+          message: "The canonical source check could not be started.",
+          tone: "error",
+        });
+      showToast({
+        body: requestError?.message ?? "The source check could not be started.",
+        title: "Source check was not started",
+        tone: "error",
+      });
     } finally {
       setRelationBusy(undefined);
     }
@@ -459,21 +543,43 @@ export function ResearchReviewQueue({ selectedId }: { selectedId?: string }) {
       ? [focusedItem, ...items]
       : items;
   const bulk = useBulkSelection(visibleItems.map(({ id }) => id));
-  const selectedResearchItems = visibleItems.filter(({ id }) => bulk.isSelected(id));
+  const selectedResearchItems = visibleItems.filter(({ id }) =>
+    bulk.isSelected(id),
+  );
   const issuesFor = (candidate: ReviewResearch): ReviewIssue[] => [
     ...(candidate.reviewIssues ?? []),
     ...actionIssues.forItem(candidate.id),
   ];
-  const selectedAttentionCount = selectedResearchItems.filter((candidate) => issuesFor(candidate).length > 0).length;
-  const commonBulkStatuses = commonResearchBulkStatuses(selectedResearchItems, relationBusy);
-  const commonBulkActions = researchBulkActions(commonBulkStatuses, selectedResearchItems.length);
-  const item = visibleItems.find((candidate) => candidate.id === selected) ?? (loading ? loadingResearchItem() : undefined);
+  const selectedAttentionCount = selectedResearchItems.filter(
+    (candidate) => issuesFor(candidate).length > 0,
+  ).length;
+  const commonBulkStatuses = commonResearchBulkStatuses(
+    selectedResearchItems,
+    relationBusy,
+  );
+  const commonBulkActions = researchBulkActions(
+    commonBulkStatuses,
+    selectedResearchItems.length,
+  );
+  const item =
+    visibleItems.find((candidate) => candidate.id === selected) ??
+    (loading ? loadingResearchItem() : undefined);
   const editing = Boolean(item && editingId === item.id);
   const sourcePending =
     item?.sourceSnapshot?.status === "PENDING" ||
     relationBusy === `discover:${item?.id}`;
-  const hasProposedMatches = Boolean(item?.contributors.some((contributor) => contributor.matches.some((match) => match.status === "PROPOSED")));
-  async function decideBulk({ note, status: decisionStatus }: { note?: string; status: ResearchDecision }) {
+  const hasProposedMatches = Boolean(
+    item?.contributors.some((contributor) =>
+      contributor.matches.some((match) => match.status === "PROPOSED"),
+    ),
+  );
+  async function decideBulk({
+    note,
+    status: decisionStatus,
+  }: {
+    note?: string;
+    status: ResearchDecision;
+  }) {
     if (!selectedResearchItems.length) return;
     await apiRequest("/research-review/bulk-review", {
       body: JSON.stringify({
@@ -503,9 +609,10 @@ export function ResearchReviewQueue({ selectedId }: { selectedId?: string }) {
   const loadingRows = loading;
   const loadingDetail = loading;
   const refreshing = loading && Boolean(result);
-  const renderedItems = loadingRows && !visibleItems.length
-    ? Array.from({ length: 7 }, (_, index) => loadingResearchItem(index + 1))
-    : visibleItems;
+  const renderedItems =
+    loadingRows && !visibleItems.length
+      ? Array.from({ length: 7 }, (_, index) => loadingResearchItem(index + 1))
+      : visibleItems;
 
   return (
     <div className="grid min-w-0 gap-4">
@@ -585,7 +692,9 @@ export function ResearchReviewQueue({ selectedId }: { selectedId?: string }) {
           selectAllState={bulk.selectAllState}
           selectableCount={visibleItems.length}
           selectedCount={bulk.selectedCount}
-          successBody={(decisionStatus) => `${selectedResearchItems.length} research review${selectedResearchItems.length === 1 ? "" : "s"} moved to ${decisionStatus.replaceAll("_", " ").toLowerCase()}.`}
+          successBody={(decisionStatus) =>
+            `${selectedResearchItems.length} research review${selectedResearchItems.length === 1 ? "" : "s"} moved to ${decisionStatus.replaceAll("_", " ").toLowerCase()}.`
+          }
           successTitle="Bulk research review saved"
         />
       ) : null}
@@ -604,10 +713,14 @@ export function ResearchReviewQueue({ selectedId }: { selectedId?: string }) {
         />
       ) : (
         <div className="grid min-w-0 grid-cols-[minmax(300px,360px)_minmax(0,1fr)] items-start gap-5 max-[960px]:grid-cols-1">
-          <aside className={`sticky top-[88px] grid max-h-[calc(100svh-104px)] min-w-0 grid-rows-[auto_minmax(0,1fr)] gap-[.35rem] overflow-hidden rounded-panel border border-line bg-surface p-4 max-[960px]:static max-[960px]:max-h-none ${refreshing ? "opacity-70" : ""}`}>
+          <aside
+            className={`sticky top-[88px] grid max-h-[calc(100svh-104px)] min-w-0 grid-rows-[auto_minmax(0,1fr)] gap-[.35rem] overflow-hidden rounded-panel border border-line bg-surface p-4 max-[960px]:static max-[960px]:max-h-none ${refreshing ? "opacity-70" : ""}`}
+          >
             <div className="grid min-w-0 items-stretch gap-3 border-b border-line pb-[.85rem]">
               <div>
-                <p className="m-0 mb-4 font-[var(--font-sans)] text-[.75rem] font-extrabold uppercase tracking-[.12em] text-brand">Review queue</p>
+                <p className="m-0 mb-4 font-[var(--font-sans)] text-[.75rem] font-extrabold uppercase tracking-[.12em] text-brand">
+                  Review queue
+                </p>
               </div>
               {loading || result ? (
                 <PaginationControls
@@ -621,24 +734,37 @@ export function ResearchReviewQueue({ selectedId }: { selectedId?: string }) {
               ) : null}
             </div>
             {renderedItems.length ? (
-              <div className="min-h-0 overflow-y-auto pr-1 [scrollbar-color:var(--ink-faint)_transparent] [scrollbar-width:thin]" data-loading={loadingRows || undefined}>
+              <div
+                className="min-h-0 overflow-y-auto pr-1 [scrollbar-color:var(--ink-faint)_transparent] [scrollbar-width:thin]"
+                data-loading={loadingRows || undefined}
+              >
                 <div className="flex flex-col divide-y divide-line rounded-panel border border-line overflow-hidden">
                   {renderedItems.map((candidate) => (
                     <div
                       className={`relative grid min-w-0 grid-cols-[auto_minmax(0,1fr)] items-stretch overflow-hidden transition-colors ${candidate.id === selected ? "bg-brand-soft" : "bg-surface hover:bg-surface-subtle"}`}
                       key={candidate.id}
                     >
-                      {!loadingRows ? <ReviewIssueStamp className="right-2 top-2" issue={issuesFor(candidate)[0]} /> : null}
+                      {!loadingRows ? (
+                        <ReviewIssueStamp
+                          className="right-2 top-2"
+                          issue={issuesFor(candidate)[0]}
+                        />
+                      ) : null}
                       <div className="grid place-items-center px-3">
                         {loadingRows ? (
-                          <span className={loadingPlaceholder(true, "control")} data-placeholder="control" />
+                          <span
+                            className={loadingPlaceholder(true, "control")}
+                            data-placeholder="control"
+                          />
                         ) : (
                           <CheckboxControl
                             ariaLabel={`Select ${researchLabel(candidate)} review`}
                             checked={bulk.isSelected(candidate.id)}
                             className="gap-0"
                             id={`research-review-select-${candidate.id}`}
-                            onCheckedChange={(checked) => bulk.toggle(candidate.id, checked)}
+                            onCheckedChange={(checked) =>
+                              bulk.toggle(candidate.id, checked)
+                            }
                           />
                         )}
                       </div>
@@ -648,10 +774,27 @@ export function ResearchReviewQueue({ selectedId }: { selectedId?: string }) {
                         onClick={() => setSelected(candidate.id)}
                         type="button"
                       >
-                        <div className="w-fit capitalize"><Badge tone="info" loading={loadingRows}>{candidate.type.toLowerCase()}</Badge></div>
-                        <span className={cn("line-clamp-2 [overflow-wrap:anywhere] font-sans text-[.95rem] font-normal normal-case leading-[1.35] tracking-normal text-ink", loadingPlaceholder(loadingRows, "text", "long"))} data-placeholder={loadingRows ? "text" : undefined} data-placeholder-width="long">{researchLabel(candidate)}</span>
+                        <div className="w-fit capitalize">
+                          <Badge tone="info" loading={loadingRows}>
+                            {candidate.type.toLowerCase()}
+                          </Badge>
+                        </div>
+                        <span
+                          className={cn(
+                            "line-clamp-2 [overflow-wrap:anywhere] font-sans text-[.95rem] font-normal normal-case leading-[1.35] tracking-normal text-ink",
+                            loadingPlaceholder(loadingRows, "text", "long"),
+                          )}
+                          data-placeholder={loadingRows ? "text" : undefined}
+                          data-placeholder-width="long"
+                        >
+                          {researchLabel(candidate)}
+                        </span>
                         {!loadingRows && issuesFor(candidate)[0] ? (
-                          <SemanticStatus tone={issuesFor(candidate)[0].tone ?? "pending"}>{issuesFor(candidate)[0].message}</SemanticStatus>
+                          <SemanticStatus
+                            tone={issuesFor(candidate)[0].tone ?? "pending"}
+                          >
+                            {issuesFor(candidate)[0].message}
+                          </SemanticStatus>
                         ) : null}
                       </button>
                     </div>
@@ -659,42 +802,134 @@ export function ResearchReviewQueue({ selectedId }: { selectedId?: string }) {
                 </div>
               </div>
             ) : (
-              <p className="m-0 text-[.82rem] leading-[1.5] text-ink-muted">No submissions match these filters.</p>
+              <p className="m-0 text-[.82rem] leading-[1.5] text-ink-muted">
+                No submissions match these filters.
+              </p>
             )}
           </aside>
-          <section className="sticky top-[88px] grid max-h-[calc(100svh-104px)] min-w-0 gap-4 overflow-y-auto rounded-panel border border-line bg-surface p-5 [scrollbar-color:var(--ink-faint)_transparent] [scrollbar-width:thin] max-[960px]:static max-[960px]:max-h-none" data-loading={loadingDetail || undefined}>
+          <section
+            className="sticky top-[88px] grid max-h-[calc(100svh-104px)] min-w-0 gap-4 overflow-y-auto rounded-panel border border-line bg-surface p-5 [scrollbar-color:var(--ink-faint)_transparent] [scrollbar-width:thin] max-[960px]:static max-[960px]:max-h-none"
+            data-loading={loadingDetail || undefined}
+          >
             {item ? (
               <>
                 <header className="grid gap-[.65rem]">
                   <div className="flex flex-wrap items-center gap-[.7rem] text-[.82rem] text-ink-muted">
-                    <div className="capitalize"><Badge tone="info" loading={loadingDetail}>{item.type.toLowerCase()}</Badge></div>
-                    <span className={cn("font-mono text-[.75rem] text-ink-muted", loadingPlaceholder(loadingDetail, "label", "long"))} data-placeholder={loadingDetail ? "label" : undefined} data-placeholder-width="long">
+                    <div className="capitalize">
+                      <Badge tone="info" loading={loadingDetail}>
+                        {item.type.toLowerCase()}
+                      </Badge>
+                    </div>
+                    <span
+                      className={cn(
+                        "font-mono text-[.75rem] text-ink-muted",
+                        loadingPlaceholder(loadingDetail, "label", "long"),
+                      )}
+                      data-placeholder={loadingDetail ? "label" : undefined}
+                      data-placeholder-width="long"
+                    >
                       Submitted by{" "}
                       {item.submittedBy?.person?.fullName ??
                         item.submittedBy?.email ??
                         "Unknown member"}
                     </span>
                   </div>
-                  <h2 className={cn("m-0 font-serif text-[clamp(1.75rem,2.7vw,2.45rem)] leading-[1.08] [overflow-wrap:anywhere]", loadingPlaceholder(loadingDetail, "text", "full"))} data-placeholder={loadingDetail ? "text" : undefined} data-placeholder-width="full">{researchLabel(item)}</h2>
-                  {item.summary ? <p className={cn("m-0 text-[.95rem] leading-[1.55] text-ink-muted", loadingPlaceholder(loadingDetail, "text", "full"))} data-placeholder={loadingDetail ? "text" : undefined} data-placeholder-width="full">{item.summary}</p> : null}
+                  <h2
+                    className={cn(
+                      "m-0 font-serif text-[clamp(1.75rem,2.7vw,2.45rem)] leading-[1.08] [overflow-wrap:anywhere]",
+                      loadingPlaceholder(loadingDetail, "text", "full"),
+                    )}
+                    data-placeholder={loadingDetail ? "text" : undefined}
+                    data-placeholder-width="full"
+                  >
+                    {researchLabel(item)}
+                  </h2>
+                  {item.summary ? (
+                    <p
+                      className={cn(
+                        "m-0 text-[.95rem] leading-[1.55] text-ink-muted",
+                        loadingPlaceholder(loadingDetail, "text", "full"),
+                      )}
+                      data-placeholder={loadingDetail ? "text" : undefined}
+                      data-placeholder-width="full"
+                    >
+                      {item.summary}
+                    </p>
+                  ) : null}
                   <div className="flex flex-wrap items-center gap-2">
-                    <Badge loading={loadingDetail} tone={item.reviewStatus === "PUBLISHED" ? "success" : item.reviewStatus === "REJECTED" ? "error" : "warning"}>{item.reviewStatus.replaceAll("_", " ").toLowerCase()}</Badge>
+                    <Badge
+                      loading={loadingDetail}
+                      tone={
+                        item.reviewStatus === "PUBLISHED"
+                          ? "success"
+                          : item.reviewStatus === "REJECTED"
+                            ? "error"
+                            : "warning"
+                      }
+                    >
+                      {item.reviewStatus.replaceAll("_", " ").toLowerCase()}
+                    </Badge>
                     {issuesFor(item).map((issue, index) => (
-                      <SemanticStatus key={`${issue.code ?? issue.message}-${index}`} loading={loadingDetail} tone={issue.tone ?? "pending"}>{issue.message}</SemanticStatus>
+                      <SemanticStatus
+                        key={`${issue.code ?? issue.message}-${index}`}
+                        loading={loadingDetail}
+                        tone={issue.tone ?? "pending"}
+                      >
+                        {issue.message}
+                      </SemanticStatus>
                     ))}
-                    <ButtonControl compact disabled={loadingDetail} onClick={() => setEditingId((current) => (current === item.id ? undefined : item.id))} variant="secondary">{editing ? "Close editor" : "Edit record"}</ButtonControl>
+                    <ButtonControl
+                      compact
+                      disabled={loadingDetail}
+                      onClick={() =>
+                        setEditingId((current) =>
+                          current === item.id ? undefined : item.id,
+                        )
+                      }
+                      variant="secondary"
+                    >
+                      {editing ? "Close editor" : "Edit record"}
+                    </ButtonControl>
                   </div>
                 </header>
-                {editing ? <ResearchRecordEditor item={item} onSubmit={saveRecordEdit} saving={editSaving} /> : null}
-                <section className="grid gap-4 rounded-panel border border-line bg-surface p-[clamp(1rem,2vw,1.35rem)]" aria-label="Source discovery">
+                {editing ? (
+                  <ResearchRecordEditor
+                    item={item}
+                    onSubmit={saveRecordEdit}
+                    saving={editSaving}
+                  />
+                ) : null}
+                <section
+                  className="grid gap-4 rounded-panel border border-line bg-surface p-[clamp(1rem,2vw,1.35rem)]"
+                  aria-label="Source discovery"
+                >
                   <div className="flex items-center justify-between gap-4 max-[640px]:flex-col max-[640px]:items-start">
                     <div className="flex items-center gap-[.7rem]">
-                      <Badge dot loading={loadingDetail} tone={!item.canonicalUrl ? "warning" : sourceTone(item.sourceSnapshot?.status)}>
-                        {!item.canonicalUrl ? "not provided" : item.sourceSnapshot?.status.toLowerCase() ?? "not checked"}
+                      <Badge
+                        dot
+                        loading={loadingDetail}
+                        tone={
+                          !item.canonicalUrl
+                            ? "warning"
+                            : sourceTone(item.sourceSnapshot?.status)
+                        }
+                      >
+                        {!item.canonicalUrl
+                          ? "not provided"
+                          : (item.sourceSnapshot?.status.toLowerCase() ??
+                            "not checked")}
                       </Badge>
-                      <h3 className="font-serif text-[clamp(1.15rem,1.7vw,1.35rem)] leading-[1.2]">Canonical source evidence</h3>
+                      <h3 className="font-serif text-[clamp(1.15rem,1.7vw,1.35rem)] leading-[1.2]">
+                        Canonical source evidence
+                      </h3>
                     </div>
-                    <ButtonControl compact disabled={sourcePending || !item.canonicalUrl} loading={loadingDetail} onClick={() => void rediscover(item.id)} variant="secondary">
+                    <ButtonControl
+                      compact
+                      disabled={sourcePending || !item.canonicalUrl}
+                      loading={loadingDetail}
+                      onClick={() => void rediscover(item.id)}
+                      variant="secondary"
+                    >
                       {!item.canonicalUrl
                         ? "No source URL"
                         : sourcePending
@@ -705,50 +940,103 @@ export function ResearchReviewQueue({ selectedId }: { selectedId?: string }) {
                     </ButtonControl>
                   </div>
                   {!item.canonicalUrl ? (
-                    <SemanticStatus loading={loadingDetail} tone="warning">No canonical source URL was submitted. Contributor relationships can still be verified manually.</SemanticStatus>
+                    <SemanticStatus loading={loadingDetail} tone="warning">
+                      No canonical source URL was submitted. Contributor
+                      relationships can still be verified manually.
+                    </SemanticStatus>
                   ) : !item.sourceSnapshot ? (
-                    <SemanticStatus loading={loadingDetail} tone="info">The canonical source has not been checked yet.</SemanticStatus>
+                    <SemanticStatus loading={loadingDetail} tone="info">
+                      The canonical source has not been checked yet.
+                    </SemanticStatus>
                   ) : item.sourceSnapshot.status === "PENDING" ? (
-                    <SemanticStatus loading={loadingDetail} tone="pending">Canonical source metadata is being checked.</SemanticStatus>
+                    <SemanticStatus loading={loadingDetail} tone="pending">
+                      Canonical source metadata is being checked.
+                    </SemanticStatus>
                   ) : item.sourceSnapshot.status === "FAILED" ? (
-                    <SemanticStatus loading={loadingDetail} tone="error">The canonical source check failed. Check the source URL or try again.</SemanticStatus>
+                    <SemanticStatus loading={loadingDetail} tone="error">
+                      The canonical source check failed. Check the source URL or
+                      try again.
+                    </SemanticStatus>
                   ) : item.sourceSnapshot.status === "UNAVAILABLE" ? (
-                    <SemanticStatus loading={loadingDetail} tone="warning">No machine-readable source metadata was available. Manual review is still possible.</SemanticStatus>
+                    <SemanticStatus loading={loadingDetail} tone="warning">
+                      No machine-readable source metadata was available. Manual
+                      review is still possible.
+                    </SemanticStatus>
                   ) : sourceAuthorsDiffer(item) ? (
                     <div className="grid gap-[.65rem]">
-                      <SemanticStatus loading={loadingDetail} tone="warning">Source metadata differs</SemanticStatus>
+                      <SemanticStatus loading={loadingDetail} tone="warning">
+                        Source metadata differs
+                      </SemanticStatus>
                       <div className="flex flex-wrap gap-[.45rem] text-[.75rem] text-ink-muted">
-                        {item.sourceSnapshot.metadata?.authors?.map(({ name }, index) => (
-                          <span key={name}>{index ? ` · ${name}` : name}</span>
-                        ))}
+                        {item.sourceSnapshot.metadata?.authors?.map(
+                          ({ name }, index) => (
+                            <span key={name}>
+                              {index ? ` · ${name}` : name}
+                            </span>
+                          ),
+                        )}
                       </div>
                     </div>
                   ) : item.sourceSnapshot.metadata?.authors?.length ? null : (
-                    <SemanticStatus loading={loadingDetail} tone="warning">No machine-readable contributor metadata was found. Manual linking remains available.</SemanticStatus>
+                    <SemanticStatus loading={loadingDetail} tone="warning">
+                      No machine-readable contributor metadata was found. Manual
+                      linking remains available.
+                    </SemanticStatus>
                   )}
                 </section>
-                <section className="grid gap-4 rounded-panel border border-line bg-surface p-[clamp(1rem,2vw,1.35rem)]" aria-label="Contributor verification">
+                <section
+                  className="grid gap-4 rounded-panel border border-line bg-surface p-[clamp(1rem,2vw,1.35rem)]"
+                  aria-label="Contributor verification"
+                >
                   <div className="flex items-center justify-between gap-4">
-                    <h3 className="font-serif text-[clamp(1.15rem,1.7vw,1.35rem)] leading-[1.2]">Contributor relationships</h3>
-                    <span className={cn("font-mono text-[.75rem] text-ink-muted", loadingPlaceholder(loadingDetail, "label", "medium"))} data-placeholder={loadingDetail ? "label" : undefined} data-placeholder-width="medium">{item.contributors.filter(({ person }) => person).length}/{item.contributors.length} linked</span>
+                    <h3 className="font-serif text-[clamp(1.15rem,1.7vw,1.35rem)] leading-[1.2]">
+                      Contributor relationships
+                    </h3>
+                    <span
+                      className={cn(
+                        "font-mono text-[.75rem] text-ink-muted",
+                        loadingPlaceholder(loadingDetail, "label", "medium"),
+                      )}
+                      data-placeholder={loadingDetail ? "label" : undefined}
+                      data-placeholder-width="medium"
+                    >
+                      {item.contributors.filter(({ person }) => person).length}/
+                      {item.contributors.length} linked
+                    </span>
                   </div>
                   {item.contributors.map((contributor) => {
                     const key = `${item.id}:${contributor.sortOrder}`;
                     const proposals = contributor.matches
                       .filter(({ status }) => status === "PROPOSED")
-                      .sort((left, right) => (right.confidence ?? 0) - (left.confidence ?? 0));
+                      .sort(
+                        (left, right) =>
+                          (right.confidence ?? 0) - (left.confidence ?? 0),
+                      );
                     const suggested = proposals[0];
-                    const selectedPersonId = manualPeople[key] ?? contributor.person?.id ?? suggested?.person.id ?? "";
-                    const selectedMatch = contributor.matches.find(({ person }) => person.id === selectedPersonId);
-                    const verifiedCurrent = Boolean(contributor.person && contributor.person.id === selectedPersonId);
+                    const selectedPersonId =
+                      manualPeople[key] ??
+                      contributor.person?.id ??
+                      suggested?.person.id ??
+                      "";
+                    const selectedMatch = contributor.matches.find(
+                      ({ person }) => person.id === selectedPersonId,
+                    );
+                    const verifiedCurrent = Boolean(
+                      contributor.person &&
+                      contributor.person.id === selectedPersonId,
+                    );
                     const metadata = selectedMatch
                       ? `${selectedMatch.status === "REJECTED" ? "Previously rejected · " : ""}${proposalReason(selectedMatch)}${selectedMatch.confidence !== null ? ` · ${Math.round(selectedMatch.confidence * 100)}% match` : ""}`
                       : selectedPersonId
                         ? "Manual selection · no automatic confidence score"
                         : "No reliable registered-person match was found";
-                    const selectedIsSuggestion = selectedMatch?.status === "PROPOSED";
-                    const selectedWasRejected = selectedMatch?.status === "REJECTED";
-                    const selectedManually = Boolean(selectedPersonId && !selectedMatch && !verifiedCurrent);
+                    const selectedIsSuggestion =
+                      selectedMatch?.status === "PROPOSED";
+                    const selectedWasRejected =
+                      selectedMatch?.status === "REJECTED";
+                    const selectedManually = Boolean(
+                      selectedPersonId && !selectedMatch && !verifiedCurrent,
+                    );
                     const statusTone: BadgeTone = verifiedCurrent
                       ? "success"
                       : selectedIsSuggestion
@@ -767,12 +1055,28 @@ export function ResearchReviewQueue({ selectedId }: { selectedId?: string }) {
                           : selectedManually
                             ? "Manual"
                             : "Unmatched";
-                    const rejectMatch = selectedIsSuggestion ? selectedMatch : undefined;
-                    const verificationBusy = relationBusy === key || relationBusy === selectedMatch?.id;
+                    const rejectMatch = selectedIsSuggestion
+                      ? selectedMatch
+                      : undefined;
+                    const verificationBusy =
+                      relationBusy === key ||
+                      relationBusy === selectedMatch?.id;
                     return (
-                      <article className="grid min-w-0 gap-[.65rem] border-t border-line py-4 first:border-t-0 first:pt-0" key={key}>
+                      <article
+                        className="grid min-w-0 gap-[.65rem] border-t border-line py-4 first:border-t-0 first:pt-0"
+                        key={key}
+                      >
                         <div className="grid min-w-0 grid-cols-[minmax(180px,.72fr)_minmax(260px,1fr)_auto] items-center gap-[.65rem] max-[720px]:grid-cols-1">
-                          <strong className={cn("min-w-0 [overflow-wrap:anywhere]", loadingPlaceholder(loadingDetail, "text", "long"))} data-placeholder={loadingDetail ? "text" : undefined} data-placeholder-width="long">
+                          <strong
+                            className={cn(
+                              "min-w-0 [overflow-wrap:anywhere]",
+                              loadingPlaceholder(loadingDetail, "text", "long"),
+                            )}
+                            data-placeholder={
+                              loadingDetail ? "text" : undefined
+                            }
+                            data-placeholder-width="long"
+                          >
                             {contributor.displayName}
                           </strong>
                           <SearchableSelect
@@ -780,17 +1084,23 @@ export function ResearchReviewQueue({ selectedId }: { selectedId?: string }) {
                             disabled={loadingDetail}
                             placeholderLoading={loadingDetail}
                             onValueChange={(value) =>
-                              setManualPeople((current) => ({ ...current, [key]: value }))
+                              setManualPeople((current) => ({
+                                ...current,
+                                [key]: value,
+                              }))
                             }
                             options={people.map((person) => {
-                              const match = contributor.matches.find(({ person: matchedPerson }) => matchedPerson.id === person.id);
+                              const match = contributor.matches.find(
+                                ({ person: matchedPerson }) =>
+                                  matchedPerson.id === person.id,
+                              );
                               return {
                                 label: person.fullName,
                                 value: person.id,
                                 ...(match
                                   ? {
-                                    description: `${match.status === "REJECTED" ? "Previously rejected · " : match.status === "VERIFIED" ? "Verified · " : ""}${proposalReason(match)}${match.confidence !== null ? ` · ${Math.round(match.confidence * 100)}% match` : ""}`,
-                                  }
+                                      description: `${match.status === "REJECTED" ? "Previously rejected · " : match.status === "VERIFIED" ? "Verified · " : ""}${proposalReason(match)}${match.confidence !== null ? ` · ${Math.round(match.confidence * 100)}% match` : ""}`,
+                                    }
                                   : {}),
                               };
                             })}
@@ -801,9 +1111,20 @@ export function ResearchReviewQueue({ selectedId }: { selectedId?: string }) {
                           <div className="flex items-center justify-end gap-2 max-[720px]:justify-start">
                             <ButtonControl
                               compact
-                              disabled={!selectedPersonId || verifiedCurrent || verificationBusy}
+                              disabled={
+                                !selectedPersonId ||
+                                verifiedCurrent ||
+                                verificationBusy
+                              }
                               loading={loadingDetail}
-                              onClick={() => void verifyContributor(item.id, contributor.sortOrder, selectedPersonId, selectedMatch)}
+                              onClick={() =>
+                                void verifyContributor(
+                                  item.id,
+                                  contributor.sortOrder,
+                                  selectedPersonId,
+                                  selectedMatch,
+                                )
+                              }
                               variant="primary"
                             >
                               {verifiedCurrent ? "Verified" : "Verify"}
@@ -811,33 +1132,74 @@ export function ResearchReviewQueue({ selectedId }: { selectedId?: string }) {
                             {rejectMatch ? (
                               <ReviewActions
                                 className="gap-0"
-                                actions={[{
-                                  confirmDescription: `Reject ${rejectMatch.person.fullName} as the selected suggested match for ${contributor.displayName}.`,
-                                  confirmLabel: "Reject suggestion",
-                                  confirmTitle: "Reject this contributor match?",
-                                  disabled: relationBusy === rejectMatch.id,
-                                  label: "Reject",
-                                  notePlaceholder: "Optional note about why this suggested contributor match is incorrect.",
-                                  requiresNote: rejectMatch.source === "USER_CLAIM",
-                                  status: "REJECTED",
-                                  tone: "secondary",
-                                }]}
-                                onSubmit={(decision) => reviewMatch(item.id, rejectMatch.id, decision)}
-                                successBody={() => "The suggested contributor match was rejected."}
+                                actions={[
+                                  {
+                                    confirmDescription: `Reject ${rejectMatch.person.fullName} as the selected suggested match for ${contributor.displayName}.`,
+                                    confirmLabel: "Reject suggestion",
+                                    confirmTitle:
+                                      "Reject this contributor match?",
+                                    disabled: relationBusy === rejectMatch.id,
+                                    label: "Reject",
+                                    notePlaceholder:
+                                      "Optional note about why this suggested contributor match is incorrect.",
+                                    requiresNote:
+                                      rejectMatch.source === "USER_CLAIM",
+                                    status: "REJECTED",
+                                    tone: "secondary",
+                                  },
+                                ]}
+                                onSubmit={(decision) =>
+                                  reviewMatch(item.id, rejectMatch.id, decision)
+                                }
+                                successBody={() =>
+                                  "The suggested contributor match was rejected."
+                                }
                                 successTitle="Contributor suggestion rejected"
                               />
                             ) : (
-                              <ButtonControl compact disabled variant="secondary">Reject</ButtonControl>
+                              <ButtonControl
+                                compact
+                                disabled
+                                variant="secondary"
+                              >
+                                Reject
+                              </ButtonControl>
                             )}
                           </div>
                         </div>
                         <div className="grid min-w-0 grid-cols-[minmax(180px,.72fr)_minmax(0,1fr)] items-start gap-[.65rem] max-[720px]:grid-cols-1">
                           <div className="flex flex-wrap items-center gap-2">
-                            <Badge dot loading={loadingDetail} tone={statusTone}>{statusLabel}</Badge>
-                            <Badge loading={loadingDetail} tone="neutral">Author</Badge>
+                            <Badge
+                              dot
+                              loading={loadingDetail}
+                              tone={statusTone}
+                            >
+                              {statusLabel}
+                            </Badge>
+                            <Badge loading={loadingDetail} tone="neutral">
+                              Author
+                            </Badge>
                           </div>
                           <div className="grid min-w-0 gap-1">
-                            <span className={cn("text-[.78rem] leading-[1.45]", loadingPlaceholder(loadingDetail, "text", "long"), selectedMatch?.confidence === 1 ? "text-success" : selectedMatch ? "text-warning" : "text-ink-muted")} data-placeholder={loadingDetail ? "text" : undefined} data-placeholder-width="long">
+                            <span
+                              className={cn(
+                                "text-[.78rem] leading-[1.45]",
+                                loadingPlaceholder(
+                                  loadingDetail,
+                                  "text",
+                                  "long",
+                                ),
+                                selectedMatch?.confidence === 1
+                                  ? "text-success"
+                                  : selectedMatch
+                                    ? "text-warning"
+                                    : "text-ink-muted",
+                              )}
+                              data-placeholder={
+                                loadingDetail ? "text" : undefined
+                              }
+                              data-placeholder-width="long"
+                            >
                               {metadata}
                             </span>
                           </div>
@@ -847,30 +1209,59 @@ export function ResearchReviewQueue({ selectedId }: { selectedId?: string }) {
                   })}
                 </section>
                 {(item.canonicalUrl ?? item.legacyUrl) ? (
-                  <ButtonAnchor className="justify-self-start" href={loadingDetail ? "#" : (item.canonicalUrl ?? item.legacyUrl ?? undefined)} loading={loadingDetail} rel="noreferrer" target="_blank" variant="secondary">
-                    {item.canonicalUrl ? "Open canonical source" : "Open import source"}
+                  <ButtonAnchor
+                    className="justify-self-start"
+                    href={
+                      loadingDetail
+                        ? "#"
+                        : (item.canonicalUrl ?? item.legacyUrl ?? undefined)
+                    }
+                    loading={loadingDetail}
+                    rel="noreferrer"
+                    target="_blank"
+                    variant="secondary"
+                  >
+                    {item.canonicalUrl
+                      ? "Open canonical source"
+                      : "Open import source"}
                   </ButtonAnchor>
                 ) : (
-                  <SemanticStatus loading={loadingDetail} tone="warning">No external source URL was provided. Manual source verification is required.</SemanticStatus>
+                  <SemanticStatus loading={loadingDetail} tone="warning">
+                    No external source URL was provided. Manual source
+                    verification is required.
+                  </SemanticStatus>
                 )}
-                {error ? <p className="m-0 flex items-center gap-[.45rem] text-[.82rem] leading-[1.5] text-ink-muted rounded-panel bg-danger-soft p-[.8rem] text-danger">{error}</p> : null}
-                {item.reviewStatus === "PUBLISHED" || item.reviewStatus === "REJECTED" ? (
+                {error ? (
+                  <p className="m-0 flex items-center gap-[.45rem] text-[.82rem] leading-[1.5] text-ink-muted rounded-panel bg-danger-soft p-[.8rem] text-danger">
+                    {error}
+                  </p>
+                ) : null}
+                {item.reviewStatus === "PUBLISHED" ||
+                item.reviewStatus === "REJECTED" ? (
                   <ReviewActions
                     loading={loadingDetail}
-                    actions={[{
-                      confirmDescription: "The public/rejected decision is retained in history and the record returns to the manual verification queue.",
-                      confirmLabel: "Reopen record",
-                      confirmTitle: "Reopen this research record?",
-                      label: "Reopen for review",
-                      notePlaceholder: "Explain why this record needs to be reviewed again.",
-                      requiresNote: true,
-                      status: "NEEDS_REVIEW",
-                      tone: "secondary",
-                    }]}
-                    onError={(requestError) => item && captureItemError(item.id, requestError)}
+                    actions={[
+                      {
+                        confirmDescription:
+                          "The public/rejected decision is retained in history and the record returns to the manual verification queue.",
+                        confirmLabel: "Reopen record",
+                        confirmTitle: "Reopen this research record?",
+                        label: "Reopen for review",
+                        notePlaceholder:
+                          "Explain why this record needs to be reviewed again.",
+                        requiresNote: true,
+                        status: "NEEDS_REVIEW",
+                        tone: "secondary",
+                      },
+                    ]}
+                    onError={(requestError) =>
+                      item && captureItemError(item.id, requestError)
+                    }
                     onSubmit={loadingDetail ? () => Promise.resolve() : decide}
                     onSuccess={() => item && actionIssues.clearOne(item.id)}
-                    successBody={() => "The record was reopened for manual review."}
+                    successBody={() =>
+                      "The record was reopened for manual review."
+                    }
                     successTitle="Research record reopened"
                   />
                 ) : (
@@ -878,46 +1269,61 @@ export function ResearchReviewQueue({ selectedId }: { selectedId?: string }) {
                     loading={loadingDetail}
                     actions={[
                       {
-                        confirmDescription: "The record becomes public and a verified paper may trigger rank promotion.",
+                        confirmDescription:
+                          "The record becomes public and a verified paper may trigger rank promotion.",
                         confirmLabel: "Publish verified record",
                         confirmTitle: "Publish this research record?",
                         disabled: sourcePending || hasProposedMatches,
-                        label: sourcePending ? "Source check in progress" : hasProposedMatches ? "Resolve contributor matches" : "Publish",
+                        label: sourcePending
+                          ? "Source check in progress"
+                          : hasProposedMatches
+                            ? "Resolve contributor matches"
+                            : "Publish",
                         status: "PUBLISHED",
                         tone: "primary",
                       },
                       {
-                        confirmDescription: "The submission returns to the member with your reviewer note.",
+                        confirmDescription:
+                          "The submission returns to the member with your reviewer note.",
                         confirmLabel: "Request changes",
                         confirmTitle: "Send this back for changes?",
                         label: "Add review",
-                        notePlaceholder: "Explain what must change before this can be approved.",
+                        notePlaceholder:
+                          "Explain what must change before this can be approved.",
                         pendingLabel: "Send review",
                         requiresNote: true,
                         status: "CHANGES_REQUESTED",
                         tone: "secondary",
                       },
                       {
-                        confirmDescription: "The submission leaves the active queue as rejected.",
+                        confirmDescription:
+                          "The submission leaves the active queue as rejected.",
                         confirmLabel: "Reject submission",
                         confirmTitle: "Reject this research record?",
                         label: "Reject",
-                        notePlaceholder: "Explain why this submission was rejected.",
+                        notePlaceholder:
+                          "Explain why this submission was rejected.",
                         requiresNote: true,
                         status: "REJECTED",
                         tone: "danger",
                       },
                     ]}
-                    onError={(requestError) => item && captureItemError(item.id, requestError)}
+                    onError={(requestError) =>
+                      item && captureItemError(item.id, requestError)
+                    }
                     onSubmit={loadingDetail ? () => Promise.resolve() : decide}
                     onSuccess={() => item && actionIssues.clearOne(item.id)}
-                    successBody={(status) => `The research record was moved to ${status.replaceAll("_", " ").toLowerCase()}.`}
+                    successBody={(status) =>
+                      `The research record was moved to ${status.replaceAll("_", " ").toLowerCase()}.`
+                    }
                     successTitle="Research review saved"
                   />
                 )}
               </>
             ) : (
-              <p className="m-0 text-[.82rem] leading-[1.5] text-ink-muted">Select a research submission.</p>
+              <p className="m-0 text-[.82rem] leading-[1.5] text-ink-muted">
+                Select a research submission.
+              </p>
             )}
           </section>
         </div>
@@ -926,58 +1332,222 @@ export function ResearchReviewQueue({ selectedId }: { selectedId?: string }) {
   );
 }
 
-function ResearchRecordEditor({ item, onSubmit, saving }: { item: ReviewResearch; onSubmit: (event: FormEvent<HTMLFormElement>) => void; saving: boolean }) {
+function ResearchRecordEditor({
+  item,
+  onSubmit,
+  saving,
+}: {
+  item: ReviewResearch;
+  onSubmit: (event: FormEvent<HTMLFormElement>) => void;
+  saving: boolean;
+}) {
   return (
-    <form className="grid gap-4 rounded-panel border border-line-strong bg-canvas p-[clamp(1rem,2vw,1.35rem)]" onSubmit={onSubmit}>
+    <form
+      className="grid gap-4 rounded-panel border border-line-strong bg-canvas p-[clamp(1rem,2vw,1.35rem)]"
+      onSubmit={onSubmit}
+    >
       <div className="grid gap-1">
-        <span className="font-mono text-[.62rem] uppercase tracking-[.08em] text-brand">Record editor</span>
-        <strong className="font-serif text-[1.2rem] font-normal">Edit and re-run verification</strong>
-        <p className="m-0 text-[.78rem] leading-[1.5] text-ink-muted">Saving changes returns the record to Needs review and restarts canonical-source and contributor matching.</p>
+        <span className="font-mono text-[.62rem] uppercase tracking-[.08em] text-brand">
+          Record editor
+        </span>
+        <strong className="font-serif text-[1.2rem] font-normal">
+          Edit and re-run verification
+        </strong>
+        <p className="m-0 text-[.78rem] leading-[1.5] text-ink-muted">
+          Saving changes returns the record to Needs review and restarts
+          canonical-source and contributor matching.
+        </p>
       </div>
       <div className="grid grid-cols-2 gap-4 max-[700px]:grid-cols-1">
-        <FormField className="col-span-full" htmlFor="review-edit-title" label="Title"><InputControl defaultValue={item.title ?? ""} id="review-edit-title" name="title" required /></FormField>
-        <FormField className="col-span-full" htmlFor="review-edit-url" label="Canonical URL"><InputControl defaultValue={item.canonicalUrl ?? ""} id="review-edit-url" name="canonicalUrl" required type="url" /></FormField>
-        <FormField className="col-span-full" htmlFor="review-edit-contributors" label="Contributors"><TextareaControl defaultValue={item.contributors.map(({ displayName }) => displayName).join(", ")} id="review-edit-contributors" name="contributors" required rows={2} /></FormField>
-        <FormField className="col-span-full" htmlFor="review-edit-summary" label="Summary"><TextareaControl defaultValue={item.summary ?? ""} id="review-edit-summary" name="summary" rows={3} /></FormField>
-        {item.type === "PAPER" ? (<>
-          <FormField htmlFor="review-edit-doi" label="DOI"><InputControl defaultValue={item.paper?.doi ?? ""} id="review-edit-doi" name="doi" /></FormField>
-          <FormField htmlFor="review-edit-year" label="Year"><InputControl defaultValue={item.paper?.year?.toString() ?? ""} id="review-edit-year" max="2200" min="1900" name="year" type="number" /></FormField>
-          <FormField htmlFor="review-edit-venue" label="Venue"><InputControl defaultValue={item.paper?.venue ?? ""} id="review-edit-venue" name="venue" /></FormField>
-          <FormField htmlFor="review-edit-publication-type" label="Publication type"><InputControl defaultValue={item.paper?.publicationType ?? ""} id="review-edit-publication-type" name="publicationType" /></FormField>
-          <FormField className="col-span-full" htmlFor="review-edit-citation" label="Citation"><TextareaControl defaultValue={item.paper?.citation ?? ""} id="review-edit-citation" name="citation" rows={3} /></FormField>
-        </>) : (<>
-          <FormField htmlFor="review-edit-version" label="Version"><InputControl defaultValue={item.dataset?.version ?? ""} id="review-edit-version" name="version" /></FormField>
-          <FormField htmlFor="review-edit-license" label="License"><InputControl defaultValue={item.dataset?.license ?? ""} id="review-edit-license" name="license" /></FormField>
-          <FormField htmlFor="review-edit-modality" label="Modality"><InputControl defaultValue={item.dataset?.modality ?? ""} id="review-edit-modality" name="modality" /></FormField>
-          <FormField className="col-span-full" htmlFor="review-edit-access" label="Access notes"><TextareaControl defaultValue={item.dataset?.accessNotes ?? ""} id="review-edit-access" name="accessNotes" rows={3} /></FormField>
-        </>)}
+        <FormField
+          className="col-span-full"
+          htmlFor="review-edit-title"
+          label="Title"
+        >
+          <InputControl
+            defaultValue={item.title ?? ""}
+            id="review-edit-title"
+            name="title"
+            required
+          />
+        </FormField>
+        <FormField
+          className="col-span-full"
+          htmlFor="review-edit-url"
+          label="Canonical URL"
+        >
+          <InputControl
+            defaultValue={item.canonicalUrl ?? ""}
+            id="review-edit-url"
+            name="canonicalUrl"
+            required
+            type="url"
+          />
+        </FormField>
+        <FormField
+          className="col-span-full"
+          htmlFor="review-edit-contributors"
+          label="Contributors"
+        >
+          <TextareaControl
+            defaultValue={item.contributors
+              .map(({ displayName }) => displayName)
+              .join(", ")}
+            id="review-edit-contributors"
+            name="contributors"
+            required
+            rows={2}
+          />
+        </FormField>
+        <FormField
+          className="col-span-full"
+          htmlFor="review-edit-summary"
+          label="Summary"
+        >
+          <TextareaControl
+            defaultValue={item.summary ?? ""}
+            id="review-edit-summary"
+            name="summary"
+            rows={3}
+          />
+        </FormField>
+        {item.type === "PAPER" ? (
+          <>
+            <FormField htmlFor="review-edit-doi" label="DOI">
+              <InputControl
+                defaultValue={item.paper?.doi ?? ""}
+                id="review-edit-doi"
+                name="doi"
+              />
+            </FormField>
+            <FormField htmlFor="review-edit-year" label="Year">
+              <InputControl
+                defaultValue={item.paper?.year?.toString() ?? ""}
+                id="review-edit-year"
+                max="2200"
+                min="1900"
+                name="year"
+                type="number"
+              />
+            </FormField>
+            <FormField htmlFor="review-edit-venue" label="Venue">
+              <InputControl
+                defaultValue={item.paper?.venue ?? ""}
+                id="review-edit-venue"
+                name="venue"
+              />
+            </FormField>
+            <FormField
+              htmlFor="review-edit-publication-type"
+              label="Publication type"
+            >
+              <InputControl
+                defaultValue={item.paper?.publicationType ?? ""}
+                id="review-edit-publication-type"
+                name="publicationType"
+              />
+            </FormField>
+            <FormField
+              className="col-span-full"
+              htmlFor="review-edit-citation"
+              label="Citation"
+            >
+              <TextareaControl
+                defaultValue={item.paper?.citation ?? ""}
+                id="review-edit-citation"
+                name="citation"
+                rows={3}
+              />
+            </FormField>
+          </>
+        ) : (
+          <>
+            <FormField htmlFor="review-edit-version" label="Version">
+              <InputControl
+                defaultValue={item.dataset?.version ?? ""}
+                id="review-edit-version"
+                name="version"
+              />
+            </FormField>
+            <FormField htmlFor="review-edit-license" label="License">
+              <InputControl
+                defaultValue={item.dataset?.license ?? ""}
+                id="review-edit-license"
+                name="license"
+              />
+            </FormField>
+            <FormField htmlFor="review-edit-modality" label="Modality">
+              <InputControl
+                defaultValue={item.dataset?.modality ?? ""}
+                id="review-edit-modality"
+                name="modality"
+              />
+            </FormField>
+            <FormField
+              className="col-span-full"
+              htmlFor="review-edit-access"
+              label="Access notes"
+            >
+              <TextareaControl
+                defaultValue={item.dataset?.accessNotes ?? ""}
+                id="review-edit-access"
+                name="accessNotes"
+                rows={3}
+              />
+            </FormField>
+          </>
+        )}
       </div>
-      <div className="flex justify-end"><ButtonControl disabled={saving} type="submit" variant="primary">{saving ? "Saving…" : "Save and re-run review"}</ButtonControl></div>
+      <div className="flex justify-end">
+        <ButtonControl disabled={saving} type="submit" variant="primary">
+          {saving ? "Saving…" : "Save and re-run review"}
+        </ButtonControl>
+      </div>
     </form>
   );
 }
 
-function researchBulkStatuses(item: ReviewResearch, relationBusy?: string): ResearchDecision[] {
+function researchBulkStatuses(
+  item: ReviewResearch,
+  relationBusy?: string,
+): ResearchDecision[] {
   if (item.reviewStatus === "PUBLISHED" || item.reviewStatus === "REJECTED") {
     return ["NEEDS_REVIEW"];
   }
-  if (item.reviewStatus !== "NEEDS_REVIEW" && item.reviewStatus !== "CHANGES_REQUESTED") {
+  if (
+    item.reviewStatus !== "NEEDS_REVIEW" &&
+    item.reviewStatus !== "CHANGES_REQUESTED"
+  ) {
     return [];
   }
   const statuses: ResearchDecision[] = ["CHANGES_REQUESTED", "REJECTED"];
-  const sourcePending = item.sourceSnapshot?.status === "PENDING" || relationBusy === `discover:${item.id}`;
-  const hasProposedMatches = item.contributors.some((contributor) => contributor.matches.some((match) => match.status === "PROPOSED"));
+  const sourcePending =
+    item.sourceSnapshot?.status === "PENDING" ||
+    relationBusy === `discover:${item.id}`;
+  const hasProposedMatches = item.contributors.some((contributor) =>
+    contributor.matches.some((match) => match.status === "PROPOSED"),
+  );
   if (!sourcePending && !hasProposedMatches) statuses.unshift("PUBLISHED");
   return statuses;
 }
 
-function commonResearchBulkStatuses(items: ReviewResearch[], relationBusy?: string): ResearchDecision[] {
+function commonResearchBulkStatuses(
+  items: ReviewResearch[],
+  relationBusy?: string,
+): ResearchDecision[] {
   if (!items.length) return [];
-  const [first, ...rest] = items.map((item) => researchBulkStatuses(item, relationBusy));
-  return first.filter((status) => rest.every((statuses) => statuses.includes(status)));
+  const [first, ...rest] = items.map((item) =>
+    researchBulkStatuses(item, relationBusy),
+  );
+  return first.filter((status) =>
+    rest.every((statuses) => statuses.includes(status)),
+  );
 }
 
-function researchBulkActions(statuses: ResearchDecision[], count: number): Array<ReviewAction<ResearchDecision>> {
+function researchBulkActions(
+  statuses: ResearchDecision[],
+  count: number,
+): Array<ReviewAction<ResearchDecision>> {
   const actions: Record<ResearchDecision, ReviewAction<ResearchDecision>> = {
     PUBLISHED: {
       confirmDescription: `Publish the ${count} selected paper/dataset record${count === 1 ? "" : "s"}. This action is only offered when every selected record has cleared source and contributor guards.`,
@@ -992,7 +1562,8 @@ function researchBulkActions(statuses: ResearchDecision[], count: number): Array
       confirmLabel: "Request changes",
       confirmTitle: "Request changes for selected records?",
       label: "Add review",
-      notePlaceholder: "Explain what must change before these records can be approved.",
+      notePlaceholder:
+        "Explain what must change before these records can be approved.",
       requiresNote: true,
       status: "CHANGES_REQUESTED",
       tone: "secondary",
@@ -1030,9 +1601,18 @@ function sourceTone(status: SourceStatus | undefined): BadgeTone {
 }
 
 function sourceAuthorsDiffer(item: ReviewResearch): boolean {
-  const source = item.sourceSnapshot?.metadata?.authors?.map(({ name }) => normalizeName(name)) ?? [];
-  const contributors = item.contributors.map(({ displayName }) => normalizeName(displayName));
-  return source.length > 0 && (source.length !== contributors.length || source.some((name, index) => name !== contributors[index]));
+  const source =
+    item.sourceSnapshot?.metadata?.authors?.map(({ name }) =>
+      normalizeName(name),
+    ) ?? [];
+  const contributors = item.contributors.map(({ displayName }) =>
+    normalizeName(displayName),
+  );
+  return (
+    source.length > 0 &&
+    (source.length !== contributors.length ||
+      source.some((name, index) => name !== contributors[index]))
+  );
 }
 
 function normalizeName(name: string): string {

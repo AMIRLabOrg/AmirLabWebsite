@@ -1,7 +1,8 @@
 import Image from "next/image";
 import { cn } from "@/lib/cn";
 
-type SceneVariant = "about" | "dataset" | "department" | "home" | "paper" | "people" | "project";
+type SceneVariant =
+  "about" | "dataset" | "department" | "home" | "paper" | "people" | "project";
 
 const SCENES: Record<SceneVariant, string> = {
   about: "/illustrations/about-mission.svg",
@@ -13,7 +14,13 @@ const SCENES: Record<SceneVariant, string> = {
   project: "/illustrations/project-research-loop.svg",
 };
 
-export function MotionScene({ className, variant = "home" }: { className?: string; variant?: SceneVariant }) {
+export function MotionScene({
+  className,
+  variant = "home",
+}: {
+  className?: string;
+  variant?: SceneVariant;
+}) {
   return (
     <Image
       alt=""

@@ -14,9 +14,11 @@ export function useBulkSelection(visibleIds: readonly string[]) {
     scope: visibleKey,
   }));
 
-  const selectedIds = selection.scope === visibleKey ? selection.ids : new Set<string>();
+  const selectedIds =
+    selection.scope === visibleKey ? selection.ids : new Set<string>();
   const selectedCount = selectedIds.size;
-  const allSelected = visibleIds.length > 0 && selectedCount === visibleIds.length;
+  const allSelected =
+    visibleIds.length > 0 && selectedCount === visibleIds.length;
   const selectAllState: boolean | "indeterminate" = allSelected
     ? true
     : selectedCount > 0
@@ -25,7 +27,8 @@ export function useBulkSelection(visibleIds: readonly string[]) {
 
   function updateSelection(update: (current: Set<string>) => Set<string>) {
     setSelection((current) => {
-      const scoped = current.scope === visibleKey ? current.ids : new Set<string>();
+      const scoped =
+        current.scope === visibleKey ? current.ids : new Set<string>();
       return { ids: update(scoped), scope: visibleKey };
     });
   }

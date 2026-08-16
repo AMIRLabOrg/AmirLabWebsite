@@ -17,6 +17,7 @@
     "verify:semantic": "node scripts/verify-semantic-ui.mjs",
     "verify:brand-review": "node scripts/verify-brand-and-review-layout.mjs",
     "typecheck": "tsc --noEmit",
+    "format": "prettier --write \"src/**/*.{ts,tsx,css}\" \"scripts/**/*.mjs\"",
     "verify:production": "pnpm run verify && pnpm run lint && pnpm run typecheck && pnpm run verify:safety && pnpm run build",
     "verify:safety": "node scripts/verify-production-safety.mjs"
   },
@@ -43,6 +44,7 @@
   },
   "devDependencies": {
     "@playwright/test": "^1.61.1",
+    "@tailwindcss/postcss": "^4.1.10",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",
     "@types/node": "^20",
@@ -52,10 +54,10 @@
     "eslint-config-next": "16.2.10",
     "jsdom": "^29.1.1",
     "openapi-typescript": "^7.13.0",
-    "typescript": "^5",
-    "vitest": "^4.1.10",
+    "prettier": "^3.9.6",
     "tailwindcss": "^4.1.10",
-    "@tailwindcss/postcss": "^4.1.10"
+    "typescript": "^5",
+    "vitest": "^4.1.10"
   },
   "packageManager": "pnpm@10.34.5",
   "engines": {

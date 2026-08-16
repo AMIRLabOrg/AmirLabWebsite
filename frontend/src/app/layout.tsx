@@ -28,7 +28,10 @@ export default function RootLayout({
     <html data-scroll-behavior="smooth" lang="en">
       <body>
         <NavigationProgress />
-        <a className="fixed left-4 top-[-5rem] z-[200] bg-ink px-4 py-3 text-white focus:top-4" href="#content">
+        <a
+          className="fixed left-4 top-[-5rem] z-[200] bg-ink px-4 py-3 text-white focus:top-4"
+          href="#content"
+        >
           Skip to content
         </a>
         <AuthProvider>

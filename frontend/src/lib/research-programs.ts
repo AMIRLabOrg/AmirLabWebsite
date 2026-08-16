@@ -1,9 +1,5 @@
 export type ResearchProgramStatus =
-  | "ACTIVE"
-  | "ARCHIVED"
-  | "COMPLETED"
-  | "PAUSED"
-  | "PLANNED";
+  "ACTIVE" | "ARCHIVED" | "COMPLETED" | "PAUSED" | "PLANNED";
 
 export interface ResearchProgramItem {
   researchItemId: string;

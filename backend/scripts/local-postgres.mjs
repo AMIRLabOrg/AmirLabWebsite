@@ -31,7 +31,10 @@ function loadEnvFile(path) {
     if (eq < 1) continue;
     const key = line.slice(0, eq).trim();
     let value = line.slice(eq + 1).trim();
-    if ((value.startsWith('"') && value.endsWith('"')) || (value.startsWith("'") && value.endsWith("'"))) {
+    if (
+      (value.startsWith('"') && value.endsWith('"')) ||
+      (value.startsWith("'") && value.endsWith("'"))
+    ) {
       value = value.slice(1, -1);
     }
     result[key] = value;
@@ -40,7 +43,10 @@ function loadEnvFile(path) {
 }
 
 const fileEnv = loadEnvFile(envFile);
-const databaseUrl = process.env.DATABASE_URL || fileEnv.DATABASE_URL || 'postgresql://amirl:amirl-local-2026@127.0.0.1:5433/amirl';
+const databaseUrl =
+  process.env.DATABASE_URL ||
+  fileEnv.DATABASE_URL ||
+  'postgresql://amirl:amirl-local-2026@127.0.0.1:5433/amirl';
 let dbUrl;
 try {
   dbUrl = new URL(databaseUrl);
@@ -49,19 +55,28 @@ try {
 }
 
 if (!['postgres:', 'postgresql:'].includes(dbUrl.protocol)) {
-  fail(`DATABASE_URL must use postgresql:// or postgres://, got ${dbUrl.protocol}`);
+  fail(
+    `DATABASE_URL must use postgresql:// or postgres://, got ${dbUrl.protocol}`,
+  );
 }
 
 const host = dbUrl.hostname || '127.0.0.1';
 if (!['127.0.0.1', 'localhost', '::1'].includes(host)) {
-  fail(`Refusing to manage a non-local PostgreSQL host (${host}). db:start only manages the private local development database.`);
+  fail(
+    `Refusing to manage a non-local PostgreSQL host (${host}). db:start only manages the private local development database.`,
+  );
 }
 
 const port = Number(dbUrl.port || 5432);
-const socketDir = join(tmpdir(), `amirlab-pg-${process.getuid?.() ?? 'user'}-${port}`);
+const socketDir = join(
+  tmpdir(),
+  `amirlab-pg-${process.getuid?.() ?? 'user'}-${port}`,
+);
 const appUser = decodeURIComponent(dbUrl.username || 'amirl');
 const appPassword = decodeURIComponent(dbUrl.password || 'amirl-local-2026');
-const appDatabase = decodeURIComponent(dbUrl.pathname.replace(/^\//, '') || 'amirl');
+const appDatabase = decodeURIComponent(
+  dbUrl.pathname.replace(/^\//, '') || 'amirl',
+);
 const initSuperuser = process.env.AMIRL_PG_SUPERUSER || 'amirl_local_admin';
 
 function fail(message, code = 1) {
@@ -70,7 +85,10 @@ function fail(message, code = 1) {
 }
 
 function commandExists(command) {
-  return spawnSync('sh', ['-c', `command -v ${shellQuote(command)} >/dev/null 2>&1`]).status === 0;
+  return (
+    spawnSync('sh', ['-c', `command -v ${shellQuote(command)} >/dev/null 2>&1`])
+      .status === 0
+  );
 }
 
 function shellQuote(value) {
@@ -82,11 +100,19 @@ function requirePostgresTools() {
   const missing = required.filter((cmd) => !commandExists(cmd));
   if (!missing.length) return;
 
-  console.error(`[db] Missing PostgreSQL command${missing.length > 1 ? 's' : ''}: ${missing.join(', ')}`);
-  console.error('[db] Install the PostgreSQL server/client tools, then run pnpm run db:start again.');
+  console.error(
+    `[db] Missing PostgreSQL command${missing.length > 1 ? 's' : ''}: ${missing.join(', ')}`,
+  );
+  console.error(
+    '[db] Install the PostgreSQL server/client tools, then run pnpm run db:start again.',
+  );
   console.error('[db] Fedora: sudo dnf install postgresql-server postgresql');
-  console.error('[db] Ubuntu/Debian: sudo apt install postgresql postgresql-client');
-  console.error('[db] Or use Docker instead from the project root: pnpm run db:start:docker');
+  console.error(
+    '[db] Ubuntu/Debian: sudo apt install postgresql postgresql-client',
+  );
+  console.error(
+    '[db] Or use Docker instead from the project root: pnpm run db:start:docker',
+  );
   process.exit(1);
 }
 
@@ -115,7 +141,10 @@ function isInitialized() {
 
 function isRunning() {
   if (!isInitialized()) return false;
-  const result = run('pg_ctl', ['-D', dataDir, 'status'], { capture: true, allowFailure: true });
+  const result = run('pg_ctl', ['-D', dataDir, 'status'], {
+    capture: true,
+    allowFailure: true,
+  });
   return result.status === 0;
 }
 
@@ -129,8 +158,10 @@ function initializeCluster() {
   console.log(`[db] Initializing private PostgreSQL cluster in ${dataDir}`);
   ensureDirectories();
   run('initdb', [
-    '-D', dataDir,
-    '--username', initSuperuser,
+    '-D',
+    dataDir,
+    '--username',
+    initSuperuser,
     '--auth-local=trust',
     '--auth-host=trust',
     '--encoding=UTF8',
@@ -140,7 +171,11 @@ function initializeCluster() {
 
 function tcpPortIsOccupied() {
   if (!commandExists('pg_isready')) return false;
-  const result = run('pg_isready', ['-h', '127.0.0.1', '-p', String(port), '-t', '1'], { capture: true, allowFailure: true });
+  const result = run(
+    'pg_isready',
+    ['-h', '127.0.0.1', '-p', String(port), '-t', '1'],
+    { capture: true, allowFailure: true },
+  );
   return result.status === 0;
 }
 
@@ -151,11 +186,22 @@ function startServer() {
     return;
   }
   if (tcpPortIsOccupied()) {
-    fail(`Port ${port} is already occupied by another PostgreSQL server. Stop the other AMIRLab checkout or change DATABASE_URL to a free local port.`);
+    fail(
+      `Port ${port} is already occupied by another PostgreSQL server. Stop the other AMIRLab checkout or change DATABASE_URL to a free local port.`,
+    );
   }
   console.log(`[db] Starting PostgreSQL on ${host}:${port}`);
   const postgresOptions = `-h 127.0.0.1 -k ${socketDir} -p ${port}`;
-  run('pg_ctl', ['-D', dataDir, '-l', logFile, '-o', postgresOptions, '-w', 'start']);
+  run('pg_ctl', [
+    '-D',
+    dataDir,
+    '-l',
+    logFile,
+    '-o',
+    postgresOptions,
+    '-w',
+    'start',
+  ]);
 }
 
 function sqlLiteral(value) {
@@ -167,42 +213,70 @@ function sqlIdentifier(value) {
 }
 
 function psql(sql, database = 'postgres', allowFailure = false) {
-  return run('psql', [
-    '-h', '127.0.0.1',
-    '-p', String(port),
-    '-U', initSuperuser,
-    '-d', database,
-    '-v', 'ON_ERROR_STOP=1',
-    '-Atqc', sql,
-  ], { capture: true, allowFailure });
+  return run(
+    'psql',
+    [
+      '-h',
+      '127.0.0.1',
+      '-p',
+      String(port),
+      '-U',
+      initSuperuser,
+      '-d',
+      database,
+      '-v',
+      'ON_ERROR_STOP=1',
+      '-Atqc',
+      sql,
+    ],
+    { capture: true, allowFailure },
+  );
 }
 
 function ensureAppRoleAndDatabase() {
-  const roleExists = psql(`SELECT 1 FROM pg_roles WHERE rolname = ${sqlLiteral(appUser)}`).stdout.trim() === '1';
+  const roleExists =
+    psql(
+      `SELECT 1 FROM pg_roles WHERE rolname = ${sqlLiteral(appUser)}`,
+    ).stdout.trim() === '1';
   if (!roleExists) {
     console.log(`[db] Creating role ${appUser}`);
-    psql(`CREATE ROLE ${sqlIdentifier(appUser)} LOGIN PASSWORD ${sqlLiteral(appPassword)}`);
+    psql(
+      `CREATE ROLE ${sqlIdentifier(appUser)} LOGIN PASSWORD ${sqlLiteral(appPassword)}`,
+    );
   } else {
     // Keep the private local role aligned with DATABASE_URL after env changes.
-    psql(`ALTER ROLE ${sqlIdentifier(appUser)} WITH LOGIN PASSWORD ${sqlLiteral(appPassword)}`);
+    psql(
+      `ALTER ROLE ${sqlIdentifier(appUser)} WITH LOGIN PASSWORD ${sqlLiteral(appPassword)}`,
+    );
   }
 
-  const dbExists = psql(`SELECT 1 FROM pg_database WHERE datname = ${sqlLiteral(appDatabase)}`).stdout.trim() === '1';
+  const dbExists =
+    psql(
+      `SELECT 1 FROM pg_database WHERE datname = ${sqlLiteral(appDatabase)}`,
+    ).stdout.trim() === '1';
   if (!dbExists) {
     console.log(`[db] Creating database ${appDatabase}`);
     run('createdb', [
-      '-h', '127.0.0.1',
-      '-p', String(port),
-      '-U', initSuperuser,
-      '-O', appUser,
+      '-h',
+      '127.0.0.1',
+      '-p',
+      String(port),
+      '-U',
+      initSuperuser,
+      '-O',
+      appUser,
       appDatabase,
     ]);
   }
 }
 
 function printReady() {
-  console.log(`[db] Ready: postgresql://${appUser}:***@${host}:${port}/${appDatabase}`);
-  console.log('[db] Next: pnpm run db:rebuild  (destructive rebuild from seed/amirl-site.json)');
+  console.log(
+    `[db] Ready: postgresql://${appUser}:***@${host}:${port}/${appDatabase}`,
+  );
+  console.log(
+    '[db] Next: pnpm run db:rebuild  (destructive rebuild from seed/amirl-site.json)',
+  );
 }
 
 function start() {
@@ -234,7 +308,10 @@ function status() {
     process.exitCode = 1;
     return;
   }
-  const result = run('pg_ctl', ['-D', dataDir, 'status'], { capture: true, allowFailure: true });
+  const result = run('pg_ctl', ['-D', dataDir, 'status'], {
+    capture: true,
+    allowFailure: true,
+  });
   if (result.stdout) process.stdout.write(result.stdout);
   if (result.stderr) process.stderr.write(result.stderr);
   if (result.status !== 0) process.exitCode = result.status ?? 1;
@@ -254,10 +331,18 @@ function reset() {
 
 const action = process.argv[2] || 'start';
 switch (action) {
-  case 'start': start(); break;
-  case 'stop': stop(); break;
-  case 'status': status(); break;
-  case 'reset': reset(); break;
+  case 'start':
+    start();
+    break;
+  case 'stop':
+    stop();
+    break;
+  case 'status':
+    status();
+    break;
+  case 'reset':
+    reset();
+    break;
   default:
     fail(`Unknown action "${action}". Use start, stop, status, or reset.`);
 }

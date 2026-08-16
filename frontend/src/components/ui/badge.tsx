@@ -2,12 +2,7 @@ import type { ReactNode } from "react";
 import { cn } from "@/lib/cn";
 import { loadingPlaceholder } from "@/lib/loading-style";
 
-export type BadgeTone =
-  | "success"
-  | "warning"
-  | "info"
-  | "error"
-  | "neutral";
+export type BadgeTone = "success" | "warning" | "info" | "error" | "neutral";
 
 const toneClass: Record<BadgeTone, string> = {
   success: "bg-success-soft text-success",
@@ -49,7 +44,12 @@ export function Badge({
       data-loading={loading || undefined}
       data-placeholder={loading ? "label" : undefined}
     >
-      {dot ? <span aria-hidden="true" className={cn("h-1.5 w-1.5 rounded-full", dotClass[tone])} /> : null}
+      {dot ? (
+        <span
+          aria-hidden="true"
+          className={cn("h-1.5 w-1.5 rounded-full", dotClass[tone])}
+        />
+      ) : null}
       {children}
     </span>
   );

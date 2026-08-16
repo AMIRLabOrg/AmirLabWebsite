@@ -1,10 +1,5 @@
 export type ReviewIssueTone =
-  | "error"
-  | "warning"
-  | "pending"
-  | "success"
-  | "info"
-  | "neutral";
+  "error" | "warning" | "pending" | "success" | "info" | "neutral";
 
 export interface ReviewIssue {
   itemId?: string;
@@ -14,7 +9,9 @@ export interface ReviewIssue {
   tone?: ReviewIssueTone;
 }
 
-export function issuesByItem(issues: ReviewIssue[]): Map<string, ReviewIssue[]> {
+export function issuesByItem(
+  issues: ReviewIssue[],
+): Map<string, ReviewIssue[]> {
   const grouped = new Map<string, ReviewIssue[]>();
   for (const issue of issues) {
     if (!issue.itemId) continue;
@@ -23,6 +20,8 @@ export function issuesByItem(issues: ReviewIssue[]): Map<string, ReviewIssue[]> 
   return grouped;
 }
 
-export function firstBlockingIssue(issues?: ReviewIssue[]): ReviewIssue | undefined {
+export function firstBlockingIssue(
+  issues?: ReviewIssue[],
+): ReviewIssue | undefined {
   return issues?.find(({ tone }) => tone === "error") ?? issues?.[0];
 }
