@@ -2,8 +2,7 @@
 
 import { useState } from "react";
 import { ButtonControl } from "@/components/ui/button-control";
-import { InputControl } from "@/components/ui/form-controls";
-import { FormField } from "@/components/ui/form-field";
+import { PasswordField } from "@/components/ui/password-field";
 import { useNotifications } from "@/components/notification-provider";
 import { apiRequest } from "@/lib/client-api";
 
@@ -68,35 +67,31 @@ export function ChangePasswordPanel() {
 
         <div className="grid gap-[.8rem]">
           <div className="grid gap-[1.2rem] grid-cols-2 max-[640px]:grid-cols-1">
-            <FormField htmlFor="current-password" label="Current password" className="col-span-full">
-              <InputControl
+            <div className="col-span-full">
+              <PasswordField
                 id="current-password"
-                type="password"
+                label="Current password"
                 required
                 value={currentPassword}
                 onChange={(e) => setCurrentPassword(e.target.value)}
               />
-            </FormField>
+            </div>
             
-            <FormField htmlFor="new-password" label="New password">
-              <InputControl
-                id="new-password"
-                type="password"
-                required
-                value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
-              />
-            </FormField>
+            <PasswordField
+              id="new-password"
+              label="New password"
+              required
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+            />
             
-            <FormField htmlFor="confirm-password" label="Confirm new password">
-              <InputControl
-                id="confirm-password"
-                type="password"
-                required
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-              />
-            </FormField>
+            <PasswordField
+              id="confirm-password"
+              label="Confirm new password"
+              required
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+            />
           </div>
         </div>
         
