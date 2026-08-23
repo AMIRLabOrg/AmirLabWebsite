@@ -82,7 +82,7 @@ export function AccountForm({ accountId }: { accountId?: string }) {
     try {
       await apiRequest(accountId ? `/users/${accountId}` : "/users", {
         body: JSON.stringify({
-          email,
+          ...(!accountId ? { email } : {}),
           fullName,
           rank: rank === "NONE" ? null : rank,
           role,
@@ -174,7 +174,7 @@ export function AccountForm({ accountId }: { accountId?: string }) {
         <FormField htmlFor="account-email" label="Email">
           <InputControl
             loading={loading}
-            disabled={loading}
+            disabled={loading || Boolean(accountId)}
             id="account-email"
             onChange={(event) => setEmail(event.target.value)}
             required

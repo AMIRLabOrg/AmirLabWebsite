@@ -127,7 +127,6 @@ export function ProfileEditor({ userId }: ProfileEditorProps) {
   const [loadError, setLoadError] = useState<string>();
   const [editRole, setEditRole] = useState("MEMBER");
   const [editRank, setEditRank] = useState("NONE");
-  const [editEmail, setEditEmail] = useState("");
   const [editFullName, setEditFullName] = useState("");
   const [, setSavingAccount] = useState(false);
   const [accountError, setAccountError] = useState<string>();
@@ -212,7 +211,6 @@ export function ProfileEditor({ userId }: ProfileEditorProps) {
       .then((account) => {
         setEditRole(account.role);
         setEditRank(account.person?.rank ?? "NONE");
-        setEditEmail(account.email ?? "");
         setEditFullName(account.person?.fullName ?? "");
       })
       .catch(() => {});
@@ -224,7 +222,6 @@ export function ProfileEditor({ userId }: ProfileEditorProps) {
     try {
       await apiRequest(`/users/${userId}`, {
         body: JSON.stringify({
-          email: editEmail,
           fullName: editFullName,
           rank: rank === "NONE" ? null : rank,
           role,

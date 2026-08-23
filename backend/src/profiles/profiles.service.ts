@@ -249,12 +249,6 @@ export class ProfilesService {
           where: { id: person.id },
           data: profileUpdateData(payload, publishedAvatarId, scope),
         });
-        if (scope === 'ADMIN' && person.userId) {
-          await transaction.user.update({
-            where: { id: person.userId },
-            data: { email: payload.publicEmail },
-          });
-        }
         await transaction.profileEditRequest.deleteMany({
           where: { personId: person.id },
         });

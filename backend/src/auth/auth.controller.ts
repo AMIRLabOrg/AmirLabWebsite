@@ -4,6 +4,7 @@ import { Throttle } from '@nestjs/throttler';
 import type { Request, Response } from 'express';
 import type { Environment } from '../config/environment';
 import { AuthService } from './auth.service';
+import { EmailChangeService } from './email-change.service';
 import { CurrentUser, Public } from './auth.decorators';
 import type { AuthenticatedUser } from './auth.types';
 import {
@@ -12,12 +13,16 @@ import {
   ResetPasswordDto,
   SetupAccountDto,
   ChangePasswordDto,
+  RequestEmailChangeDto,
+  RevertEmailChangeDto,
+  VerifyEmailChangeDto,
 } from './dto/auth.dto';
 
 @Controller('auth')
 export class AuthController {
   constructor(
     private readonly auth: AuthService,
+    private readonly emailChanges: EmailChangeService,
     private readonly config: ConfigService<Environment, true>,
   ) {}
 
@@ -80,6 +85,48 @@ export class AuthController {
       body.newPassword,
     );
     return { changed: true };
+  }
+
+  @Get('email-change')
+  emailChangeStatus(@CurrentUser() user: AuthenticatedUser) {
+    return this.emailChanges.status(user.id);
+  }
+
+  @Throttle({ default: { limit: 5, ttl: 600_000 } })
+  @Post('email-change/request')
+  requestEmailChange(
+    @Body() body: RequestEmailChangeDto,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    return this.emailChanges.requestForUser(
+      user.id,
+      body.newEmail,
+      body.currentPassword,
+    );
+  }
+
+  @Throttle({ default: { limit: 10, ttl: 600_000 } })
+  @Post('email-change/verify')
+  async verifyEmailChange(
+    @Body() body: VerifyEmailChangeDto,
+    @CurrentUser() user: AuthenticatedUser,
+    @Res({ passthrough: true }) response: Response,
+  ) {
+    const result = await this.emailChanges.verify(user.id, body.otp, user.id);
+    response.clearCookie(this.config.get('sessionCookieName', { infer: true }));
+    return result;
+  }
+
+  @Public()
+  @Throttle({ default: { limit: 10, ttl: 600_000 } })
+  @Post('email-change/revert')
+  async revertEmailChange(
+    @Body() body: RevertEmailChangeDto,
+    @Res({ passthrough: true }) response: Response,
+  ) {
+    const result = await this.emailChanges.revert(body.token);
+    response.clearCookie(this.config.get('sessionCookieName', { infer: true }));
+    return result;
   }
 
   @Get('me')

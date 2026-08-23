@@ -279,6 +279,8 @@ model User {
   sessions                    Session[]
   accountSetupTokens          AccountSetupToken[]
   passwordResetToken          PasswordResetToken?
+  emailChangeRequest          EmailChangeRequest?
+  emailChangeRevert           EmailChangeRevert?
   notifications               Notification[]
   submittedItems              ResearchItem[]         @relation("ResearchSubmitter")
   reviewedItems               ResearchItem[]         @relation("ResearchReviewer")
@@ -1071,13 +1073,42 @@ model AccountSetupToken {
   @@index([userId, expiresAt])
 }
 
-
 model PasswordResetToken {
   id        String   @id @default(uuid()) @db.Uuid
   tokenHash String   @unique
   expiresAt DateTime
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  userId    String   @unique @db.Uuid
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([expiresAt])
+}
+
+model EmailChangeRequest {
+  id              String   @id @default(uuid()) @db.Uuid
+  oldEmail        String
+  newEmail        String   @unique
+  otpHash         String
+  otpExpiresAt    DateTime
+  failedAttempts  Int      @default(0)
+  revertTokenHash String   @unique
+  revertExpiresAt DateTime
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  userId          String   @unique @db.Uuid
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([otpExpiresAt])
+}
+
+model EmailChangeRevert {
+  id        String   @id @default(uuid()) @db.Uuid
+  oldEmail  String
+  newEmail  String
+  tokenHash String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
   userId    String   @unique @db.Uuid
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 

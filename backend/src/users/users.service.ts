@@ -5,8 +5,9 @@ import {
 } from '@nestjs/common';
 import { AccountStatus, Prisma } from '../../generated/prisma/client';
 import { AuthService } from '../auth/auth.service';
+import { EmailChangeService } from '../auth/email-change.service';
 import { PrismaService } from '../database/prisma.service';
-import type { CreateUserDto } from './dto/create-user.dto';
+import type { CreateUserDto, UpdateUserDto } from './dto/create-user.dto';
 import { UserQueryDto, UserSort } from './dto/user-query.dto';
 import { buildPersonSlug } from './person-slug';
 import { effectiveRank } from '../settings/settings.service';
@@ -15,6 +16,7 @@ import { effectiveRank } from '../settings/settings.service';
 export class UsersService {
   constructor(
     private readonly auth: AuthService,
+    private readonly emailChanges: EmailChangeService,
     private readonly prisma: PrismaService,
   ) {}
 
@@ -138,23 +140,17 @@ export class UsersService {
     return withEffectivePersonRank(user);
   }
 
-  async update(id: string, dto: CreateUserDto, actorId: string) {
+  async update(id: string, dto: UpdateUserDto, actorId: string) {
     const user = await this.prisma.user.findUnique({
       where: { id },
       include: { person: true },
     });
     if (!user) throw new NotFoundException('Account not found');
-    const email = dto.email.trim().toLowerCase();
-    const owner = await this.prisma.user.findUnique({ where: { email } });
-    if (owner && owner.id !== id) {
-      throw new ConflictException('An account already exists for this email');
-    }
-
     const fullName = dto.fullName.trim();
     const updated = await this.prisma.$transaction(async (transaction) => {
       const account = await transaction.user.update({
         where: { id },
-        data: { email, role: dto.role },
+        data: { role: dto.role },
         select: { email: true, id: true, role: true, status: true },
       });
       if (user.person) {
@@ -180,7 +176,6 @@ export class UsersService {
           entityId: id,
           entityType: 'User',
           details: {
-            email: { from: user.email, to: email },
             fullName: { from: user.person?.fullName, to: fullName },
             rank: { from: user.person?.appointedRank, to: dto.rank },
             role: { from: user.role, to: dto.role },
@@ -190,6 +185,18 @@ export class UsersService {
       return account;
     });
     return updated;
+  }
+
+  emailChangeStatus(id: string) {
+    return this.emailChanges.status(id);
+  }
+
+  requestEmailChange(id: string, newEmail: string, actorId: string) {
+    return this.emailChanges.requestForAdmin(id, newEmail, actorId);
+  }
+
+  verifyEmailChange(id: string, otp: string, actorId: string) {
+    return this.emailChanges.verify(id, otp, actorId);
   }
 
   async sendAccessEmail(id: string, actorId: string) {

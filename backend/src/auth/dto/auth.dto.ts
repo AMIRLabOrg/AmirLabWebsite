@@ -1,4 +1,10 @@
-import { IsEmail, IsString, MaxLength, MinLength } from 'class-validator';
+import {
+  IsEmail,
+  IsString,
+  Matches,
+  MaxLength,
+  MinLength,
+} from 'class-validator';
 import { PASSWORD_MAX_LENGTH, PASSWORD_MIN_LENGTH } from '../password';
 
 export class LoginDto {
@@ -48,4 +54,26 @@ export class ChangePasswordDto {
   @MinLength(PASSWORD_MIN_LENGTH)
   @MaxLength(PASSWORD_MAX_LENGTH)
   newPassword!: string;
+}
+
+export class RequestEmailChangeDto {
+  @IsEmail()
+  newEmail!: string;
+
+  @IsString()
+  @MinLength(PASSWORD_MIN_LENGTH)
+  @MaxLength(PASSWORD_MAX_LENGTH)
+  currentPassword!: string;
+}
+
+export class VerifyEmailChangeDto {
+  @IsString()
+  @Matches(/^\d{6}$/)
+  otp!: string;
+}
+
+export class RevertEmailChangeDto {
+  @IsString()
+  @MinLength(32)
+  token!: string;
 }
