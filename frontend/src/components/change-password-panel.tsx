@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 import { ButtonControl } from "@/components/ui/button-control";
 import { PasswordField } from "@/components/ui/password-field";
@@ -25,7 +26,7 @@ export function ChangePasswordPanel() {
       setError("Password must be at least 8 characters long.");
       return;
     }
-    
+
     setSaving(true);
     try {
       await apiRequest("/auth/password", {
@@ -33,12 +34,17 @@ export function ChangePasswordPanel() {
         body: JSON.stringify({ currentPassword, newPassword }),
         headers: { "content-type": "application/json" },
       });
-      showToast({ title: "Password changed", body: "Your password has been successfully updated." });
+      showToast({
+        title: "Password changed",
+        body: "Your password has been successfully updated.",
+      });
       setCurrentPassword("");
       setNewPassword("");
       setConfirmPassword("");
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : "Unable to change password.");
+      setError(
+        caught instanceof Error ? caught.message : "Unable to change password.",
+      );
     } finally {
       setSaving(false);
     }
@@ -58,7 +64,7 @@ export function ChangePasswordPanel() {
             <h2 className="text-[1.35rem] font-semibold">Change password</h2>
           </div>
         </div>
-        
+
         {error ? (
           <p className="m-0 flex items-center gap-[.45rem] text-[.82rem] leading-[1.5] text-ink-muted rounded-panel bg-danger-soft p-[.8rem] text-danger">
             {error}
@@ -75,8 +81,14 @@ export function ChangePasswordPanel() {
                 value={currentPassword}
                 onChange={(e) => setCurrentPassword(e.target.value)}
               />
+              <Link
+                className="mt-2 inline-flex w-fit text-[.75rem] font-semibold text-brand hover:text-brand-hover"
+                href="/forgot-password"
+              >
+                Forgot current password?
+              </Link>
             </div>
-            
+
             <PasswordField
               id="new-password"
               label="New password"
@@ -84,7 +96,7 @@ export function ChangePasswordPanel() {
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
             />
-            
+
             <PasswordField
               id="confirm-password"
               label="Confirm new password"
@@ -94,9 +106,14 @@ export function ChangePasswordPanel() {
             />
           </div>
         </div>
-        
+
         <div className="mt-2">
-          <ButtonControl disabled={saving} loading={saving} type="submit" variant="secondary">
+          <ButtonControl
+            disabled={saving}
+            loading={saving}
+            type="submit"
+            variant="secondary"
+          >
             {saving ? "Saving…" : "Update password"}
           </ButtonControl>
         </div>

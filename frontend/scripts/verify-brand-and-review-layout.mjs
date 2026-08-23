@@ -13,6 +13,8 @@ const globals = read("src/app/globals.css");
 const brand = read("src/components/brand-mark.tsx");
 const review = read("src/components/research-review-queue.tsx");
 const login = read("src/components/login-form.tsx");
+const changePassword = read("src/components/change-password-panel.tsx");
+const forgotPasswordPage = read("src/app/forgot-password/page.tsx");
 const reset = read("src/components/reset-password-form.tsx");
 const layout = read("src/app/layout.tsx");
 
@@ -66,7 +68,9 @@ expect(
   "A preselected automatic match must be verified as the existing proposal, not rewritten as a manual link.",
 );
 expect(
-  /verifyContributor\(\s*item\.id,\s*contributor\.sortOrder,\s*selectedPersonId,\s*selectedMatch,?\s*\)/.test(review),
+  /verifyContributor\(\s*item\.id,\s*contributor\.sortOrder,\s*selectedPersonId,\s*selectedMatch,?\s*\)/.test(
+    review,
+  ),
   "Verify must act on the currently selected searchable-person value.",
 );
 expect(
@@ -89,6 +93,14 @@ expect(
 expect(
   login.includes("/forgot-password"),
   "Login page must expose password recovery.",
+);
+expect(
+  changePassword.includes('href="/forgot-password"'),
+  "Profile password controls must expose account recovery.",
+);
+expect(
+  !forgotPasswordPage.includes("GuestOnly"),
+  "Signed-in users must be able to open account recovery from their profile.",
 );
 expect(
   reset.includes("/auth/password-reset/complete"),
