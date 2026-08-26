@@ -92,26 +92,36 @@ export class DeadlineNotificationsService
     ]);
 
     const items: DeadlineItem[] = [
-      ...tasks.map((task) => ({
-        id: task.id,
-        kind: 'task' as const,
-        title: task.title,
-        dueAt: task.dueAt!,
-        projectId: task.projectId,
-        projectTitle: task.project.researchItem.title ?? 'Project',
-        recipientId: task.owner!.user!.id,
-        recipientEmail: task.owner!.user!.email,
-      })),
-      ...milestones.map((milestone) => ({
-        id: milestone.id,
-        kind: 'milestone' as const,
-        title: milestone.title,
-        dueAt: milestone.dueAt!,
-        projectId: milestone.projectId,
-        projectTitle: milestone.project.researchItem.title ?? 'Project',
-        recipientId: milestone.owner!.user!.id,
-        recipientEmail: milestone.owner!.user!.email,
-      })),
+      ...tasks.flatMap((task) => {
+        if (!task.dueAt || !task.owner?.user) return [];
+        return [
+          {
+            id: task.id,
+            kind: 'task' as const,
+            title: task.title,
+            dueAt: task.dueAt,
+            projectId: task.projectId,
+            projectTitle: task.project.researchItem.title ?? 'Project',
+            recipientId: task.owner.user.id,
+            recipientEmail: task.owner.user.email,
+          },
+        ];
+      }),
+      ...milestones.flatMap((milestone) => {
+        if (!milestone.dueAt || !milestone.owner?.user) return [];
+        return [
+          {
+            id: milestone.id,
+            kind: 'milestone' as const,
+            title: milestone.title,
+            dueAt: milestone.dueAt,
+            projectId: milestone.projectId,
+            projectTitle: milestone.project.researchItem.title ?? 'Project',
+            recipientId: milestone.owner.user.id,
+            recipientEmail: milestone.owner.user.email,
+          },
+        ];
+      }),
     ];
     await Promise.all(items.map((item) => this.notify(item, now, policy)));
   }
