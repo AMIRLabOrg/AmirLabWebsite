@@ -11,6 +11,11 @@ import { MailService } from '../mail/mail.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { resolveService } from '../../test/resolve-service';
 import { ApplicationsService } from './applications.service';
+import { AppointmentLettersService } from './appointment-letters.service';
+import {
+  DEFAULT_APPOINTMENT_LETTER_TEMPLATE,
+  SettingsService,
+} from '../settings/settings.service';
 
 describe('ApplicationsService review notes', () => {
   it('does not store a reason when accepting an application', async () => {
@@ -48,9 +53,21 @@ describe('ApplicationsService review notes', () => {
     };
     const service = await resolveService(ApplicationsService, [
       { provide: AssetsService, useValue: {} },
+      { provide: AppointmentLettersService, useValue: {} },
       { provide: JobsService, useValue: { register: jest.fn() } },
       { provide: MailService, useValue: { queue: jest.fn() } },
       { provide: NotificationsService, useValue: {} },
+      {
+        provide: SettingsService,
+        useValue: {
+          appointmentLetter: jest
+            .fn()
+            .mockResolvedValue(DEFAULT_APPOINTMENT_LETTER_TEMPLATE),
+          notificationPolicy: jest
+            .fn()
+            .mockResolvedValue({ applicationAccepted: false }),
+        },
+      },
       {
         provide: PrismaService,
         useValue: {

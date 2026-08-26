@@ -8,6 +8,8 @@ import { MailService } from '../mail/mail.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { resolveService } from '../../test/resolve-service';
 import { ApplicationsService } from './applications.service';
+import { AppointmentLettersService } from './appointment-letters.service';
+import { SettingsService } from '../settings/settings.service';
 
 const cv = {
   buffer: Buffer.from('%PDF-test'),
@@ -20,6 +22,7 @@ const cv = {
 async function serviceWith(assets: object, prisma: object) {
   return resolveService(ApplicationsService, [
     { provide: AssetsService, useValue: assets },
+    { provide: AppointmentLettersService, useValue: {} },
     {
       provide: JobsService,
       useValue: { enqueue: jest.fn(), register: jest.fn() },
@@ -27,6 +30,7 @@ async function serviceWith(assets: object, prisma: object) {
     { provide: MailService, useValue: { queue: jest.fn() } },
     { provide: NotificationsService, useValue: { notifyReviewers: jest.fn() } },
     { provide: PrismaService, useValue: prisma },
+    { provide: SettingsService, useValue: {} },
   ]);
 }
 

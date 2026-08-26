@@ -269,6 +269,7 @@ export interface Position {
   engagementStartsAt: string | null;
   engagementEndsAt: string | null;
   engagementDurationLabel: string | null;
+  weeklyCommitmentHours: number | null;
   targetRank: string | null;
   departmentId?: string | null;
   department: { id?: string; name: string } | null;

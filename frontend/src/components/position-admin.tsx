@@ -53,6 +53,7 @@ const EMPTY_POSITION = {
   engagementEndsAt: "",
   engagementStartsAt: "",
   engagementType: "FIXED_TERM",
+  weeklyCommitmentHours: "",
   opensAt: "",
   positionType: "INTERNSHIP",
   requirements: [""],
@@ -664,6 +665,22 @@ export function PositionAdminEditor({ id }: { id?: string }) {
                 }
               />
             </Field>
+            <Field label="Weekly commitment">
+              <InputControl
+                loading={editorLoading}
+                max="168"
+                min="1"
+                placeholder="Hours per week"
+                type="number"
+                value={form.weeklyCommitmentHours}
+                onChange={(event) =>
+                  setForm({
+                    ...form,
+                    weeklyCommitmentHours: event.target.value,
+                  })
+                }
+              />
+            </Field>
             {timingError ? (
               <p
                 className="col-span-full m-0 rounded-panel border-l-[3px] border-danger bg-danger-soft px-[.9rem] py-3 text-[.78rem] leading-[1.45] text-danger"
@@ -875,6 +892,9 @@ function positionToForm(position: Position): PositionFormState {
     engagementEndsAt: toDateInput(position.engagementEndsAt),
     engagementStartsAt: toDateInput(position.engagementStartsAt),
     engagementType: position.engagementType,
+    weeklyCommitmentHours: position.weeklyCommitmentHours
+      ? String(position.weeklyCommitmentHours)
+      : "",
     opensAt: toDateTimeLocal(position.opensAt),
     positionType: position.positionType,
     requirements: position.requirements.length ? position.requirements : [""],
@@ -896,6 +916,9 @@ function formToPayload(form: PositionFormState) {
     engagementEndsAt: dateOrNull(form.engagementEndsAt),
     engagementStartsAt: dateOrNull(form.engagementStartsAt),
     engagementType: form.engagementType,
+    ...(form.weeklyCommitmentHours
+      ? { weeklyCommitmentHours: Number(form.weeklyCommitmentHours) }
+      : {}),
     opensAt: dateTimeOrNull(form.opensAt),
     positionType: form.positionType,
     requirements: cleanRows(form.requirements),

@@ -246,6 +246,7 @@ enum ContributorMatchSource {
 enum NotificationType {
   APPLICATION_RECEIVED
   APPLICATION_PARSED
+  APPLICATION_ACCEPTED
   APPLICATION_REJECTED
   ACCOUNT_ACTIVATED
   RESEARCH_SUBMITTED
@@ -260,6 +261,12 @@ enum NotificationType {
   PROJECT_REVIEW_NEEDED
   WEEKLY_REPORT_SUBMITTED
   WEEKLY_REPORT_REVIEWED
+  TASK_ASSIGNED
+  TASK_CHANGED
+  MILESTONE_PROGRESS_CHANGED
+  DEADLINE_REMINDER
+  DEADLINE_DUE
+  DEADLINE_OVERDUE
   SYSTEM
 }
 
@@ -959,6 +966,7 @@ model Position {
   engagementStartsAt      DateTime?
   engagementEndsAt        DateTime?
   engagementDurationLabel String?
+  weeklyCommitmentHours   Int?
   departmentId            String?        @db.Uuid
   createdAt               DateTime       @default(now())
   updatedAt               DateTime       @updatedAt
@@ -993,9 +1001,25 @@ model Application {
   profileImageAsset   Asset?             @relation("ApplicationProfileImage", fields: [profileImageAssetId], references: [id], onDelete: SetNull)
   reviewedBy          User?              @relation("ApplicationReviewer", fields: [reviewedById], references: [id], onDelete: SetNull)
   events              ApplicationEvent[]
+  appointmentLetter   AppointmentLetter?
 
   @@index([status, createdAt])
   @@index([email])
+}
+
+model AppointmentLetter {
+  id               String      @id @default(uuid()) @db.Uuid
+  applicationId    String      @unique @db.Uuid
+  templateVersion  Int
+  templateMarkdown String      @db.Text
+  snapshot         Json
+  pdfData          Bytes?
+  pdfChecksum      String?
+  emailSentAt      DateTime?
+  lastEmailError   String?     @db.Text
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
+  application      Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
 }
 
 model ApplicationEvent {
@@ -1122,6 +1146,7 @@ model Notification {
   body        String
   actionUrl   String?
   payload     Json?
+  uniqueKey   String?          @unique
   readAt      DateTime?
   createdAt   DateTime         @default(now())
   recipientId String           @db.Uuid

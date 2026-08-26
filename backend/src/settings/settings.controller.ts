@@ -2,13 +2,50 @@ import { Body, Controller, Get, Put } from '@nestjs/common';
 import { PlatformRole } from '../../generated/prisma/client';
 import { CurrentUser, RequireRole } from '../auth/auth.decorators';
 import type { AuthenticatedUser } from '../auth/auth.types';
-import { RankPolicyDto, VerificationPolicyDto } from './dto/settings.dto';
-import { SettingsService } from './settings.service';
+import {
+  AppointmentLetterTemplateDto,
+  NotificationPolicyDto,
+  RankPolicyDto,
+  VerificationPolicyDto,
+} from './dto/settings.dto';
+import {
+  APPOINTMENT_TEMPLATE_VARIABLES,
+  SettingsService,
+} from './settings.service';
 
 @Controller('settings')
 @RequireRole(PlatformRole.ADMIN)
 export class SettingsController {
   constructor(private readonly settings: SettingsService) {}
+
+  @Get('appointment-letter')
+  async appointmentLetter() {
+    return {
+      ...(await this.settings.appointmentLetter()),
+      variables: APPOINTMENT_TEMPLATE_VARIABLES,
+    };
+  }
+
+  @Put('appointment-letter')
+  updateAppointmentLetter(
+    @Body() body: AppointmentLetterTemplateDto,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    return this.settings.updateAppointmentLetter(body, user.id);
+  }
+
+  @Get('notifications')
+  notifications() {
+    return this.settings.notificationPolicy();
+  }
+
+  @Put('notifications')
+  updateNotifications(
+    @Body() body: NotificationPolicyDto,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    return this.settings.updateNotificationPolicy(body, user.id);
+  }
 
   @Get('verification')
   verification() {

@@ -347,6 +347,7 @@ export class ResearchService {
         summary: dto.summary.trim(),
         targetRank: dto.targetRank,
         title: dto.title.trim(),
+        weeklyCommitmentHours: dto.weeklyCommitmentHours,
         deadline: dto.deadline ? new Date(dto.deadline) : undefined,
         departmentId: dto.departmentId,
         slug: `${slugBase}-${Date.now().toString(36)}`,
@@ -1350,6 +1351,9 @@ function positionData(
     ...(dto.summary !== undefined ? { summary: dto.summary.trim() } : {}),
     ...(dto.targetRank !== undefined ? { targetRank: dto.targetRank } : {}),
     ...(dto.title !== undefined ? { title: dto.title.trim() } : {}),
+    ...(dto.weeklyCommitmentHours !== undefined
+      ? { weeklyCommitmentHours: dto.weeklyCommitmentHours }
+      : {}),
   };
 }
 

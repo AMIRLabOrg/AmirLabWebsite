@@ -2,15 +2,16 @@
 
 import { cn } from "@/lib/cn";
 import { loadingPlaceholder } from "@/lib/loading-style";
-import { useEffect, useState } from "react";
-import { Save, ShieldCheck } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { Braces, ExternalLink, Save, ShieldCheck } from "lucide-react";
 import { AdminOnly } from "@/components/admin-only";
 import { useNotifications } from "@/components/notification-provider";
 import { StatePanel } from "@/components/state-panel";
-import { InputControl } from "@/components/ui/form-controls";
+import { InputControl, TextareaControl } from "@/components/ui/form-controls";
 import { SegmentedControl } from "@/components/ui/segmented-control";
 import { apiRequest } from "@/lib/client-api";
 import { ButtonControl } from "@/components/ui/button-control";
+import { API_URL } from "@/lib/api";
 
 type VerificationMode = "AUTOMATIC" | "MANUAL";
 
@@ -32,6 +33,64 @@ interface RankPolicy {
 interface RedirectUrlSetting {
   url: string;
 }
+
+interface AppointmentLetterTemplate {
+  version: number;
+  markdown: string;
+  signerName: string;
+  signerTitle: string;
+  signerEmail: string;
+  signerPhone: string;
+  siteUrl: string;
+  siteEmail: string;
+  siteLocation: string;
+  variables: Array<{
+    label: string;
+    required: boolean;
+    token: string;
+  }>;
+}
+
+interface NotificationPolicy {
+  applicationAccepted: boolean;
+  applicationRejected: boolean;
+  taskAssigned: boolean;
+  taskChanged: boolean;
+  milestoneProgress: boolean;
+  deadlineReminder: boolean;
+  deadlineDue: boolean;
+  deadlineOverdue: boolean;
+  reminderDays: number;
+}
+
+const NOTIFICATION_LABELS: Record<
+  Exclude<keyof NotificationPolicy, "reminderDays">,
+  [string, string]
+> = {
+  applicationAccepted: [
+    "Accepted applications",
+    "Email the PDF appointment letter.",
+  ],
+  applicationRejected: [
+    "Rejected applications",
+    "Email the applicant when a decision is recorded.",
+  ],
+  taskAssigned: ["Task assignments", "Notify the person assigned to a task."],
+  taskChanged: [
+    "Task changes",
+    "Notify owners when task details or status change.",
+  ],
+  milestoneProgress: [
+    "Milestone progress",
+    "Notify project members when milestone progress changes.",
+  ],
+  deadlineReminder: [
+    "Deadline reminders",
+    "Send a reminder before a task or milestone is due.",
+  ],
+  deadlineDue: ["Due today", "Notify owners on the due date."],
+  deadlineOverdue: ["Overdue", "Notify owners once after a deadline passes."],
+};
 
 const LABELS: Record<keyof VerificationPolicy, [string, string]> = {
   profileEdit: [
@@ -62,10 +121,15 @@ export function AdminSettings() {
   const [redirectUrl, setRedirectUrl] = useState<RedirectUrlSetting | null>(
     null,
   );
+  const [appointmentLetter, setAppointmentLetter] =
+    useState<AppointmentLetterTemplate | null>(null);
+  const [notificationPolicy, setNotificationPolicy] =
+    useState<NotificationPolicy | null>(null);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
   const [reload, setReload] = useState(0);
+  const templateEditor = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
     Promise.all([
@@ -76,21 +140,46 @@ export function AdminSettings() {
       apiRequest<RedirectUrlSetting>("/settings/redirect-url", {
         method: "GET",
       }),
+      apiRequest<AppointmentLetterTemplate>("/settings/appointment-letter", {
+        method: "GET",
+      }),
+      apiRequest<NotificationPolicy>("/settings/notifications", {
+        method: "GET",
+      }),
     ])
-      .then(([nextVerification, nextRanking, nextRedirectUrl]) => {
-        setVerification(nextVerification);
-        setRanking(nextRanking);
-        setRedirectUrl(nextRedirectUrl);
-      })
+      .then(
+        ([
+          nextVerification,
+          nextRanking,
+          nextRedirectUrl,
+          nextAppointmentLetter,
+          nextNotificationPolicy,
+        ]) => {
+          setVerification(nextVerification);
+          setRanking(nextRanking);
+          setRedirectUrl(nextRedirectUrl);
+          setAppointmentLetter(nextAppointmentLetter);
+          setNotificationPolicy(nextNotificationPolicy);
+        },
+      )
       .catch((value: Error) => setError(value.message))
       .finally(() => setLoading(false));
   }, [reload]);
 
   async function save() {
-    if (!verification || !ranking || !redirectUrl) return;
+    if (
+      !verification ||
+      !ranking ||
+      !redirectUrl ||
+      !appointmentLetter ||
+      !notificationPolicy
+    )
+      return;
     setError("");
     setMessage("");
     try {
+      const appointmentLetterInput =
+        appointmentTemplateInput(appointmentLetter);
       await Promise.all([
         apiRequest("/settings/verification", {
           body: JSON.stringify(verification),
@@ -104,6 +193,16 @@ export function AdminSettings() {
         }),
         apiRequest("/settings/redirect-url", {
           body: JSON.stringify(redirectUrl),
+          headers: { "content-type": "application/json" },
+          method: "PUT",
+        }),
+        apiRequest("/settings/appointment-letter", {
+          body: JSON.stringify(appointmentLetterInput),
+          headers: { "content-type": "application/json" },
+          method: "PUT",
+        }),
+        apiRequest("/settings/notifications", {
+          body: JSON.stringify(notificationPolicy),
           headers: { "content-type": "application/json" },
           method: "PUT",
         }),
@@ -130,6 +229,19 @@ export function AdminSettings() {
     setVerification({ ...verification, [key]: mode as VerificationMode });
   }
 
+  function insertTemplateVariable(token: string) {
+    if (!appointmentLetter) return;
+    const editor = templateEditor.current;
+    const start = editor?.selectionStart ?? appointmentLetter.markdown.length;
+    const end = editor?.selectionEnd ?? start;
+    const markdown = `${appointmentLetter.markdown.slice(0, start)}${token}${appointmentLetter.markdown.slice(end)}`;
+    setAppointmentLetter({ ...appointmentLetter, markdown });
+    requestAnimationFrame(() => {
+      editor?.focus();
+      editor?.setSelectionRange(start + token.length, start + token.length);
+    });
+  }
+
   const displayedVerification: VerificationPolicy = verification ?? {
     profileEdit: "AUTOMATIC",
     newPaper: "AUTOMATIC",
@@ -144,8 +256,37 @@ export function AdminSettings() {
     leadCitationMinimum: 0,
   };
   const displayedRedirectUrl = redirectUrl ?? { url: "https://amirl.org/" };
+  const displayedAppointmentLetter = appointmentLetter ?? {
+    version: 1,
+    markdown: "",
+    signerName: "",
+    signerTitle: "",
+    signerEmail: "",
+    signerPhone: "",
+    siteUrl: "",
+    siteEmail: "",
+    siteLocation: "",
+    variables: [],
+  };
+  const displayedNotificationPolicy = notificationPolicy ?? {
+    applicationAccepted: true,
+    applicationRejected: true,
+    taskAssigned: true,
+    taskChanged: true,
+    milestoneProgress: true,
+    deadlineReminder: true,
+    deadlineDue: true,
+    deadlineOverdue: true,
+    reminderDays: 3,
+  };
   const loadFailed = Boolean(
-    error && (!verification || !ranking || !redirectUrl) && !loading,
+    error &&
+    (!verification ||
+      !ranking ||
+      !redirectUrl ||
+      !appointmentLetter ||
+      !notificationPolicy) &&
+    !loading,
   );
 
   return (
@@ -159,7 +300,12 @@ export function AdminSettings() {
             {message}
           </p>
         ) : null}
-        {error && verification && ranking ? (
+        {error &&
+        verification &&
+        ranking &&
+        redirectUrl &&
+        appointmentLetter &&
+        notificationPolicy ? (
           <p className="m-0 border-l-[3px] border-danger bg-danger-soft px-4 py-[.8rem] text-[.78rem]">
             {error}
           </p>
@@ -399,6 +545,220 @@ export function AdminSettings() {
               </div>
             </section>
 
+            <section className="grid gap-[1.1rem]">
+              <header className="grid grid-cols-[42px_minmax(0,1fr)] items-start gap-[1.2rem] border-b border-line pb-4 max-[640px]:grid-cols-1">
+                <span className="pt-[.35rem] font-mono text-[.62rem] text-ink-faint">
+                  04
+                </span>
+                <div>
+                  <p className="m-0 mb-4 font-[var(--font-sans)] text-[.75rem] font-extrabold uppercase tracking-[.12em] text-brand">
+                    Appointment document
+                  </p>
+                  <h2 className="mt-[.35rem] font-serif text-[clamp(1.75rem,3vw,2.6rem)] font-normal leading-none">
+                    Letter template
+                  </h2>
+                  <p className="mt-[.7rem] max-w-[760px] text-[.78rem] leading-[1.55] text-ink-muted">
+                    Edit the Markdown body. The branded header, position facts,
+                    signature, and footer are controlled by the design system.
+                  </p>
+                </div>
+              </header>
+              <div className="ml-[calc(42px+1.2rem)] grid gap-5 rounded-panel border border-line bg-surface p-4 max-[640px]:ml-0">
+                <label className="grid gap-2 text-[.8rem] font-semibold text-ink-muted">
+                  Markdown body
+                  <TextareaControl
+                    ref={templateEditor}
+                    className="min-h-[280px] font-mono text-[.78rem] leading-[1.6]"
+                    disabled={loading}
+                    maxLength={20000}
+                    onChange={(event) =>
+                      appointmentLetter &&
+                      setAppointmentLetter({
+                        ...appointmentLetter,
+                        markdown: event.target.value,
+                      })
+                    }
+                    value={displayedAppointmentLetter.markdown}
+                  />
+                </label>
+                <div className="grid gap-3 rounded-panel border border-line bg-canvas p-4">
+                  <div className="grid grid-cols-[auto_minmax(0,1fr)] items-start gap-3">
+                    <Braces
+                      aria-hidden="true"
+                      className="text-brand"
+                      size={19}
+                    />
+                    <div>
+                      <strong className="text-[.82rem]">
+                        Available variables
+                      </strong>
+                      <p className="mt-1 text-[.72rem] leading-[1.5] text-ink-muted">
+                        Select a variable to insert it at the cursor. Values are
+                        rendered as plain text; HTML, images, links, and unknown
+                        variables are rejected by the server.
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {displayedAppointmentLetter.variables.map((variable) => (
+                      <ButtonControl
+                        aria-label={`Insert ${variable.label}`}
+                        className="gap-2 font-mono"
+                        compact
+                        disabled={loading}
+                        key={variable.token}
+                        onClick={() => insertTemplateVariable(variable.token)}
+                        title={`${variable.label}${variable.required ? " — required" : ""}`}
+                        type="button"
+                        variant="add-another"
+                      >
+                        {variable.token}
+                        {variable.required ? (
+                          <span className="font-[var(--font-sans)] text-[.58rem] font-extrabold uppercase tracking-[.08em]">
+                            Required
+                          </span>
+                        ) : null}
+                      </ButtonControl>
+                    ))}
+                  </div>
+                  <p className="m-0 text-[.68rem] leading-[1.5] text-ink-muted">
+                    Responsibilities must remain on a line by itself so the PDF
+                    can safely create the numbered list from the position.
+                  </p>
+                </div>
+                <div className="grid grid-cols-2 gap-4 max-[760px]:grid-cols-1">
+                  {(
+                    [
+                      ["signerName", "Signer name", "text"],
+                      ["signerTitle", "Signer title", "text"],
+                      ["signerEmail", "Signer email", "email"],
+                      ["signerPhone", "Signer phone", "text"],
+                      ["siteUrl", "Website", "url"],
+                      ["siteEmail", "Lab email", "email"],
+                      ["siteLocation", "Location", "text"],
+                    ] as const
+                  ).map(([key, label, type]) => (
+                    <label
+                      className="grid gap-2 text-[.8rem] font-semibold text-ink-muted"
+                      key={key}
+                    >
+                      {label}
+                      <InputControl
+                        disabled={loading}
+                        onChange={(event) =>
+                          appointmentLetter &&
+                          setAppointmentLetter({
+                            ...appointmentLetter,
+                            [key]: event.target.value,
+                          })
+                        }
+                        type={type}
+                        value={displayedAppointmentLetter[key]}
+                      />
+                    </label>
+                  ))}
+                </div>
+                <div className="flex items-center justify-between gap-4 border-t border-line pt-4 max-[640px]:items-stretch">
+                  <span className="font-mono text-[.68rem] text-ink-muted">
+                    Template version {displayedAppointmentLetter.version}
+                  </span>
+                  <ButtonControl
+                    onClick={() =>
+                      window.open(
+                        `${API_URL}/applications/appointment-letter/preview`,
+                        "_blank",
+                        "noopener,noreferrer",
+                      )
+                    }
+                    type="button"
+                    variant="secondary"
+                  >
+                    <ExternalLink size={15} /> Preview PDF
+                  </ButtonControl>
+                </div>
+              </div>
+            </section>
+
+            <section className="grid gap-[1.1rem]">
+              <header className="grid grid-cols-[42px_minmax(0,1fr)] items-start gap-[1.2rem] border-b border-line pb-4 max-[640px]:grid-cols-1">
+                <span className="pt-[.35rem] font-mono text-[.62rem] text-ink-faint">
+                  05
+                </span>
+                <div>
+                  <p className="m-0 mb-4 font-[var(--font-sans)] text-[.75rem] font-extrabold uppercase tracking-[.12em] text-brand">
+                    Delivery rules
+                  </p>
+                  <h2 className="mt-[.35rem] font-serif text-[clamp(1.75rem,3vw,2.6rem)] font-normal leading-none">
+                    Email and notifications
+                  </h2>
+                  <p className="mt-[.7rem] max-w-[760px] text-[.78rem] leading-[1.55] text-ink-muted">
+                    Each workflow can be enabled independently. Deadline notices
+                    are deduplicated, so a person receives each event once.
+                  </p>
+                </div>
+              </header>
+              <div className="ml-[calc(42px+1.2rem)] grid overflow-hidden rounded-panel border border-line bg-surface max-[640px]:ml-0">
+                {(
+                  Object.keys(NOTIFICATION_LABELS) as Array<
+                    Exclude<keyof NotificationPolicy, "reminderDays">
+                  >
+                ).map((key) => (
+                  <article
+                    className="grid min-h-[76px] grid-cols-[minmax(240px,1fr)_180px] items-center gap-4 border-b border-line px-4 py-[.95rem] last:border-b-0 max-[700px]:grid-cols-1"
+                    key={key}
+                  >
+                    <div>
+                      <strong className="text-[.86rem]">
+                        {NOTIFICATION_LABELS[key][0]}
+                      </strong>
+                      <p className="mt-1 text-[.72rem] leading-[1.5] text-ink-muted">
+                        {NOTIFICATION_LABELS[key][1]}
+                      </p>
+                    </div>
+                    <SegmentedControl
+                      ariaLabel={`${NOTIFICATION_LABELS[key][0]} delivery`}
+                      disabled={loading}
+                      loading={loading}
+                      onValueChange={(value) =>
+                        notificationPolicy &&
+                        setNotificationPolicy({
+                          ...notificationPolicy,
+                          [key]: value === "ON",
+                        })
+                      }
+                      options={[
+                        { label: "On", value: "ON" },
+                        { label: "Off", value: "OFF", tone: "neutral" },
+                      ]}
+                      value={displayedNotificationPolicy[key] ? "ON" : "OFF"}
+                    />
+                  </article>
+                ))}
+                <label className="grid grid-cols-[minmax(240px,1fr)_160px] items-center gap-4 border-t border-line px-4 py-[.95rem] text-[.8rem] font-semibold text-ink-muted max-[700px]:grid-cols-1">
+                  <span>
+                    Reminder lead time
+                    <small className="mt-1 block font-normal leading-[1.5]">
+                      Calendar days before the due date.
+                    </small>
+                  </span>
+                  <InputControl
+                    disabled={loading}
+                    max="30"
+                    min="0"
+                    onChange={(event) =>
+                      notificationPolicy &&
+                      setNotificationPolicy({
+                        ...notificationPolicy,
+                        reminderDays: Number(event.target.value),
+                      })
+                    }
+                    type="number"
+                    value={displayedNotificationPolicy.reminderDays}
+                  />
+                </label>
+              </div>
+            </section>
+
             <footer className="flex items-center justify-between gap-4 border-t border-line pt-5 max-[640px]:flex-col max-[640px]:items-stretch">
               <p className="m-0 text-[.72rem] leading-[1.5] text-ink-muted">
                 Scholar profiles sync daily with gradual scheduling, backoff,
@@ -420,4 +780,17 @@ export function AdminSettings() {
       </div>
     </AdminOnly>
   );
+}
+
+function appointmentTemplateInput(value: AppointmentLetterTemplate) {
+  return {
+    markdown: value.markdown,
+    signerEmail: value.signerEmail,
+    signerName: value.signerName,
+    signerPhone: value.signerPhone,
+    signerTitle: value.signerTitle,
+    siteEmail: value.siteEmail,
+    siteLocation: value.siteLocation,
+    siteUrl: value.siteUrl,
+  };
 }

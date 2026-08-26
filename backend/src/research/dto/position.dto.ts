@@ -3,10 +3,13 @@ import {
   IsArray,
   IsDateString,
   IsEnum,
+  IsInt,
   IsOptional,
   IsString,
   IsUUID,
   MaxLength,
+  Max,
+  Min,
   MinLength,
 } from 'class-validator';
 import {
@@ -80,6 +83,12 @@ export class CreatePositionDto {
   engagementDurationLabel?: string;
 
   @IsOptional()
+  @IsInt()
+  @Min(1)
+  @Max(168)
+  weeklyCommitmentHours?: number;
+
+  @IsOptional()
   @IsUUID()
   departmentId?: string;
 }
@@ -150,6 +159,12 @@ export class UpdatePositionDto {
   @IsString()
   @MaxLength(200)
   engagementDurationLabel?: string;
+
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  @Max(168)
+  weeklyCommitmentHours?: number;
 
   @IsOptional()
   @IsUUID()

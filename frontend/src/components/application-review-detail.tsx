@@ -34,6 +34,12 @@ interface ReviewApplication {
   position: { title: string };
   createdAt: string;
   decisionReason: string | null;
+  appointmentLetter: {
+    ready: boolean;
+    checksum: string | null;
+    emailSentAt: string | null;
+    lastEmailError: string | null;
+  } | null;
 }
 type Decision = "ACCEPTED" | "REJECTED";
 
@@ -395,6 +401,38 @@ export function ApplicationReviewDetail({ id }: { id: string }) {
                 (loading ? "Loading extracted text" : "No extracted text.")}
             </pre>
           </details>
+          {application?.appointmentLetter ? (
+            <div className="mt-4 grid gap-3 border-t border-line pt-4">
+              <span className="font-mono text-[.64rem] uppercase tracking-[.06em] text-brand">
+                Appointment letter
+              </span>
+              <SemanticStatus
+                tone={
+                  application.appointmentLetter.lastEmailError
+                    ? "error"
+                    : application.appointmentLetter.emailSentAt
+                      ? "success"
+                      : "pending"
+                }
+              >
+                {application.appointmentLetter.lastEmailError
+                  ? "Delivery will be retried."
+                  : application.appointmentLetter.emailSentAt
+                    ? "PDF emailed to the applicant."
+                    : "PDF generation and email are queued."}
+              </SemanticStatus>
+              {application.appointmentLetter.ready ? (
+                <ButtonAnchor
+                  href={`${API_URL}/applications/${application.id}/appointment-letter`}
+                  rel="noreferrer"
+                  target="_blank"
+                  variant="secondary"
+                >
+                  Open appointment letter
+                </ButtonAnchor>
+              ) : null}
+            </div>
+          ) : null}
         </aside>
       </div>
       {loading || canDecide ? (
@@ -417,8 +455,8 @@ export function ApplicationReviewDetail({ id }: { id: string }) {
               },
               {
                 confirmDescription: application
-                  ? `Accept ${application.fullName} and create an account pending setup. No access email will be sent automatically.`
-                  : "Accept this application and create its account record.",
+                  ? `Accept ${application.fullName}, create the account record, and queue their PDF appointment letter for email delivery.`
+                  : "Accept this application, create its account record, and queue the appointment letter.",
                 confirmLabel: "Accept and create account",
                 confirmTitle: "Accept this application?",
                 label: "Accept and create account",

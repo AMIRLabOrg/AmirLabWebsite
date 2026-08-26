@@ -10,6 +10,11 @@ export interface MailMessage {
   subject: string;
   text: string;
   html?: string;
+  attachments?: Array<{
+    filename: string;
+    content: Buffer;
+    contentType: string;
+  }>;
 }
 
 @Injectable()
@@ -52,7 +57,11 @@ export class MailService implements OnModuleInit {
 
   /** Send immediately when a one-time secret must never be persisted in the job payload. */
   async sendNow(message: MailMessage): Promise<void> {
-    await this.deliver(message, true);
+    if (!this.transporter) throw new Error('SMTP is not configured');
+    await this.transporter.sendMail({
+      from: this.config.get('smtpFrom', { infer: true }),
+      ...message,
+    });
   }
 
   private async deliver(

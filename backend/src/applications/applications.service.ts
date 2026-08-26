@@ -22,6 +22,7 @@ import { PrismaService } from '../database/prisma.service';
 import { JobsService } from '../jobs/jobs.service';
 import { MailService } from '../mail/mail.service';
 import { NotificationsService } from '../notifications/notifications.service';
+import { SettingsService } from '../settings/settings.service';
 import { reviewConflict } from '../common/review-problem';
 import { publicPositionWhere } from '../research/research.service';
 import { buildPersonSlug } from '../users/person-slug';
@@ -38,6 +39,13 @@ import {
   type ParsedResumeText,
   type ResumeAssessment,
 } from './resume-assessment';
+import {
+  appointmentSnapshot,
+  AppointmentLettersService,
+  SEND_APPOINTMENT_LETTER_JOB,
+} from './appointment-letters.service';
+
+const SEND_APPLICATION_REJECTION_JOB = 'SEND_APPLICATION_REJECTION';
 
 @Injectable()
 export class ApplicationsService implements OnModuleInit {
@@ -45,10 +53,12 @@ export class ApplicationsService implements OnModuleInit {
 
   constructor(
     private readonly assets: AssetsService,
+    private readonly appointmentLetters: AppointmentLettersService,
     private readonly jobs: JobsService,
     private readonly mail: MailService,
     private readonly notifications: NotificationsService,
     private readonly prisma: PrismaService,
+    private readonly settings: SettingsService,
   ) {}
 
   onModuleInit(): void {
@@ -61,6 +71,26 @@ export class ApplicationsService implements OnModuleInit {
         throw new Error('Application parsing payload needs applicationId');
       }
       await this.parse(applicationId);
+    });
+    this.jobs.register(SEND_APPLICATION_REJECTION_JOB, async (payload) => {
+      if (!payload || Array.isArray(payload) || typeof payload !== 'object') {
+        throw new Error('Application rejection payload must be an object');
+      }
+      const applicationId = payload.applicationId;
+      if (typeof applicationId !== 'string') {
+        throw new Error('Application rejection payload needs applicationId');
+      }
+      const application = await this.prisma.application.findUnique({
+        where: { id: applicationId },
+        include: { position: true },
+      });
+      if (!application || application.status !== ApplicationStatus.REJECTED)
+        return;
+      await this.mail.sendNow({
+        to: application.email,
+        subject: 'Update on your AmirLab application',
+        text: `Thank you for applying for ${application.position.title}. We are unable to move forward with your application.\n\nFeedback: ${application.decisionReason ?? 'The application was not selected.'}`,
+      });
     });
   }
 
@@ -204,13 +234,32 @@ export class ApplicationsService implements OnModuleInit {
   async get(id: string) {
     const application = await this.prisma.application.findUnique({
       where: { id },
-      include: { events: { orderBy: { createdAt: 'asc' } }, position: true },
+      include: {
+        appointmentLetter: {
+          select: {
+            emailSentAt: true,
+            lastEmailError: true,
+            pdfChecksum: true,
+            pdfData: true,
+          },
+        },
+        events: { orderBy: { createdAt: 'asc' } },
+        position: true,
+      },
     });
     if (!application) {
       throw new NotFoundException('Application not found');
     }
     return {
       ...application,
+      appointmentLetter: application.appointmentLetter
+        ? {
+            emailSentAt: application.appointmentLetter.emailSentAt,
+            lastEmailError: application.appointmentLetter.lastEmailError,
+            pdfChecksum: application.appointmentLetter.pdfChecksum,
+            ready: Boolean(application.appointmentLetter.pdfData),
+          }
+        : null,
       parseFeedback:
         application.status === ApplicationStatus.PARSE_FAILED
           ? 'The uploaded PDF could not be processed automatically.'
@@ -234,6 +283,14 @@ export class ApplicationsService implements OnModuleInit {
       throw new NotFoundException('Application not found');
     }
     return this.assets.readCv(application.cvAssetId);
+  }
+
+  previewAppointmentLetter() {
+    return this.appointmentLetters.preview();
+  }
+
+  readAppointmentLetter(id: string) {
+    return this.appointmentLetters.read(id);
   }
 
   async review(
@@ -273,34 +330,43 @@ export class ApplicationsService implements OnModuleInit {
       if (!reason) {
         throw new BadRequestException('A rejection reason is required');
       }
-      await this.prisma.application.update({
-        where: { id },
-        data: {
-          decisionReason: reason,
-          events: {
-            create: {
-              actorId: reviewer.id,
-              fromStatus: application.status,
-              note: reason,
-              toStatus: ApplicationStatus.REJECTED,
+      const policy = await this.settings.notificationPolicy();
+      await this.prisma.$transaction(async (transaction) => {
+        await transaction.application.update({
+          where: { id },
+          data: {
+            decisionReason: reason,
+            events: {
+              create: {
+                actorId: reviewer.id,
+                fromStatus: application.status,
+                note: reason,
+                toStatus: ApplicationStatus.REJECTED,
+              },
             },
+            reviewedAt: new Date(),
+            reviewedById: reviewer.id,
+            status: ApplicationStatus.REJECTED,
           },
-          reviewedAt: new Date(),
-          reviewedById: reviewer.id,
-          status: ApplicationStatus.REJECTED,
-        },
+        });
+        if (policy.applicationRejected) {
+          await transaction.job.create({
+            data: {
+              type: SEND_APPLICATION_REJECTION_JOB,
+              payload: { applicationId: application.id },
+              uniqueKey: `application-rejected:${application.id}`,
+            },
+          });
+        }
       });
-      await this.mail.queue(
-        {
-          to: application.email,
-          subject: `Update on your AMIR Lab application`,
-          text: `Thank you for applying for ${application.position.title}. We are unable to move forward with your application.\n\nFeedback: ${reason}`,
-        },
-        `application-rejected:${application.id}`,
-      );
       return { status: ApplicationStatus.REJECTED };
     }
 
+    const [template, policy] = await Promise.all([
+      this.settings.appointmentLetter(),
+      this.settings.notificationPolicy(),
+    ]);
+    const reviewedAt = new Date();
     await this.prisma.$transaction(async (transaction) => {
       const account = await transaction.user.upsert({
         where: { email: application.email },
@@ -351,7 +417,7 @@ export class ApplicationsService implements OnModuleInit {
               toStatus: ApplicationStatus.ACCEPTED,
             },
           },
-          reviewedAt: new Date(),
+          reviewedAt,
           reviewedById: reviewer.id,
           status: ApplicationStatus.ACCEPTED,
         },
@@ -365,6 +431,35 @@ export class ApplicationsService implements OnModuleInit {
           details: { userId: account.id },
         },
       });
+      if (policy.applicationAccepted) {
+        const letter = await transaction.appointmentLetter.create({
+          data: {
+            applicationId: application.id,
+            templateMarkdown: template.markdown,
+            templateVersion: template.version,
+            snapshot: appointmentSnapshot(template, {
+              applicationId: application.id,
+              applicantEmail: application.email,
+              applicantName: application.fullName,
+              duration: application.position.engagementDurationLabel,
+              endsAt: application.position.engagementEndsAt,
+              issueDate: reviewedAt,
+              positionSlug: application.position.slug,
+              positionTitle: application.position.title,
+              responsibilities: application.position.responsibilities,
+              startsAt: application.position.engagementStartsAt,
+              weeklyCommitmentHours: application.position.weeklyCommitmentHours,
+            }),
+          },
+        });
+        await transaction.job.create({
+          data: {
+            type: SEND_APPOINTMENT_LETTER_JOB,
+            payload: { appointmentLetterId: letter.id },
+            uniqueKey: `appointment-letter:${letter.id}`,
+          },
+        });
+      }
     });
     return { status: ApplicationStatus.ACCEPTED };
   }

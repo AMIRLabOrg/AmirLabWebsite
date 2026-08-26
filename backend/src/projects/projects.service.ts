@@ -364,9 +364,17 @@ export class ProjectsService {
         status: dto.status ?? 'TODO',
         title: dto.title.trim(),
       },
-      include: { owner: true },
+      include: { owner: { include: { user: true } } },
     });
     await this.recordActivityText(id, user.id, `created task “${task.title}”`);
+    const policy = await this.settings.notificationPolicy();
+    if (
+      policy.taskAssigned &&
+      task.owner?.user &&
+      task.owner.user.id !== user.id
+    ) {
+      await this.notifyTaskOwner(task.owner.user, task, 'assigned');
+    }
     return task;
   }
 
@@ -377,7 +385,7 @@ export class ProjectsService {
     user: AuthenticatedUser,
   ) {
     await this.authorize(id, user, ProjectAccess.POST_UPDATES);
-    await this.assertTask(id, taskId);
+    const previous = await this.assertTask(id, taskId);
     await this.assertTaskOwner(id, dto.ownerId);
     const task = await this.prisma.projectTask.update({
       where: { id: taskId },
@@ -390,9 +398,18 @@ export class ProjectsService {
         status: dto.status,
         title: dto.title.trim(),
       },
-      include: { owner: true },
+      include: { owner: { include: { user: true } } },
     });
     await this.recordActivityText(id, user.id, `updated task “${task.title}”`);
+    const policy = await this.settings.notificationPolicy();
+    if (task.owner?.user && task.owner.user.id !== user.id) {
+      const assigned = previous.ownerId !== task.ownerId;
+      if (assigned && policy.taskAssigned) {
+        await this.notifyTaskOwner(task.owner.user, task, 'assigned');
+      } else if (policy.taskChanged) {
+        await this.notifyTaskOwner(task.owner.user, task, 'changed');
+      }
+    }
     return task;
   }
 
@@ -1600,7 +1617,81 @@ export class ProjectsService {
       },
     });
     await this.recordActivity(projectId, actorId, kind);
+    if (kind === ProjectChangeKind.MILESTONES) {
+      await this.notifyMilestoneProgress(projectId, actorId);
+    }
     return result;
+  }
+
+  private async notifyTaskOwner(
+    recipient: { id: string; email: string | null },
+    task: { id: string; projectId: string; title: string },
+    event: 'assigned' | 'changed',
+  ): Promise<void> {
+    const title = event === 'assigned' ? 'Task assigned' : 'Task updated';
+    const body = `“${task.title}” ${event === 'assigned' ? 'was assigned to you' : 'has changed'}.`;
+    await this.notifications.create(recipient.id, {
+      actionUrl: `/workspace/projects/${task.projectId}`,
+      body,
+      payload: { projectId: task.projectId, taskId: task.id },
+      title,
+      type:
+        event === 'assigned'
+          ? NotificationType.TASK_ASSIGNED
+          : NotificationType.TASK_CHANGED,
+    });
+    if (recipient.email) {
+      await this.mail.queue({
+        to: recipient.email,
+        subject: title,
+        text: body,
+      });
+    }
+  }
+
+  private async notifyMilestoneProgress(
+    projectId: string,
+    actorId: string,
+  ): Promise<void> {
+    const policy = await this.settings.notificationPolicy();
+    if (!policy.milestoneProgress) return;
+    const project = await this.prisma.project.findUnique({
+      where: { researchItemId: projectId },
+      include: {
+        researchItem: { select: { title: true } },
+        memberships: {
+          where: { status: ProjectMembershipStatus.ACTIVE },
+          include: { person: { include: { user: true } } },
+        },
+      },
+    });
+    if (!project) return;
+    const title = 'Milestone progress updated';
+    const body = `Milestone progress changed in ${project.researchItem.title ?? 'a project'}.`;
+    await Promise.all(
+      project.memberships.flatMap(({ person }) => {
+        if (!person.user || person.user.id === actorId) return [];
+        return [
+          this.notifications
+            .create(person.user.id, {
+              actionUrl: `/workspace/projects/${projectId}`,
+              body,
+              payload: { projectId },
+              title,
+              type: NotificationType.MILESTONE_PROGRESS_CHANGED,
+            })
+            .then(() =>
+              person.user?.email
+                ? this.mail.queue({
+                    to: person.user.email,
+                    subject: title,
+                    text: body,
+                  })
+                : undefined,
+            ),
+        ];
+      }),
+    );
   }
 
   private async recordActivity(

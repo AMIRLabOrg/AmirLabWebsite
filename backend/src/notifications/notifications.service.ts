@@ -33,6 +33,7 @@ export interface NotificationCreateInput {
   body: string;
   actionUrl?: string;
   payload?: Prisma.InputJsonValue;
+  uniqueKey?: string;
 }
 
 @Injectable()
@@ -246,6 +247,44 @@ export class NotificationsService {
     });
     for (const subscriber of this.subscribers.get(recipientId) ?? []) {
       subscriber.next({ data: notification });
+    }
+  }
+
+  async createOnce(
+    recipientId: string,
+    uniqueKey: string,
+    input: {
+      type: NotificationType;
+      title: string;
+      body: string;
+      actionUrl?: string;
+      payload?: Prisma.InputJsonValue;
+    },
+  ): Promise<boolean> {
+    try {
+      const notification = await this.prisma.notification.create({
+        data: { recipientId, uniqueKey, ...input },
+        select: {
+          id: true,
+          type: true,
+          title: true,
+          body: true,
+          actionUrl: true,
+          createdAt: true,
+        },
+      });
+      for (const subscriber of this.subscribers.get(recipientId) ?? []) {
+        subscriber.next({ data: notification });
+      }
+      return true;
+    } catch (error) {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === 'P2002'
+      ) {
+        return false;
+      }
+      throw error;
     }
   }
 }
