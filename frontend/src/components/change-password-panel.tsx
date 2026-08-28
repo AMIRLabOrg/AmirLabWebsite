@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { SyntheticEvent, useState } from "react";
 import { ButtonControl } from "@/components/ui/button-control";
 import { PasswordField } from "@/components/ui/password-field";
 import { useNotifications } from "@/components/notification-provider";
@@ -15,7 +15,7 @@ export function ChangePasswordPanel() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string>();
 
-  async function submit(event: React.FormEvent<HTMLFormElement>) {
+  async function submit(event: SyntheticEvent<HTMLFormElement, SubmitEvent>) {
     event.preventDefault();
     setError(undefined);
     if (newPassword !== confirmPassword) {

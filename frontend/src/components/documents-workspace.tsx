@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
+import { SyntheticEvent, SyntheticEvent, useEffect, useMemo, useRef, useState } from "react";
 import {
   Award,
   Download,
@@ -292,7 +292,7 @@ function IssueDocumentPanel({
     setRecipientEmail(recipient.publicEmail ?? recipient.user?.email ?? "");
   }
 
-  async function issue(event: FormEvent<HTMLFormElement>) {
+  async function issue(event: SyntheticEvent<HTMLFormElement, SubmitEvent>) {
     event.preventDefault();
     setSaving(true);
     setError(undefined);
@@ -639,7 +639,7 @@ function TemplatesPanel({
     });
   }
 
-  async function save(event: FormEvent<HTMLFormElement>) {
+  async function save(event: SyntheticEvent<HTMLFormElement, SubmitEvent>) {
     event.preventDefault();
     setSaving(true);
     setError(undefined);
@@ -1012,7 +1012,7 @@ function ApprovalPanel({
   const showStoredWatermark =
     approval?.watermarkAvailable && !watermark && !removeWatermark;
 
-  async function save(event: FormEvent<HTMLFormElement>) {
+  async function save(event: SyntheticEvent<HTMLFormElement, SubmitEvent>) {
     event.preventDefault();
     if (!personId) return;
     setSaving(true);

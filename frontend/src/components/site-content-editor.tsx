@@ -3,7 +3,7 @@
 import { cn } from "@/lib/cn";
 import { loadingPlaceholder } from "@/lib/loading-style";
 import Link from "next/link";
-import { useEffect, useState, type FormEvent, type ReactNode } from "react";
+import { useEffect, useState, type SyntheticEvent, type ReactNode } from "react";
 import { ArrowLeft, LoaderCircle, Plus, X } from "lucide-react";
 import { useNotifications } from "@/components/notification-provider";
 import { StatePanel } from "@/components/state-panel";
@@ -66,7 +66,7 @@ export function SiteContentEditor({ page }: { page: SiteContentPage }) {
     setContent((current) => ({ ...current, [key]: value }) as EditableContent);
   }
 
-  async function submit(event: FormEvent<HTMLFormElement>) {
+  async function submit(event: SyntheticEvent<HTMLFormElement, SubmitEvent>) {
     event.preventDefault();
     setSaving(true);
     setError(undefined);

@@ -3,7 +3,7 @@
 import { cn } from "@/lib/cn";
 import { loadingPlaceholder } from "@/lib/loading-style";
 import { useRouter } from "next/navigation";
-import { FormEvent, useEffect, useState, type ReactNode } from "react";
+import { SyntheticEvent, useEffect, useState, type ReactNode } from "react";
 import { CircleOff, CirclePlay, Plus, Save, Trash2 } from "lucide-react";
 import { ConfirmDialog } from "@/components/confirm-dialog";
 import { SelectControl } from "@/components/ui/select-control";
@@ -312,7 +312,7 @@ export function PositionAdminEditor({ id }: { id?: string }) {
       .finally(() => setLoading(false));
   }, [id, showToast]);
 
-  async function submit(event: FormEvent<HTMLFormElement>) {
+  async function submit(event: SyntheticEvent<HTMLFormElement, SubmitEvent>) {
     event.preventDefault();
     setSubmitError(undefined);
     const validationError = validatePositionForm(form);

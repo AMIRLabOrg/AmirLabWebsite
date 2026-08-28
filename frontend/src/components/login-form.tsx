@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { FormEvent, useState } from "react";
+import { SyntheticEvent, useState } from "react";
 import { PASSWORD_MAX_LENGTH, PASSWORD_MIN_LENGTH } from "@/lib/auth";
 import { ApiRequestError, apiRequest } from "@/lib/client-api";
 import { ButtonControl } from "@/components/ui/button-control";
@@ -16,7 +16,7 @@ export function LoginForm() {
   const [phase, setPhase] = useState<LoginPhase>("idle");
   const busy = phase !== "idle";
 
-  async function submit(event: FormEvent<HTMLFormElement>) {
+  async function submit(event: SyntheticEvent<HTMLFormElement, SubmitEvent>) {
     event.preventDefault();
     if (busy) return;
 

@@ -3,7 +3,7 @@
 import { cn } from "@/lib/cn";
 import { loadingPlaceholder } from "@/lib/loading-style";
 import Image from "next/image";
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { SyntheticEvent, useEffect, useMemo, useState } from "react";
 import { Camera, Check, Plus, Trash2, UserRound, X } from "lucide-react";
 import { SelectControl } from "@/components/ui/select-control";
 import { ButtonControl } from "@/components/ui/button-control";
@@ -249,7 +249,7 @@ export function ProfileEditor({ userId }: ProfileEditorProps) {
     }
   }
 
-  async function submit(event: FormEvent<HTMLFormElement>) {
+  async function submit(event: SyntheticEvent<HTMLFormElement, SubmitEvent>) {
     event.preventDefault();
     setSaving(true);
     setMessage(undefined);

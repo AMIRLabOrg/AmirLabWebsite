@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { FormEvent, useEffect, useState } from "react";
+import { SyntheticEvent, useEffect, useState } from "react";
 import { LoaderCircle } from "lucide-react";
 import { apiRequest } from "@/lib/client-api";
 import { StatePanel } from "@/components/state-panel";
@@ -75,7 +75,7 @@ export function AccountForm({ accountId }: { accountId?: string }) {
     };
   }, [accountId]);
 
-  async function submit(event: FormEvent<HTMLFormElement>) {
+  async function submit(event: SyntheticEvent<HTMLFormElement, SubmitEvent>) {
     event.preventDefault();
     setSaving(true);
     setError(undefined);

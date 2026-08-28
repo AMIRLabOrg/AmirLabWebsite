@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { SyntheticEvent, useEffect, useMemo, useState } from "react";
 import { LoaderCircle, Upload } from "lucide-react";
 import type { Position } from "@/lib/types";
 import { apiRequest } from "@/lib/client-api";
@@ -47,8 +47,9 @@ export function ApplicationForm({ positions }: { positions: Position[] }) {
     }
   }
 
-  async function submit(event: FormEvent<HTMLFormElement>) {
+  async function submit(event: SyntheticEvent<HTMLFormElement, SubmitEvent>) {
     event.preventDefault();
+    const formElement = event.currentTarget;
     if (!file) {
       setSubmission({
         kind: "error",
@@ -65,7 +66,7 @@ export function ApplicationForm({ positions }: { positions: Position[] }) {
       return;
     }
     setSubmission({ kind: "submitting" });
-    const form = new FormData(event.currentTarget);
+    const form = new FormData(formElement);
     form.set("fullName", profile.fullName);
     form.set("email", profile.email);
     if (profile.phone) form.set("phone", profile.phone);
@@ -82,7 +83,7 @@ export function ApplicationForm({ positions }: { positions: Position[] }) {
         body: "Application received. The review team can now inspect it.",
         title: "Application submitted",
       });
-      event.currentTarget.reset();
+      formElement.reset();
       setFile(undefined);
       setParseResult(undefined);
     } catch (error) {

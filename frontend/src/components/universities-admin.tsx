@@ -5,7 +5,7 @@ import { loadingPlaceholder } from "@/lib/loading-style";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useRef, useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type SyntheticEvent } from "react";
 import { ArrowRight, Save, Trash2, Upload } from "lucide-react";
 import { AdminOnly } from "@/components/admin-only";
 import { ConfirmDialog } from "@/components/confirm-dialog";
@@ -201,7 +201,7 @@ export function UniversityEditor({ id }: { id?: string }) {
     };
   }, [id]);
 
-  async function save(event: FormEvent<HTMLFormElement>) {
+  async function save(event: SyntheticEvent<HTMLFormElement, SubmitEvent>) {
     event.preventDefault();
     setSaving(true);
     setError(undefined);

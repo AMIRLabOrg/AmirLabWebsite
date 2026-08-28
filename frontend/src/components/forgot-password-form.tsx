@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { SyntheticEvent, useState } from "react";
 import { ApiRequestError, apiRequest } from "@/lib/client-api";
 import { ButtonControl, ButtonLink } from "@/components/ui/button-control";
 import { InputControl } from "@/components/ui/form-controls";
@@ -11,7 +11,7 @@ export function ForgotPasswordForm() {
   const [sent, setSent] = useState(false);
   const [error, setError] = useState<string>();
 
-  async function submit(event: FormEvent<HTMLFormElement>) {
+  async function submit(event: SyntheticEvent<HTMLFormElement, SubmitEvent>) {
     event.preventDefault();
     if (sending) return;
 

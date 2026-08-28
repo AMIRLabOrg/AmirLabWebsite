@@ -2,7 +2,7 @@
 
 import { cn } from "@/lib/cn";
 import { loadingPlaceholder } from "@/lib/loading-style";
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useState, type SyntheticEvent } from "react";
 import { useRouter } from "next/navigation";
 import { ApiRequestError, apiRequest } from "@/lib/client-api";
 import { useReviewIssues } from "@/lib/use-review-issues";
@@ -304,7 +304,7 @@ export function ResearchReviewQueue({ selectedId }: { selectedId?: string }) {
     void refreshUnreadCount().catch(() => undefined);
   }
 
-  async function saveRecordEdit(event: FormEvent<HTMLFormElement>) {
+  async function saveRecordEdit(event: SyntheticEvent<HTMLFormElement, SubmitEvent>) {
     event.preventDefault();
     if (!item || loadingDetail) return;
     const form = new FormData(event.currentTarget);
@@ -1338,7 +1338,7 @@ function ResearchRecordEditor({
   saving,
 }: {
   item: ReviewResearch;
-  onSubmit: (event: FormEvent<HTMLFormElement>) => void;
+  onSubmit: (event: SyntheticEvent<HTMLFormElement, SubmitEvent>) => void;
   saving: boolean;
 }) {
   return (

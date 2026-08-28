@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useEffect, useState } from "react";
+import { SyntheticEvent, useEffect, useState } from "react";
 import { apiRequest } from "@/lib/client-api";
 import { SelectControl } from "@/components/ui/select-control";
 import { SearchableSelect } from "@/components/ui/searchable-select";
@@ -70,11 +70,12 @@ export function ResearchSubmissionForm() {
     ? submitterPersonId
     : (user?.person?.id ?? "");
 
-  async function submit(event: FormEvent<HTMLFormElement>) {
+  async function submit(event: SyntheticEvent<HTMLFormElement, SubmitEvent>) {
     event.preventDefault();
     setError(undefined);
     setLoading(true);
-    const form = new FormData(event.currentTarget);
+    const formElement = event.currentTarget;
+    const form = new FormData(formElement);
     if (staff && !effectiveSubmitterPersonId) {
       setError(
         "Select the registered person this record is being submitted for.",
@@ -106,7 +107,7 @@ export function ResearchSubmissionForm() {
         headers: { "content-type": "application/json" },
         method: "POST",
       });
-      event.currentTarget.reset();
+      formElement.reset();
       showToast({
         body: "The source and registered contributor matches are being checked before review.",
         title: staff

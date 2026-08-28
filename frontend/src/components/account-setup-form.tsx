@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { SyntheticEvent, useState } from "react";
 import { PASSWORD_MAX_LENGTH, PASSWORD_MIN_LENGTH } from "@/lib/auth";
 import { apiRequest } from "@/lib/client-api";
 import { PasswordField } from "@/components/ui/password-field";
@@ -10,7 +10,7 @@ export function AccountSetupForm({ token }: { token?: string }) {
   const [error, setError] = useState<string>();
   const [loading, setLoading] = useState(false);
 
-  async function submit(event: FormEvent<HTMLFormElement>) {
+  async function submit(event: SyntheticEvent<HTMLFormElement, SubmitEvent>) {
     event.preventDefault();
     if (!token) {
       return;

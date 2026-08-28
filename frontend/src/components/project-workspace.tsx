@@ -7,7 +7,7 @@ import {
   useEffect,
   useMemo,
   useState,
-  type FormEvent,
+  type SyntheticEvent,
 } from "react";
 import {
   ArrowLeft,
@@ -846,7 +846,7 @@ function Tasks({
     label: person.fullName,
     value: person.id,
   }));
-  function createTask(event: FormEvent<HTMLFormElement>) {
+  function createTask(event: SyntheticEvent<HTMLFormElement, SubmitEvent>) {
     event.preventDefault();
     create({
       title,

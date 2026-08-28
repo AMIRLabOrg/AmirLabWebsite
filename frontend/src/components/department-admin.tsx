@@ -4,7 +4,7 @@ import { cn } from "@/lib/cn";
 import { loadingPlaceholder } from "@/lib/loading-style";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useState, type FormEvent } from "react";
+import { SyntheticEvent, useEffect, useState } from "react";
 import { ArrowRight, Save, Trash2 } from "lucide-react";
 import { AdminOnly } from "@/components/admin-only";
 import { ConfirmDialog } from "@/components/confirm-dialog";
@@ -222,7 +222,7 @@ export function DepartmentEditor({ id }: { id?: string }) {
     };
   }, [id]);
 
-  async function save(event: FormEvent<HTMLFormElement>) {
+  async function save(event: SyntheticEvent<HTMLFormElement, SubmitEvent>) {
     event.preventDefault();
     setSaving(true);
     setError(undefined);

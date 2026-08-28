@@ -2,7 +2,7 @@
 
 import { cn } from "@/lib/cn";
 import { loadingPlaceholder } from "@/lib/loading-style";
-import { FormEvent, useCallback, useEffect, useState } from "react";
+import { SyntheticEvent, useCallback, useEffect, useState } from "react";
 import { ExternalLink, Link2, Search } from "lucide-react";
 import { ApiRequestError, apiRequest } from "@/lib/client-api";
 import { Badge } from "@/components/ui/badge";
@@ -112,7 +112,7 @@ export function ResearchConnectionsPanel() {
     };
   }, [staff]);
 
-  async function search(event: FormEvent<HTMLFormElement>) {
+  async function search(event: SyntheticEvent<HTMLFormElement, SubmitEvent>) {
     event.preventDefault();
     setError(undefined);
     setSearching(true);

@@ -7,7 +7,7 @@ import {
   useMemo,
   useRef,
   useState,
-  type FormEvent,
+  type SyntheticEvent,
 } from "react";
 import {
   CheckCheck,
@@ -206,7 +206,7 @@ export function WorkspaceChat() {
     setSelectedId(conversation.id);
   }
 
-  function submit(event: FormEvent) {
+  function submit(event: SyntheticEvent) {
     event.preventDefault();
     const socket = socketRef.current;
     if (!socket || !selectedId || !draft.trim() || sending) return;

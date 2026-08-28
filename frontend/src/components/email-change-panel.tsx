@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { SyntheticEvent, useEffect, useState } from "react";
 import { useAuth } from "@/components/auth-provider";
 import { useNotifications } from "@/components/notification-provider";
 import { ButtonControl } from "@/components/ui/button-control";
@@ -53,7 +53,7 @@ export function EmailChangePanel({ userId }: { userId?: string }) {
     };
   }, [basePath]);
 
-  async function requestChange(event: React.FormEvent<HTMLFormElement>) {
+  async function requestChange(event: SyntheticEvent<HTMLFormElement, SubmitEvent>) {
     event.preventDefault();
     setSaving(true);
     setError(undefined);
@@ -93,7 +93,7 @@ export function EmailChangePanel({ userId }: { userId?: string }) {
     }
   }
 
-  async function verifyChange(event: React.FormEvent<HTMLFormElement>) {
+  async function verifyChange(event: SyntheticEvent<HTMLFormElement, SubmitEvent>) {
     event.preventDefault();
     setSaving(true);
     setError(undefined);
