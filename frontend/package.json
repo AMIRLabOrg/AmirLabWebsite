@@ -7,6 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "test": "vitest run",
     "verify:loading": "node scripts/verify-loading-architecture.mjs",
     "verify:tailwind": "node scripts/verify-tailwind-architecture.mjs",
     "verify": "node scripts/verify-tailwind-architecture.mjs && node scripts/verify-loading-architecture.mjs && node scripts/verify-component-reuse.mjs && node scripts/verify-workflow-contracts.mjs && node scripts/verify-semantic-ui.mjs && node scripts/verify-brand-and-review-layout.mjs",
@@ -16,9 +17,9 @@
     "verify:visual": "playwright test e2e/visual-review.spec.ts",
     "verify:semantic": "node scripts/verify-semantic-ui.mjs",
     "verify:brand-review": "node scripts/verify-brand-and-review-layout.mjs",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsc --noEmit -p tsconfig.typecheck.json",
     "format": "prettier --write \"src/**/*.{ts,tsx,css}\" \"scripts/**/*.mjs\"",
-    "verify:production": "pnpm run verify && pnpm run lint && pnpm run typecheck && pnpm run verify:safety && pnpm run build",
+    "verify:production": "pnpm run verify && pnpm run lint && pnpm run typecheck && pnpm run test && pnpm run verify:safety && pnpm run build",
     "verify:safety": "node scripts/verify-production-safety.mjs"
   },
   "dependencies": {

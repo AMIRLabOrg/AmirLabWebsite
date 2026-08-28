@@ -37,4 +37,16 @@ describe('validateEnvironment', () => {
       'SMTP_HOST, SMTP_USER, and SMTP_PASSWORD must be configured together',
     );
   });
+
+  it('requires an explicit persistent upload directory in production', () => {
+    expect(() =>
+      validateEnvironment({
+        ...baseEnvironment,
+        NODE_ENV: 'production',
+        SMTP_HOST: 'mail.smtp2go.com',
+        SMTP_PASSWORD: 'secret',
+        SMTP_USER: 'account',
+      }),
+    ).toThrow('UPLOAD_ROOT is required in production');
+  });
 });

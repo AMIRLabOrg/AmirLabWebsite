@@ -1,23 +1,23 @@
 [Unit]
-Description=AMIR Lab API
-After=network-online.target postgresql.service
+Description=AMIR Lab web application
+After=network-online.target amirl-api.service
 Wants=network-online.target
 
 [Service]
 Type=simple
 User=amirl
 Group=amirl
-WorkingDirectory=/opt/amirl/backend
-EnvironmentFile=/etc/amirl/api.env
+WorkingDirectory=/opt/amirl/frontend
 Environment=NODE_ENV=production
-ExecStart=/usr/bin/env pnpm start:prod
+Environment=PORT=3000
+ExecStart=/usr/bin/env pnpm start
 Restart=on-failure
 RestartSec=5
 NoNewPrivileges=true
 PrivateTmp=true
 ProtectSystem=strict
 ProtectHome=true
-ReadWritePaths=/var/lib/amirl/uploads
+ReadWritePaths=/opt/amirl/frontend/.next/cache
 
 [Install]
 WantedBy=multi-user.target

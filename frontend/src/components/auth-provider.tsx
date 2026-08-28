@@ -89,8 +89,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             setLoading(false);
             return;
           }
-          if (attempts < 4) retry = window.setTimeout(loadSession, 1000);
-          else setLoading(false);
+          const delay = Math.min(1_000 * 2 ** Math.min(attempts - 1, 3), 8_000);
+          retry = window.setTimeout(loadSession, delay);
         });
     }
 

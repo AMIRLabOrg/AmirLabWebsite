@@ -33,6 +33,7 @@ export function validateEnvironment(
   const smtpUser = optionalValue(source.SMTP_USER);
   const smtpPassword = optionalValue(source.SMTP_PASSWORD);
   const smtpConfigured = Boolean(smtpHost || smtpUser || smtpPassword);
+  const uploadRoot = optionalValue(source.UPLOAD_ROOT);
 
   if (!['development', 'test', 'production'].includes(nodeEnv)) {
     throw new Error('NODE_ENV must be development, test, or production');
@@ -48,6 +49,9 @@ export function validateEnvironment(
   }
   if (nodeEnv === 'production' && !smtpConfigured) {
     throw new Error('SMTP configuration is required in production');
+  }
+  if (nodeEnv === 'production' && !uploadRoot) {
+    throw new Error('UPLOAD_ROOT is required in production');
   }
 
   return {
@@ -76,7 +80,7 @@ export function validateEnvironment(
       true,
       'SMTP_REQUIRE_TLS',
     ),
-    uploadRoot: optionalString(source.UPLOAD_ROOT, './storage'),
+    uploadRoot: uploadRoot ?? './storage',
     redisUrl: optionalValue(source.REDIS_URL),
     vapidPublicKey: optionalValue(source.VAPID_PUBLIC_KEY),
     vapidPrivateKey: optionalValue(source.VAPID_PRIVATE_KEY),

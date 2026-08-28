@@ -88,6 +88,7 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm --filter web run lint
       - run: pnpm --filter web run typecheck
+      - run: pnpm --filter web run test
       - run: pnpm --filter web run verify
       - run: pnpm --filter web run verify:safety
       - run: pnpm --filter web run build
