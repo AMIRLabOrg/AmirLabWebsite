@@ -84,7 +84,7 @@ function drawCertificatePaper(document: PDFKit.PDFDocument): void {
   document
     .save()
     .rect(0, 0, document.page.width, document.page.height)
-    .fill('#f6ead3')
+    .fill('#fffdf8')
     .restore();
 }
 
