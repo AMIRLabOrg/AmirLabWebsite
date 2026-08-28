@@ -3,6 +3,7 @@ import { PDFParse, TextResult } from 'pdf-parse';
 import { ApplicationStatus, AssetAccess } from '../../generated/prisma/client';
 import { AssetsService } from '../assets/assets.service';
 import { PrismaService } from '../database/prisma.service';
+import { DocumentsService } from '../documents/documents.service';
 import { JobsService } from '../jobs/jobs.service';
 import { MailService } from '../mail/mail.service';
 import { NotificationsService } from '../notifications/notifications.service';
@@ -23,6 +24,7 @@ async function serviceWith(assets: object, prisma: object) {
   return resolveService(ApplicationsService, [
     { provide: AssetsService, useValue: assets },
     { provide: AppointmentLettersService, useValue: {} },
+    { provide: DocumentsService, useValue: {} },
     {
       provide: JobsService,
       useValue: { enqueue: jest.fn(), register: jest.fn() },

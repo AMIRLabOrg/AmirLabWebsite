@@ -10,6 +10,7 @@ import {
   ContributorMatchSource,
   ContributorMatchStatus,
   DepartmentRole,
+  DocumentKind,
   EngagementType,
   PlatformRole,
   ProfileReviewStatus,
@@ -22,6 +23,10 @@ import {
   Prisma,
 } from '../generated/prisma/client';
 import { hashPassword } from '../src/auth/password';
+import {
+  DEFAULT_DOCUMENT_SITE,
+  DEFAULT_DOCUMENT_TEMPLATES,
+} from '../src/documents/documents.service';
 import { createCliPrisma } from './prisma';
 import {
   type AmirSeedData,
@@ -33,6 +38,16 @@ import {
 
 const uploadRoot = resolve(process.env.UPLOAD_ROOT ?? './storage');
 const peopleStorageRoot = resolve(uploadRoot, 'peoples');
+const signatureStorageRoot = resolve(uploadRoot, 'document-signatures');
+const watermarkStorageRoot = resolve(uploadRoot, 'document-watermarks');
+const signatureSeedPath = resolve(
+  process.cwd(),
+  'src/applications/brand/signature.svg',
+);
+const watermarkSeedPath = resolve(
+  process.cwd(),
+  'src/applications/brand/Logo-high-res.png',
+);
 const adminEmail = (process.env.ADMIN_EMAIL ?? 'admin@amirl.org').toLowerCase();
 const adminPassword = process.env.ADMIN_PASSWORD ?? 'AmirlabLocal2026!';
 const adminName = process.env.ADMIN_NAME ?? 'AMIRLab Administrator';
@@ -65,6 +80,8 @@ async function main() {
     }
 
     await rm(peopleStorageRoot, { recursive: true, force: true });
+    await rm(signatureStorageRoot, { recursive: true, force: true });
+    await rm(watermarkStorageRoot, { recursive: true, force: true });
     await mkdir(peopleStorageRoot, { recursive: true });
 
     const passwordHash = await hashPassword(adminPassword);
@@ -195,6 +212,17 @@ async function main() {
       personNameBySource.set(person.sourceId, person.fullName);
       userIdBySource.set(person.sourceId, account.id);
     }
+
+    const defaultApprover = data.people.find((person) =>
+      person.roleTitle?.toLowerCase().includes('director'),
+    );
+    await seedDocuments(
+      prisma,
+      admin.id,
+      defaultApprover
+        ? (personIdBySource.get(defaultApprover.sourceId) ?? null)
+        : null,
+    );
 
     for (const department of data.departments) {
       const departmentId = required(
@@ -365,6 +393,147 @@ async function main() {
   } finally {
     await prisma.$disconnect();
   }
+}
+
+async function seedDocuments(
+  prisma: ReturnType<typeof createCliPrisma>,
+  createdById: string,
+  approverPersonId: string | null,
+): Promise<void> {
+  const signatureAssetId = await createApprovalSignatureAsset(
+    prisma,
+    createdById,
+  );
+  const watermarkAssetId = await createDocumentWatermarkAsset(
+    prisma,
+    createdById,
+  );
+  const templates = [];
+  for (const template of DEFAULT_DOCUMENT_TEMPLATES) {
+    templates.push(
+      await prisma.documentTemplate.create({
+        data: {
+          ...template,
+          createdById,
+          updatedById: createdById,
+        },
+      }),
+    );
+  }
+  await prisma.documentSettings.create({
+    data: {
+      id: 'documents',
+      approverPersonId,
+      defaultOfferTemplateId:
+        templates.find((template) => template.kind === DocumentKind.OFFER)
+          ?.id ?? null,
+      siteEmail: DEFAULT_DOCUMENT_SITE.email,
+      siteLocation: DEFAULT_DOCUMENT_SITE.location,
+      siteUrl: DEFAULT_DOCUMENT_SITE.url,
+      signatureAssetId,
+      watermarkAssetId,
+    },
+  });
+}
+
+async function createDocumentWatermarkAsset(
+  prisma: ReturnType<typeof createCliPrisma>,
+  createdById: string,
+): Promise<string | null> {
+  let source: Buffer;
+  try {
+    source = await readFile(watermarkSeedPath);
+  } catch {
+    console.warn(
+      '[db] Document watermark source is unavailable; continuing without it.',
+    );
+    return null;
+  }
+  let image: { data: Buffer; info: sharp.OutputInfo };
+  try {
+    image = await sharp(source, {
+      animated: false,
+      limitInputPixels: 40_000_000,
+    })
+      .resize(2_000, 2_000, { fit: 'inside', withoutEnlargement: true })
+      .png({ compressionLevel: 9 })
+      .toBuffer({ resolveWithObject: true });
+  } catch {
+    console.warn(
+      '[db] Document watermark source is invalid; continuing without it.',
+    );
+    return null;
+  }
+  const checksum = createHash('sha256').update(image.data).digest('hex');
+  const storageKey = `document-watermarks/head-${checksum.slice(0, 12)}.png`;
+  const target = resolve(uploadRoot, storageKey);
+  await mkdir(dirname(target), { recursive: true });
+  await writeFile(target, image.data, { flag: 'wx' });
+  const asset = await prisma.asset.create({
+    data: {
+      access: AssetAccess.PRIVATE,
+      byteSize: image.data.length,
+      checksum,
+      createdById,
+      height: image.info.height,
+      kind: AssetKind.DOCUMENT_WATERMARK,
+      mimeType: 'image/png',
+      originalName: basename(watermarkSeedPath),
+      storageKey,
+      width: image.info.width,
+    },
+  });
+  return asset.id;
+}
+
+async function createApprovalSignatureAsset(
+  prisma: ReturnType<typeof createCliPrisma>,
+  createdById: string,
+): Promise<string | null> {
+  let source: Buffer;
+  try {
+    source = await readFile(signatureSeedPath);
+  } catch {
+    console.warn(
+      '[db] Approval signature source is unavailable; continuing without it.',
+    );
+    return null;
+  }
+  let image: { data: Buffer; info: sharp.OutputInfo };
+  try {
+    image = await sharp(source, {
+      animated: false,
+      limitInputPixels: 40_000_000,
+    })
+      .resize(1_600, 800, { fit: 'inside', withoutEnlargement: true })
+      .png({ compressionLevel: 9 })
+      .toBuffer({ resolveWithObject: true });
+  } catch {
+    console.warn(
+      '[db] Approval signature source is invalid; continuing without it.',
+    );
+    return null;
+  }
+  const checksum = createHash('sha256').update(image.data).digest('hex');
+  const storageKey = `document-signatures/approval-${checksum.slice(0, 12)}.png`;
+  const target = resolve(uploadRoot, storageKey);
+  await mkdir(dirname(target), { recursive: true });
+  await writeFile(target, image.data, { flag: 'wx' });
+  const asset = await prisma.asset.create({
+    data: {
+      access: AssetAccess.PRIVATE,
+      byteSize: image.data.length,
+      checksum,
+      createdById,
+      height: image.info.height,
+      kind: AssetKind.DOCUMENT_SIGNATURE,
+      mimeType: 'image/png',
+      originalName: basename(signatureSeedPath),
+      storageKey,
+      width: image.info.width,
+    },
+  });
+  return asset.id;
 }
 
 async function seedSiteSettings(

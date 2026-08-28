@@ -189,6 +189,14 @@ enum AssetKind {
   SITE_IMAGE
   CV
   UNIVERSITY_LOGO
+  DOCUMENT_SIGNATURE
+  DOCUMENT_WATERMARK
+}
+
+enum DocumentKind {
+  OFFER
+  LETTER
+  CERTIFICATE
 }
 
 enum AssetAccess {
@@ -312,6 +320,9 @@ model User {
   authoredWeeklyReports       WeeklyReport[]         @relation("WeeklyReportAuthor")
   reviewedWeeklyReports       WeeklyReport[]         @relation("WeeklyReportReviewer")
   createdResearchPrograms     ResearchProgram[]      @relation("ResearchProgramCreator")
+  createdDocumentTemplates    DocumentTemplate[]     @relation("DocumentTemplateCreator")
+  updatedDocumentTemplates    DocumentTemplate[]     @relation("DocumentTemplateUpdater")
+  issuedDocuments             IssuedDocument[]       @relation("IssuedDocumentCreator")
 }
 
 model Person {
@@ -348,6 +359,8 @@ model Person {
   projectMilestones   ProjectMilestone[]
   projectTasks        ProjectTask[]
   ledResearchPrograms ResearchProgram[]      @relation("ResearchProgramLead")
+  issuedDocuments     IssuedDocument[]
+  documentApproval    DocumentSettings?      @relation("DocumentApprover")
 }
 
 model PersonMetric {
@@ -1001,25 +1014,82 @@ model Application {
   profileImageAsset   Asset?             @relation("ApplicationProfileImage", fields: [profileImageAssetId], references: [id], onDelete: SetNull)
   reviewedBy          User?              @relation("ApplicationReviewer", fields: [reviewedById], references: [id], onDelete: SetNull)
   events              ApplicationEvent[]
-  appointmentLetter   AppointmentLetter?
+  offerDocument       IssuedDocument?
 
   @@index([status, createdAt])
   @@index([email])
 }
 
-model AppointmentLetter {
-  id               String      @id @default(uuid()) @db.Uuid
-  applicationId    String      @unique @db.Uuid
-  templateVersion  Int
-  templateMarkdown String      @db.Text
-  snapshot         Json
-  pdfData          Bytes?
-  pdfChecksum      String?
-  emailSentAt      DateTime?
-  lastEmailError   String?     @db.Text
-  createdAt        DateTime    @default(now())
-  updatedAt        DateTime    @updatedAt
-  application      Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+model DocumentSettings {
+  id                     String            @id @default("documents")
+  siteUrl                String
+  siteEmail              String
+  siteLocation           String
+  approverPersonId       String?           @unique @db.Uuid
+  signatureAssetId       String?           @unique @db.Uuid
+  watermarkAssetId       String?           @unique @db.Uuid
+  defaultOfferTemplateId String?           @unique @db.Uuid
+  createdAt              DateTime          @default(now())
+  updatedAt              DateTime          @updatedAt
+  approverPerson         Person?           @relation("DocumentApprover", fields: [approverPersonId], references: [id], onDelete: SetNull)
+  signatureAsset         Asset?            @relation("DocumentApprovalSignature", fields: [signatureAssetId], references: [id], onDelete: SetNull)
+  watermarkAsset         Asset?            @relation("DocumentWatermark", fields: [watermarkAssetId], references: [id], onDelete: SetNull)
+  defaultOfferTemplate   DocumentTemplate? @relation("DefaultOfferTemplate", fields: [defaultOfferTemplateId], references: [id], onDelete: SetNull)
+}
+
+model DocumentTemplate {
+  id                   String            @id @default(uuid()) @db.Uuid
+  kind                 DocumentKind
+  name                 String
+  titleTemplate        String
+  bodyMarkdown         String            @db.Text
+  emailSubjectTemplate String
+  version              Int               @default(1)
+  isActive             Boolean           @default(true)
+  createdById          String?           @db.Uuid
+  updatedById          String?           @db.Uuid
+  createdAt            DateTime          @default(now())
+  updatedAt            DateTime          @updatedAt
+  createdBy            User?             @relation("DocumentTemplateCreator", fields: [createdById], references: [id], onDelete: SetNull)
+  updatedBy            User?             @relation("DocumentTemplateUpdater", fields: [updatedById], references: [id], onDelete: SetNull)
+  issuedDocuments      IssuedDocument[]
+  defaultForSettings   DocumentSettings? @relation("DefaultOfferTemplate")
+
+  @@index([kind, isActive, name])
+}
+
+model IssuedDocument {
+  id                String            @id @default(uuid()) @db.Uuid
+  kind              DocumentKind      @default(OFFER)
+  reference         String?           @unique
+  recipientName     String?
+  recipientEmail    String?
+  applicationId     String?           @unique @db.Uuid
+  recipientPersonId String?           @db.Uuid
+  templateId        String?           @db.Uuid
+  createdById       String?           @db.Uuid
+  signatureAssetId  String?           @db.Uuid
+  watermarkAssetId  String?           @db.Uuid
+  templateVersion   Int
+  templateMarkdown  String            @db.Text
+  snapshot          Json
+  approverSnapshot  Json?
+  pdfData           Bytes?
+  pdfChecksum       String?
+  emailSentAt       DateTime?
+  lastEmailError    String?           @db.Text
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+  application       Application?      @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  recipientPerson   Person?           @relation(fields: [recipientPersonId], references: [id], onDelete: SetNull)
+  template          DocumentTemplate? @relation(fields: [templateId], references: [id], onDelete: SetNull)
+  createdBy         User?             @relation("IssuedDocumentCreator", fields: [createdById], references: [id], onDelete: SetNull)
+  signatureAsset    Asset?            @relation("IssuedDocumentSignature", fields: [signatureAssetId], references: [id], onDelete: Restrict)
+  watermarkAsset    Asset?            @relation("IssuedDocumentWatermark", fields: [watermarkAssetId], references: [id], onDelete: Restrict)
+
+  @@index([kind, createdAt])
+  @@index([recipientPersonId, createdAt])
+  @@map("AppointmentLetter")
 }
 
 model ApplicationEvent {
@@ -1047,26 +1117,30 @@ model University {
 }
 
 model Asset {
-  id                      String              @id @default(uuid()) @db.Uuid
-  kind                    AssetKind
-  access                  AssetAccess
-  storageKey              String              @unique
-  originalName            String
-  mimeType                String
-  byteSize                Int
-  width                   Int?
-  height                  Int?
-  variants                Json?
-  checksum                String
-  createdById             String?             @db.Uuid
-  createdAt               DateTime            @default(now())
-  createdBy               User?               @relation(fields: [createdById], references: [id], onDelete: SetNull)
-  avatarFor               Person?             @relation("PersonAvatar")
-  profileEdit             ProfileEditRequest? @relation("ProfileEditAvatar")
-  projectCover            Project?            @relation("ProjectCover")
-  applicationCv           Application?        @relation("ApplicationCv")
-  applicationProfileImage Application?        @relation("ApplicationProfileImage")
-  universityLogoFor       University[]        @relation("UniversityLogo")
+  id                        String              @id @default(uuid()) @db.Uuid
+  kind                      AssetKind
+  access                    AssetAccess
+  storageKey                String              @unique
+  originalName              String
+  mimeType                  String
+  byteSize                  Int
+  width                     Int?
+  height                    Int?
+  variants                  Json?
+  checksum                  String
+  createdById               String?             @db.Uuid
+  createdAt                 DateTime            @default(now())
+  createdBy                 User?               @relation(fields: [createdById], references: [id], onDelete: SetNull)
+  avatarFor                 Person?             @relation("PersonAvatar")
+  profileEdit               ProfileEditRequest? @relation("ProfileEditAvatar")
+  projectCover              Project?            @relation("ProjectCover")
+  applicationCv             Application?        @relation("ApplicationCv")
+  applicationProfileImage   Application?        @relation("ApplicationProfileImage")
+  universityLogoFor         University[]        @relation("UniversityLogo")
+  documentApprovalSignature DocumentSettings?   @relation("DocumentApprovalSignature")
+  documentWatermark         DocumentSettings?   @relation("DocumentWatermark")
+  issuedDocumentSignatures  IssuedDocument[]    @relation("IssuedDocumentSignature")
+  issuedDocumentWatermarks  IssuedDocument[]    @relation("IssuedDocumentWatermark")
 }
 
 model Session {

@@ -69,6 +69,16 @@ export class ApplicationsController {
       .send(pdf);
   }
 
+  @Get('offer-letter/preview')
+  @RequireRole(PlatformRole.ADMIN)
+  async offerLetterPreview(@Res() response: Response): Promise<void> {
+    const pdf = await this.applications.previewAppointmentLetter();
+    response
+      .type('application/pdf')
+      .attachment('offer-letter-preview.pdf')
+      .send(pdf);
+  }
+
   @Get(':id')
   @RequireRole(PlatformRole.MODERATOR)
   get(@Param('id', ParseUUIDPipe) id: string) {
@@ -91,6 +101,19 @@ export class ApplicationsController {
   @Get(':id/appointment-letter')
   @RequireRole(PlatformRole.ADMIN)
   async appointmentLetter(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Res() response: Response,
+  ): Promise<void> {
+    const letter = await this.applications.readAppointmentLetter(id);
+    response
+      .type('application/pdf')
+      .attachment(letter.filename)
+      .send(letter.buffer);
+  }
+
+  @Get(':id/offer-letter')
+  @RequireRole(PlatformRole.ADMIN)
+  async offerLetter(
     @Param('id', ParseUUIDPipe) id: string,
     @Res() response: Response,
   ): Promise<void> {

@@ -19,6 +19,7 @@ import {
 import { AssetsService } from '../assets/assets.service';
 import type { AuthenticatedUser } from '../auth/auth.types';
 import { PrismaService } from '../database/prisma.service';
+import { DocumentsService } from '../documents/documents.service';
 import { JobsService } from '../jobs/jobs.service';
 import { MailService } from '../mail/mail.service';
 import { NotificationsService } from '../notifications/notifications.service';
@@ -39,11 +40,7 @@ import {
   type ParsedResumeText,
   type ResumeAssessment,
 } from './resume-assessment';
-import {
-  appointmentSnapshot,
-  AppointmentLettersService,
-  SEND_APPOINTMENT_LETTER_JOB,
-} from './appointment-letters.service';
+import { AppointmentLettersService } from './appointment-letters.service';
 
 const SEND_APPLICATION_REJECTION_JOB = 'SEND_APPLICATION_REJECTION';
 
@@ -54,6 +51,7 @@ export class ApplicationsService implements OnModuleInit {
   constructor(
     private readonly assets: AssetsService,
     private readonly appointmentLetters: AppointmentLettersService,
+    private readonly documents: DocumentsService,
     private readonly jobs: JobsService,
     private readonly mail: MailService,
     private readonly notifications: NotificationsService,
@@ -235,7 +233,7 @@ export class ApplicationsService implements OnModuleInit {
     const application = await this.prisma.application.findUnique({
       where: { id },
       include: {
-        appointmentLetter: {
+        offerDocument: {
           select: {
             emailSentAt: true,
             lastEmailError: true,
@@ -252,12 +250,12 @@ export class ApplicationsService implements OnModuleInit {
     }
     return {
       ...application,
-      appointmentLetter: application.appointmentLetter
+      appointmentLetter: application.offerDocument
         ? {
-            emailSentAt: application.appointmentLetter.emailSentAt,
-            lastEmailError: application.appointmentLetter.lastEmailError,
-            pdfChecksum: application.appointmentLetter.pdfChecksum,
-            ready: Boolean(application.appointmentLetter.pdfData),
+            emailSentAt: application.offerDocument.emailSentAt,
+            lastEmailError: application.offerDocument.lastEmailError,
+            pdfChecksum: application.offerDocument.pdfChecksum,
+            ready: Boolean(application.offerDocument.pdfData),
           }
         : null,
       parseFeedback:
@@ -362,11 +360,23 @@ export class ApplicationsService implements OnModuleInit {
       return { status: ApplicationStatus.REJECTED };
     }
 
-    const [template, policy] = await Promise.all([
-      this.settings.appointmentLetter(),
-      this.settings.notificationPolicy(),
-    ]);
+    const policy = await this.settings.notificationPolicy();
     const reviewedAt = new Date();
+    const preparedOffer = policy.applicationAccepted
+      ? await this.documents.prepareAutomatedOffer({
+          applicationId: application.id,
+          applicantEmail: application.email,
+          applicantName: application.fullName,
+          createdById: reviewer.id,
+          duration: application.position.engagementDurationLabel,
+          endsAt: application.position.engagementEndsAt,
+          issueDate: reviewedAt,
+          positionTitle: application.position.title,
+          responsibilities: application.position.responsibilities,
+          startsAt: application.position.engagementStartsAt,
+          weeklyCommitmentHours: application.position.weeklyCommitmentHours,
+        })
+      : null;
     await this.prisma.$transaction(async (transaction) => {
       const account = await transaction.user.upsert({
         where: { email: application.email },
@@ -431,32 +441,15 @@ export class ApplicationsService implements OnModuleInit {
           details: { userId: account.id },
         },
       });
-      if (policy.applicationAccepted) {
-        const letter = await transaction.appointmentLetter.create({
-          data: {
-            applicationId: application.id,
-            templateMarkdown: template.markdown,
-            templateVersion: template.version,
-            snapshot: appointmentSnapshot(template, {
-              applicationId: application.id,
-              applicantEmail: application.email,
-              applicantName: application.fullName,
-              duration: application.position.engagementDurationLabel,
-              endsAt: application.position.engagementEndsAt,
-              issueDate: reviewedAt,
-              positionSlug: application.position.slug,
-              positionTitle: application.position.title,
-              responsibilities: application.position.responsibilities,
-              startsAt: application.position.engagementStartsAt,
-              weeklyCommitmentHours: application.position.weeklyCommitmentHours,
-            }),
-          },
+      if (preparedOffer) {
+        const letter = await transaction.issuedDocument.create({
+          data: preparedOffer.data,
         });
         await transaction.job.create({
           data: {
-            type: SEND_APPOINTMENT_LETTER_JOB,
-            payload: { appointmentLetterId: letter.id },
-            uniqueKey: `appointment-letter:${letter.id}`,
+            type: preparedOffer.jobType,
+            payload: { documentId: letter.id },
+            uniqueKey: `issued-document:${letter.id}`,
           },
         });
       }

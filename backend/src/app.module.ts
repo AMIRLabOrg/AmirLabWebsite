@@ -11,6 +11,7 @@ import { SessionAuthGuard } from './auth/session-auth.guard';
 import { validateEnvironment } from './config/environment';
 import { DatabaseModule } from './database/database.module';
 import { DepartmentsModule } from './departments/departments.module';
+import { DocumentsModule } from './documents/documents.module';
 import { UniversitiesModule } from './universities/universities.module';
 import { JobsModule } from './jobs/jobs.module';
 import { MailModule } from './mail/mail.module';
@@ -35,6 +36,7 @@ import { WeeklyReportsModule } from './weekly-reports/weekly-reports.module';
     ThrottlerModule.forRoot([{ ttl: 60_000, limit: 100 }]),
     DatabaseModule,
     DepartmentsModule,
+    DocumentsModule,
     UniversitiesModule,
     JobsModule,
     MailModule,

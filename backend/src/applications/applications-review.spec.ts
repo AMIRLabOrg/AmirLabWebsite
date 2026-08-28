@@ -6,6 +6,7 @@ import {
 } from '../../generated/prisma/client';
 import { AssetsService } from '../assets/assets.service';
 import { PrismaService } from '../database/prisma.service';
+import { DocumentsService } from '../documents/documents.service';
 import { JobsService } from '../jobs/jobs.service';
 import { MailService } from '../mail/mail.service';
 import { NotificationsService } from '../notifications/notifications.service';
@@ -54,6 +55,10 @@ describe('ApplicationsService review notes', () => {
     const service = await resolveService(ApplicationsService, [
       { provide: AssetsService, useValue: {} },
       { provide: AppointmentLettersService, useValue: {} },
+      {
+        provide: DocumentsService,
+        useValue: { prepareAutomatedOffer: jest.fn() },
+      },
       { provide: JobsService, useValue: { register: jest.fn() } },
       { provide: MailService, useValue: { queue: jest.fn() } },
       { provide: NotificationsService, useValue: {} },

@@ -6,7 +6,15 @@
     "deleteOutDir": true,
     "assets": [
       {
-        "include": "applications/brand/**/*",
+        "include": "applications/brand/amirlab-logo.png",
+        "watchAssets": true
+      },
+      {
+        "include": "applications/brand/amirlab-wordmark.png",
+        "watchAssets": true
+      },
+      {
+        "include": "applications/brand/*.ttf",
         "watchAssets": true
       }
     ]

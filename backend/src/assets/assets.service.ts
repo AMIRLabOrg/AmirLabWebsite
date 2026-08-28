@@ -153,6 +153,100 @@ export class AssetsService {
     }
   }
 
+  async storeDocumentSignature(
+    file: Express.Multer.File,
+    createdById?: string,
+  ) {
+    let image: { data: Buffer; info: sharp.OutputInfo };
+    try {
+      image = await sharp(file.buffer, {
+        animated: false,
+        limitInputPixels: 40_000_000,
+      })
+        .rotate()
+        .resize(1_600, 800, { fit: 'inside', withoutEnlargement: true })
+        .png({ compressionLevel: 9 })
+        .toBuffer({ resolveWithObject: true });
+    } catch {
+      throw new BadRequestException('Signature image could not be processed');
+    }
+
+    const now = new Date();
+    const storageKey = `document-signatures/${now.getUTCFullYear()}/${String(
+      now.getUTCMonth() + 1,
+    ).padStart(2, '0')}/${randomUUID()}.png`;
+    const filePath = resolve(this.uploadRoot, storageKey);
+    await mkdir(dirname(filePath), { recursive: true });
+    await writeFile(filePath, image.data, { flag: 'wx' });
+
+    try {
+      return await this.prisma.asset.create({
+        data: {
+          access: AssetAccess.PRIVATE,
+          byteSize: image.data.length,
+          checksum: createHash('sha256').update(image.data).digest('hex'),
+          createdById,
+          height: image.info.height,
+          kind: AssetKind.DOCUMENT_SIGNATURE,
+          mimeType: 'image/png',
+          originalName: file.originalname,
+          storageKey,
+          width: image.info.width,
+        },
+      });
+    } catch (error) {
+      await rm(filePath, { force: true });
+      throw error;
+    }
+  }
+
+  async storeDocumentWatermark(
+    file: Express.Multer.File,
+    createdById?: string,
+  ) {
+    let image: { data: Buffer; info: sharp.OutputInfo };
+    try {
+      image = await sharp(file.buffer, {
+        animated: false,
+        limitInputPixels: 40_000_000,
+      })
+        .rotate()
+        .resize(2_000, 2_000, { fit: 'inside', withoutEnlargement: true })
+        .png({ compressionLevel: 9 })
+        .toBuffer({ resolveWithObject: true });
+    } catch {
+      throw new BadRequestException('Watermark image could not be processed');
+    }
+
+    const now = new Date();
+    const storageKey = `document-watermarks/${now.getUTCFullYear()}/${String(
+      now.getUTCMonth() + 1,
+    ).padStart(2, '0')}/${randomUUID()}.png`;
+    const filePath = resolve(this.uploadRoot, storageKey);
+    await mkdir(dirname(filePath), { recursive: true });
+    await writeFile(filePath, image.data, { flag: 'wx' });
+
+    try {
+      return await this.prisma.asset.create({
+        data: {
+          access: AssetAccess.PRIVATE,
+          byteSize: image.data.length,
+          checksum: createHash('sha256').update(image.data).digest('hex'),
+          createdById,
+          height: image.info.height,
+          kind: AssetKind.DOCUMENT_WATERMARK,
+          mimeType: 'image/png',
+          originalName: file.originalname,
+          storageKey,
+          width: image.info.width,
+        },
+      });
+    } catch (error) {
+      await rm(filePath, { force: true });
+      throw error;
+    }
+  }
+
   async readCv(
     assetId: string,
   ): Promise<{ buffer: Buffer; originalName: string }> {
@@ -172,6 +266,30 @@ export class AssetsService {
       throw new NotFoundException('Public asset not found');
     }
     return asset;
+  }
+
+  async readDocumentSignature(assetId: string): Promise<Buffer | null> {
+    const asset = await this.prisma.asset.findUnique({
+      where: { id: assetId },
+    });
+    if (!asset || asset.kind !== AssetKind.DOCUMENT_SIGNATURE) return null;
+    try {
+      return await readFile(resolve(this.uploadRoot, asset.storageKey));
+    } catch {
+      return null;
+    }
+  }
+
+  async readDocumentWatermark(assetId: string): Promise<Buffer | null> {
+    const asset = await this.prisma.asset.findUnique({
+      where: { id: assetId },
+    });
+    if (!asset || asset.kind !== AssetKind.DOCUMENT_WATERMARK) return null;
+    try {
+      return await readFile(resolve(this.uploadRoot, asset.storageKey));
+    } catch {
+      return null;
+    }
   }
 
   async remove(assetId: string): Promise<void> {

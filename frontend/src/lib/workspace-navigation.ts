@@ -6,6 +6,7 @@ import {
   CheckSquare2,
   ClipboardCheck,
   FilePenLine,
+  FileText,
   FolderKanban,
   LayoutDashboard,
   NotebookPen,
@@ -115,6 +116,7 @@ const ORGANIZATION: readonly WorkspaceNavigationItem[] = [
     indicator: "applications",
     label: "Applications",
   },
+  { href: "/workspace/documents", icon: FileText, label: "Documents" },
 ];
 
 const GOVERNANCE: readonly WorkspaceNavigationItem[] = [

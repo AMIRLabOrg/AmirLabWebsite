@@ -39,7 +39,7 @@ export const TextareaControl = forwardRef<
       ref={ref}
       className={cn(
         formControlClass,
-        "h-auto min-h-[120px] resize-y rounded-panel py-3",
+        "h-auto! min-h-[120px]! resize-y rounded-panel py-3",
         loading && loadingPlaceholder(true, "control"),
         className,
       )}

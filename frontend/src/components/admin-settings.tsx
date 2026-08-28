@@ -2,16 +2,15 @@
 
 import { cn } from "@/lib/cn";
 import { loadingPlaceholder } from "@/lib/loading-style";
-import { useEffect, useRef, useState } from "react";
-import { Braces, ExternalLink, Save, ShieldCheck } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Save, ShieldCheck } from "lucide-react";
 import { AdminOnly } from "@/components/admin-only";
 import { useNotifications } from "@/components/notification-provider";
 import { StatePanel } from "@/components/state-panel";
-import { InputControl, TextareaControl } from "@/components/ui/form-controls";
+import { InputControl } from "@/components/ui/form-controls";
 import { SegmentedControl } from "@/components/ui/segmented-control";
 import { apiRequest } from "@/lib/client-api";
 import { ButtonControl } from "@/components/ui/button-control";
-import { API_URL } from "@/lib/api";
 
 type VerificationMode = "AUTOMATIC" | "MANUAL";
 
@@ -32,23 +31,6 @@ interface RankPolicy {
 
 interface RedirectUrlSetting {
   url: string;
-}
-
-interface AppointmentLetterTemplate {
-  version: number;
-  markdown: string;
-  signerName: string;
-  signerTitle: string;
-  signerEmail: string;
-  signerPhone: string;
-  siteUrl: string;
-  siteEmail: string;
-  siteLocation: string;
-  variables: Array<{
-    label: string;
-    required: boolean;
-    token: string;
-  }>;
 }
 
 interface NotificationPolicy {
@@ -121,15 +103,12 @@ export function AdminSettings() {
   const [redirectUrl, setRedirectUrl] = useState<RedirectUrlSetting | null>(
     null,
   );
-  const [appointmentLetter, setAppointmentLetter] =
-    useState<AppointmentLetterTemplate | null>(null);
   const [notificationPolicy, setNotificationPolicy] =
     useState<NotificationPolicy | null>(null);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
   const [reload, setReload] = useState(0);
-  const templateEditor = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
     Promise.all([
@@ -138,9 +117,6 @@ export function AdminSettings() {
       }),
       apiRequest<RankPolicy>("/settings/ranking", { method: "GET" }),
       apiRequest<RedirectUrlSetting>("/settings/redirect-url", {
-        method: "GET",
-      }),
-      apiRequest<AppointmentLetterTemplate>("/settings/appointment-letter", {
         method: "GET",
       }),
       apiRequest<NotificationPolicy>("/settings/notifications", {
@@ -152,13 +128,11 @@ export function AdminSettings() {
           nextVerification,
           nextRanking,
           nextRedirectUrl,
-          nextAppointmentLetter,
           nextNotificationPolicy,
         ]) => {
           setVerification(nextVerification);
           setRanking(nextRanking);
           setRedirectUrl(nextRedirectUrl);
-          setAppointmentLetter(nextAppointmentLetter);
           setNotificationPolicy(nextNotificationPolicy);
         },
       )
@@ -167,19 +141,11 @@ export function AdminSettings() {
   }, [reload]);
 
   async function save() {
-    if (
-      !verification ||
-      !ranking ||
-      !redirectUrl ||
-      !appointmentLetter ||
-      !notificationPolicy
-    )
+    if (!verification || !ranking || !redirectUrl || !notificationPolicy)
       return;
     setError("");
     setMessage("");
     try {
-      const appointmentLetterInput =
-        appointmentTemplateInput(appointmentLetter);
       await Promise.all([
         apiRequest("/settings/verification", {
           body: JSON.stringify(verification),
@@ -193,11 +159,6 @@ export function AdminSettings() {
         }),
         apiRequest("/settings/redirect-url", {
           body: JSON.stringify(redirectUrl),
-          headers: { "content-type": "application/json" },
-          method: "PUT",
-        }),
-        apiRequest("/settings/appointment-letter", {
-          body: JSON.stringify(appointmentLetterInput),
           headers: { "content-type": "application/json" },
           method: "PUT",
         }),
@@ -229,19 +190,6 @@ export function AdminSettings() {
     setVerification({ ...verification, [key]: mode as VerificationMode });
   }
 
-  function insertTemplateVariable(token: string) {
-    if (!appointmentLetter) return;
-    const editor = templateEditor.current;
-    const start = editor?.selectionStart ?? appointmentLetter.markdown.length;
-    const end = editor?.selectionEnd ?? start;
-    const markdown = `${appointmentLetter.markdown.slice(0, start)}${token}${appointmentLetter.markdown.slice(end)}`;
-    setAppointmentLetter({ ...appointmentLetter, markdown });
-    requestAnimationFrame(() => {
-      editor?.focus();
-      editor?.setSelectionRange(start + token.length, start + token.length);
-    });
-  }
-
   const displayedVerification: VerificationPolicy = verification ?? {
     profileEdit: "AUTOMATIC",
     newPaper: "AUTOMATIC",
@@ -256,18 +204,6 @@ export function AdminSettings() {
     leadCitationMinimum: 0,
   };
   const displayedRedirectUrl = redirectUrl ?? { url: "https://amirl.org/" };
-  const displayedAppointmentLetter = appointmentLetter ?? {
-    version: 1,
-    markdown: "",
-    signerName: "",
-    signerTitle: "",
-    signerEmail: "",
-    signerPhone: "",
-    siteUrl: "",
-    siteEmail: "",
-    siteLocation: "",
-    variables: [],
-  };
   const displayedNotificationPolicy = notificationPolicy ?? {
     applicationAccepted: true,
     applicationRejected: true,
@@ -281,11 +217,7 @@ export function AdminSettings() {
   };
   const loadFailed = Boolean(
     error &&
-    (!verification ||
-      !ranking ||
-      !redirectUrl ||
-      !appointmentLetter ||
-      !notificationPolicy) &&
+    (!verification || !ranking || !redirectUrl || !notificationPolicy) &&
     !loading,
   );
 
@@ -304,7 +236,6 @@ export function AdminSettings() {
         verification &&
         ranking &&
         redirectUrl &&
-        appointmentLetter &&
         notificationPolicy ? (
           <p className="m-0 border-l-[3px] border-danger bg-danger-soft px-4 py-[.8rem] text-[.78rem]">
             {error}
@@ -552,140 +483,6 @@ export function AdminSettings() {
                 </span>
                 <div>
                   <p className="m-0 mb-4 font-[var(--font-sans)] text-[.75rem] font-extrabold uppercase tracking-[.12em] text-brand">
-                    Appointment document
-                  </p>
-                  <h2 className="mt-[.35rem] font-serif text-[clamp(1.75rem,3vw,2.6rem)] font-normal leading-none">
-                    Letter template
-                  </h2>
-                  <p className="mt-[.7rem] max-w-[760px] text-[.78rem] leading-[1.55] text-ink-muted">
-                    Edit the Markdown body. The branded header, position facts,
-                    signature, and footer are controlled by the design system.
-                  </p>
-                </div>
-              </header>
-              <div className="ml-[calc(42px+1.2rem)] grid gap-5 rounded-panel border border-line bg-surface p-4 max-[640px]:ml-0">
-                <label className="grid gap-2 text-[.8rem] font-semibold text-ink-muted">
-                  Markdown body
-                  <TextareaControl
-                    ref={templateEditor}
-                    className="min-h-[280px] font-mono text-[.78rem] leading-[1.6]"
-                    disabled={loading}
-                    maxLength={20000}
-                    onChange={(event) =>
-                      appointmentLetter &&
-                      setAppointmentLetter({
-                        ...appointmentLetter,
-                        markdown: event.target.value,
-                      })
-                    }
-                    value={displayedAppointmentLetter.markdown}
-                  />
-                </label>
-                <div className="grid gap-3 rounded-panel border border-line bg-canvas p-4">
-                  <div className="grid grid-cols-[auto_minmax(0,1fr)] items-start gap-3">
-                    <Braces
-                      aria-hidden="true"
-                      className="text-brand"
-                      size={19}
-                    />
-                    <div>
-                      <strong className="text-[.82rem]">
-                        Available variables
-                      </strong>
-                      <p className="mt-1 text-[.72rem] leading-[1.5] text-ink-muted">
-                        Select a variable to insert it at the cursor. Values are
-                        rendered as plain text; HTML, images, links, and unknown
-                        variables are rejected by the server.
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex flex-wrap gap-2">
-                    {displayedAppointmentLetter.variables.map((variable) => (
-                      <ButtonControl
-                        aria-label={`Insert ${variable.label}`}
-                        className="gap-2 font-mono"
-                        compact
-                        disabled={loading}
-                        key={variable.token}
-                        onClick={() => insertTemplateVariable(variable.token)}
-                        title={`${variable.label}${variable.required ? " — required" : ""}`}
-                        type="button"
-                        variant="add-another"
-                      >
-                        {variable.token}
-                        {variable.required ? (
-                          <span className="font-[var(--font-sans)] text-[.58rem] font-extrabold uppercase tracking-[.08em]">
-                            Required
-                          </span>
-                        ) : null}
-                      </ButtonControl>
-                    ))}
-                  </div>
-                  <p className="m-0 text-[.68rem] leading-[1.5] text-ink-muted">
-                    Responsibilities must remain on a line by itself so the PDF
-                    can safely create the numbered list from the position.
-                  </p>
-                </div>
-                <div className="grid grid-cols-2 gap-4 max-[760px]:grid-cols-1">
-                  {(
-                    [
-                      ["signerName", "Signer name", "text"],
-                      ["signerTitle", "Signer title", "text"],
-                      ["signerEmail", "Signer email", "email"],
-                      ["signerPhone", "Signer phone", "text"],
-                      ["siteUrl", "Website", "url"],
-                      ["siteEmail", "Lab email", "email"],
-                      ["siteLocation", "Location", "text"],
-                    ] as const
-                  ).map(([key, label, type]) => (
-                    <label
-                      className="grid gap-2 text-[.8rem] font-semibold text-ink-muted"
-                      key={key}
-                    >
-                      {label}
-                      <InputControl
-                        disabled={loading}
-                        onChange={(event) =>
-                          appointmentLetter &&
-                          setAppointmentLetter({
-                            ...appointmentLetter,
-                            [key]: event.target.value,
-                          })
-                        }
-                        type={type}
-                        value={displayedAppointmentLetter[key]}
-                      />
-                    </label>
-                  ))}
-                </div>
-                <div className="flex items-center justify-between gap-4 border-t border-line pt-4 max-[640px]:items-stretch">
-                  <span className="font-mono text-[.68rem] text-ink-muted">
-                    Template version {displayedAppointmentLetter.version}
-                  </span>
-                  <ButtonControl
-                    onClick={() =>
-                      window.open(
-                        `${API_URL}/applications/appointment-letter/preview`,
-                        "_blank",
-                        "noopener,noreferrer",
-                      )
-                    }
-                    type="button"
-                    variant="secondary"
-                  >
-                    <ExternalLink size={15} /> Preview PDF
-                  </ButtonControl>
-                </div>
-              </div>
-            </section>
-
-            <section className="grid gap-[1.1rem]">
-              <header className="grid grid-cols-[42px_minmax(0,1fr)] items-start gap-[1.2rem] border-b border-line pb-4 max-[640px]:grid-cols-1">
-                <span className="pt-[.35rem] font-mono text-[.62rem] text-ink-faint">
-                  05
-                </span>
-                <div>
-                  <p className="m-0 mb-4 font-[var(--font-sans)] text-[.75rem] font-extrabold uppercase tracking-[.12em] text-brand">
                     Delivery rules
                   </p>
                   <h2 className="mt-[.35rem] font-serif text-[clamp(1.75rem,3vw,2.6rem)] font-normal leading-none">
@@ -780,17 +577,4 @@ export function AdminSettings() {
       </div>
     </AdminOnly>
   );
-}
-
-function appointmentTemplateInput(value: AppointmentLetterTemplate) {
-  return {
-    markdown: value.markdown,
-    signerEmail: value.signerEmail,
-    signerName: value.signerName,
-    signerPhone: value.signerPhone,
-    signerTitle: value.signerTitle,
-    siteEmail: value.siteEmail,
-    siteLocation: value.siteLocation,
-    siteUrl: value.siteUrl,
-  };
 }
