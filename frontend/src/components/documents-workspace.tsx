@@ -1,6 +1,6 @@
 "use client";
 
-import { SyntheticEvent, SyntheticEvent, useEffect, useMemo, useRef, useState } from "react";
+import { SyntheticEvent, useEffect, useMemo, useRef, useState } from "react";
 import {
   Award,
   Download,
