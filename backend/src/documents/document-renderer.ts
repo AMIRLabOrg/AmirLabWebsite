@@ -66,16 +66,26 @@ export async function renderDocument(
   document.registerFont('Meta', fonts.meta);
 
   const watermark = input.watermark;
-  if (watermark) {
-    document.on('pageAdded', () => drawWatermark(document, watermark));
-    drawWatermark(document, watermark);
-  }
+  const drawPageDecoration = () => {
+    if (landscape) drawCertificatePaper(document);
+    if (watermark) drawWatermark(document, watermark);
+  };
+  document.on('pageAdded', drawPageDecoration);
+  drawPageDecoration();
 
   if (landscape) drawCertificate(document, input);
   else drawLetter(document, input);
   drawFooters(document, input.site);
   document.end();
   return done;
+}
+
+function drawCertificatePaper(document: PDFKit.PDFDocument): void {
+  document
+    .save()
+    .rect(0, 0, document.page.width, document.page.height)
+    .fill('#f6ead3')
+    .restore();
 }
 
 function drawWatermark(document: PDFKit.PDFDocument, logo: Buffer): void {
