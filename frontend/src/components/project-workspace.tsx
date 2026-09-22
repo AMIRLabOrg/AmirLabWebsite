@@ -1616,11 +1616,9 @@ function Settings({
         <ButtonControl
           className="col-span-full justify-self-end max-[640px]:w-full"
           disabled={busy}
-          loading={busy}
           type="submit"
           variant="primary"
         >
-          {busy ? "Saving…" : "Save settings"}
           <Save size={15} /> Save settings
         </ButtonControl>
       </form>
@@ -1631,13 +1629,8 @@ function Settings({
             Remove it from active listings while retaining its verified record.
           </p>
         </div>
-        <ButtonControl
-          disabled={busy}
-          loading={busy}
-          onClick={archive}
-          variant="danger"
-        >
-          {busy ? "Archiving…" : "Archive"}
+        <ButtonControl disabled={busy} onClick={archive} variant="danger">
+          Archive
         </ButtonControl>
       </div>
     </div>
