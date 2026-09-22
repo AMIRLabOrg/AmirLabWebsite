@@ -25,6 +25,25 @@ pnpm run db:rebuild
 pnpm run db:verify
 ```
 
+## Credentials and tokens
+
+The seed creates exactly one active administrator. It requires
+`ADMIN_EMAIL`, `ADMIN_NAME`, and `ADMIN_PASSWORD`; it never falls back to a
+sample password. Imported people receive pending accounts with no password and
+no setup token. Setup, password-reset, session, CSRF, and invitation tokens are
+created only by their live flows using cryptographically random values, stored
+as hashes, and delivered only when the corresponding action is requested.
+
+For an empty production database, load the API environment and run the seed
+once:
+
+```bash
+pnpm --filter api run db:seed
+```
+
+Do not put raw tokens or admin passwords in the seed JSON or commit them to the
+repository.
+
 ## Normalization decisions
 
 - The public team page supplies current roster/category/affiliation facts; detailed profile tabs are converted into `profileSections` rather than stored as raw HTML.

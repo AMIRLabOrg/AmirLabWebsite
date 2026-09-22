@@ -1,0 +1,38 @@
+primary_region = "sin"
+
+[build]
+  dockerfile = "fly.api.Dockerfile"
+
+[deploy]
+  release_command = "pnpm --filter api run db:push"
+  release_command_timeout = "10m"
+
+[env]
+  NODE_ENV = "production"
+  PORT = "3001"
+  UPLOAD_ROOT = "/var/lib/amirlab/uploads"
+  SESSION_COOKIE_NAME = "amirl_session"
+  SESSION_DAYS = "30"
+  PASSWORD_RESET_MINUTES = "10"
+
+[[mounts]]
+  source = "amirlab_uploads"
+  destination = "/var/lib/amirlab/uploads"
+  initial_size = "10gb"
+
+[http_service]
+  internal_port = 3001
+  force_https = true
+  auto_stop_machines = "stop"
+  auto_start_machines = true
+  min_machines_running = 1
+
+  [[http_service.checks]]
+  interval = "30s"
+  timeout = "5s"
+  grace_period = "20s"
+  method = "GET"
+  path = "/api/health"
+
+[[vm]]
+  memory = "1gb"

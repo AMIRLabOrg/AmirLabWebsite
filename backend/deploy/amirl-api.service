@@ -10,6 +10,7 @@ Group=amirl
 WorkingDirectory=/opt/amirl/backend
 EnvironmentFile=/etc/amirl/api.env
 Environment=NODE_ENV=production
+Environment=PATH=/usr/local/bin:/usr/bin:/bin:/home/amirl/.local/bin
 ExecStart=/usr/bin/env pnpm start:prod
 Restart=on-failure
 RestartSec=5

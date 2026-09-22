@@ -2,5 +2,10 @@
 /.pnpm-store/
 /.pnpm-debug.log*
 
+# Environment files may exist at the workspace root during deployment.
+.env
+.env.*
+!.env.example
+
 .DS_Store
 /internship-report-workspace/

@@ -2,10 +2,10 @@
   "name": "amirlab",
   "private": true,
   "scripts": {
-    "dev": "pnpm --parallel --filter api --filter web run dev",
+    "dev": "bash scripts/dev.sh",
     "dev:backend": "pnpm --filter api run dev",
     "dev:frontend": "pnpm --filter web run dev",
-    "build": "pnpm --recursive run build",
+    "build": "pnpm --filter api run build && pnpm --filter web run build",
     "format": "pnpm --recursive run format",
     "lint": "pnpm --recursive run lint",
     "typecheck": "pnpm --recursive run typecheck",

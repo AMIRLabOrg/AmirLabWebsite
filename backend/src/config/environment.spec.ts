@@ -43,10 +43,38 @@ describe('validateEnvironment', () => {
       validateEnvironment({
         ...baseEnvironment,
         NODE_ENV: 'production',
+        SMTP_FROM: 'AMIR Lab <noreply@example.org>',
         SMTP_HOST: 'mail.smtp2go.com',
         SMTP_PASSWORD: 'secret',
         SMTP_USER: 'account',
       }),
     ).toThrow('UPLOAD_ROOT is required in production');
+  });
+
+  it('rejects production placeholders even when they are non-empty', () => {
+    expect(() =>
+      validateEnvironment({
+        ...baseEnvironment,
+        NODE_ENV: 'production',
+        UPLOAD_ROOT: '/var/lib/amirlab/uploads',
+        SMTP_FROM: 'AMIR Lab <noreply@example.org>',
+        SMTP_HOST: 'mail.smtp2go.com',
+        SMTP_PASSWORD: 'UPDATE_ON_PROD',
+        SMTP_USER: 'real-user',
+      }),
+    ).toThrow('SMTP_PASSWORD contains a production placeholder');
+  });
+
+  it('requires the production SMTP sender to come from the environment', () => {
+    expect(() =>
+      validateEnvironment({
+        ...baseEnvironment,
+        NODE_ENV: 'production',
+        UPLOAD_ROOT: '/var/lib/amirlab/uploads',
+        SMTP_HOST: 'smtp.example.net',
+        SMTP_PASSWORD: 'real-password',
+        SMTP_USER: 'real-user',
+      }),
+    ).toThrow('SMTP_FROM is required in production');
   });
 });

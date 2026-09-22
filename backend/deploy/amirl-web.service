@@ -10,6 +10,8 @@ Group=amirl
 WorkingDirectory=/opt/amirl/frontend
 Environment=NODE_ENV=production
 Environment=PORT=3000
+Environment=NEXT_TELEMETRY_DISABLED=1
+Environment=PATH=/usr/local/bin:/usr/bin:/bin:/home/amirl/.local/bin
 ExecStart=/usr/bin/env pnpm start
 Restart=on-failure
 RestartSec=5

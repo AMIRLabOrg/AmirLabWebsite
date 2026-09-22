@@ -28,6 +28,7 @@ import {
   DEFAULT_DOCUMENT_TEMPLATES,
 } from '../src/documents/documents.service';
 import { createCliPrisma } from './prisma';
+import { seedAdminCredentials } from './seed-credentials';
 import {
   type AmirSeedData,
   type SeedPaper,
@@ -48,11 +49,13 @@ const watermarkSeedPath = resolve(
   process.cwd(),
   'src/applications/brand/Logo-high-res.png',
 );
-const adminEmail = (process.env.ADMIN_EMAIL ?? 'admin@amirl.org').toLowerCase();
-const adminPassword = process.env.ADMIN_PASSWORD ?? 'AmirlabLocal2026!';
-const adminName = process.env.ADMIN_NAME ?? 'AMIRLab Administrator';
+const {
+  email: adminEmail,
+  fullName: adminName,
+  password: adminPassword,
+} = seedAdminCredentials();
 
-async function main() {
+export async function rebuildDatabase() {
   const data = await readSeedData();
   const missingFiles = await missingSeedAvatarFiles(data);
   if (missingFiles.length) {
@@ -634,12 +637,17 @@ function required<T>(value: T | undefined, message: string): T {
   return value;
 }
 
-void main().catch((error) => {
-  console.error(
-    error instanceof Error ? (error.stack ?? error.message) : String(error),
-  );
-  process.exitCode = 1;
-});
+if (
+  process.argv[1] &&
+  ['rebuild-db.ts', 'rebuild-db.js'].includes(basename(process.argv[1]))
+) {
+  void rebuildDatabase().catch((error) => {
+    console.error(
+      error instanceof Error ? (error.stack ?? error.message) : String(error),
+    );
+    process.exitCode = 1;
+  });
+}
 
 function toInputJsonValue(value: unknown): Prisma.InputJsonValue {
   if (typeof value === 'string' || typeof value === 'boolean') return value;

@@ -29,6 +29,7 @@
     "db:push": "node scripts/migrate-profile-entry-labels.mjs && prisma db push && prisma generate",
     "seed:validate": "tsx scripts/validate-seed-data.ts",
     "db:seed": "tsx scripts/rebuild-db.ts",
+    "db:seed:if-empty": "tsx scripts/seed-if-empty.ts",
     "db:verify": "tsx scripts/verify-db.ts",
     "db:rebuild": "node scripts/local-postgres.mjs start && prisma generate && prisma db push --force-reset && tsx scripts/rebuild-db.ts && tsx scripts/verify-db.ts",
     "research:sources:backfill": "tsx scripts/backfill-research-sources.ts",

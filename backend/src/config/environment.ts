@@ -34,6 +34,7 @@ export function validateEnvironment(
   const smtpPassword = optionalValue(source.SMTP_PASSWORD);
   const smtpConfigured = Boolean(smtpHost || smtpUser || smtpPassword);
   const uploadRoot = optionalValue(source.UPLOAD_ROOT);
+  const smtpFromValue = optionalValue(source.SMTP_FROM);
 
   if (!['development', 'test', 'production'].includes(nodeEnv)) {
     throw new Error('NODE_ENV must be development, test, or production');
@@ -50,8 +51,21 @@ export function validateEnvironment(
   if (nodeEnv === 'production' && !smtpConfigured) {
     throw new Error('SMTP configuration is required in production');
   }
+  if (nodeEnv === 'production' && !smtpFromValue) {
+    throw new Error('SMTP_FROM is required in production');
+  }
   if (nodeEnv === 'production' && !uploadRoot) {
     throw new Error('UPLOAD_ROOT is required in production');
+  }
+  if (nodeEnv === 'production') {
+    rejectProductionPlaceholder(databaseUrl, 'DATABASE_URL');
+    rejectProductionPlaceholder(frontendOrigins.join(','), 'FRONTEND_ORIGINS');
+    if (smtpFromValue) rejectProductionPlaceholder(smtpFromValue, 'SMTP_FROM');
+    if (smtpHost) rejectProductionPlaceholder(smtpHost, 'SMTP_HOST');
+    if (smtpUser) rejectProductionPlaceholder(smtpUser, 'SMTP_USER');
+    if (smtpPassword)
+      rejectProductionPlaceholder(smtpPassword, 'SMTP_PASSWORD');
+    if (uploadRoot) rejectProductionPlaceholder(uploadRoot, 'UPLOAD_ROOT');
   }
 
   return {
@@ -69,7 +83,7 @@ export function validateEnvironment(
       10,
       'PASSWORD_RESET_MINUTES',
     ),
-    smtpFrom: optionalString(source.SMTP_FROM, 'AMIR Lab <noreply@amirl.org>'),
+    smtpFrom: smtpFromValue ?? 'AMIR Lab <noreply@amirl.org>',
     smtpHost,
     smtpPort: positiveInteger(source.SMTP_PORT, 2525, 'SMTP_PORT'),
     smtpUser,
@@ -102,6 +116,16 @@ function optionalString(value: unknown, fallback: string): string {
 
 function optionalValue(value: unknown): string | undefined {
   return typeof value === 'string' && value.trim() !== '' ? value : undefined;
+}
+
+function rejectProductionPlaceholder(value: string, key: string): void {
+  if (
+    /update_on_prod|replace[_-]?with|change[_-]?me|your[_-]|dummy|example\.com/i.test(
+      value,
+    )
+  ) {
+    throw new Error(`${key} contains a production placeholder`);
+  }
 }
 
 function booleanValue(value: unknown, fallback: boolean, key: string): boolean {
