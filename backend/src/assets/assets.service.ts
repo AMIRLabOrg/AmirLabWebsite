@@ -1,27 +1,23 @@
 import {
   BadRequestException,
+  Inject,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import { createHash, randomUUID } from 'node:crypto';
-import { mkdir, readFile, rm, writeFile } from 'node:fs/promises';
-import { dirname, extname, resolve } from 'node:path';
+import { extname } from 'node:path';
 import sharp from 'sharp';
 import { AssetAccess, AssetKind } from '../../generated/prisma/client';
-import type { Environment } from '../config/environment';
 import { PrismaService } from '../database/prisma.service';
+import { ASSET_STORAGE } from './asset-storage';
+import type { AssetStorage } from './asset-storage';
 
 @Injectable()
 export class AssetsService {
-  private readonly uploadRoot: string;
-
   constructor(
-    config: ConfigService<Environment, true>,
     private readonly prisma: PrismaService,
-  ) {
-    this.uploadRoot = resolve(config.get('uploadRoot', { infer: true }));
-  }
+    @Inject(ASSET_STORAGE) private readonly storage: AssetStorage,
+  ) {}
 
   async storeCv(file: Express.Multer.File) {
     if (
@@ -36,9 +32,7 @@ export class AssetsService {
     const storageKey = `cv/${now.getUTCFullYear()}/${String(
       now.getUTCMonth() + 1,
     ).padStart(2, '0')}/${randomUUID()}.pdf`;
-    const filePath = resolve(this.uploadRoot, storageKey);
-    await mkdir(dirname(filePath), { recursive: true });
-    await writeFile(filePath, file.buffer, { flag: 'wx' });
+    await this.storage.put(storageKey, file.buffer);
 
     try {
       return await this.prisma.asset.create({
@@ -53,7 +47,7 @@ export class AssetsService {
         },
       });
     } catch (error) {
-      await rm(filePath, { force: true });
+      await this.storage.remove(storageKey);
       throw error;
     }
   }
@@ -82,9 +76,7 @@ export class AssetsService {
     const storageKey = `peoples/${now.getUTCFullYear()}/${String(
       now.getUTCMonth() + 1,
     ).padStart(2, '0')}/${randomUUID()}.webp`;
-    const filePath = resolve(this.uploadRoot, storageKey);
-    await mkdir(dirname(filePath), { recursive: true });
-    await writeFile(filePath, image.data, { flag: 'wx' });
+    await this.storage.put(storageKey, image.data);
 
     try {
       return await this.prisma.asset.create({
@@ -102,7 +94,7 @@ export class AssetsService {
         },
       });
     } catch (error) {
-      await rm(filePath, { force: true });
+      await this.storage.remove(storageKey);
       throw error;
     }
   }
@@ -129,9 +121,7 @@ export class AssetsService {
     const storageKey = `university-logos/${now.getUTCFullYear()}/${String(
       now.getUTCMonth() + 1,
     ).padStart(2, '0')}/${randomUUID()}.png`;
-    const filePath = resolve(this.uploadRoot, storageKey);
-    await mkdir(dirname(filePath), { recursive: true });
-    await writeFile(filePath, image.data, { flag: 'wx' });
+    await this.storage.put(storageKey, image.data);
 
     try {
       return await this.prisma.asset.create({
@@ -148,7 +138,7 @@ export class AssetsService {
         },
       });
     } catch (error) {
-      await rm(filePath, { force: true });
+      await this.storage.remove(storageKey);
       throw error;
     }
   }
@@ -175,9 +165,7 @@ export class AssetsService {
     const storageKey = `document-signatures/${now.getUTCFullYear()}/${String(
       now.getUTCMonth() + 1,
     ).padStart(2, '0')}/${randomUUID()}.png`;
-    const filePath = resolve(this.uploadRoot, storageKey);
-    await mkdir(dirname(filePath), { recursive: true });
-    await writeFile(filePath, image.data, { flag: 'wx' });
+    await this.storage.put(storageKey, image.data);
 
     try {
       return await this.prisma.asset.create({
@@ -195,7 +183,7 @@ export class AssetsService {
         },
       });
     } catch (error) {
-      await rm(filePath, { force: true });
+      await this.storage.remove(storageKey);
       throw error;
     }
   }
@@ -222,9 +210,7 @@ export class AssetsService {
     const storageKey = `document-watermarks/${now.getUTCFullYear()}/${String(
       now.getUTCMonth() + 1,
     ).padStart(2, '0')}/${randomUUID()}.png`;
-    const filePath = resolve(this.uploadRoot, storageKey);
-    await mkdir(dirname(filePath), { recursive: true });
-    await writeFile(filePath, image.data, { flag: 'wx' });
+    await this.storage.put(storageKey, image.data);
 
     try {
       return await this.prisma.asset.create({
@@ -242,7 +228,7 @@ export class AssetsService {
         },
       });
     } catch (error) {
-      await rm(filePath, { force: true });
+      await this.storage.remove(storageKey);
       throw error;
     }
   }
@@ -274,7 +260,7 @@ export class AssetsService {
     });
     if (!asset || asset.kind !== AssetKind.DOCUMENT_SIGNATURE) return null;
     try {
-      return await readFile(resolve(this.uploadRoot, asset.storageKey));
+      return await this.storage.read(asset.storageKey);
     } catch {
       return null;
     }
@@ -286,7 +272,7 @@ export class AssetsService {
     });
     if (!asset || asset.kind !== AssetKind.DOCUMENT_WATERMARK) return null;
     try {
-      return await readFile(resolve(this.uploadRoot, asset.storageKey));
+      return await this.storage.read(asset.storageKey);
     } catch {
       return null;
     }
@@ -300,7 +286,7 @@ export class AssetsService {
       return;
     }
     await this.prisma.asset.delete({ where: { id: assetId } });
-    await rm(resolve(this.uploadRoot, asset.storageKey), { force: true });
+    await this.storage.remove(asset.storageKey);
   }
 
   async removeMany(assetIds: readonly string[]): Promise<void> {
@@ -315,9 +301,7 @@ export class AssetsService {
       where: { id: { in: assets.map(({ id }) => id) } },
     });
     await Promise.all(
-      assets.map(({ storageKey }) =>
-        rm(resolve(this.uploadRoot, storageKey), { force: true }),
-      ),
+      assets.map(({ storageKey }) => this.storage.remove(storageKey)),
     );
   }
 
@@ -328,7 +312,7 @@ export class AssetsService {
     if (!asset) return null;
     return {
       ...asset,
-      buffer: await readFile(resolve(this.uploadRoot, asset.storageKey)),
+      buffer: await this.storage.read(asset.storageKey),
     };
   }
 }

@@ -1,5 +1,7 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { AcademicRank, Prisma } from '../../generated/prisma/client';
+import type { Environment } from '../config/environment';
 import { PrismaService } from '../database/prisma.service';
 import { RECALCULATE_ALL_RANKS_JOB } from '../jobs/job-types';
 import { JobsService } from '../jobs/jobs.service';
@@ -102,9 +104,9 @@ We look forward to your contribution to AmirLab's research activities and to the
   signerTitle: 'Founder & Research Director',
   signerEmail: 'firoz.mridha@aiub.edu',
   signerPhone: '+8801674791594',
-  siteUrl: 'https://amirl.org',
-  siteEmail: 'amirlab.org@gmail.com',
-  siteLocation: 'Dhaka, Bangladesh',
+  siteUrl: process.env.PUBLIC_SITE_URL ?? 'http://localhost:3000',
+  siteEmail: process.env.PUBLIC_SITE_EMAIL ?? 'admin@example.test',
+  siteLocation: process.env.PUBLIC_SITE_LOCATION ?? 'Local development',
 };
 
 export const DEFAULT_NOTIFICATION_POLICY: NotificationPolicy = {
@@ -124,13 +126,15 @@ const RANK_KEY = 'rank-policy';
 const REDIRECT_URL_KEY = 'redirect-url';
 const APPOINTMENT_LETTER_KEY = 'appointment-letter-template';
 const NOTIFICATION_POLICY_KEY = 'notification-policy';
-const DEFAULT_REDIRECT_URL = 'https://amirlab.org';
+const DEFAULT_REDIRECT_URL =
+  process.env.PUBLIC_SITE_URL ?? 'http://localhost:3000';
 
 @Injectable()
 export class SettingsService {
   constructor(
     private readonly jobs: JobsService,
     private readonly prisma: PrismaService,
+    private readonly config: ConfigService<Environment, true>,
   ) {}
 
   async verification(): Promise<VerificationPolicy> {
@@ -151,7 +155,10 @@ export class SettingsService {
     const setting = await this.prisma.siteSetting.findUnique({
       where: { key: APPOINTMENT_LETTER_KEY },
     });
-    return validateAppointmentLetterTemplate(setting?.value);
+    return validateAppointmentLetterTemplate(
+      setting?.value,
+      this.defaultTemplate(),
+    );
   }
 
   async notificationPolicy(): Promise<NotificationPolicy> {
@@ -224,10 +231,13 @@ export class SettingsService {
     actorId: string,
   ): Promise<AppointmentLetterTemplate> {
     const current = await this.appointmentLetter();
-    const parsed = validateAppointmentLetterTemplate({
-      ...value,
-      version: current.version + 1,
-    });
+    const parsed = validateAppointmentLetterTemplate(
+      {
+        ...value,
+        version: current.version + 1,
+      },
+      this.defaultTemplate(),
+    );
     const json = objectToJson(parsed);
     await this.saveSetting(
       APPOINTMENT_LETTER_KEY,
@@ -236,6 +246,15 @@ export class SettingsService {
       actorId,
     );
     return parsed;
+  }
+
+  private defaultTemplate(): AppointmentLetterTemplate {
+    return {
+      ...DEFAULT_APPOINTMENT_LETTER_TEMPLATE,
+      siteUrl: this.config.get('publicSiteUrl', { infer: true }),
+      siteEmail: this.config.get('publicSiteEmail', { infer: true }),
+      siteLocation: this.config.get('publicSiteLocation', { infer: true }),
+    };
   }
 
   async updateNotificationPolicy(
@@ -438,10 +457,11 @@ function parseRankPolicy(value: unknown): RankPolicy {
 
 export function validateAppointmentLetterTemplate(
   value: unknown,
+  defaults: AppointmentLetterTemplate = DEFAULT_APPOINTMENT_LETTER_TEMPLATE,
 ): AppointmentLetterTemplate {
   const candidate = isRecord(value) ? value : {};
   const text = (key: keyof AppointmentLetterTemplate, maxLength: number) => {
-    const fallback = String(DEFAULT_APPOINTMENT_LETTER_TEMPLATE[key]);
+    const fallback = String(defaults[key]);
     const result =
       typeof candidate[key] === 'string' && candidate[key].trim()
         ? candidate[key].trim()
@@ -458,7 +478,7 @@ export function validateAppointmentLetterTemplate(
   const markdown =
     typeof candidate.markdown === 'string' && candidate.markdown.trim()
       ? candidate.markdown.trim()
-      : DEFAULT_APPOINTMENT_LETTER_TEMPLATE.markdown;
+      : defaults.markdown;
   if (markdown.length > 20_000 || hasControlCharacter(markdown, true)) {
     throw new BadRequestException(
       'Appointment template contains invalid characters',
@@ -518,7 +538,10 @@ export function validateAppointmentLetterTemplate(
   } catch {
     throw new BadRequestException('Appointment website URL is invalid');
   }
-  if (parsedSiteUrl.protocol !== 'https:') {
+  if (
+    parsedSiteUrl.protocol !== 'https:' &&
+    !['localhost', '127.0.0.1'].includes(parsedSiteUrl.hostname)
+  ) {
     throw new BadRequestException('Appointment website URL must use HTTPS');
   }
   if (
@@ -532,10 +555,7 @@ export function validateAppointmentLetterTemplate(
     );
   }
   return {
-    version: integer(
-      candidate.version,
-      DEFAULT_APPOINTMENT_LETTER_TEMPLATE.version,
-    ),
+    version: integer(candidate.version, defaults.version),
     markdown,
     signerName: text('signerName', 160),
     signerTitle: text('signerTitle', 160),

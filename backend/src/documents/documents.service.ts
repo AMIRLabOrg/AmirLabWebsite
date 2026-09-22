@@ -39,9 +39,9 @@ export const DEFAULT_APPROVER: Omit<ApproverSnapshot, 'signatureAssetId'> = {
 };
 
 export const DEFAULT_DOCUMENT_SITE: DocumentSiteSnapshot = {
-  url: 'https://amirl.org',
-  email: 'amirlab.org@gmail.com',
-  location: 'Dhaka, Bangladesh',
+  url: process.env.PUBLIC_SITE_URL ?? 'http://localhost:3000',
+  email: process.env.PUBLIC_SITE_EMAIL ?? 'admin@example.test',
+  location: process.env.PUBLIC_SITE_LOCATION ?? 'Local development',
 };
 
 export const DEFAULT_DOCUMENT_TEMPLATES: ReadonlyArray<

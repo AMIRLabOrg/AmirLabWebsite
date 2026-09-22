@@ -1,6 +1,16 @@
 export interface Environment {
   databaseUrl: string;
   frontendOrigins: string[];
+  publicSiteUrl: string;
+  publicSiteEmail: string;
+  publicSiteLocation: string;
+  storageProvider: 'local' | 's3';
+  storageBucket?: string;
+  storageEndpoint?: string;
+  storageRegion: string;
+  storageAccessKeyId?: string;
+  storageSecretAccessKey?: string;
+  storageForcePathStyle: boolean;
   nodeEnv: 'development' | 'test' | 'production';
   port: number;
   sessionCookieName: string;
@@ -35,6 +45,25 @@ export function validateEnvironment(
   const smtpConfigured = Boolean(smtpHost || smtpUser || smtpPassword);
   const uploadRoot = optionalValue(source.UPLOAD_ROOT);
   const smtpFromValue = optionalValue(source.SMTP_FROM);
+  const storageProvider = optionalString(source.STORAGE_PROVIDER, 'local');
+  const storageBucket = optionalValue(source.STORAGE_BUCKET);
+  const storageEndpoint = optionalValue(source.STORAGE_ENDPOINT);
+  const storageAccessKeyId = optionalValue(source.STORAGE_ACCESS_KEY_ID);
+  const storageSecretAccessKey = optionalValue(
+    source.STORAGE_SECRET_ACCESS_KEY,
+  );
+  const publicSiteUrl = optionalString(
+    source.PUBLIC_SITE_URL,
+    'http://localhost:3000',
+  );
+  const publicSiteEmail = optionalString(
+    source.PUBLIC_SITE_EMAIL,
+    'admin@example.test',
+  );
+  const publicSiteLocation = optionalString(
+    source.PUBLIC_SITE_LOCATION,
+    'Local development',
+  );
 
   if (!['development', 'test', 'production'].includes(nodeEnv)) {
     throw new Error('NODE_ENV must be development, test, or production');
@@ -54,8 +83,28 @@ export function validateEnvironment(
   if (nodeEnv === 'production' && !smtpFromValue) {
     throw new Error('SMTP_FROM is required in production');
   }
-  if (nodeEnv === 'production' && !uploadRoot) {
-    throw new Error('UPLOAD_ROOT is required in production');
+  if (nodeEnv === 'production' && !uploadRoot && storageProvider === 'local') {
+    throw new Error('UPLOAD_ROOT is required for local storage in production');
+  }
+  if (!['local', 's3'].includes(storageProvider)) {
+    throw new Error('STORAGE_PROVIDER must be local or s3');
+  }
+  if (
+    storageProvider === 's3' &&
+    (!storageBucket || !storageAccessKeyId || !storageSecretAccessKey)
+  ) {
+    throw new Error(
+      'STORAGE_BUCKET, STORAGE_ACCESS_KEY_ID, and STORAGE_SECRET_ACCESS_KEY are required for s3 storage',
+    );
+  }
+  if (nodeEnv === 'production' && !source.PUBLIC_SITE_URL) {
+    throw new Error('PUBLIC_SITE_URL is required in production');
+  }
+  if (nodeEnv === 'production' && !source.PUBLIC_SITE_EMAIL) {
+    throw new Error('PUBLIC_SITE_EMAIL is required in production');
+  }
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(publicSiteEmail)) {
+    throw new Error('PUBLIC_SITE_EMAIL must be a valid email address');
   }
   if (nodeEnv === 'production') {
     rejectProductionPlaceholder(databaseUrl, 'DATABASE_URL');
@@ -66,11 +115,37 @@ export function validateEnvironment(
     if (smtpPassword)
       rejectProductionPlaceholder(smtpPassword, 'SMTP_PASSWORD');
     if (uploadRoot) rejectProductionPlaceholder(uploadRoot, 'UPLOAD_ROOT');
+    if (storageBucket)
+      rejectProductionPlaceholder(storageBucket, 'STORAGE_BUCKET');
+    if (storageAccessKeyId)
+      rejectProductionPlaceholder(storageAccessKeyId, 'STORAGE_ACCESS_KEY_ID');
+    if (storageSecretAccessKey)
+      rejectProductionPlaceholder(
+        storageSecretAccessKey,
+        'STORAGE_SECRET_ACCESS_KEY',
+      );
+    rejectProductionPlaceholder(publicSiteUrl, 'PUBLIC_SITE_URL');
+    rejectProductionPlaceholder(publicSiteEmail, 'PUBLIC_SITE_EMAIL');
+    validatePublicSiteUrl(publicSiteUrl);
   }
 
   return {
     databaseUrl,
     frontendOrigins,
+    publicSiteUrl,
+    publicSiteEmail,
+    publicSiteLocation,
+    storageProvider: storageProvider as Environment['storageProvider'],
+    storageBucket,
+    storageEndpoint,
+    storageRegion: optionalString(source.STORAGE_REGION, 'auto'),
+    storageAccessKeyId,
+    storageSecretAccessKey,
+    storageForcePathStyle: booleanValue(
+      source.STORAGE_FORCE_PATH_STYLE,
+      false,
+      'STORAGE_FORCE_PATH_STYLE',
+    ),
     nodeEnv: nodeEnv as Environment['nodeEnv'],
     port: positiveInteger(source.PORT, 3001, 'PORT'),
     sessionCookieName: optionalString(
@@ -83,7 +158,7 @@ export function validateEnvironment(
       10,
       'PASSWORD_RESET_MINUTES',
     ),
-    smtpFrom: smtpFromValue ?? 'AMIR Lab <noreply@amirl.org>',
+    smtpFrom: smtpFromValue ?? `Application <${publicSiteEmail}>`,
     smtpHost,
     smtpPort: positiveInteger(source.SMTP_PORT, 2525, 'SMTP_PORT'),
     smtpUser,
@@ -100,6 +175,23 @@ export function validateEnvironment(
     vapidPrivateKey: optionalValue(source.VAPID_PRIVATE_KEY),
     vapidSubject: optionalValue(source.VAPID_SUBJECT),
   };
+}
+
+function validatePublicSiteUrl(value: string): void {
+  let url: URL;
+  try {
+    url = new URL(value);
+  } catch {
+    throw new Error('PUBLIC_SITE_URL must be a valid URL');
+  }
+  if (url.protocol !== 'https:') {
+    throw new Error('PUBLIC_SITE_URL must use HTTPS in production');
+  }
+  if (url.username || url.password || url.search || url.hash) {
+    throw new Error(
+      'PUBLIC_SITE_URL cannot contain credentials, a query, or a fragment',
+    );
+  }
 }
 
 function requiredString(source: Record<string, unknown>, key: string): string {

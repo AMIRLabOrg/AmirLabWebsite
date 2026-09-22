@@ -4,7 +4,7 @@ primary_region = "sin"
   dockerfile = "fly.api.Dockerfile"
 
 [deploy]
-  release_command = "pnpm --filter api run db:push"
+  release_command = "pnpm --filter api run db:push && pnpm --filter api run db:seed:if-empty"
   release_command_timeout = "10m"
 
 [env]

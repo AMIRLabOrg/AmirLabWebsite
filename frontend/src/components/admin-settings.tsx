@@ -203,7 +203,9 @@ export function AdminSettings() {
     leadPaperMinimum: 0,
     leadCitationMinimum: 0,
   };
-  const displayedRedirectUrl = redirectUrl ?? { url: "https://amirl.org/" };
+  const displayedRedirectUrl = redirectUrl ?? {
+    url: process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000",
+  };
   const displayedNotificationPolicy = notificationPolicy ?? {
     applicationAccepted: true,
     applicationRejected: true,

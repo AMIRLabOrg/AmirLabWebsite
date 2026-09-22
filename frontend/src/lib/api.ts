@@ -12,8 +12,18 @@ import type {
 } from "./types";
 import { DEFAULT_ABOUT_CONTENT, DEFAULT_HOME_CONTENT } from "./site-content";
 
-export const API_URL =
-  process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001/api";
+const configuredApiUrl = process.env.NEXT_PUBLIC_API_URL?.trim();
+
+if (
+  process.env.NODE_ENV === "production" &&
+  (!configuredApiUrl || /localhost|127\.0\.0\.1/i.test(configuredApiUrl))
+) {
+  throw new Error(
+    "NEXT_PUBLIC_API_URL must be set to the deployed API URL in production",
+  );
+}
+
+export const API_URL = configuredApiUrl ?? "http://localhost:3001/api";
 
 async function getCollection<T>(
   path: string,

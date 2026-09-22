@@ -1,11 +1,16 @@
 import { Controller, Get, Redirect } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { Public } from './auth/auth.decorators';
+import type { Environment } from './config/environment';
 import { PrismaService } from './database/prisma.service';
 
 @Controller()
 @Public()
 export class AppController {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly config: ConfigService<Environment, true>,
+  ) {}
 
   @Get('health')
   async health(): Promise<{ status: 'ok'; timestamp: string }> {
@@ -22,7 +27,7 @@ export class AppController {
     const url =
       typeof setting?.value === 'string' && setting.value
         ? setting.value
-        : 'https://amirlab.org';
+        : this.config.get('publicSiteUrl', { infer: true });
     return { url };
   }
 }

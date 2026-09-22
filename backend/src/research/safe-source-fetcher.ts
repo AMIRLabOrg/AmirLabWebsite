@@ -1,6 +1,8 @@
 import { Injectable } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { lookup } from 'node:dns/promises';
 import { isIP } from 'node:net';
+import type { Environment } from '../config/environment';
 
 const MAX_SOURCE_BYTES = 2_500_000;
 const MAX_REDIRECTS = 3;
@@ -15,6 +17,8 @@ export class SourceUnavailableError extends Error {}
 
 @Injectable()
 export class SafeSourceFetcher {
+  constructor(private readonly config: ConfigService<Environment, true>) {}
+
   async fetch(
     sourceUrl: string,
     accept = 'text/html, application/ld+json, application/json, application/pdf;q=0.8',
@@ -25,7 +29,10 @@ export class SafeSourceFetcher {
       const response = await fetch(url, {
         headers: {
           accept,
-          'user-agent': 'AmirLab-Research-Linker/1.0 (+https://amirl.org)',
+          'user-agent': `AmirLab-Research-Linker/1.0 (+${this.config.get(
+            'publicSiteUrl',
+            { infer: true },
+          )})`,
         },
         redirect: 'manual',
         signal: AbortSignal.timeout(12_000),

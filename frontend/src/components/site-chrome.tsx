@@ -9,6 +9,10 @@ import { BrandLockup } from "./brand-mark";
 const footerLink = "text-[.72rem] text-ink-muted hover:text-ink";
 const footerColumn =
   "grid justify-items-start gap-[.58rem] border-t border-line-strong pt-[.62rem]";
+const siteEmail = process.env.NEXT_PUBLIC_SITE_EMAIL ?? "admin@example.test";
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
+const siteLocation =
+  process.env.NEXT_PUBLIC_SITE_LOCATION ?? "Local development";
 
 export function SiteChrome({ children }: { children: ReactNode }) {
   const pathname = usePathname();
@@ -30,12 +34,12 @@ export function SiteChrome({ children }: { children: ReactNode }) {
                 <BrandLockup />
               </Link>
               <p className="m-0 font-mono text-[.62rem] leading-[1.65] text-ink-muted">
-                Dhaka, Bangladesh · est. 2020
+                {siteLocation} · est. 2020
                 <br />
                 Non-profit academic consortium
               </p>
-              <a className={footerLink} href="mailto:amirlab.org@gmail.com">
-                amirlab.org@gmail.com
+              <a className={footerLink} href={`mailto:${siteEmail}`}>
+                {siteEmail}
               </a>
             </div>
             <nav className={footerColumn} aria-label="Footer navigation">
@@ -87,7 +91,7 @@ export function SiteChrome({ children }: { children: ReactNode }) {
               <Link className={footerLink} href="/login" prefetch={false}>
                 Member login
               </Link>
-              <a className={footerLink} href="mailto:amirlab.org@gmail.com">
+              <a className={footerLink} href={`mailto:${siteEmail}`}>
                 Get in touch
               </a>
             </nav>
@@ -96,8 +100,8 @@ export function SiteChrome({ children }: { children: ReactNode }) {
                 © {new Date().getFullYear()} AmirLab · Non-profit academic
                 research consortium
               </span>
-              <a href="https://amirl.org" rel="noreferrer" target="_blank">
-                amirl.org
+              <a href={siteUrl} rel="noreferrer" target="_blank">
+                {siteUrl}
               </a>
             </div>
           </div>
