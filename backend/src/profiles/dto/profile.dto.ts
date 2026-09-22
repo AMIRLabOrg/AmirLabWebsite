@@ -82,7 +82,6 @@ export interface ProfileEditPayload {
   fullName: string;
   headline: string | null;
   biography: string | null;
-  publicEmail: string | null;
   phone: string | null;
   contactAddress: string | null;
   roleTitle?: string | null;

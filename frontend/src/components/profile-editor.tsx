@@ -66,7 +66,6 @@ const EMPTY_PROFILE: ProfileEditPayload = {
   fullName: "",
   headline: null,
   biography: null,
-  publicEmail: null,
   phone: null,
   contactAddress: null,
   roleTitle: null,
@@ -128,6 +127,7 @@ export function ProfileEditor({ userId }: ProfileEditorProps) {
   const [editRole, setEditRole] = useState("MEMBER");
   const [editRank, setEditRank] = useState("NONE");
   const [editFullName, setEditFullName] = useState("");
+  const [editEmail, setEditEmail] = useState("");
   const [, setSavingAccount] = useState(false);
   const [accountError, setAccountError] = useState<string>();
   const avatarPreview = useMemo(
@@ -157,7 +157,6 @@ export function ProfileEditor({ userId }: ProfileEditorProps) {
                 fullName: current.fullName,
                 headline: current.headline,
                 biography: current.biography,
-                publicEmail: current.publicEmail,
                 phone: current.phone,
                 roleTitle: userId ? current.roleTitle : null,
                 contactAddress: current.contactAddress,
@@ -210,6 +209,7 @@ export function ProfileEditor({ userId }: ProfileEditorProps) {
     }>(`/users/${userId}`, { method: "GET" })
       .then((account) => {
         setEditRole(account.role);
+        setEditEmail(account.email ?? "");
         setEditRank(account.person?.rank ?? "NONE");
         setEditFullName(account.person?.fullName ?? "");
       })
@@ -222,6 +222,7 @@ export function ProfileEditor({ userId }: ProfileEditorProps) {
     try {
       await apiRequest(`/users/${userId}`, {
         body: JSON.stringify({
+          email: editEmail,
           fullName: editFullName,
           rank: rank === "NONE" ? null : rank,
           role,
@@ -271,7 +272,6 @@ export function ProfileEditor({ userId }: ProfileEditorProps) {
           : adminProfile
             ? {
                 fullName: profile.fullName,
-                publicEmail: profile.publicEmail,
               }
             : {
                 biography: profile.biography,
@@ -282,7 +282,6 @@ export function ProfileEditor({ userId }: ProfileEditorProps) {
                 ...(userId ? { roleTitle: profile.roleTitle } : {}),
                 links: profile.links,
                 phone: profile.phone,
-                publicEmail: profile.publicEmail,
                 sections: profile.sections,
               },
       ),
@@ -299,6 +298,18 @@ export function ProfileEditor({ userId }: ProfileEditorProps) {
     const endpoint = userId ? `/users/${userId}/profile` : "/profile/me";
 
     try {
+      if (userId) {
+        await apiRequest(`/users/${userId}`, {
+          body: JSON.stringify({
+            email: editEmail,
+            fullName: profile.fullName,
+            rank: editRank === "NONE" ? null : editRank,
+            role: editRole,
+          }),
+          headers: { "content-type": "application/json" },
+          method: "PATCH",
+        });
+      }
       const result = await apiRequest<
         { direct: true } | Omit<ProfileEditRequest, "person">
       >(endpoint, { body, method: "POST" });
@@ -370,12 +381,10 @@ export function ProfileEditor({ userId }: ProfileEditorProps) {
     : adminProfile
       ? [
           { complete: Boolean(profile.fullName), label: "Full name" },
-          { complete: Boolean(profile.publicEmail), label: "Email" },
           { complete: Boolean(visibleAvatarId), label: "Profile image" },
         ]
       : [
           { complete: Boolean(profile.fullName), label: "Full name" },
-          { complete: Boolean(profile.publicEmail), label: "Public email" },
           { complete: Boolean(profile.headline), label: "Headline" },
           { complete: Boolean(profile.biography), label: "Biography" },
           { complete: profile.links.length > 0, label: "Profile links" },
@@ -521,34 +530,26 @@ export function ProfileEditor({ userId }: ProfileEditorProps) {
                 loading={editorLoading}
                 id="profile-name"
                 maxLength={120}
-                onChange={(event) =>
-                  setProfile({ ...profile, fullName: event.target.value })
-                }
+                onChange={(event) => {
+                  setProfile({ ...profile, fullName: event.target.value });
+                  if (userId) setEditFullName(event.target.value);
+                }}
                 required
                 value={profile.fullName}
               />
             </FormField>
-            <FormField
-              htmlFor="profile-email"
-              label={adminProfile ? "Email" : "Public email"}
-            >
-              {!moderatorProfile ? (
-                <>
-                  <InputControl
-                    loading={editorLoading}
-                    id="profile-email"
-                    onChange={(event) =>
-                      setProfile({
-                        ...profile,
-                        publicEmail: event.target.value || null,
-                      })
-                    }
-                    type="email"
-                    value={profile.publicEmail ?? ""}
-                  />
-                </>
-              ) : null}
-            </FormField>
+            {userId ? (
+              <FormField htmlFor="account-email" label="Email">
+                <InputControl
+                  loading={editorLoading}
+                  id="account-email"
+                  onChange={(event) => setEditEmail(event.target.value)}
+                  required
+                  type="email"
+                  value={editEmail}
+                />
+              </FormField>
+            ) : null}
             {researchProfile ? (
               <FormField
                 className="col-span-full"

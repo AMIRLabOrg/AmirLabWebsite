@@ -133,12 +133,12 @@ export function PersonProfileView({
                 </>
               ) : (
                 <>
-                  {person?.publicEmail ? (
+                  {person?.email ? (
                     <a
                       className="inline-flex items-center gap-[.4rem] break-words text-[.8rem] text-brand hover:text-brand-hover"
-                      href={`mailto:${person.publicEmail}`}
+                      href={`mailto:${person.email}`}
                     >
-                      <Mail aria-hidden="true" size={16} /> {person.publicEmail}
+                      <Mail aria-hidden="true" size={16} /> {person.email}
                     </a>
                   ) : null}
                   {person?.phone ? (

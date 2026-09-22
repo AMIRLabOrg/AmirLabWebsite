@@ -104,14 +104,14 @@ export class ProfilesService {
       include: {
         ...PROFILE_INCLUDE,
         profileEditRequest: { include: { avatarAsset: true } },
-        user: { select: { role: true } },
+        user: { select: { email: true, role: true } },
       },
     });
     if (!person) throw new NotFoundException('Profile not found');
     const { profileEditRequest, user, ...profile } = person;
     return {
       accountRole: user?.role ?? PlatformRole.MEMBER,
-      profile,
+      profile: { ...profile, email: user?.email ?? null },
       draft: profileEditRequest,
     };
   }
@@ -288,12 +288,6 @@ export class ProfilesService {
                   fullName: { contains: search, mode: 'insensitive' },
                 },
               },
-              {
-                payload: {
-                  path: ['publicEmail'],
-                  string_contains: search,
-                },
-              },
             ],
           }
         : {}),
@@ -386,7 +380,6 @@ export class ProfilesService {
             headline: true,
             id: true,
             phone: true,
-            publicEmail: true,
             roleTitle: true,
             user: { select: { id: true, role: true } },
             userId: true,
@@ -469,10 +462,6 @@ export class ProfilesService {
                   scope === 'MODERATOR' || scope === 'RESEARCH'
                     ? payload.phone
                     : current.phone,
-                publicEmail:
-                  scope === 'ADMIN' || scope === 'RESEARCH'
-                    ? payload.publicEmail
-                    : current.publicEmail,
                 roleTitle:
                   scope === 'RESEARCH' && payload.roleTitle !== undefined
                     ? payload.roleTitle
@@ -530,7 +519,6 @@ export class ProfilesService {
             ${target.fullName},
             ${target.headline},
             ${target.phone},
-            ${target.publicEmail},
             ${target.roleTitle}
           )`,
         );
@@ -546,7 +534,6 @@ export class ProfilesService {
               "headline" = selected.headline,
               "isPublished" = true,
               "phone" = selected.phone,
-              "publicEmail" = selected.public_email,
               "roleTitle" = selected.role_title,
               "updatedAt" = NOW()
             FROM (VALUES ${Prisma.join(personRows)}) AS selected(
@@ -558,7 +545,6 @@ export class ProfilesService {
               full_name,
               headline,
               phone,
-              public_email,
               role_title
             )
             WHERE person."id" = selected.person_id
@@ -857,7 +843,6 @@ function profileUpdateData(
     return {
       avatarId,
       fullName: payload.fullName,
-      publicEmail: payload.publicEmail,
     };
   }
   return {
@@ -894,7 +879,6 @@ function profileUpdateData(
         },
       })),
     },
-    publicEmail: payload.publicEmail,
     ...(payload.roleTitle !== undefined
       ? { roleTitle: payload.roleTitle }
       : {}),
@@ -949,15 +933,6 @@ function profilePayloadIssue(itemId: string, error: unknown): ReviewIssue {
       : detail && typeof detail === 'object' && 'message' in detail
         ? String((detail as { message?: string }).message ?? '')
         : '';
-  if (raw.includes('publicEmail')) {
-    return {
-      code: 'INVALID_PUBLIC_EMAIL',
-      field: 'publicEmail',
-      itemId,
-      message: 'Invalid submitted public email.',
-      tone: 'error',
-    };
-  }
   if (raw.includes('links')) {
     return {
       code: 'INVALID_PROFILE_LINKS',

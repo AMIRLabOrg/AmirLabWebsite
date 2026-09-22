@@ -470,18 +470,21 @@ export class DocumentsService implements OnModuleInit {
     });
   }
 
-  listRecipients() {
-    return this.prisma.person.findMany({
+  async listRecipients() {
+    const people = await this.prisma.person.findMany({
       orderBy: { fullName: 'asc' },
       select: {
         fullName: true,
         id: true,
         phone: true,
-        publicEmail: true,
         roleTitle: true,
         user: { select: { email: true } },
       },
     });
+    return people.map(({ user, ...person }) => ({
+      ...person,
+      email: user?.email ?? null,
+    }));
   }
 
   async read(id: string) {
@@ -715,17 +718,12 @@ export class DocumentsService implements OnModuleInit {
         where: { id: dto.recipientPersonId },
         select: {
           fullName: true,
-          publicEmail: true,
           user: { select: { email: true } },
         },
       });
       if (!person) throw new NotFoundException('Recipient person not found');
       return {
-        recipientEmail:
-          dto.recipientEmail?.trim() ||
-          person.publicEmail ||
-          person.user?.email ||
-          '',
+        recipientEmail: dto.recipientEmail?.trim() || person.user?.email || '',
         recipientName: person.fullName,
       };
     }
@@ -1169,14 +1167,13 @@ function approverFromPerson(
   person: {
     fullName: string;
     phone: string | null;
-    publicEmail: string | null;
     roleTitle: string | null;
     user: { email: string | null } | null;
   },
   signatureAssetId: string | null,
 ): ApproverSnapshot {
   return {
-    email: person.publicEmail || person.user?.email || DEFAULT_APPROVER.email,
+    email: person.user?.email || DEFAULT_APPROVER.email,
     name: person.fullName,
     phone: person.phone || DEFAULT_APPROVER.phone,
     signatureAssetId,

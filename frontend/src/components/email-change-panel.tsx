@@ -1,7 +1,6 @@
 "use client";
 
 import { SyntheticEvent, useEffect, useState } from "react";
-import { useAuth } from "@/components/auth-provider";
 import { useNotifications } from "@/components/notification-provider";
 import { ButtonControl } from "@/components/ui/button-control";
 import { FormField, FormMessage } from "@/components/ui/form-field";
@@ -14,8 +13,7 @@ interface EmailChangeStatus {
   pending: { newEmail: string; otpExpiresAt: string } | null;
 }
 
-export function EmailChangePanel({ userId }: { userId?: string }) {
-  const { user } = useAuth();
+export function EmailChangePanel() {
   const { showToast } = useNotifications();
   const [status, setStatus] = useState<EmailChangeStatus>();
   const [newEmail, setNewEmail] = useState("");
@@ -24,9 +22,7 @@ export function EmailChangePanel({ userId }: { userId?: string }) {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string>();
-  const basePath = userId
-    ? `/users/${userId}/email-change`
-    : "/auth/email-change";
+  const basePath = "/auth/email-change";
 
   useEffect(() => {
     let active = true;
@@ -53,7 +49,9 @@ export function EmailChangePanel({ userId }: { userId?: string }) {
     };
   }, [basePath]);
 
-  async function requestChange(event: SyntheticEvent<HTMLFormElement, SubmitEvent>) {
+  async function requestChange(
+    event: SyntheticEvent<HTMLFormElement, SubmitEvent>,
+  ) {
     event.preventDefault();
     setSaving(true);
     setError(undefined);
@@ -64,7 +62,7 @@ export function EmailChangePanel({ userId }: { userId?: string }) {
       }>(`${basePath}/request`, {
         body: JSON.stringify({
           newEmail,
-          ...(!userId ? { currentPassword } : {}),
+          currentPassword,
         }),
         headers: { "content-type": "application/json" },
         method: "POST",
@@ -93,7 +91,9 @@ export function EmailChangePanel({ userId }: { userId?: string }) {
     }
   }
 
-  async function verifyChange(event: SyntheticEvent<HTMLFormElement, SubmitEvent>) {
+  async function verifyChange(
+    event: SyntheticEvent<HTMLFormElement, SubmitEvent>,
+  ) {
     event.preventDefault();
     setSaving(true);
     setError(undefined);
@@ -110,14 +110,8 @@ export function EmailChangePanel({ userId }: { userId?: string }) {
         body: `The login email is now ${result.currentEmail}. Existing sessions were signed out.`,
         title: "Email changed",
       });
-      if (!userId || userId === user?.id) {
-        sessionStorage.removeItem("amirl_csrf");
-        window.location.assign("/login");
-        return;
-      }
-      setStatus({ currentEmail: result.currentEmail, pending: null });
-      setNewEmail("");
-      setOtp("");
+      sessionStorage.removeItem("amirl_csrf");
+      window.location.assign("/login");
     } catch (caught) {
       setError(
         caught instanceof Error
@@ -149,23 +143,17 @@ export function EmailChangePanel({ userId }: { userId?: string }) {
 
       <form className="grid gap-[1rem]" onSubmit={requestChange}>
         <div className="grid grid-cols-2 gap-[1.2rem] max-[640px]:grid-cols-1">
-          <FormField
-            htmlFor={`${userId ?? "self"}-current-email`}
-            label="Current email"
-          >
+          <FormField htmlFor="self-current-email" label="Current email">
             <InputControl
               disabled
-              id={`${userId ?? "self"}-current-email`}
+              id="self-current-email"
               loading={loading}
               value={status?.currentEmail ?? ""}
             />
           </FormField>
-          <FormField
-            htmlFor={`${userId ?? "self"}-new-email`}
-            label="New email"
-          >
+          <FormField htmlFor="self-new-email" label="New email">
             <InputControl
-              id={`${userId ?? "self"}-new-email`}
+              id="self-new-email"
               loading={loading}
               onChange={(event) => setNewEmail(event.target.value)}
               required
@@ -173,15 +161,13 @@ export function EmailChangePanel({ userId }: { userId?: string }) {
               value={newEmail}
             />
           </FormField>
-          {!userId ? (
-            <PasswordField
-              id="email-change-current-password"
-              label="Current password"
-              onChange={(event) => setCurrentPassword(event.target.value)}
-              required
-              value={currentPassword}
-            />
-          ) : null}
+          <PasswordField
+            id="email-change-current-password"
+            label="Current password"
+            onChange={(event) => setCurrentPassword(event.target.value)}
+            required
+            value={currentPassword}
+          />
         </div>
         <div>
           <ButtonControl
@@ -204,13 +190,10 @@ export function EmailChangePanel({ userId }: { userId?: string }) {
             Enter the code sent to {status.pending.newEmail}. Requesting a new
             code invalidates the previous one.
           </p>
-          <FormField
-            htmlFor={`${userId ?? "self"}-email-otp`}
-            label="Verification code"
-          >
+          <FormField htmlFor="self-email-otp" label="Verification code">
             <InputControl
               autoComplete="one-time-code"
-              id={`${userId ?? "self"}-email-otp`}
+              id="self-email-otp"
               inputMode="numeric"
               maxLength={6}
               onChange={(event) =>

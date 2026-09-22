@@ -3,7 +3,6 @@ import {
   IsEnum,
   IsOptional,
   IsString,
-  Matches,
   MaxLength,
   MinLength,
 } from 'class-validator';
@@ -28,6 +27,9 @@ export class CreateUserDto {
 }
 
 export class UpdateUserDto {
+  @IsEmail()
+  email!: string;
+
   @IsString()
   @MinLength(2)
   @MaxLength(120)
@@ -39,15 +41,4 @@ export class UpdateUserDto {
   @IsOptional()
   @IsEnum(AcademicRank)
   rank?: AcademicRank | null;
-}
-
-export class AdminRequestEmailChangeDto {
-  @IsEmail()
-  newEmail!: string;
-}
-
-export class AdminVerifyEmailChangeDto {
-  @IsString()
-  @Matches(/^\d{6}$/)
-  otp!: string;
 }

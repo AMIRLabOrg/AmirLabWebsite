@@ -31,7 +31,7 @@ export interface SeedPerson {
   fullName: string;
   headline: string | null;
   biography: string | null;
-  publicEmail: string | null;
+  email: string | null;
   roleTitle: string | null;
   phone: string | null;
   contactAddress: string | null;
@@ -165,7 +165,7 @@ export function validateSeedData(data: AmirSeedData): void {
       `person ${person.slug} appointedRank`,
     );
     ensureMeaningfulText(person.fullName, `person ${person.slug} fullName`);
-    ensureEmail(person.publicEmail, `person ${person.slug} publicEmail`);
+    ensureEmail(person.email, `person ${person.slug} email`);
     rejectImportedJunk(person.headline, `person ${person.slug} headline`);
     rejectImportedJunk(person.biography, `person ${person.slug} biography`);
     unique(person.links, (link) => link.url, `link URL for ${person.slug}`);

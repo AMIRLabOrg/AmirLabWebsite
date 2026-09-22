@@ -48,37 +48,6 @@ function setup() {
 }
 
 describe('EmailChangeService', () => {
-  it('replaces the pending request and sends the OTP only by email', async () => {
-    const { mail, prisma, service } = setup();
-    prisma.user.findUnique
-      .mockResolvedValueOnce({ email: 'old@example.com' })
-      .mockResolvedValueOnce(null);
-
-    const result = await service.requestForAdmin(
-      USER_ID,
-      ' NEW@Example.com ',
-      ACTOR_ID,
-    );
-
-    expect(result.newEmail).toBe('new@example.com');
-    expect(prisma.emailChangeRequest.upsert).toHaveBeenCalledWith(
-      expect.objectContaining({
-        where: { userId: USER_ID },
-        update: expect.objectContaining({
-          failedAttempts: 0,
-          newEmail: 'new@example.com',
-        }),
-      }),
-    );
-    expect(mail.sendNow).toHaveBeenCalledTimes(2);
-    expect(mail.sendNow.mock.calls[0]?.[0]).toEqual(
-      expect.objectContaining({ to: 'new@example.com' }),
-    );
-    expect(mail.sendNow.mock.calls[1]?.[0]).toEqual(
-      expect.objectContaining({ to: 'old@example.com' }),
-    );
-  });
-
   it('rejects and removes an expired OTP on demand', async () => {
     const { prisma, service } = setup();
     prisma.emailChangeRequest.findUnique.mockResolvedValue({

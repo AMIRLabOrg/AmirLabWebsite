@@ -67,10 +67,6 @@ export class EmailChangeService {
     return this.request(userId, newEmail, userId);
   }
 
-  requestForAdmin(userId: string, newEmail: string, actorId: string) {
-    return this.request(userId, newEmail, actorId);
-  }
-
   async verify(userId: string, otp: string, actorId: string) {
     const pending = await this.prisma.emailChangeRequest.findUnique({
       where: { userId },

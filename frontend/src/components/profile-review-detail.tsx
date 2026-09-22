@@ -22,7 +22,6 @@ const EMPTY_PROFILE_PAYLOAD: ProfileEditPayload = {
   fullName: "",
   headline: "",
   biography: "",
-  publicEmail: "",
   phone: "",
   contactAddress: "",
   expertise: [],
@@ -110,7 +109,6 @@ export function ProfileReviewDetail({ id }: { id: string }) {
         fullName: currentPerson.fullName,
         headline: currentPerson.headline,
         biography: currentPerson.biography,
-        publicEmail: currentPerson.publicEmail,
         phone: currentPerson.phone,
         contactAddress: currentPerson.contactAddress,
         expertise: currentPerson.expertise,
@@ -304,7 +302,6 @@ function ProfileDiff({
   }> = [
     { key: "fullName", label: "Full name" },
     { key: "headline", label: "Headline" },
-    { key: "publicEmail", label: "Public email" },
     { key: "phone", label: "Phone" },
     { key: "expertise", label: "Expertise" },
     { key: "biography", label: "Biography" },

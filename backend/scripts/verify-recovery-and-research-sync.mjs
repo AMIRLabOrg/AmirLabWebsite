@@ -139,8 +139,8 @@ expect(
   'Profile approval must not reintroduce canonical-output duplicates.',
 );
 expect(
-  rebuild.includes('publicEmail: adminEmail'),
-  'Seeded admin profile email must use the login email.',
+  rebuild.includes('email: adminEmail'),
+  'Seeded admin account email must use the configured login email.',
 );
 expect(
   !rebuild.includes('sourceSnapshot: {\n                  create:'),

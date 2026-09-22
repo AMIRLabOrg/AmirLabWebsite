@@ -189,7 +189,7 @@ export function ProfileReviewQueue() {
             setSearch(event.target.value);
             setPage(1);
           }}
-          placeholder="Name or submitted email"
+          placeholder="Name"
           value={search}
         />
         <FormField htmlFor="profile-review-sort" label="Sort">
@@ -333,48 +333,39 @@ export function ProfileReviewQueue() {
                             data-placeholder="label"
                             data-placeholder-width="medium"
                           >
-                            Loading submitted email
-                          </span>
-                        ) : profileEmailIssue(issuesFor(request)) ? (
-                          <>
-                            {request.payload.publicEmail ? (
-                              <span className="text-danger">
-                                {request.payload.publicEmail}
-                              </span>
-                            ) : null}
-                            <SemanticStatus loading={loading} tone="error">
-                              Invalid submitted email
-                            </SemanticStatus>
-                          </>
-                        ) : request.payload.publicEmail ? (
-                          <span className="text-ink-muted">
-                            {request.payload.publicEmail}
+                            Loading submitted profile
                           </span>
                         ) : (
-                          <SemanticStatus loading={loading} tone="warning">
-                            Not provided
-                          </SemanticStatus>
+                          <span className="text-ink-muted">
+                            Profile changes
+                          </span>
                         )}
                         {request ? (
-                          nonEmailIssue(issuesFor(request)) ? (
+                          reviewIssue(issuesFor(request)) ? (
                             <SemanticStatus
                               loading={loading}
                               tone={
-                                nonEmailIssue(issuesFor(request))?.tone ??
-                                "error"
+                                reviewIssue(issuesFor(request))?.tone ?? "error"
                               }
                             >
-                              {nonEmailIssue(issuesFor(request))?.message}
+                              {reviewIssue(issuesFor(request))?.message}
                             </SemanticStatus>
                           ) : null
                         ) : null}
                       </div>
                     </DataTableCell>
-                    <DataTableCell
-                      className={loadingPlaceholder(loading, "value")}
-                      data-placeholder="value"
-                    >
-                      {request ? profileChangeCount(request) : 0} fields
+                    <DataTableCell>
+                      {request ? (
+                        `${profileChangeCount(request)} fields`
+                      ) : (
+                        <span
+                          className={loadingPlaceholder(true, "value", "short")}
+                          data-placeholder="value"
+                          data-placeholder-width="short"
+                        >
+                          0 fields
+                        </span>
+                      )}
                     </DataTableCell>
                     <DataTableCell className="font-mono text-[.7rem] text-ink-muted">
                       <time
@@ -439,18 +430,8 @@ export function ProfileReviewQueue() {
   );
 }
 
-function profileEmailIssue(issues: ReviewIssue[]): ReviewIssue | undefined {
-  return issues.find(
-    ({ field, code }) =>
-      field === "publicEmail" || code === "INVALID_PUBLIC_EMAIL",
-  );
-}
-
-function nonEmailIssue(issues: ReviewIssue[]): ReviewIssue | undefined {
-  return issues.find(
-    ({ field, code }) =>
-      field !== "publicEmail" && code !== "INVALID_PUBLIC_EMAIL",
-  );
+function reviewIssue(issues: ReviewIssue[]): ReviewIssue | undefined {
+  return issues[0];
 }
 
 function profileChangeCount(request: ProfileEditRequest): number {
@@ -460,7 +441,6 @@ function profileChangeCount(request: ProfileEditRequest): number {
     [current.fullName, proposed.fullName],
     [current.headline, proposed.headline],
     [current.biography, proposed.biography],
-    [current.publicEmail, proposed.publicEmail],
     [current.phone, proposed.phone],
     [current.contactAddress, proposed.contactAddress],
     [current.expertise, proposed.expertise],

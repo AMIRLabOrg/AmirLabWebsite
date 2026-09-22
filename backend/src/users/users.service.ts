@@ -9,7 +9,6 @@ import {
   Prisma,
 } from '../../generated/prisma/client';
 import { AuthService } from '../auth/auth.service';
-import { EmailChangeService } from '../auth/email-change.service';
 import { PrismaService } from '../database/prisma.service';
 import type { CreateUserDto, UpdateUserDto } from './dto/create-user.dto';
 import {
@@ -24,7 +23,6 @@ import { effectiveRank } from '../settings/settings.service';
 export class UsersService {
   constructor(
     private readonly auth: AuthService,
-    private readonly emailChanges: EmailChangeService,
     private readonly prisma: PrismaService,
   ) {}
 
@@ -157,11 +155,21 @@ export class UsersService {
       include: { person: true },
     });
     if (!user) throw new NotFoundException('Account not found');
+    if (user.isDeleted) {
+      throw new ConflictException('Restore the account before editing it');
+    }
     const fullName = dto.fullName.trim();
+    const email = dto.email.trim().toLowerCase();
+    if (email !== user.email) {
+      const existing = await this.prisma.user.findUnique({ where: { email } });
+      if (existing && existing.id !== id) {
+        throw new ConflictException('An account already exists for this email');
+      }
+    }
     const updated = await this.prisma.$transaction(async (transaction) => {
       const account = await transaction.user.update({
         where: { id },
-        data: { role: dto.role },
+        data: { email, role: dto.role },
         select: { email: true, id: true, role: true, status: true },
       });
       if (user.person) {
@@ -180,6 +188,12 @@ export class UsersService {
           },
         });
       }
+      if (email !== user.email) {
+        await transaction.session.updateMany({
+          where: { userId: id, revokedAt: null },
+          data: { revokedAt: new Date() },
+        });
+      }
       await transaction.auditRecord.create({
         data: {
           action: 'account.updated',
@@ -190,6 +204,7 @@ export class UsersService {
             fullName: { from: user.person?.fullName, to: fullName },
             rank: { from: user.person?.appointedRank, to: dto.rank },
             role: { from: user.role, to: dto.role },
+            email: { from: user.email, to: email },
           },
         },
       });
@@ -281,18 +296,6 @@ export class UsersService {
     });
 
     return { restored: true };
-  }
-
-  emailChangeStatus(id: string) {
-    return this.emailChanges.status(id);
-  }
-
-  requestEmailChange(id: string, newEmail: string, actorId: string) {
-    return this.emailChanges.requestForAdmin(id, newEmail, actorId);
-  }
-
-  verifyEmailChange(id: string, otp: string, actorId: string) {
-    return this.emailChanges.verify(id, otp, actorId);
   }
 
   async sendAccessEmail(id: string, actorId: string) {

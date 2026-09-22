@@ -9,7 +9,6 @@ const profile = {
   fullName: 'Jane Researcher',
   headline: 'Research Assistant',
   biography: 'Works on machine learning systems.',
-  publicEmail: 'Jane@Example.org',
   phone: null,
   contactAddress: null,
   expertise: ['Machine learning'],
@@ -38,7 +37,6 @@ describe('parseProfilePayload', () => {
   it('normalizes editable profile fields and keeps image intent separate', () => {
     expect(parseProfilePayload(JSON.stringify(profile), true)).toEqual({
       ...profile,
-      publicEmail: 'jane@example.org',
       links: [{ ...profile.links[0], url: 'https://example.org/profile' }],
       removeAvatar: true,
     });
@@ -62,7 +60,6 @@ describe('parseProfilePayload', () => {
   it('round-trips the internal removal flag for reviewer approval', () => {
     expect(parseProfilePayload({ ...profile, removeAvatar: true })).toEqual({
       ...profile,
-      publicEmail: 'jane@example.org',
       links: [{ ...profile.links[0], url: 'https://example.org/profile' }],
       removeAvatar: true,
     });
@@ -108,7 +105,6 @@ describe('parseProfilePayload', () => {
       headline: null,
       links: [],
       phone: '+880 1000 000000',
-      publicEmail: null,
       removeAvatar: false,
       sections: [],
     });
@@ -132,7 +128,6 @@ describe('parseProfilePayload', () => {
       parseProfilePayload(
         JSON.stringify({
           fullName: 'Administrator',
-          publicEmail: 'Admin@Example.org',
         }),
         true,
         { scope: 'ADMIN' },
@@ -140,7 +135,6 @@ describe('parseProfilePayload', () => {
     ).toEqual(
       expect.objectContaining({
         fullName: 'Administrator',
-        publicEmail: 'admin@example.org',
         removeAvatar: true,
       }),
     );

@@ -335,7 +335,6 @@ model Person {
   fullName            String
   headline            String?
   biography           String?                @db.Text
-  publicEmail         String?
   roleTitle           String?
   phone               String?
   contactAddress      String?                @db.Text

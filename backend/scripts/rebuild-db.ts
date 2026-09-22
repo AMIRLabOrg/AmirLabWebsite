@@ -91,7 +91,6 @@ export async function rebuildDatabase() {
     const admin = await prisma.user.create({
       data: {
         activatedAt: new Date(),
-        email: adminEmail,
         passwordHash,
         passwordSetAt: new Date(),
         role: PlatformRole.ADMIN,
@@ -103,7 +102,6 @@ export async function rebuildDatabase() {
         fullName: adminName,
         headline: 'Research operations administrator',
         isPublished: false,
-        publicEmail: adminEmail,
         roleTitle: 'Lab Administrator',
         slug: 'amirlab-administrator',
         userId: admin.id,
@@ -135,7 +133,7 @@ export async function rebuildDatabase() {
     let importedAvatars = 0;
 
     for (const person of data.people) {
-      const candidateEmail = person.publicEmail?.trim().toLowerCase() || null;
+      const candidateEmail = person.email?.trim().toLowerCase() || null;
       const accountEmail =
         candidateEmail && !usedAccountEmails.has(candidateEmail)
           ? candidateEmail
@@ -186,7 +184,6 @@ export async function rebuildDatabase() {
             fullName: person.fullName,
             headline: person.headline,
             biography: person.biography,
-            publicEmail: person.publicEmail,
             phone: person.phone,
             contactAddress: person.contactAddress,
             expertise: person.expertise,

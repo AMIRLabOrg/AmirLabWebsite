@@ -5,7 +5,6 @@ import { useEffect } from "react";
 import { useAuth } from "@/components/auth-provider";
 import { WorkspacePageShell } from "@/components/workspace-page-shell";
 import { ProfileEditor } from "@/components/profile-editor";
-import { EmailChangePanel } from "@/components/email-change-panel";
 
 export default function EditAccountPage() {
   const { id } = useParams<{ id: string }>();
@@ -23,7 +22,6 @@ export default function EditAccountPage() {
   return (
     <WorkspacePageShell>
       <ProfileEditor userId={id} />
-      <EmailChangePanel userId={id} />
     </WorkspacePageShell>
   );
 }

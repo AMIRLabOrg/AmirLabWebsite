@@ -65,7 +65,7 @@ interface IssuedDocument {
 interface Recipient {
   id: string;
   fullName: string;
-  publicEmail: string | null;
+  email: string | null;
   roleTitle: string | null;
   phone: string | null;
   user: { email: string | null } | null;
@@ -289,7 +289,7 @@ function IssueDocumentPanel({
     const recipient = recipients.find((item) => item.id === value);
     if (!recipient) return;
     setRecipientName(recipient.fullName);
-    setRecipientEmail(recipient.publicEmail ?? recipient.user?.email ?? "");
+    setRecipientEmail(recipient.email ?? recipient.user?.email ?? "");
   }
 
   async function issue(event: SyntheticEvent<HTMLFormElement, SubmitEvent>) {
@@ -405,7 +405,7 @@ function IssueDocumentPanel({
                 ...recipients.map((recipient) => ({
                   description:
                     recipient.roleTitle ??
-                    recipient.publicEmail ??
+                    recipient.email ??
                     recipient.user?.email ??
                     undefined,
                   label: recipient.fullName,
@@ -1000,8 +1000,7 @@ function ApprovalPanel({
       ? approval.approver
       : selected
         ? {
-            email:
-              selected.publicEmail ?? selected.user?.email ?? "No email set",
+            email: selected.email ?? selected.user?.email ?? "No email set",
             name: selected.fullName,
             phone: selected.phone ?? "No phone set",
             title: selected.roleTitle ?? "No role title set",
@@ -1083,7 +1082,7 @@ function ApprovalPanel({
             options={people.map((person) => ({
               description:
                 person.roleTitle ??
-                person.publicEmail ??
+                person.email ??
                 person.user?.email ??
                 undefined,
               label: person.fullName,

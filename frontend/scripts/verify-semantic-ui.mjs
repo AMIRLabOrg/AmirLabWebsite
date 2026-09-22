@@ -44,24 +44,16 @@ for (const token of [
 
 const profileQueue = read("src/components/profile-review-queue.tsx");
 expect(
-  profileQueue.includes("request.payload.publicEmail"),
-  "Profile review queue must show the submitted public email.",
+  !profileQueue.includes("request.payload.email"),
+  "Profile review queue must not contain account email fields.",
 );
 expect(
-  !profileQueue.includes("request.person.publicEmail"),
+  !profileQueue.includes("request.person.email"),
   "Profile review queue must not infer submitted email from the published person record.",
-);
-expect(
-  !profileQueue.includes("No public email"),
-  "Profile review queue must use 'Not provided' for an absent submitted email.",
 );
 expect(
   profileQueue.includes("<ReviewIssueStamp"),
   "Profile review queue must mark item-specific issues.",
-);
-expect(
-  /tone="warning">\s*Not provided/.test(profileQueue),
-  "Missing submitted email must use warning styling.",
 );
 
 const bulkBar = read("src/components/bulk-review-bar.tsx");

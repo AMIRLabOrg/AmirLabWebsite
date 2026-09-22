@@ -86,10 +86,16 @@ export class ResearchService {
         avatar: true,
         departments: { include: { department: true } },
         metrics: true,
+        user: { select: { email: true } },
       },
       orderBy: { fullName: 'asc' },
     });
-    return people.map(publicPerson).sort(comparePeople);
+    return people
+      .map(({ user, ...profile }) => ({
+        ...publicPerson(profile),
+        email: user?.email ?? null,
+      }))
+      .sort(comparePeople);
   }
 
   async personBySlug(slug: string) {
@@ -109,6 +115,7 @@ export class ResearchService {
           },
         },
         metrics: true,
+        user: { select: { email: true } },
         contributions: {
           where: { researchItem: publicResearchWhere() },
           orderBy: { researchItem: { publishedAt: 'desc' } },
@@ -117,7 +124,8 @@ export class ResearchService {
       },
     });
     if (!person) throw new NotFoundException('Person not found');
-    return publicPerson(person);
+    const { user, ...profile } = person;
+    return { ...publicPerson(profile), email: user?.email ?? null };
   }
 
   research(type?: ResearchItemType) {

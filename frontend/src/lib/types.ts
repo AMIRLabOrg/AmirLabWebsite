@@ -116,11 +116,11 @@ export interface ProfileSectionEntry {
 export interface Person {
   id: string;
   slug: string;
+  email?: string | null;
   fullName: string;
   headline: string | null;
   biography: string | null;
   contactAddress: string | null;
-  publicEmail: string | null;
   phone: string | null;
   rank: string | null;
   appointedRank?: string | null;
@@ -210,7 +210,6 @@ export interface ProfileEditPayload {
   fullName: string;
   headline: string | null;
   biography: string | null;
-  publicEmail: string | null;
   phone: string | null;
   contactAddress: string | null;
   roleTitle?: string | null;

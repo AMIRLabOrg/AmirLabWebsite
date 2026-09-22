@@ -10,7 +10,6 @@ const PROFILE_FIELDS = new Set([
   'fullName',
   'headline',
   'biography',
-  'publicEmail',
   'phone',
   'contactAddress',
   'expertise',
@@ -24,7 +23,7 @@ const MODERATOR_PROFILE_FIELDS = new Set([
   'phone',
   'contactAddress',
 ]);
-const GENERAL_ADMIN_PROFILE_FIELDS = new Set(['fullName', 'publicEmail']);
+const GENERAL_ADMIN_PROFILE_FIELDS = new Set(['fullName']);
 
 export type ProfileEditScope = 'ADMIN' | 'RESEARCH' | 'MODERATOR';
 
@@ -72,7 +71,6 @@ export function parseProfilePayload(
       fullName: requiredText(source.fullName, 'fullName', 2, 120),
       headline: null,
       biography: null,
-      publicEmail: null,
       phone: optionalText(source.phone, 'phone', 80),
       contactAddress: optionalText(
         source.contactAddress,
@@ -91,7 +89,6 @@ export function parseProfilePayload(
       fullName: requiredText(source.fullName, 'fullName', 2, 120),
       headline: null,
       biography: null,
-      publicEmail: requiredEmail(source.publicEmail),
       phone: null,
       contactAddress: null,
       expertise: [],
@@ -106,7 +103,6 @@ export function parseProfilePayload(
     fullName: requiredText(source.fullName, 'fullName', 2, 120),
     headline: optionalText(source.headline, 'headline', 300),
     biography: optionalText(source.biography, 'biography', 8_000),
-    publicEmail: optionalEmail(source.publicEmail),
     phone: optionalText(source.phone, 'phone', 80),
     contactAddress: optionalText(
       source.contactAddress,
@@ -131,7 +127,6 @@ export function profilePayloadToJson(
     fullName: payload.fullName,
     headline: payload.headline,
     biography: payload.biography,
-    publicEmail: payload.publicEmail,
     phone: payload.phone,
     contactAddress: payload.contactAddress,
     ...(payload.roleTitle !== undefined
@@ -185,22 +180,6 @@ function optionalText(
     );
   }
   return result || null;
-}
-
-function optionalEmail(value: unknown): string | null {
-  const email = optionalText(value, 'publicEmail', 320);
-  if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-    throw new BadRequestException('profile.publicEmail must be a valid email');
-  }
-  return email?.toLowerCase() ?? null;
-}
-
-function requiredEmail(value: unknown): string {
-  const email = optionalEmail(value);
-  if (!email) {
-    throw new BadRequestException('profile.publicEmail is required');
-  }
-  return email;
 }
 
 function stringArray(
