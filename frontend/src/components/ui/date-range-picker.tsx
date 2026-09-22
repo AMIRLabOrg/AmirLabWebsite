@@ -256,7 +256,7 @@ function MonthView({
           const rowEnd = index % 7 === 6;
           const className = cn(
             "relative flex h-[38px] cursor-pointer select-none items-center justify-center border-0 bg-transparent text-[.78rem] text-ink hover:text-brand",
-            inRange && "bg-brand-faint",
+            inRange && "!bg-surface-subtle",
             inRange && rowStart && "rounded-l-full",
             inRange && rowEnd && "rounded-r-full",
             (selectedStart || selectedEnd) &&
@@ -282,13 +282,13 @@ function MonthView({
               {hasRange && selectedStart && !rowEnd ? (
                 <span
                   aria-hidden="true"
-                  className="absolute inset-y-0 left-1/2 right-0 z-0 bg-brand-faint"
+                  className="absolute inset-y-0 left-1/2 right-0 z-0 bg-surface-subtle"
                 />
               ) : null}
               {hasRange && selectedEnd && !rowStart ? (
                 <span
                   aria-hidden="true"
-                  className="absolute inset-y-0 left-0 right-1/2 z-0 bg-brand-faint"
+                  className="absolute inset-y-0 left-0 right-1/2 z-0 bg-surface-subtle"
                 />
               ) : null}
               {selectedStart || selectedEnd ? (
