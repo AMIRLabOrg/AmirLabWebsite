@@ -12,6 +12,11 @@ export enum UserSort {
   OLDEST = 'OLDEST',
 }
 
+export enum UserDeletedFilter {
+  ACTIVE = 'ACTIVE',
+  TRASH = 'TRASH',
+}
+
 export class UserQueryDto extends PaginationQueryDto {
   @IsOptional()
   @IsString()
@@ -33,4 +38,8 @@ export class UserQueryDto extends PaginationQueryDto {
   @IsOptional()
   @IsEnum(UserSort)
   sort: UserSort = UserSort.NEWEST;
+
+  @IsOptional()
+  @IsEnum(UserDeletedFilter)
+  deleted: UserDeletedFilter = UserDeletedFilter.ACTIVE;
 }

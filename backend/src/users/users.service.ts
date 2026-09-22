@@ -3,12 +3,20 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { AccountStatus, Prisma } from '../../generated/prisma/client';
+import {
+  AccountStatus,
+  PlatformRole,
+  Prisma,
+} from '../../generated/prisma/client';
 import { AuthService } from '../auth/auth.service';
 import { EmailChangeService } from '../auth/email-change.service';
 import { PrismaService } from '../database/prisma.service';
 import type { CreateUserDto, UpdateUserDto } from './dto/create-user.dto';
-import { UserQueryDto, UserSort } from './dto/user-query.dto';
+import {
+  UserDeletedFilter,
+  UserQueryDto,
+  UserSort,
+} from './dto/user-query.dto';
 import { buildPersonSlug } from './person-slug';
 import { effectiveRank } from '../settings/settings.service';
 
@@ -55,6 +63,7 @@ export class UsersService {
     const where: Prisma.UserWhereInput = {
       role: query.role,
       status: query.status,
+      isDeleted: query.deleted === UserDeletedFilter.TRASH,
       person: query.rank
         ? {
             is: {
@@ -89,6 +98,8 @@ export class UsersService {
       role: true,
       setupEmailQueuedAt: true,
       status: true,
+      isDeleted: true,
+      deletedAt: true,
       person: {
         select: {
           fullName: true,
@@ -185,6 +196,91 @@ export class UsersService {
       return account;
     });
     return updated;
+  }
+
+  async remove(id: string, actorId: string) {
+    if (id === actorId) {
+      throw new ConflictException('You cannot delete your own account');
+    }
+
+    const user = await this.prisma.user.findUnique({
+      where: { id },
+      select: { email: true, role: true, isDeleted: true },
+    });
+    if (!user) throw new NotFoundException('Account not found');
+    if (user.isDeleted)
+      throw new ConflictException('Account is already in trash');
+
+    if (user.role === PlatformRole.ADMIN) {
+      const adminCount = await this.prisma.user.count({
+        where: {
+          isDeleted: false,
+          role: PlatformRole.ADMIN,
+          status: { not: AccountStatus.ARCHIVED },
+        },
+      });
+      if (adminCount <= 1) {
+        throw new ConflictException('The last administrator cannot be deleted');
+      }
+    }
+
+    try {
+      await this.prisma.$transaction(async (transaction) => {
+        await transaction.auditRecord.create({
+          data: {
+            action: 'account.deleted',
+            actorId,
+            entityId: id,
+            entityType: 'User',
+            details: { email: user.email },
+          },
+        });
+        await transaction.session.deleteMany({ where: { userId: id } });
+        await transaction.user.update({
+          where: { id },
+          data: { deletedAt: new Date(), isDeleted: true },
+        });
+      });
+    } catch (error) {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === 'P2003'
+      ) {
+        throw new ConflictException(
+          'This account owns records that must be reassigned or removed before deletion',
+        );
+      }
+      throw error;
+    }
+
+    return { deleted: true };
+  }
+
+  async restore(id: string, actorId: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { id },
+      select: { email: true, isDeleted: true },
+    });
+    if (!user) throw new NotFoundException('Account not found');
+    if (!user.isDeleted) throw new ConflictException('Account is not in trash');
+
+    await this.prisma.$transaction(async (transaction) => {
+      await transaction.user.update({
+        where: { id },
+        data: { deletedAt: null, isDeleted: false },
+      });
+      await transaction.auditRecord.create({
+        data: {
+          action: 'account.restored',
+          actorId,
+          entityId: id,
+          entityType: 'User',
+          details: { email: user.email },
+        },
+      });
+    });
+
+    return { restored: true };
   }
 
   emailChangeStatus(id: string) {

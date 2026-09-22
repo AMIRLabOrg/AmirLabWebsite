@@ -50,7 +50,7 @@ export function SiteHeader() {
         <nav
           aria-label="Main navigation"
           className={cn(
-            "flex min-w-0 items-stretch justify-center gap-[clamp(.75rem,1.4vw,1.35rem)] max-[1050px]:fixed max-[1050px]:inset-x-0 max-[1050px]:top-[62px] max-[1050px]:bottom-0 max-[1050px]:z-[55] max-[1050px]:content-start max-[1050px]:overflow-y-auto max-[1050px]:border-b max-[1050px]:border-line-strong max-[1050px]:bg-surface max-[1050px]:px-4 max-[1050px]:pt-2 max-[1050px]:pb-8 max-[560px]:top-[58px]",
+            "flex min-w-0 items-stretch justify-center gap-[clamp(.75rem,1.4vw,1.35rem)] max-[1050px]:fixed max-[1050px]:inset-x-0 max-[1050px]:top-[62px] max-[1050px]:z-[55] max-[1050px]:h-[calc(100dvh-62px)] max-[1050px]:grid-rows-[repeat(7,min-content)] max-[1050px]:content-start max-[1050px]:items-start max-[1050px]:overflow-y-auto max-[1050px]:overscroll-contain max-[1050px]:border-b max-[1050px]:border-line-strong max-[1050px]:bg-surface max-[1050px]:px-4 max-[1050px]:pt-2 max-[1050px]:pb-8 max-[560px]:top-[58px] max-[560px]:h-[calc(100dvh-58px)]",
             open ? "max-[1050px]:grid" : "max-[1050px]:hidden",
           )}
         >

@@ -39,10 +39,11 @@ export class AuthService {
   ): Promise<SessionResult> {
     const user = await this.prisma.user.findUnique({
       where: { email: email.trim().toLowerCase() },
-      select: { id: true, passwordHash: true, status: true },
+      select: { id: true, isDeleted: true, passwordHash: true, status: true },
     });
     if (
       !user?.passwordHash ||
+      user.isDeleted ||
       user.status !== AccountStatus.ACTIVE ||
       !(await verifyPassword(password, user.passwordHash))
     ) {
@@ -67,9 +68,10 @@ export class AuthService {
   async issueAccountSetup(userId: string): Promise<Date> {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
-      select: { email: true, status: true },
+      select: { email: true, isDeleted: true, status: true },
     });
     if (!user) throw new NotFoundException('Account not found');
+    if (user.isDeleted) throw new NotFoundException('Account not found');
     if (!user.email) {
       throw new BadRequestException(
         'Add an account email before sending access',
@@ -128,7 +130,8 @@ export class AuthService {
       !setupToken ||
       setupToken.usedAt ||
       setupToken.expiresAt <= new Date() ||
-      setupToken.user.status !== AccountStatus.PENDING_SETUP
+      setupToken.user.status !== AccountStatus.PENDING_SETUP ||
+      setupToken.user.isDeleted
     ) {
       throw new UnauthorizedException(
         'Account setup link is invalid or expired',
@@ -176,11 +179,12 @@ export class AuthService {
     const normalizedEmail = email.trim().toLowerCase();
     const user = await this.prisma.user.findUnique({
       where: { email: normalizedEmail },
-      select: { id: true, email: true, status: true },
+      select: { id: true, email: true, isDeleted: true, status: true },
     });
 
     // Deliberately return the same public result for unknown/inactive accounts.
-    if (!user?.email || user.status !== AccountStatus.ACTIVE) return;
+    if (!user?.email || user.isDeleted || user.status !== AccountStatus.ACTIVE)
+      return;
 
     const requestedAt = new Date();
     const token = randomBytes(32).toString('base64url');

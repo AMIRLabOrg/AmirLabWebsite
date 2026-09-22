@@ -283,6 +283,8 @@ model User {
   email                       String?                @unique
   role                        PlatformRole           @default(MEMBER)
   status                      AccountStatus          @default(PENDING_SETUP)
+  isDeleted                   Boolean                @default(false)
+  deletedAt                   DateTime?
   passwordHash                String?
   passwordSetAt               DateTime?
   setupEmailQueuedAt          DateTime?
@@ -323,6 +325,8 @@ model User {
   createdDocumentTemplates    DocumentTemplate[]     @relation("DocumentTemplateCreator")
   updatedDocumentTemplates    DocumentTemplate[]     @relation("DocumentTemplateUpdater")
   issuedDocuments             IssuedDocument[]       @relation("IssuedDocumentCreator")
+
+  @@index([isDeleted, deletedAt])
 }
 
 model Person {

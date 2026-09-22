@@ -68,6 +68,7 @@ export class SessionAuthGuard implements CanActivate {
       !session ||
       session.revokedAt ||
       session.expiresAt <= new Date() ||
+      session.user.isDeleted ||
       session.user.status !== AccountStatus.ACTIVE
     ) {
       throw new UnauthorizedException('Session is invalid or expired');

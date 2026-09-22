@@ -16,6 +16,7 @@ export class JobsService implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(JobsService.name);
   private readonly workerId = randomUUID();
   private timer?: NodeJS.Timeout;
+  private cleanupTimer?: NodeJS.Timeout;
   private working = false;
 
   constructor(private readonly prisma: PrismaService) {}
@@ -33,11 +34,40 @@ export class JobsService implements OnModuleInit, OnModuleDestroy {
       },
     });
     this.timer = setInterval(() => void this.runNext(), 2_000);
+    this.cleanupTimer = setInterval(
+      () => void this.purgeDeletedUsers(),
+      60 * 60_000,
+    );
+    await this.purgeDeletedUsers();
   }
 
   onModuleDestroy(): void {
     if (this.timer) {
       clearInterval(this.timer);
+    }
+    if (this.cleanupTimer) {
+      clearInterval(this.cleanupTimer);
+    }
+  }
+
+  private async purgeDeletedUsers(): Promise<void> {
+    const cutoff = new Date(Date.now() - 30 * 24 * 60 * 60_000);
+    const accounts = await this.prisma.user.findMany({
+      where: { deletedAt: { lte: cutoff }, isDeleted: true },
+      select: { id: true },
+    });
+    for (const account of accounts) {
+      try {
+        await this.prisma.user.delete({ where: { id: account.id } });
+      } catch (error) {
+        if (isForeignKeyConstraintError(error)) {
+          this.logger.warn(
+            `Deleted account ${account.id} is retained because it still owns records`,
+          );
+          continue;
+        }
+        throw error;
+      }
     }
   }
 
@@ -177,5 +207,12 @@ function isUniqueConstraintError(error: unknown): boolean {
     error !== null &&
     'code' in error &&
     error.code === 'P2002'
+  );
+}
+
+function isForeignKeyConstraintError(error: unknown): boolean {
+  return (
+    error instanceof Prisma.PrismaClientKnownRequestError &&
+    error.code === 'P2003'
   );
 }

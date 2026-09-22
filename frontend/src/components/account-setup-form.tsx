@@ -57,7 +57,7 @@ export function AccountSetupForm({ token }: { token?: string }) {
 
   return (
     <form
-      className="rounded-panel border border-line bg-surface grid gap-[1.2rem]"
+      className="grid gap-[1.2rem] rounded-panel border border-line bg-surface p-[clamp(1rem,3vw,1.5rem)]"
       onSubmit={submit}
     >
       <div>

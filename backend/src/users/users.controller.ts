@@ -1,5 +1,6 @@
 import {
   Body,
+  Delete,
   Controller,
   Get,
   Param,
@@ -48,6 +49,22 @@ export class UsersController {
     @CurrentUser() actor: AuthenticatedUser,
   ) {
     return this.users.update(id, body, actor.id);
+  }
+
+  @Delete(':id')
+  remove(
+    @Param('id', ParseUUIDPipe) id: string,
+    @CurrentUser() actor: AuthenticatedUser,
+  ) {
+    return this.users.remove(id, actor.id);
+  }
+
+  @Post(':id/restore')
+  restore(
+    @Param('id', ParseUUIDPipe) id: string,
+    @CurrentUser() actor: AuthenticatedUser,
+  ) {
+    return this.users.restore(id, actor.id);
   }
 
   @Get(':id/email-change')

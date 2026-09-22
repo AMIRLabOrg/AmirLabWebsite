@@ -3,7 +3,7 @@
 import { cn } from "@/lib/cn";
 import { loadingPlaceholder } from "@/lib/loading-style";
 import { useEffect, useState } from "react";
-import { Pencil, Plus, Search, Trash2 } from "lucide-react";
+import { ArchiveRestore, Pencil, Plus, Search, Trash2 } from "lucide-react";
 import { ApiRequestError, apiRequest } from "@/lib/client-api";
 import { ConfirmDialog } from "@/components/confirm-dialog";
 import { PaginationControls } from "@/components/pagination-controls";
@@ -31,6 +31,7 @@ const RANKS = [
   "DEPARTMENT_HEAD",
   "ADVISOR",
 ] as const;
+const ACCOUNT_RECOVERY_DAYS = 30;
 
 interface Account {
   id: string;
@@ -38,6 +39,8 @@ interface Account {
   role: string;
   status: string;
   setupEmailQueuedAt: string | null;
+  isDeleted: boolean;
+  deletedAt: string | null;
   person: { fullName: string; rank: string | null; slug: string } | null;
 }
 
@@ -45,11 +48,24 @@ function readable(value: string): string {
   return value.replaceAll("_", " ").toLowerCase();
 }
 
-function accountStatusLabel(status: string): string {
+function accountStatusLabel(status: string, isDeleted: boolean): string {
+  if (isDeleted) return "deleted";
   return status === "PENDING_SETUP" ? "setup pending" : readable(status);
 }
 
-function accountStatusTone(status: string): BadgeTone {
+function recoveryLabel(deletedAt: string | null): string {
+  if (!deletedAt) return `recoverable within ${ACCOUNT_RECOVERY_DAYS} days`;
+  const expiresAt =
+    new Date(deletedAt).getTime() + ACCOUNT_RECOVERY_DAYS * 24 * 60 * 60_000;
+  const days = Math.max(
+    0,
+    Math.ceil((expiresAt - Date.now()) / (24 * 60 * 60_000)),
+  );
+  return `recoverable within ${days} days`;
+}
+
+function accountStatusTone(status: string, isDeleted: boolean): BadgeTone {
+  if (isDeleted) return "error";
   if (status === "ACTIVE") return "success";
   if (status === "PENDING_SETUP") return "warning";
   if (status === "SUSPENDED") return "error";
@@ -73,6 +89,7 @@ export function UserManagement() {
   const [rank, setRank] = useState("ALL");
   const [sort, setSort] = useState("NEWEST");
   const [reload, setReload] = useState(0);
+  const [showTrash, setShowTrash] = useState(false);
   const actionIssues = useReviewIssues();
 
   function beginRefresh() {
@@ -87,6 +104,7 @@ export function UserManagement() {
         pageSize: "20",
         sort,
       });
+      if (showTrash) params.set("deleted", "TRASH");
       if (search.trim()) params.set("search", search.trim());
       if (role !== "ALL") params.set("role", role);
       if (status !== "ALL") params.set("status", status);
@@ -119,7 +137,7 @@ export function UserManagement() {
       active = false;
       window.clearTimeout(timeout);
     };
-  }, [page, rank, reload, role, search, sort, status]);
+  }, [page, rank, reload, role, search, showTrash, sort, status]);
 
   async function sendAccess(account: Account) {
     setError(undefined);
@@ -162,6 +180,55 @@ export function UserManagement() {
     }
   }
 
+  async function deleteAccount(id: string) {
+    setError(undefined);
+    setActiveId(id);
+    try {
+      await apiRequest(`/users/${id}`, { method: "DELETE" });
+      setAccounts((current) => current.filter((account) => account.id !== id));
+      showToast({
+        body: "The account was moved to trash and can be restored during the recovery period.",
+        title: "Account deleted",
+      });
+      setDeletePending(undefined);
+      setReload((value) => value + 1);
+    } catch (caught) {
+      const requestError =
+        caught instanceof ApiRequestError ? caught : undefined;
+      showToast({
+        body: requestError?.message ?? "Unable to delete this account.",
+        title: "Account was not deleted",
+        tone: "error",
+      });
+    } finally {
+      setActiveId(undefined);
+    }
+  }
+
+  async function restoreAccount(id: string) {
+    setError(undefined);
+    setActiveId(id);
+    try {
+      await apiRequest(`/users/${id}/restore`, { method: "POST" });
+      setAccounts((current) => current.filter((account) => account.id !== id));
+      showToast({
+        body: "The account was restored.",
+        title: "Account restored",
+      });
+      setReload((value) => value + 1);
+    } catch (caught) {
+      const requestError =
+        caught instanceof ApiRequestError ? caught : undefined;
+      showToast({
+        body: requestError?.message ?? "Unable to restore this account.",
+        title: "Account was not restored",
+        tone: "error",
+      });
+    } finally {
+      setActiveId(undefined);
+    }
+  }
+
   return (
     <div className="grid gap-4">
       <div
@@ -177,9 +244,23 @@ export function UserManagement() {
             ? `${result.total} account${result.total === 1 ? "" : "s"}`
             : "Member accounts"}
         </p>
-        <ButtonLink href="/workspace/users/new" variant="primary">
-          <Plus aria-hidden="true" size={16} /> New account
-        </ButtonLink>
+        <div className="flex flex-wrap justify-end gap-2">
+          <ButtonControl
+            onClick={() => {
+              setShowTrash((value) => !value);
+              setPage(1);
+            }}
+            variant="secondary"
+          >
+            <Trash2 aria-hidden="true" size={16} />
+            {showTrash ? "Active accounts" : "Trash"}
+          </ButtonControl>
+          {!showTrash ? (
+            <ButtonLink href="/workspace/users/new" variant="primary">
+              <Plus aria-hidden="true" size={16} /> New account
+            </ButtonLink>
+          ) : null}
+        </div>
       </div>
 
       {error && result ? <FormMessage>{error}</FormMessage> : null}
@@ -310,7 +391,7 @@ export function UserManagement() {
               : undefined;
             return (
               <article
-                className="relative grid min-w-0 grid-cols-[minmax(220px,4fr)_minmax(260px,5fr)_minmax(360px,3fr)] items-center gap-4 rounded-panel border border-line bg-surface p-4 pr-10 max-[1180px]:grid-cols-2 max-[700px]:grid-cols-1"
+                className="relative grid min-w-0 grid-cols-[minmax(220px,4fr)_minmax(260px,5fr)_minmax(360px,3fr)] items-center gap-4 rounded-panel border border-line bg-surface p-4 pr-10 max-[1180px]:grid-cols-1 max-[700px]:grid-cols-1"
                 key={account?.id ?? `account-loading-${index}`}
               >
                 {account ? <ReviewIssueStamp issue={issue} /> : null}
@@ -334,11 +415,20 @@ export function UserManagement() {
                       dot
                       loading={loading}
                       tone={
-                        account ? accountStatusTone(account.status) : "neutral"
+                        account
+                          ? accountStatusTone(account.status, account.isDeleted)
+                          : "neutral"
                       }
                     >
-                      {account ? accountStatusLabel(account.status) : "loading"}
+                      {account
+                        ? accountStatusLabel(account.status, account.isDeleted)
+                        : "loading"}
                     </Badge>
+                    {account?.isDeleted ? (
+                      <Badge tone="warning">
+                        {recoveryLabel(account.deletedAt)}
+                      </Badge>
+                    ) : null}
                     {loading || account?.person?.rank ? (
                       <Badge loading={loading} tone="info">
                         {account?.person?.rank
@@ -381,22 +471,37 @@ export function UserManagement() {
                     </SemanticStatus>
                   )}
                 </div>
-                <div className="flex items-center justify-end gap-2 max-[1180px]:col-span-full max-[1180px]:justify-start max-[700px]:grid max-[700px]:grid-cols-1">
-                  <ButtonLink
-                    href={account ? `/workspace/users/${account.id}/edit` : "#"}
-                    loading={loading || !account}
-                    variant="secondary"
-                  >
-                    <Pencil aria-hidden="true" size={15} /> Edit
-                  </ButtonLink>
-                  <ButtonControl
-                    disabled={!account}
-                    loading={loading}
-                    onClick={() => account && setDeletePending(account.id)}
-                    variant="danger"
-                  >
-                    <Trash2 size={15} /> Delete
-                  </ButtonControl>
+                <div className="flex min-w-0 w-full flex-wrap items-center justify-start gap-2 max-[700px]:grid max-[700px]:grid-cols-1">
+                  {account?.isDeleted ? (
+                    <ButtonControl
+                      disabled={!account}
+                      loading={loading || activeId === account?.id}
+                      onClick={() => account && void restoreAccount(account.id)}
+                      variant="secondary"
+                    >
+                      <ArchiveRestore size={15} /> Restore
+                    </ButtonControl>
+                  ) : (
+                    <>
+                      <ButtonLink
+                        href={
+                          account ? `/workspace/users/${account.id}/edit` : "#"
+                        }
+                        loading={loading || !account}
+                        variant="secondary"
+                      >
+                        <Pencil aria-hidden="true" size={15} /> Edit
+                      </ButtonLink>
+                      <ButtonControl
+                        disabled={!account}
+                        loading={loading}
+                        onClick={() => account && setDeletePending(account.id)}
+                        variant="danger"
+                      >
+                        <Trash2 size={15} /> Delete
+                      </ButtonControl>
+                    </>
+                  )}
                   {loading || account?.status === "PENDING_SETUP" ? (
                     <ButtonControl
                       disabled={
@@ -458,16 +563,12 @@ export function UserManagement() {
         }
       />
       <ConfirmDialog
+        busy={activeId === deletePending}
         confirmLabel="Delete account"
-        description="This account will be permanently removed."
+        description={`This account will move to trash and remain recoverable for ${ACCOUNT_RECOVERY_DAYS} days.`}
         onCancel={() => setDeletePending(undefined)}
         onConfirm={() => {
-          showToast({
-            body: "Account deletion is not yet implemented.",
-            title: "Not implemented",
-            tone: "error",
-          });
-          setDeletePending(undefined);
+          if (deletePending) void deleteAccount(deletePending);
         }}
         open={Boolean(deletePending)}
         title="Delete this account?"
