@@ -42,7 +42,7 @@ const filters = [
 ];
 
 export function WeeklyReportReview() {
-  const { showToast } = useNotifications();
+  const { refreshUnreadCount, showToast } = useNotifications();
   const [reports, setReports] = useState<WeeklyReport[]>();
   const [filter, setFilter] = useState<WeeklyReportStatus>("SUBMITTED");
   const [selectedId, setSelectedId] = useState<string>();
@@ -143,6 +143,7 @@ export function WeeklyReportReview() {
       bulk.clear();
       setSelectedId(undefined);
       setReload((current) => current + 1);
+      void refreshUnreadCount().catch(() => undefined);
     } finally {
       setWorking(false);
     }
@@ -171,6 +172,7 @@ export function WeeklyReportReview() {
       setNote("");
       setError("");
       reviewIssues.clearOne(selected.id);
+      void refreshUnreadCount().catch(() => undefined);
     } catch (caught) {
       const requestError =
         caught instanceof ApiRequestError ? caught : undefined;

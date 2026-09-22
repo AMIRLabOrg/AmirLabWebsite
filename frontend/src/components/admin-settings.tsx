@@ -101,6 +101,7 @@ export function AdminSettings() {
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const [reload, setReload] = useState(0);
 
   useEffect(() => {
@@ -113,26 +114,20 @@ export function AdminSettings() {
         method: "GET",
       }),
     ])
-      .then(
-        ([
-          nextVerification,
-          nextRanking,
-          nextNotificationPolicy,
-        ]) => {
-          setVerification(nextVerification);
-          setRanking(nextRanking);
-          setNotificationPolicy(nextNotificationPolicy);
-        },
-      )
+      .then(([nextVerification, nextRanking, nextNotificationPolicy]) => {
+        setVerification(nextVerification);
+        setRanking(nextRanking);
+        setNotificationPolicy(nextNotificationPolicy);
+      })
       .catch((value: Error) => setError(value.message))
       .finally(() => setLoading(false));
   }, [reload]);
 
   async function save() {
-    if (!verification || !ranking || !notificationPolicy)
-      return;
+    if (!verification || !ranking || !notificationPolicy) return;
     setError("");
     setMessage("");
+    setSaving(true);
     try {
       await Promise.all([
         apiRequest("/settings/verification", {
@@ -165,6 +160,8 @@ export function AdminSettings() {
         title: "Settings were not saved",
         tone: "error",
       });
+    } finally {
+      setSaving(false);
     }
   }
 
@@ -198,9 +195,7 @@ export function AdminSettings() {
     reminderDays: 3,
   };
   const loadFailed = Boolean(
-    error &&
-    (!verification || !ranking || !notificationPolicy) &&
-    !loading,
+    error && (!verification || !ranking || !notificationPolicy) && !loading,
   );
 
   return (
@@ -214,10 +209,7 @@ export function AdminSettings() {
             {message}
           </p>
         ) : null}
-        {error &&
-        verification &&
-        ranking &&
-        notificationPolicy ? (
+        {error && verification && ranking && notificationPolicy ? (
           <p className="m-0 border-l-[3px] border-danger bg-danger-soft px-4 py-[.8rem] text-[.78rem]">
             {error}
           </p>
@@ -508,12 +500,13 @@ export function AdminSettings() {
               <ButtonControl
                 className={loadingPlaceholder(loading, "control")}
                 data-placeholder={loading ? "control" : undefined}
-                disabled={loading}
+                disabled={loading || saving}
+                loading={loading || saving}
                 onClick={save}
                 type="button"
               >
                 <Save size={15} />
-                Save policy
+                {saving ? "Saving…" : "Save policy"}
               </ButtonControl>
             </footer>
           </>

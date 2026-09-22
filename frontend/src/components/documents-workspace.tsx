@@ -613,6 +613,7 @@ function TemplatesPanel({
     DocumentTemplate | Omit<DocumentTemplate, "id">
   >(selected ?? EMPTY_TEMPLATE);
   const [saving, setSaving] = useState(false);
+  const [defaultSaving, setDefaultSaving] = useState(false);
   const [error, setError] = useState<string>();
 
   function newTemplate() {
@@ -686,7 +687,7 @@ function TemplatesPanel({
 
   async function setDefault() {
     if (!selected) return;
-    setSaving(true);
+    setDefaultSaving(true);
     try {
       await apiRequest(
         `/admin/document-templates/${selected.id}/default-offer`,
@@ -706,7 +707,7 @@ function TemplatesPanel({
           : "Default template was not changed.",
       );
     } finally {
-      setSaving(false);
+      setDefaultSaving(false);
     }
   }
 
@@ -846,7 +847,7 @@ function TemplatesPanel({
         <footer className="flex flex-wrap justify-end gap-3 border-t border-line pt-5">
           {selected ? (
             <ButtonControl
-              disabled={saving}
+              disabled={saving || defaultSaving}
               onClick={() =>
                 void openPdf(`/admin/document-templates/${selected.id}/preview`)
               }
@@ -856,14 +857,17 @@ function TemplatesPanel({
           ) : null}
           {selected?.kind === "OFFER" && !selected.isDefaultOffer ? (
             <ButtonControl
-              disabled={saving || !draft.isActive}
+              disabled={saving || defaultSaving || !draft.isActive}
+              loading={defaultSaving}
               onClick={() => void setDefault()}
             >
-              <Star aria-hidden="true" size={15} /> Make default offer
+              <Star aria-hidden="true" size={15} />{" "}
+              {defaultSaving ? "Making default…" : "Make default offer"}
             </ButtonControl>
           ) : null}
           <ButtonControl loading={saving} type="submit" variant="primary">
-            <Save aria-hidden="true" size={15} /> Save template
+            <Save aria-hidden="true" size={15} />{" "}
+            {saving ? "Saving…" : "Save template"}
           </ButtonControl>
         </footer>
       </form>
@@ -881,10 +885,10 @@ function IssuedPanel({
   onChanged: () => void;
 }) {
   const { showToast } = useNotifications();
-  const [sendingId, setSendingId] = useState<string>();
+  const [sendingIds, setSendingIds] = useState<Set<string>>(() => new Set());
 
   async function email(document: IssuedDocument) {
-    setSendingId(document.id);
+    setSendingIds((current) => new Set(current).add(document.id));
     try {
       await apiRequest(`/admin/documents/${document.id}/email`, {
         method: "POST",
@@ -904,7 +908,11 @@ function IssuedPanel({
         tone: "error",
       });
     } finally {
-      setSendingId(undefined);
+      setSendingIds((current) => {
+        const next = new Set(current);
+        next.delete(document.id);
+        return next;
+      });
     }
   }
 
@@ -958,11 +966,13 @@ function IssuedPanel({
             {document.recipientEmail && !document.emailSentAt ? (
               <ButtonControl
                 compact
-                loading={sendingId === document.id}
+                loading={sendingIds.has(document.id)}
+                disabled={sendingIds.has(document.id)}
                 onClick={() => void email(document)}
                 variant="primary"
               >
-                <Mail aria-hidden="true" size={14} /> Email
+                <Mail aria-hidden="true" size={14} />{" "}
+                {sendingIds.has(document.id) ? "Sending…" : "Email"}
               </ButtonControl>
             ) : null}
           </div>

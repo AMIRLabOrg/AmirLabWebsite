@@ -39,15 +39,25 @@ export function ProfileReviewDetail({ id }: { id: string }) {
   const [reload, setReload] = useState(0);
 
   useEffect(() => {
+    let active = true;
     void apiRequest<ProfileEditRequest>(`/profile-reviews/${id}`, {
       method: "GET",
     })
-      .then(setRequest)
-      .catch((caught: unknown) =>
-        setMessage(
-          caught instanceof Error ? caught.message : "Unable to load request.",
-        ),
-      );
+      .then((nextRequest) => {
+        if (active) setRequest(nextRequest);
+      })
+      .catch((caught: unknown) => {
+        if (active) {
+          setMessage(
+            caught instanceof Error
+              ? caught.message
+              : "Unable to load request.",
+          );
+        }
+      });
+    return () => {
+      active = false;
+    };
   }, [id, reload]);
 
   function captureReviewError(error: ApiRequestError) {

@@ -42,6 +42,7 @@ export function UniversityIndex() {
   const [error, setError] = useState<string>();
   const [loading, setLoading] = useState(true);
   const load = () => {
+    setError(undefined);
     setLoading(true);
     void apiRequest<University[]>("/admin/universities", { method: "GET" })
       .then(setUniversities)

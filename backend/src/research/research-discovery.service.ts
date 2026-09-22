@@ -164,24 +164,13 @@ export class ResearchDiscoveryService implements OnModuleInit {
       ...serializableMetadata(metadata, response.finalUrl),
       provider,
     };
-    await this.prisma.researchSourceSnapshot.update({
-      where: { researchItemId },
-      data: {
-        contentType: response.contentType,
-        failureReason: null,
-        fetchedAt: new Date(),
-        metadata: evidence,
-        status: SourceFetchStatus.FETCHED,
-        url: response.finalUrl,
-      },
-    });
-    if (!metadata.authors.length) return;
-
-    await this.syncContributorsFromMetadata(
-      researchItemId,
-      item.contributors,
-      metadata.authors,
-    );
+    if (metadata.authors.length) {
+      await this.syncContributorsFromMetadata(
+        researchItemId,
+        item.contributors,
+        metadata.authors,
+      );
+    }
 
     const contributors = await this.prisma.researchContributor.findMany({
       where: { researchItemId },
@@ -294,6 +283,18 @@ export class ResearchDiscoveryService implements OnModuleInit {
         payload: { researchItemId: item.id },
       });
     }
+
+    await this.prisma.researchSourceSnapshot.update({
+      where: { researchItemId },
+      data: {
+        contentType: response.contentType,
+        failureReason: null,
+        fetchedAt: new Date(),
+        metadata: evidence,
+        status: SourceFetchStatus.FETCHED,
+        url: response.finalUrl,
+      },
+    });
   }
 
   private async parse(response: SourceResponse): Promise<SourceMetadata> {

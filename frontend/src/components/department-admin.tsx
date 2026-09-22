@@ -43,6 +43,7 @@ export function DepartmentIndex() {
   const [loading, setLoading] = useState(true);
 
   const load = () => {
+    setError(undefined);
     setLoading(true);
     void apiRequest<Department[]>("/admin/departments", { method: "GET" })
       .then(setDepartments)
@@ -168,6 +169,7 @@ export function DepartmentEditor({ id }: { id?: string }) {
     name: string;
   }>();
   const [deletePending, setDeletePending] = useState(false);
+  const [deleteSaving, setDeleteSaving] = useState(false);
   const [personId, setPersonId] = useState("");
   const [role, setRole] = useState("MEMBER");
   const memberIssues = useReviewIssues();
@@ -295,6 +297,7 @@ export function DepartmentEditor({ id }: { id?: string }) {
   }
 
   async function removeDepartment() {
+    setDeleteSaving(true);
     try {
       await apiRequest(`/admin/departments/${id}`, { method: "DELETE" });
       showToast({
@@ -312,6 +315,8 @@ export function DepartmentEditor({ id }: { id?: string }) {
         title: "Department was not deleted",
         tone: "error",
       });
+    } finally {
+      setDeleteSaving(false);
     }
   }
 
@@ -573,9 +578,9 @@ export function DepartmentEditor({ id }: { id?: string }) {
         confirmLabel="Delete department"
         description={`\"${department.name}\" will be permanently removed.`}
         onCancel={() => setDeletePending(false)}
+        busy={deleteSaving}
         onConfirm={() => {
           void removeDepartment();
-          setDeletePending(false);
         }}
         open={deletePending}
         title="Delete this department?"

@@ -297,7 +297,7 @@ export function ProjectManager({ id }: { id: string }) {
   const [tab, setTab] = useState<Tab>("overview");
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
-  const [busy, setBusy] = useState(false);
+  const [busyAction, setBusyAction] = useState<string>();
   const [publishNow, setPublishNow] = useState(false);
   const [overrideReason, setOverrideReason] = useState(
     "Administrator explicitly published this project workspace change.",
@@ -318,8 +318,13 @@ export function ProjectManager({ id }: { id: string }) {
     () => project?.milestones.reduce((sum, item) => sum + item.weight, 0) ?? 0,
     [project],
   );
-  async function submit(path: string, method: string, body: unknown) {
-    setBusy(true);
+  async function submit(
+    action: string,
+    path: string,
+    method: string,
+    body: unknown,
+  ) {
+    setBusyAction(action);
     setError("");
     setMessage("");
     try {
@@ -344,7 +349,7 @@ export function ProjectManager({ id }: { id: string }) {
         tone: "error",
       });
     } finally {
-      setBusy(false);
+      setBusyAction(undefined);
     }
   }
   const loadingProject = !project;
@@ -642,13 +647,25 @@ export function ProjectManager({ id }: { id: string }) {
           {!loadingProject && tab === "tasks" ? (
             <Tasks
               project={currentProject}
-              busy={busy}
-              create={(body) => submit(`/projects/${id}/tasks`, "POST", body)}
+              busy={busyAction === "tasks"}
+              create={(body) =>
+                submit("tasks", `/projects/${id}/tasks`, "POST", body)
+              }
               update={(taskId, body) =>
-                submit(`/projects/${id}/tasks/${taskId}`, "PATCH", body)
+                submit(
+                  "tasks",
+                  `/projects/${id}/tasks/${taskId}`,
+                  "PATCH",
+                  body,
+                )
               }
               remove={(taskId) =>
-                submit(`/projects/${id}/tasks/${taskId}`, "DELETE", undefined)
+                submit(
+                  "tasks",
+                  `/projects/${id}/tasks/${taskId}`,
+                  "DELETE",
+                  undefined,
+                )
               }
             />
           ) : null}
@@ -656,9 +673,9 @@ export function ProjectManager({ id }: { id: string }) {
             <Timeline
               project={currentProject}
               weight={weight}
-              busy={busy}
+              busy={busyAction === "timeline"}
               save={(milestones) =>
-                submit(`/projects/${id}/milestones`, "PUT", {
+                submit("timeline", `/projects/${id}/milestones`, "PUT", {
                   milestones,
                   ...override,
                 })
@@ -668,9 +685,9 @@ export function ProjectManager({ id }: { id: string }) {
           {!loadingProject && tab === "updates" ? (
             <Updates
               project={currentProject}
-              busy={busy}
+              busy={busyAction === "updates"}
               save={(body) =>
-                submit(`/projects/${id}/updates`, "POST", {
+                submit("updates", `/projects/${id}/updates`, "POST", {
                   ...body,
                   ...override,
                 })
@@ -680,9 +697,9 @@ export function ProjectManager({ id }: { id: string }) {
           {!loadingProject && tab === "people" ? (
             <People
               project={currentProject}
-              busy={busy}
+              busy={busyAction === "people"}
               save={(body) =>
-                submit(`/projects/${id}/invitations`, "POST", {
+                submit("people", `/projects/${id}/invitations`, "POST", {
                   ...body,
                   ...override,
                 })
@@ -692,15 +709,15 @@ export function ProjectManager({ id }: { id: string }) {
           {!loadingProject && tab === "outputs" ? (
             <Outputs
               project={currentProject}
-              busy={busy}
+              busy={busyAction === "output"}
               output={(body) =>
-                submit(`/projects/${id}/outputs`, "POST", {
+                submit("output", `/projects/${id}/outputs`, "POST", {
                   ...body,
                   ...override,
                 })
               }
               resource={(body) =>
-                submit(`/projects/${id}/resources`, "POST", {
+                submit("resource", `/projects/${id}/resources`, "POST", {
                   ...body,
                   ...override,
                 })
@@ -710,12 +727,15 @@ export function ProjectManager({ id }: { id: string }) {
           {!loadingProject && tab === "settings" ? (
             <Settings
               project={currentProject}
-              busy={busy}
+              busy={busyAction === "settings" || busyAction === "archive"}
               save={(body) =>
-                submit(`/projects/${id}`, "PATCH", { ...body, ...override })
+                submit("settings", `/projects/${id}`, "PATCH", {
+                  ...body,
+                  ...override,
+                })
               }
               archive={() =>
-                submit(`/projects/${id}/archive`, "POST", override)
+                submit("archive", `/projects/${id}/archive`, "POST", override)
               }
             />
           ) : null}
@@ -929,10 +949,11 @@ function Tasks({
         </label>
         <ButtonControl
           disabled={busy || !title.trim()}
+          loading={busy}
           type="submit"
           variant="primary"
         >
-          <Plus size={15} /> Add task
+          <Plus size={15} /> {busy ? "Adding…" : "Add task"}
         </ButtonControl>
       </form>
       <div className="grid border-t border-line">
@@ -1153,10 +1174,11 @@ function Timeline({
       <ButtonControl
         className="justify-self-end max-[640px]:w-full"
         disabled={busy}
+        loading={busy}
         onClick={() => save(items)}
         variant="primary"
       >
-        <Save size={15} /> Save milestones
+        <Save size={15} /> {busy ? "Saving…" : "Save milestones"}
       </ButtonControl>
     </div>
   );
@@ -1197,16 +1219,18 @@ function Updates({
         <div className="flex justify-end gap-[.6rem] max-[640px]:col-span-full">
           <ButtonControl
             disabled={busy}
+            loading={busy}
             onClick={() => save({ title, body, status: "DRAFT" })}
           >
-            Save draft
+            {busy ? "Saving…" : "Save draft"}
           </ButtonControl>
           <ButtonControl
             disabled={busy}
+            loading={busy}
             onClick={() => save({ title, body, status: "PUBLISHED" })}
             variant="primary"
           >
-            Publish <Send size={14} />
+            {busy ? "Publishing…" : "Publish"} <Send size={14} />
           </ButtonControl>
         </div>
       </div>
@@ -1331,10 +1355,10 @@ function People({
         </label>
         <ButtonControl
           disabled={busy || !personId}
+          loading={busy}
           type="submit"
-          variant="primary"
         >
-          Add member
+          {busy ? "Adding…" : "Add member"}
         </ButtonControl>
       </form>
     </div>
@@ -1460,8 +1484,12 @@ function Outputs({
             value={outputId}
           />
         </label>
-        <ButtonControl disabled={busy || !outputId} type="submit">
-          Link output
+        <ButtonControl
+          disabled={busy || !outputId}
+          loading={busy}
+          type="submit"
+        >
+          {busy ? "Linking…" : "Link output"}
         </ButtonControl>
       </form>
       <form
@@ -1488,8 +1516,13 @@ function Outputs({
             onChange={(event) => setUrl(event.target.value)}
           />
         </label>
-        <ButtonControl disabled={busy} type="submit" variant="primary">
-          Add resource
+        <ButtonControl
+          disabled={busy}
+          loading={busy}
+          type="submit"
+          variant="primary"
+        >
+          {busy ? "Adding…" : "Add resource"}
         </ButtonControl>
       </form>
     </div>
@@ -1583,9 +1616,11 @@ function Settings({
         <ButtonControl
           className="col-span-full justify-self-end max-[640px]:w-full"
           disabled={busy}
+          loading={busy}
           type="submit"
           variant="primary"
         >
+          {busy ? "Saving…" : "Save settings"}
           <Save size={15} /> Save settings
         </ButtonControl>
       </form>
@@ -1596,8 +1631,13 @@ function Settings({
             Remove it from active listings while retaining its verified record.
           </p>
         </div>
-        <ButtonControl disabled={busy} onClick={archive} variant="danger">
-          Archive
+        <ButtonControl
+          disabled={busy}
+          loading={busy}
+          onClick={archive}
+          variant="danger"
+        >
+          {busy ? "Archiving…" : "Archive"}
         </ButtonControl>
       </div>
     </div>

@@ -12,6 +12,7 @@ import { CheckboxControl } from "@/components/ui/checkbox-control";
 import { useBulkSelection } from "@/lib/use-bulk-selection";
 import { ApiRequestError, apiRequest } from "@/lib/client-api";
 import { useReviewIssues } from "@/lib/use-review-issues";
+import { useNotifications } from "@/components/notification-provider";
 import type { ReviewIssue } from "@/lib/review-issues";
 import {
   ReviewIssueStamp,
@@ -30,6 +31,7 @@ interface ChangeRequest {
 }
 
 export function ProjectReviewQueue() {
+  const { refreshUnreadCount } = useNotifications();
   const [items, setItems] = useState<ChangeRequest[]>([]);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
@@ -89,6 +91,7 @@ export function ProjectReviewQueue() {
       method: "POST",
     });
     await load();
+    void refreshUnreadCount().catch(() => undefined);
   }
 
   const bulk = useBulkSelection(items.map(({ id }) => id));
@@ -169,6 +172,7 @@ export function ProjectReviewQueue() {
     });
     bulk.clear();
     await load();
+    void refreshUnreadCount().catch(() => undefined);
   }
 
   return (

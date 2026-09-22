@@ -36,7 +36,19 @@ export function NotificationInbox() {
   const [to, setTo] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string>();
-  const [markingId, setMarkingId] = useState<string>();
+  const [markingIds, setMarkingIds] = useState<Set<string>>(() => new Set());
+
+  function beginMarking(id: string) {
+    setMarkingIds((current) => new Set(current).add(id));
+  }
+
+  function endMarking(id: string) {
+    setMarkingIds((current) => {
+      const next = new Set(current);
+      next.delete(id);
+      return next;
+    });
+  }
   const [reload, setReload] = useState(0);
 
   useEffect(() => {
@@ -78,7 +90,7 @@ export function NotificationInbox() {
 
   async function markRead(notification: NotificationRecord) {
     if (notification.readAt) return;
-    setMarkingId(notification.id);
+    beginMarking(notification.id);
     try {
       const response = await apiRequest<{ updated: boolean }>(
         `/notifications/${notification.id}/read`,
@@ -133,13 +145,13 @@ export function NotificationInbox() {
       });
       void refreshUnreadCount().catch(() => undefined);
     } finally {
-      setMarkingId(undefined);
+      endMarking(notification.id);
     }
   }
 
   async function markUnread(notification: NotificationRecord) {
     if (!notification.readAt) return;
-    setMarkingId(notification.id);
+    beginMarking(notification.id);
     try {
       const response = await apiRequest<{ updated: boolean }>(
         `/notifications/${notification.id}/unread`,
@@ -193,7 +205,7 @@ export function NotificationInbox() {
       });
       void refreshUnreadCount().catch(() => undefined);
     } finally {
-      setMarkingId(undefined);
+      endMarking(notification.id);
     }
   }
 
@@ -332,8 +344,9 @@ export function NotificationInbox() {
                 </div>
                 <div className="flex items-center gap-2 max-[640px]:items-stretch">
                   <ButtonControl
-                    disabled={!notification || markingId === notification?.id}
-                    loading={loading}
+                    disabled={
+                      !notification || markingIds.has(notification?.id ?? "")
+                    }
                     onClick={() =>
                       notification &&
                       void (notification.readAt
@@ -343,16 +356,18 @@ export function NotificationInbox() {
                     variant="secondary"
                   >
                     {notification?.readAt ? (
-                      <RotateCcw aria-hidden="true" size={16} />
+                      <>
+                        <RotateCcw aria-hidden="true" size={16} /> Mark unread
+                      </>
                     ) : (
-                      <Check aria-hidden="true" size={16} />
+                      <>
+                        <Check aria-hidden="true" size={16} /> Mark read
+                      </>
                     )}
-                    {notification?.readAt ? "Mark unread" : "Mark read"}
                   </ButtonControl>
                   {loading || notification?.actionUrl ? (
                     <ButtonControl
-                      disabled={!notification || markingId === notification?.id}
-                      loading={loading}
+                      disabled={!notification}
                       onClick={() =>
                         notification && void openNotification(notification)
                       }

@@ -151,7 +151,21 @@ export function ResearchReviewQueue({ selectedId }: { selectedId?: string }) {
   const [reload, setReload] = useState(0);
   const [people, setPeople] = useState<LinkablePerson[]>([]);
   const [manualPeople, setManualPeople] = useState<Record<string, string>>({});
-  const [relationBusy, setRelationBusy] = useState<string>();
+  const [relationBusy, setRelationBusy] = useState<Set<string>>(
+    () => new Set(),
+  );
+
+  function beginRelation(key: string) {
+    setRelationBusy((current) => new Set(current).add(key));
+  }
+
+  function endRelation(key: string) {
+    setRelationBusy((current) => {
+      const next = new Set(current);
+      next.delete(key);
+      return next;
+    });
+  }
   const [editingId, setEditingId] = useState<string>();
   const [editSaving, setEditSaving] = useState(false);
   const [sourcePollTick, setSourcePollTick] = useState(0);
@@ -266,6 +280,27 @@ export function ResearchReviewQueue({ selectedId }: { selectedId?: string }) {
     };
   }, [pendingSourceId, sourcePollTick]);
 
+  async function refreshResearchItem(itemId: string): Promise<void> {
+    try {
+      const updated = await apiRequest<ReviewResearch>(
+        `/research-review/${itemId}`,
+        { method: "GET" },
+      );
+      setItems((current) =>
+        current.map((candidate) =>
+          candidate.id === updated.id ? updated : candidate,
+        ),
+      );
+      setFocusedItem((current) =>
+        current?.id === updated.id ? updated : current,
+      );
+    } catch {
+      setError(
+        "The review was saved, but the updated contributor data could not be loaded.",
+      );
+    }
+  }
+
   function captureItemError(itemId: string, error: ApiRequestError) {
     if (error.issues.length) actionIssues.capture(error);
     else
@@ -304,7 +339,9 @@ export function ResearchReviewQueue({ selectedId }: { selectedId?: string }) {
     void refreshUnreadCount().catch(() => undefined);
   }
 
-  async function saveRecordEdit(event: SyntheticEvent<HTMLFormElement, SubmitEvent>) {
+  async function saveRecordEdit(
+    event: SyntheticEvent<HTMLFormElement, SubmitEvent>,
+  ) {
     event.preventDefault();
     if (!item || loadingDetail) return;
     const form = new FormData(event.currentTarget);
@@ -382,7 +419,7 @@ export function ResearchReviewQueue({ selectedId }: { selectedId?: string }) {
     id: string,
     { note, status }: { note?: string; status: "VERIFIED" | "REJECTED" },
   ) {
-    setRelationBusy(id);
+    beginRelation(id);
     setError(undefined);
     try {
       await apiRequest(`/contributor-matches/${id}/review`, {
@@ -391,7 +428,7 @@ export function ResearchReviewQueue({ selectedId }: { selectedId?: string }) {
         method: "POST",
       });
       actionIssues.clearOne(itemId);
-      setReload((current) => current + 1);
+      await refreshResearchItem(itemId);
     } catch (caught) {
       if (caught instanceof ApiRequestError && caught.issues.length)
         actionIssues.capture(caught);
@@ -403,7 +440,7 @@ export function ResearchReviewQueue({ selectedId }: { selectedId?: string }) {
         });
       throw caught;
     } finally {
-      setRelationBusy(undefined);
+      endRelation(id);
     }
   }
 
@@ -439,7 +476,7 @@ export function ResearchReviewQueue({ selectedId }: { selectedId?: string }) {
   ) {
     const key = `${itemId}:${sortOrder}`;
     if (!personId) return;
-    setRelationBusy(key);
+    beginRelation(key);
     setError(undefined);
     try {
       await apiRequest(`/research/${itemId}/contributors/${sortOrder}/link`, {
@@ -453,7 +490,7 @@ export function ResearchReviewQueue({ selectedId }: { selectedId?: string }) {
         return next;
       });
       actionIssues.clearOne(itemId);
-      setReload((current) => current + 1);
+      await refreshResearchItem(itemId);
       showToast({
         body: "The contributor is now linked to the verified person record.",
         title: "Contributor linked",
@@ -474,12 +511,13 @@ export function ResearchReviewQueue({ selectedId }: { selectedId?: string }) {
         tone: "error",
       });
     } finally {
-      setRelationBusy(undefined);
+      endRelation(key);
     }
   }
 
   async function rediscover(itemId: string) {
-    setRelationBusy(`discover:${itemId}`);
+    const key = `discover:${itemId}`;
+    beginRelation(key);
     setError(undefined);
     try {
       await apiRequest(`/research/${itemId}/discover`, { method: "POST" });
@@ -534,7 +572,7 @@ export function ResearchReviewQueue({ selectedId }: { selectedId?: string }) {
         tone: "error",
       });
     } finally {
-      setRelationBusy(undefined);
+      endRelation(key);
     }
   }
 
@@ -561,13 +599,15 @@ export function ResearchReviewQueue({ selectedId }: { selectedId?: string }) {
     commonBulkStatuses,
     selectedResearchItems.length,
   );
+  const initialLoading = loading && !result;
   const item =
+    (focusedItem?.id === selected ? focusedItem : undefined) ??
     visibleItems.find((candidate) => candidate.id === selected) ??
-    (loading ? loadingResearchItem() : undefined);
+    (initialLoading ? loadingResearchItem() : undefined);
   const editing = Boolean(item && editingId === item.id);
   const sourcePending =
     item?.sourceSnapshot?.status === "PENDING" ||
-    relationBusy === `discover:${item?.id}`;
+    relationBusy.has(`discover:${item?.id}`);
   const hasProposedMatches = Boolean(
     item?.contributors.some((contributor) =>
       contributor.matches.some((match) => match.status === "PROPOSED"),
@@ -606,8 +646,8 @@ export function ResearchReviewQueue({ selectedId }: { selectedId?: string }) {
     void refreshUnreadCount().catch(() => undefined);
   }
 
-  const loadingRows = loading;
-  const loadingDetail = loading;
+  const loadingRows = initialLoading;
+  const loadingDetail = initialLoading;
   const refreshing = loading && Boolean(result);
   const renderedItems =
     loadingRows && !visibleItems.length
@@ -869,15 +909,16 @@ export function ResearchReviewQueue({ selectedId }: { selectedId?: string }) {
                     >
                       {item.reviewStatus.replaceAll("_", " ").toLowerCase()}
                     </Badge>
-                    {issuesFor(item).map((issue, index) => (
-                      <SemanticStatus
-                        key={`${issue.code ?? issue.message}-${index}`}
-                        loading={loadingDetail}
-                        tone={issue.tone ?? "pending"}
-                      >
-                        {issue.message}
-                      </SemanticStatus>
-                    ))}
+                    {!loadingDetail
+                      ? issuesFor(item).map((issue, index) => (
+                          <SemanticStatus
+                            key={`${issue.code ?? issue.message}-${index}`}
+                            tone={issue.tone ?? "pending"}
+                          >
+                            {issue.message}
+                          </SemanticStatus>
+                        ))
+                      : null}
                     <ButtonControl
                       compact
                       disabled={loadingDetail}
@@ -939,32 +980,38 @@ export function ResearchReviewQueue({ selectedId }: { selectedId?: string }) {
                             : "Check source"}
                     </ButtonControl>
                   </div>
-                  {!item.canonicalUrl ? (
-                    <SemanticStatus loading={loadingDetail} tone="warning">
+                  {loadingDetail ? (
+                    <span
+                      className={loadingPlaceholder(true, "label", "long")}
+                      data-placeholder="label"
+                      data-placeholder-width="long"
+                    />
+                  ) : !item.canonicalUrl ? (
+                    <SemanticStatus tone="warning">
                       No canonical source URL was submitted. Contributor
                       relationships can still be verified manually.
                     </SemanticStatus>
                   ) : !item.sourceSnapshot ? (
-                    <SemanticStatus loading={loadingDetail} tone="info">
+                    <SemanticStatus tone="info">
                       The canonical source has not been checked yet.
                     </SemanticStatus>
                   ) : item.sourceSnapshot.status === "PENDING" ? (
-                    <SemanticStatus loading={loadingDetail} tone="pending">
+                    <SemanticStatus tone="pending">
                       Canonical source metadata is being checked.
                     </SemanticStatus>
                   ) : item.sourceSnapshot.status === "FAILED" ? (
-                    <SemanticStatus loading={loadingDetail} tone="error">
+                    <SemanticStatus tone="error">
                       The canonical source check failed. Check the source URL or
                       try again.
                     </SemanticStatus>
                   ) : item.sourceSnapshot.status === "UNAVAILABLE" ? (
-                    <SemanticStatus loading={loadingDetail} tone="warning">
+                    <SemanticStatus tone="warning">
                       No machine-readable source metadata was available. Manual
                       review is still possible.
                     </SemanticStatus>
                   ) : sourceAuthorsDiffer(item) ? (
                     <div className="grid gap-[.65rem]">
-                      <SemanticStatus loading={loadingDetail} tone="warning">
+                      <SemanticStatus tone="warning">
                         Source metadata differs
                       </SemanticStatus>
                       <div className="flex flex-wrap gap-[.45rem] text-[.75rem] text-ink-muted">
@@ -978,7 +1025,7 @@ export function ResearchReviewQueue({ selectedId }: { selectedId?: string }) {
                       </div>
                     </div>
                   ) : item.sourceSnapshot.metadata?.authors?.length ? null : (
-                    <SemanticStatus loading={loadingDetail} tone="warning">
+                    <SemanticStatus tone="warning">
                       No machine-readable contributor metadata was found. Manual
                       linking remains available.
                     </SemanticStatus>
@@ -1059,8 +1106,8 @@ export function ResearchReviewQueue({ selectedId }: { selectedId?: string }) {
                       ? selectedMatch
                       : undefined;
                     const verificationBusy =
-                      relationBusy === key ||
-                      relationBusy === selectedMatch?.id;
+                      relationBusy.has(key) ||
+                      relationBusy.has(selectedMatch?.id ?? "");
                     return (
                       <article
                         className="grid min-w-0 gap-[.65rem] border-t border-line py-4 first:border-t-0 first:pt-0"
@@ -1127,7 +1174,11 @@ export function ResearchReviewQueue({ selectedId }: { selectedId?: string }) {
                               }
                               variant="primary"
                             >
-                              {verifiedCurrent ? "Verified" : "Verify"}
+                              {verificationBusy
+                                ? "Verifying…"
+                                : verifiedCurrent
+                                  ? "Verified"
+                                  : "Verify"}
                             </ButtonControl>
                             {rejectMatch ? (
                               <ReviewActions
@@ -1138,7 +1189,7 @@ export function ResearchReviewQueue({ selectedId }: { selectedId?: string }) {
                                     confirmLabel: "Reject suggestion",
                                     confirmTitle:
                                       "Reject this contributor match?",
-                                    disabled: relationBusy === rejectMatch.id,
+                                    disabled: relationBusy.has(rejectMatch.id),
                                     label: "Reject",
                                     notePlaceholder:
                                       "Optional note about why this suggested contributor match is incorrect.",
@@ -1156,15 +1207,7 @@ export function ResearchReviewQueue({ selectedId }: { selectedId?: string }) {
                                 }
                                 successTitle="Contributor suggestion rejected"
                               />
-                            ) : (
-                              <ButtonControl
-                                compact
-                                disabled
-                                variant="secondary"
-                              >
-                                Reject
-                              </ButtonControl>
-                            )}
+                            ) : null}
                           </div>
                         </div>
                         <div className="grid min-w-0 grid-cols-[minmax(180px,.72fr)_minmax(0,1fr)] items-start gap-[.65rem] max-[720px]:grid-cols-1">
@@ -1509,7 +1552,7 @@ function ResearchRecordEditor({
 
 function researchBulkStatuses(
   item: ReviewResearch,
-  relationBusy?: string,
+  relationBusy: Set<string>,
 ): ResearchDecision[] {
   if (item.reviewStatus === "PUBLISHED" || item.reviewStatus === "REJECTED") {
     return ["NEEDS_REVIEW"];
@@ -1523,7 +1566,7 @@ function researchBulkStatuses(
   const statuses: ResearchDecision[] = ["CHANGES_REQUESTED", "REJECTED"];
   const sourcePending =
     item.sourceSnapshot?.status === "PENDING" ||
-    relationBusy === `discover:${item.id}`;
+    relationBusy.has(`discover:${item.id}`);
   const hasProposedMatches = item.contributors.some((contributor) =>
     contributor.matches.some((match) => match.status === "PROPOSED"),
   );
@@ -1533,7 +1576,7 @@ function researchBulkStatuses(
 
 function commonResearchBulkStatuses(
   items: ReviewResearch[],
-  relationBusy?: string,
+  relationBusy: Set<string>,
 ): ResearchDecision[] {
   if (!items.length) return [];
   const [first, ...rest] = items.map((item) =>

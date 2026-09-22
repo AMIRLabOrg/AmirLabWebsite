@@ -71,7 +71,7 @@ export function PositionAdminList() {
   const [error, setError] = useState<string>();
   const [loading, setLoading] = useState(true);
   const [reload, setReload] = useState(0);
-  const [updatingId, setUpdatingId] = useState<string>();
+  const [updatingIds, setUpdatingIds] = useState<Set<string>>(() => new Set());
   const actionIssues = useReviewIssues();
 
   useEffect(() => {
@@ -96,7 +96,7 @@ export function PositionAdminList() {
   }, [reload, showToast]);
 
   async function setEnabled(position: Position, enabled: boolean) {
-    setUpdatingId(position.id);
+    setUpdatingIds((current) => new Set(current).add(position.id));
     try {
       const updated = await apiRequest<Position>(
         `/positions/${position.id}/${enabled ? "enable" : "disable"}`,
@@ -127,7 +127,11 @@ export function PositionAdminList() {
         tone: "error",
       });
     } finally {
-      setUpdatingId(undefined);
+      setUpdatingIds((current) => {
+        const next = new Set(current);
+        next.delete(position.id);
+        return next;
+      });
     }
   }
 
@@ -203,7 +207,7 @@ export function PositionAdminList() {
                     </span>
                     {issue ? (
                       <SemanticStatus
-                        loading={loading}
+                        loading={loading || updatingIds.has(position?.id ?? "")}
                         tone={issue.tone ?? "error"}
                       >
                         {issue.message}
@@ -230,9 +234,11 @@ export function PositionAdminList() {
                         : "Job post publication state"
                     }
                     disabled={
-                      loading || !position || updatingId === position?.id
+                      loading ||
+                      !position ||
+                      updatingIds.has(position?.id ?? "")
                     }
-                    loading={loading}
+                    loading={loading || updatingIds.has(position?.id ?? "")}
                     onValueChange={(value) => {
                       if (!position) return;
                       const nextEnabled = value === "OPEN";
@@ -245,6 +251,11 @@ export function PositionAdminList() {
                     ]}
                     value={position?.status === "OPEN" ? "OPEN" : "DISABLED"}
                   />
+                  {position && updatingIds.has(position.id) ? (
+                    <span className="text-[.72rem] text-ink-muted">
+                      Updating…
+                    </span>
+                  ) : null}
                   <ButtonLink
                     compact
                     href={

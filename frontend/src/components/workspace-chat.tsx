@@ -132,12 +132,6 @@ export function WorkspaceChat() {
       withCredentials: true,
     });
     socket.on("message.created", (message: CollaborationMessage) => {
-      if (message.conversationId !== selectedId) return;
-      setMessages((current) =>
-        current.some(({ id }) => id === message.id)
-          ? current
-          : [...current, message],
-      );
       setConversations((current) =>
         current.map((conversation) =>
           conversation.id === message.conversationId
@@ -148,6 +142,12 @@ export function WorkspaceChat() {
               }
             : conversation,
         ),
+      );
+      if (message.conversationId !== selectedId) return;
+      setMessages((current) =>
+        current.some(({ id }) => id === message.id)
+          ? current
+          : [...current, message],
       );
     });
     socket.on(
