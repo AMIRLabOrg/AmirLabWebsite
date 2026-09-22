@@ -75,6 +75,11 @@ jobs:
     needs: changes
     if: ${{ needs.changes.outputs.frontend == 'true' }}
     runs-on: ubuntu-latest
+    env:
+      NEXT_PUBLIC_API_URL: https://api.example.test/api
+      NEXT_PUBLIC_SITE_URL: https://example.test
+      NEXT_PUBLIC_SITE_EMAIL: ci@example.test
+      NEXT_PUBLIC_SITE_LOCATION: CI
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4

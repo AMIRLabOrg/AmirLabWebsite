@@ -82,8 +82,10 @@ expect(
   'Reset expiry configuration is missing from .env.example.',
 );
 expect(
-  envExample.includes('SMTP_HOST=mail.smtp2go.com'),
-  'SMTP2GO example configuration is missing.',
+  envExample.includes('SMTP_HOST=smtp.example.test') &&
+    envExample.includes('SMTP_USER=replace-with-smtp-username') &&
+    envExample.includes('SMTP_PASSWORD=replace-with-smtp-password'),
+  'Generic SMTP example configuration is missing.',
 );
 
 for (const base of ['src', 'scripts']) {
