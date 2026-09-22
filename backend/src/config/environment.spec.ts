@@ -43,12 +43,14 @@ describe('validateEnvironment', () => {
       validateEnvironment({
         ...baseEnvironment,
         NODE_ENV: 'production',
+        PUBLIC_SITE_URL: 'https://example.org',
+        PUBLIC_SITE_EMAIL: 'admin@example.org',
         SMTP_FROM: 'AMIR Lab <noreply@example.org>',
         SMTP_HOST: 'mail.smtp2go.com',
         SMTP_PASSWORD: 'secret',
         SMTP_USER: 'account',
       }),
-    ).toThrow('UPLOAD_ROOT is required in production');
+    ).toThrow('UPLOAD_ROOT is required for local storage in production');
   });
 
   it('rejects production placeholders even when they are non-empty', () => {
@@ -57,6 +59,8 @@ describe('validateEnvironment', () => {
         ...baseEnvironment,
         NODE_ENV: 'production',
         UPLOAD_ROOT: '/var/lib/amirlab/uploads',
+        PUBLIC_SITE_URL: 'https://example.org',
+        PUBLIC_SITE_EMAIL: 'admin@example.org',
         SMTP_FROM: 'AMIR Lab <noreply@example.org>',
         SMTP_HOST: 'mail.smtp2go.com',
         SMTP_PASSWORD: 'UPDATE_ON_PROD',
@@ -71,6 +75,8 @@ describe('validateEnvironment', () => {
         ...baseEnvironment,
         NODE_ENV: 'production',
         UPLOAD_ROOT: '/var/lib/amirlab/uploads',
+        PUBLIC_SITE_URL: 'https://example.org',
+        PUBLIC_SITE_EMAIL: 'admin@example.org',
         SMTP_HOST: 'smtp.example.net',
         SMTP_PASSWORD: 'real-password',
         SMTP_USER: 'real-user',
