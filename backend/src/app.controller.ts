@@ -1,13 +1,17 @@
-import { Controller, Get, HttpCode, HttpStatus, NotFoundException } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  HttpCode,
+  HttpStatus,
+  NotFoundException,
+} from '@nestjs/common';
 import { Public } from './auth/auth.decorators';
 import { PrismaService } from './database/prisma.service';
 
 @Controller()
 @Public()
 export class AppController {
-  constructor(
-    private readonly prisma: PrismaService,
-  ) {}
+  constructor(private readonly prisma: PrismaService) {}
 
   @Get('health')
   async health(): Promise<{ status: 'ok'; timestamp: string }> {

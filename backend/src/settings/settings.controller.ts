@@ -72,5 +72,4 @@ export class SettingsController {
   ) {
     return this.settings.updateRanking(body, user.id);
   }
-
 }

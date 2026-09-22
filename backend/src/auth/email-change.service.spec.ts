@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access */
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import type { ConfigService } from '@nestjs/config';
 import { createHash } from 'node:crypto';
 import type { Environment } from '../config/environment';

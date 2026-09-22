@@ -9,9 +9,7 @@ describe('AppController', () => {
   beforeEach(async () => {
     const app: TestingModule = await Test.createTestingModule({
       controllers: [AppController],
-      providers: [
-        { provide: PrismaService, useValue: prisma },
-      ],
+      providers: [{ provide: PrismaService, useValue: prisma }],
     }).compile();
 
     appController = app.get<AppController>(AppController);
@@ -35,5 +33,4 @@ describe('AppController', () => {
       );
     });
   });
-
 });
