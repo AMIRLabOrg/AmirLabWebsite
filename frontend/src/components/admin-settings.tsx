@@ -29,10 +29,6 @@ interface RankPolicy {
   leadCitationMinimum: number;
 }
 
-interface RedirectUrlSetting {
-  url: string;
-}
-
 interface NotificationPolicy {
   applicationAccepted: boolean;
   applicationRejected: boolean;
@@ -100,9 +96,6 @@ export function AdminSettings() {
     null,
   );
   const [ranking, setRanking] = useState<RankPolicy | null>(null);
-  const [redirectUrl, setRedirectUrl] = useState<RedirectUrlSetting | null>(
-    null,
-  );
   const [notificationPolicy, setNotificationPolicy] =
     useState<NotificationPolicy | null>(null);
   const [message, setMessage] = useState("");
@@ -116,9 +109,6 @@ export function AdminSettings() {
         method: "GET",
       }),
       apiRequest<RankPolicy>("/settings/ranking", { method: "GET" }),
-      apiRequest<RedirectUrlSetting>("/settings/redirect-url", {
-        method: "GET",
-      }),
       apiRequest<NotificationPolicy>("/settings/notifications", {
         method: "GET",
       }),
@@ -127,12 +117,10 @@ export function AdminSettings() {
         ([
           nextVerification,
           nextRanking,
-          nextRedirectUrl,
           nextNotificationPolicy,
         ]) => {
           setVerification(nextVerification);
           setRanking(nextRanking);
-          setRedirectUrl(nextRedirectUrl);
           setNotificationPolicy(nextNotificationPolicy);
         },
       )
@@ -141,7 +129,7 @@ export function AdminSettings() {
   }, [reload]);
 
   async function save() {
-    if (!verification || !ranking || !redirectUrl || !notificationPolicy)
+    if (!verification || !ranking || !notificationPolicy)
       return;
     setError("");
     setMessage("");
@@ -154,11 +142,6 @@ export function AdminSettings() {
         }),
         apiRequest("/settings/ranking", {
           body: JSON.stringify(ranking),
-          headers: { "content-type": "application/json" },
-          method: "PUT",
-        }),
-        apiRequest("/settings/redirect-url", {
-          body: JSON.stringify(redirectUrl),
           headers: { "content-type": "application/json" },
           method: "PUT",
         }),
@@ -203,9 +186,6 @@ export function AdminSettings() {
     leadPaperMinimum: 0,
     leadCitationMinimum: 0,
   };
-  const displayedRedirectUrl = redirectUrl ?? {
-    url: process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000",
-  };
   const displayedNotificationPolicy = notificationPolicy ?? {
     applicationAccepted: true,
     applicationRejected: true,
@@ -219,7 +199,7 @@ export function AdminSettings() {
   };
   const loadFailed = Boolean(
     error &&
-    (!verification || !ranking || !redirectUrl || !notificationPolicy) &&
+    (!verification || !ranking || !notificationPolicy) &&
     !loading,
   );
 
@@ -237,7 +217,6 @@ export function AdminSettings() {
         {error &&
         verification &&
         ranking &&
-        redirectUrl &&
         notificationPolicy ? (
           <p className="m-0 border-l-[3px] border-danger bg-danger-soft px-4 py-[.8rem] text-[.78rem]">
             {error}
@@ -263,43 +242,6 @@ export function AdminSettings() {
               <header className="grid grid-cols-[42px_minmax(0,1fr)] items-start gap-[1.2rem] border-b border-line pb-4 max-[640px]:grid-cols-1">
                 <span className="pt-[.35rem] font-mono text-[.62rem] text-ink-faint">
                   01
-                </span>
-                <div>
-                  <p className="m-0 mb-4 font-[var(--font-sans)] text-[.75rem] font-extrabold uppercase tracking-[.12em] text-brand">
-                    Public site
-                  </p>
-                  <h2 className="mt-[.35rem] font-serif text-[clamp(1.75rem,3vw,2.6rem)] font-normal leading-none">
-                    Frontend redirect URL
-                  </h2>
-                  <p className="mt-[.7rem] max-w-[680px] text-[.78rem] leading-[1.55] text-ink-muted">
-                    The URL where visitors are redirected when they access the
-                    API root.
-                  </p>
-                </div>
-              </header>
-              <div className="ml-[calc(42px+1.2rem)] grid gap-4 rounded-panel border border-line bg-surface p-4 max-[640px]:ml-0">
-                <div className="grid grid-cols-1">
-                  <label className="grid grid-cols-[minmax(0,1fr)_160px] items-center gap-4 border-t border-line py-[.7rem] text-[.8rem] font-semibold text-ink-muted first:border-t-0 max-[640px]:grid-cols-1">
-                    Redirect URL
-                    <InputControl
-                      className={loadingPlaceholder(loading, "control")}
-                      data-placeholder={loading ? "control" : undefined}
-                      disabled={loading}
-                      onChange={(event) =>
-                        setRedirectUrl({ url: event.target.value })
-                      }
-                      type="url"
-                      value={displayedRedirectUrl.url}
-                    />
-                  </label>
-                </div>
-              </div>
-            </section>
-
-            <section className="grid gap-[1.1rem]">
-              <header className="grid grid-cols-[42px_minmax(0,1fr)] items-start gap-[1.2rem] border-b border-line pb-4 max-[640px]:grid-cols-1">
-                <span className="pt-[.35rem] font-mono text-[.62rem] text-ink-faint">
-                  02
                 </span>
                 <div>
                   <p className="m-0 mb-4 font-[var(--font-sans)] text-[.75rem] font-extrabold uppercase tracking-[.12em] text-brand">
@@ -365,7 +307,7 @@ export function AdminSettings() {
             <section className="grid gap-[1.1rem]">
               <header className="grid grid-cols-[42px_minmax(0,1fr)] items-start gap-[1.2rem] border-b border-line pb-4 max-[640px]:grid-cols-1">
                 <span className="pt-[.35rem] font-mono text-[.62rem] text-ink-faint">
-                  03
+                  02
                 </span>
                 <div>
                   <p className="m-0 mb-4 font-[var(--font-sans)] text-[.75rem] font-extrabold uppercase tracking-[.12em] text-brand">
@@ -481,7 +423,7 @@ export function AdminSettings() {
             <section className="grid gap-[1.1rem]">
               <header className="grid grid-cols-[42px_minmax(0,1fr)] items-start gap-[1.2rem] border-b border-line pb-4 max-[640px]:grid-cols-1">
                 <span className="pt-[.35rem] font-mono text-[.62rem] text-ink-faint">
-                  04
+                  03
                 </span>
                 <div>
                   <p className="m-0 mb-4 font-[var(--font-sans)] text-[.75rem] font-extrabold uppercase tracking-[.12em] text-brand">

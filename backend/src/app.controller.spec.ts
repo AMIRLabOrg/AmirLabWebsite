@@ -1,26 +1,16 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { ConfigService } from '@nestjs/config';
 import { AppController } from './app.controller';
 import { PrismaService } from './database/prisma.service';
 
 describe('AppController', () => {
   let appController: AppController;
-  const prisma = {
-    $queryRaw: jest.fn(),
-    siteSetting: { findUnique: jest.fn() },
-  };
+  const prisma = { $queryRaw: jest.fn() };
 
   beforeEach(async () => {
     const app: TestingModule = await Test.createTestingModule({
       controllers: [AppController],
       providers: [
         { provide: PrismaService, useValue: prisma },
-        {
-          provide: ConfigService,
-          useValue: {
-            get: jest.fn().mockReturnValue('https://frontend.example.org'),
-          },
-        },
       ],
     }).compile();
 
@@ -46,15 +36,4 @@ describe('AppController', () => {
     });
   });
 
-  describe('root', () => {
-    it('uses the configured frontend redirect URL', async () => {
-      prisma.siteSetting.findUnique.mockResolvedValue({
-        value: 'https://frontend.example.org',
-      });
-
-      await expect(appController.root()).resolves.toEqual({
-        url: 'https://frontend.example.org',
-      });
-    });
-  });
 });

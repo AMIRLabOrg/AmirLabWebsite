@@ -1,7 +1,5 @@
-import { Controller, Get, Redirect } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
+import { Controller, Get, HttpCode, HttpStatus, NotFoundException } from '@nestjs/common';
 import { Public } from './auth/auth.decorators';
-import type { Environment } from './config/environment';
 import { PrismaService } from './database/prisma.service';
 
 @Controller()
@@ -9,7 +7,6 @@ import { PrismaService } from './database/prisma.service';
 export class AppController {
   constructor(
     private readonly prisma: PrismaService,
-    private readonly config: ConfigService<Environment, true>,
   ) {}
 
   @Get('health')
@@ -19,15 +16,8 @@ export class AppController {
   }
 
   @Get()
-  @Redirect('', 302)
-  async root() {
-    const setting = await this.prisma.siteSetting.findUnique({
-      where: { key: 'redirect-url' },
-    });
-    const url =
-      typeof setting?.value === 'string' && setting.value
-        ? setting.value
-        : this.config.get('publicSiteUrl', { infer: true });
-    return { url };
+  @HttpCode(HttpStatus.NOT_FOUND)
+  root(): never {
+    throw new NotFoundException();
   }
 }

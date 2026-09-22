@@ -89,7 +89,6 @@ export function UserManagement() {
   const [rank, setRank] = useState("ALL");
   const [sort, setSort] = useState("NEWEST");
   const [reload, setReload] = useState(0);
-  const [showTrash, setShowTrash] = useState(false);
   const actionIssues = useReviewIssues();
 
   function beginRefresh() {
@@ -104,10 +103,11 @@ export function UserManagement() {
         pageSize: "20",
         sort,
       });
-      if (showTrash) params.set("deleted", "TRASH");
+      params.set("deleted", status === "DELETED" ? "TRASH" : "ACTIVE");
       if (search.trim()) params.set("search", search.trim());
       if (role !== "ALL") params.set("role", role);
-      if (status !== "ALL") params.set("status", status);
+      if (status !== "ALL" && status !== "DELETED")
+        params.set("status", status);
       if (rank !== "ALL") params.set("rank", rank);
 
       setLoading(true);
@@ -137,7 +137,7 @@ export function UserManagement() {
       active = false;
       window.clearTimeout(timeout);
     };
-  }, [page, rank, reload, role, search, showTrash, sort, status]);
+  }, [page, rank, reload, role, search, sort, status]);
 
   async function sendAccess(account: Account) {
     setError(undefined);
@@ -245,21 +245,9 @@ export function UserManagement() {
             : "Member accounts"}
         </p>
         <div className="flex flex-wrap justify-end gap-2">
-          <ButtonControl
-            onClick={() => {
-              setShowTrash((value) => !value);
-              setPage(1);
-            }}
-            variant="secondary"
-          >
-            <Trash2 aria-hidden="true" size={16} />
-            {showTrash ? "Active accounts" : "Trash"}
-          </ButtonControl>
-          {!showTrash ? (
-            <ButtonLink href="/workspace/users/new" variant="primary">
-              <Plus aria-hidden="true" size={16} /> New account
-            </ButtonLink>
-          ) : null}
+          <ButtonLink href="/workspace/users/new" variant="primary">
+            <Plus aria-hidden="true" size={16} /> New account
+          </ButtonLink>
         </div>
       </div>
 
@@ -322,6 +310,7 @@ export function UserManagement() {
               { label: "Active", value: "ACTIVE" },
               { label: "Suspended", value: "SUSPENDED" },
               { label: "Archived", value: "ARCHIVED" },
+              { label: "Deleted", value: "DELETED" },
             ]}
             value={status}
           />

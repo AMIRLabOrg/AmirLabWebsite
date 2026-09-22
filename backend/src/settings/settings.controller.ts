@@ -73,16 +73,4 @@ export class SettingsController {
     return this.settings.updateRanking(body, user.id);
   }
 
-  @Get('redirect-url')
-  redirectUrl() {
-    return this.settings.redirectUrl();
-  }
-
-  @Put('redirect-url')
-  updateRedirectUrl(
-    @Body() body: { url: string },
-    @CurrentUser() user: AuthenticatedUser,
-  ) {
-    return this.settings.updateRedirectUrl(body.url, user.id);
-  }
 }

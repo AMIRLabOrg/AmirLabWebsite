@@ -123,11 +123,8 @@ export const DEFAULT_NOTIFICATION_POLICY: NotificationPolicy = {
 
 const VERIFICATION_KEY = 'verification-policy';
 const RANK_KEY = 'rank-policy';
-const REDIRECT_URL_KEY = 'redirect-url';
 const APPOINTMENT_LETTER_KEY = 'appointment-letter-template';
 const NOTIFICATION_POLICY_KEY = 'notification-policy';
-const DEFAULT_REDIRECT_URL =
-  process.env.PUBLIC_SITE_URL ?? 'http://localhost:3000';
 
 @Injectable()
 export class SettingsService {
@@ -268,44 +265,6 @@ export class SettingsService {
       actorId,
     );
     return parsed;
-  }
-
-  async redirectUrl(): Promise<{ url: string }> {
-    const setting = await this.prisma.siteSetting.findUnique({
-      where: { key: REDIRECT_URL_KEY },
-    });
-    const url =
-      typeof setting?.value === 'string' && setting.value
-        ? setting.value
-        : DEFAULT_REDIRECT_URL;
-    return { url };
-  }
-
-  async updateRedirectUrl(
-    value: string,
-    actorId: string,
-  ): Promise<{ url: string }> {
-    const url = value.trim() || DEFAULT_REDIRECT_URL;
-    await this.prisma.$transaction(async (transaction) => {
-      await transaction.siteSetting.upsert({
-        where: { key: REDIRECT_URL_KEY },
-        create: {
-          key: REDIRECT_URL_KEY,
-          value: url,
-        },
-        update: { value: url },
-      });
-      await transaction.auditRecord.create({
-        data: {
-          action: 'settings.redirect-url-updated',
-          actorId,
-          entityId: REDIRECT_URL_KEY,
-          entityType: 'SiteSetting',
-          details: { url },
-        },
-      });
-    });
-    return { url };
   }
 
   private async saveSetting(
