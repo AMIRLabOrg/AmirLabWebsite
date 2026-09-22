@@ -6,10 +6,10 @@ export const metadata: Metadata = { title: "Log in" };
 
 export default function LoginPage() {
   return (
-    <div className="min-h-svh bg-canvas">
+    <div className="bg-canvas">
       <GuestOnly>
-        <section className="grid min-h-svh">
-          <div className="grid content-center justify-items-center p-[clamp(2rem,6vw,5rem)] max-[900px]:py-12 max-[560px]:px-4 max-[560px]:pb-8 max-[560px]:pt-[1.4rem]">
+        <section className="grid">
+          <div className="grid justify-items-center p-[clamp(2rem,6vw,5rem)] max-[900px]:py-12 max-[560px]:px-4 max-[560px]:pb-8 max-[560px]:pt-[1.4rem]">
             <div className="w-[min(100%,520px)] max-[560px]:w-full">
               <div className="border-t border-line-strong pt-[.8rem]">
                 <p className="mb-[.8rem] flex items-center gap-[.55rem] font-mono text-[.6rem] font-semibold uppercase tracking-[.09em] text-brand before:h-px before:w-[30px] before:bg-brand">

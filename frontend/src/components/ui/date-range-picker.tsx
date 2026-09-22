@@ -255,8 +255,8 @@ function MonthView({
           const rowStart = index % 7 === 0;
           const rowEnd = index % 7 === 6;
           const className = cn(
-            "relative isolate flex h-[38px] cursor-pointer select-none items-center justify-center border-0 bg-transparent text-[.78rem] text-ink hover:text-brand",
-            inRange && "bg-surface-subtle",
+            "relative flex h-[38px] cursor-pointer select-none items-center justify-center border-0 bg-transparent text-[.78rem] text-ink hover:text-brand",
+            inRange && "bg-brand-faint",
             inRange && rowStart && "rounded-l-full",
             inRange && rowEnd && "rounded-r-full",
             (selectedStart || selectedEnd) &&
@@ -282,22 +282,22 @@ function MonthView({
               {hasRange && selectedStart && !rowEnd ? (
                 <span
                   aria-hidden="true"
-                  className="absolute inset-y-0 left-1/2 right-0 -z-20 bg-surface-subtle"
+                  className="absolute inset-y-0 left-1/2 right-0 z-0 bg-brand-faint"
                 />
               ) : null}
               {hasRange && selectedEnd && !rowStart ? (
                 <span
                   aria-hidden="true"
-                  className="absolute inset-y-0 left-0 right-1/2 -z-20 bg-surface-subtle"
+                  className="absolute inset-y-0 left-0 right-1/2 z-0 bg-brand-faint"
                 />
               ) : null}
               {selectedStart || selectedEnd ? (
                 <span
                   aria-hidden="true"
-                  className="absolute left-1/2 top-1/2 -z-10 h-[38px] w-[38px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-brand"
+                  className="absolute left-1/2 top-1/2 z-10 h-[38px] w-[38px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-brand"
                 />
               ) : null}
-              <span className="relative">{day.getDate()}</span>
+              <span className="relative z-20">{day.getDate()}</span>
             </button>
           );
         })}

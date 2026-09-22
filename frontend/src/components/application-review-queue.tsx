@@ -42,6 +42,8 @@ const STATUSES = [
   "REJECTED",
 ];
 
+const LOADING_ROWS = 3;
+
 function label(value: string) {
   return value.replaceAll("_", " ").toLowerCase();
 }
@@ -207,7 +209,7 @@ export function ApplicationReviewQueue() {
               </thead>
               <tbody>
                 {(loading && !result?.items.length
-                  ? Array.from({ length: 6 }, () => undefined)
+                  ? Array.from({ length: LOADING_ROWS }, () => undefined)
                   : (result?.items ?? [])
                 ).map((application, row) => {
                   const failed = application?.status === "PARSE_FAILED";
@@ -237,19 +239,23 @@ export function ApplicationReviewQueue() {
                           {application?.email ?? "loading@example.org"}
                         </span>
                       </DataTableCell>
-                      <DataTableCell
-                        className={loadingPlaceholder(loading, "text", "long")}
-                        data-placeholder="text"
-                        data-placeholder-width="long"
-                      >
-                        {application?.position.title ?? "Loading position"}
+                      <DataTableCell>
+                        <span
+                          className={cn(
+                            "block",
+                            loadingPlaceholder(loading, "text", "long"),
+                          )}
+                          data-placeholder="text"
+                          data-placeholder-width="long"
+                        >
+                          {application?.position.title ?? "Loading position"}
+                        </span>
                       </DataTableCell>
                       <DataTableCell className="font-mono text-[.7rem] text-ink-muted">
                         <time
-                          className={loadingPlaceholder(
-                            loading,
-                            "label",
-                            "medium",
+                          className={cn(
+                            "block",
+                            loadingPlaceholder(loading, "label", "medium"),
                           )}
                           data-placeholder="label"
                           data-placeholder-width="medium"
