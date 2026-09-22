@@ -164,7 +164,12 @@ export class AuthController {
       {
         httpOnly: true,
         maxAge: this.config.get('sessionDays', { infer: true }) * 86_400_000,
-        sameSite: 'lax',
+        // The production frontend and API may use different origins (for
+        // example Vercel and Fly). Cross-site fetches require SameSite=None.
+        sameSite:
+          this.config.get('nodeEnv', { infer: true }) === 'production'
+            ? 'none'
+            : 'lax',
         secure: this.config.get('nodeEnv', { infer: true }) === 'production',
       },
     );

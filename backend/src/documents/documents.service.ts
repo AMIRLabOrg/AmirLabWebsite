@@ -41,7 +41,7 @@ export const DEFAULT_APPROVER: Omit<ApproverSnapshot, 'signatureAssetId'> = {
 export const DEFAULT_DOCUMENT_SITE: DocumentSiteSnapshot = {
   url: process.env.PUBLIC_SITE_URL ?? 'http://localhost:3000',
   email: process.env.PUBLIC_SITE_EMAIL ?? 'admin@example.test',
-  location: process.env.PUBLIC_SITE_LOCATION ?? 'Local development',
+  location: '',
 };
 
 export const DEFAULT_DOCUMENT_TEMPLATES: ReadonlyArray<

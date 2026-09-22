@@ -3,7 +3,6 @@ export interface Environment {
   frontendOrigins: string[];
   publicSiteUrl: string;
   publicSiteEmail: string;
-  publicSiteLocation: string;
   storageProvider: 'local' | 's3';
   storageBucket?: string;
   storageEndpoint?: string;
@@ -59,10 +58,6 @@ export function validateEnvironment(
   const publicSiteEmail = optionalString(
     source.PUBLIC_SITE_EMAIL,
     'admin@example.test',
-  );
-  const publicSiteLocation = optionalString(
-    source.PUBLIC_SITE_LOCATION,
-    'Local development',
   );
 
   if (!['development', 'test', 'production'].includes(nodeEnv)) {
@@ -134,7 +129,6 @@ export function validateEnvironment(
     frontendOrigins,
     publicSiteUrl,
     publicSiteEmail,
-    publicSiteLocation,
     storageProvider: storageProvider as Environment['storageProvider'],
     storageBucket,
     storageEndpoint,

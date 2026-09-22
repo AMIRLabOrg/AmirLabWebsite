@@ -106,7 +106,7 @@ We look forward to your contribution to AmirLab's research activities and to the
   signerPhone: '+8801674791594',
   siteUrl: process.env.PUBLIC_SITE_URL ?? 'http://localhost:3000',
   siteEmail: process.env.PUBLIC_SITE_EMAIL ?? 'admin@example.test',
-  siteLocation: process.env.PUBLIC_SITE_LOCATION ?? 'Local development',
+  siteLocation: '',
 };
 
 export const DEFAULT_NOTIFICATION_POLICY: NotificationPolicy = {
@@ -253,7 +253,6 @@ export class SettingsService {
       ...DEFAULT_APPOINTMENT_LETTER_TEMPLATE,
       siteUrl: this.config.get('publicSiteUrl', { infer: true }),
       siteEmail: this.config.get('publicSiteEmail', { infer: true }),
-      siteLocation: this.config.get('publicSiteLocation', { infer: true }),
     };
   }
 

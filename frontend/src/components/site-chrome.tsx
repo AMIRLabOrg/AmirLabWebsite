@@ -11,8 +11,6 @@ const footerColumn =
   "grid justify-items-start gap-[.58rem] border-t border-line-strong pt-[.62rem]";
 const siteEmail = process.env.NEXT_PUBLIC_SITE_EMAIL ?? "admin@example.test";
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
-const siteLocation =
-  process.env.NEXT_PUBLIC_SITE_LOCATION ?? "Local development";
 
 export function SiteChrome({ children }: { children: ReactNode }) {
   const pathname = usePathname();
@@ -34,7 +32,7 @@ export function SiteChrome({ children }: { children: ReactNode }) {
                 <BrandLockup />
               </Link>
               <p className="m-0 font-mono text-[.62rem] leading-[1.65] text-ink-muted">
-                {siteLocation} · est. 2020
+                est. 2020
                 <br />
                 Non-profit academic consortium
               </p>
