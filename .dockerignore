@@ -1,9 +1,0 @@
-.git
-.next
-node_modules
-coverage
-backend/storage
-frontend/test-results
-frontend/playwright-report
-*.env
-*.env.local

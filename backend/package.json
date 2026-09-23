@@ -1,5 +1,6 @@
 {
   "name": "api",
+  "packageManager": "pnpm@10.34.5",
   "version": "0.0.1",
   "description": "",
   "author": "",

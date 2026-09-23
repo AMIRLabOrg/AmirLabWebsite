@@ -5,4 +5,4 @@ if (($# > 0)); then
   exec "$@"
 fi
 
-exec pnpm --filter api run start:prod
+exec pnpm run start:prod

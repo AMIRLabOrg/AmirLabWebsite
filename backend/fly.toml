@@ -1,10 +1,11 @@
+app = "amirlabwebsite"
 primary_region = "sin"
 
 [build]
-  dockerfile = "fly.api.Dockerfile"
+  dockerfile = "Dockerfile"
 
 [deploy]
-  release_command = "pnpm --filter api run db:push && pnpm --filter api run db:seed:if-empty"
+  release_command = "pnpm run db:push && pnpm run db:seed:if-empty"
   release_command_timeout = "10m"
 
 [env]

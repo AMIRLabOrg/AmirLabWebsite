@@ -54,7 +54,8 @@ suitable for this layout.
 ```bash
 sudo -u amirl git clone <REPOSITORY_URL> /opt/amirl
 cd /opt/amirl
-sudo -u amirl pnpm install --frozen-lockfile
+sudo -u amirl pnpm --dir /opt/amirl/backend install --frozen-lockfile
+sudo -u amirl pnpm --dir /opt/amirl/frontend install --frozen-lockfile
 sudo install -d -o root -g amirl -m 0750 /etc/amirl
 sudo install -o root -g amirl -m 0640 backend/deploy/api.env.example /etc/amirl/api.env
 sudoedit /etc/amirl/api.env
@@ -70,15 +71,15 @@ The Prisma commands need the service environment loaded in the shell:
 ```bash
 cd /opt/amirl
 set -a; . /etc/amirl/api.env; set +a
-sudo -u amirl --preserve-env=DATABASE_URL,UPLOAD_ROOT pnpm run db:push
+sudo -u amirl --preserve-env=DATABASE_URL,UPLOAD_ROOT pnpm --dir /opt/amirl/backend run db:push
 ```
 
 On an empty first install only, seed the database and create the administrator.
 Never run `db:rebuild` on production data because it resets the database:
 
 ```bash
-sudo -u amirl --preserve-env=DATABASE_URL,UPLOAD_ROOT pnpm run db:seed
-sudo -u amirl --preserve-env=DATABASE_URL pnpm --filter api run admin:create
+sudo -u amirl --preserve-env=DATABASE_URL,UPLOAD_ROOT pnpm --dir /opt/amirl/backend run db:seed
+sudo -u amirl --preserve-env=DATABASE_URL pnpm --dir /opt/amirl/backend run admin:create
 ```
 
 Before seeding production, also export `ADMIN_EMAIL`, `ADMIN_NAME`, and a
@@ -94,12 +95,12 @@ machines with limited memory from compiling both applications at once.
 
 ```bash
 cd /opt/amirl
-sudo -u amirl pnpm --filter api run build
+sudo -u amirl pnpm --dir /opt/amirl/backend run build
 sudo install -o root -g root -m 0644 backend/deploy/amirl-api.service /etc/systemd/system/amirl-api.service
 sudo systemctl daemon-reload
 sudo systemctl enable --now amirl-api.service
 curl --fail http://127.0.0.1:3001/api/health
-sudo -u amirl env NEXT_PUBLIC_API_URL=https://api.amirl.org/api pnpm --filter web run build
+sudo -u amirl env NEXT_PUBLIC_API_URL=https://api.amirl.org/api pnpm --dir /opt/amirl/frontend run build
 ```
 
 ## 5. Enable systemd and Caddy
@@ -132,13 +133,14 @@ and health-check it, then build the web app and restart both services:
 ```bash
 cd /opt/amirl
 sudo -u amirl git pull --ff-only
-sudo -u amirl pnpm install --frozen-lockfile
+sudo -u amirl pnpm --dir /opt/amirl/backend install --frozen-lockfile
+sudo -u amirl pnpm --dir /opt/amirl/frontend install --frozen-lockfile
 set -a; . /etc/amirl/api.env; set +a
-sudo -u amirl --preserve-env=DATABASE_URL,UPLOAD_ROOT pnpm run db:push
-sudo -u amirl pnpm --filter api run build
+sudo -u amirl --preserve-env=DATABASE_URL,UPLOAD_ROOT pnpm --dir /opt/amirl/backend run db:push
+sudo -u amirl pnpm --dir /opt/amirl/backend run build
 sudo systemctl restart amirl-api
 curl --fail http://127.0.0.1:3001/api/health
-sudo -u amirl env NEXT_PUBLIC_API_URL=https://api.amirl.org/api pnpm --filter web run build
+sudo -u amirl env NEXT_PUBLIC_API_URL=https://api.amirl.org/api pnpm --dir /opt/amirl/frontend run build
 sudo systemctl restart amirl-web
 ```
 

@@ -14,10 +14,11 @@ AMIRLab is a full-stack research-lab platform with a public website and a privat
 
 Requirements: Node.js 22+, pnpm 10+, and PostgreSQL binaries (`initdb`, `pg_ctl`, `psql`, `createdb`).
 
-Install the frontend and backend dependencies from the repository root:
+Install each application independently from the repository root:
 
 ```bash
-pnpm install
+pnpm --dir backend install
+pnpm --dir frontend install
 ```
 
 Configure local values in `backend/.env`, prepare the database, and start both applications. The root command starts the API first, waits for its health endpoint, and only then starts Next.js:
@@ -45,34 +46,25 @@ updates, and backups.
 
 ## Deploy to Fly.io
 
-Fly uses separate apps so the API and web process do not compete for startup or
-network resources. Deploy the API first; its release command applies the Prisma
-schema before the API machine becomes healthy. Then deploy the web app. Both
-apps use the domains and credentials supplied through the environment.
+Fly deploys the API only. The Fly app uses `backend/` as its working directory,
+where `fly.toml` and `Dockerfile` live. Keep `DATABASE_URL` as a Fly secret; it
+points to the externally hosted PostgreSQL database. Enable Fly auto-deploys
+from `main` in the app settings, or deploy manually from the repository root:
 
 ```bash
-fly apps create "$FLY_API_APP"
-fly apps create "$FLY_WEB_APP"
-fly volumes create amirlab_uploads --app "$FLY_API_APP" --region "$FLY_REGION" --size 10
-fly secrets set --app "$FLY_API_APP" \
-  DATABASE_URL="$DATABASE_URL" FRONTEND_ORIGINS="$FRONTEND_ORIGINS" \
-  SMTP_HOST="$SMTP_HOST" SMTP_PORT="$SMTP_PORT" \
-  SMTP_USER="$SMTP_USER" SMTP_PASSWORD="$SMTP_PASSWORD" \
-  SMTP_FROM="$SMTP_FROM" SMTP_SECURE="$SMTP_SECURE" \
-  SMTP_REQUIRE_TLS="$SMTP_REQUIRE_TLS" \
-  ADMIN_EMAIL="$ADMIN_EMAIL" ADMIN_NAME="$ADMIN_NAME" \
-  ADMIN_PASSWORD="$ADMIN_PASSWORD"
-fly deploy --config fly.api.toml --app "$FLY_API_APP"
-fly deploy --config fly.web.toml --app "$FLY_WEB_APP" \
-  --build-arg NEXT_PUBLIC_API_URL="$NEXT_PUBLIC_API_URL"
+fly deploy ./backend --app "$FLY_API_APP"
 ```
 
-The API entrypoint applies the schema, seeds an empty database from the
-supplied `ADMIN_*` and SMTP environment values, and then starts the API. It
-skips seeding once users exist. Do not put credentials in `fly.toml`, an env
-file committed to the repository, or a Docker build argument. The API volume
-is required because seeded and uploaded documents are stored under
-`UPLOAD_ROOT`.
+The Fly release command applies the Prisma schema and seeds an empty database
+from the supplied `ADMIN_*` and SMTP environment values. The machine entrypoint
+starts the API after release succeeds. Do not create a Fly Postgres app. Deploy
+the frontend separately to Vercel with Root Directory `frontend` and
+`NEXT_PUBLIC_API_URL=https://<your-fly-app>.fly.dev/api`. Set `DATABASE_URL`, `FRONTEND_ORIGINS`,
+`PUBLIC_SITE_URL`, `PUBLIC_SITE_EMAIL`, the `SMTP_*` values, and `ADMIN_EMAIL`,
+`ADMIN_NAME`, and `ADMIN_PASSWORD` as Fly secrets; add `STORAGE_*` secrets when
+using object storage. Do not put credentials in `fly.toml`, an env file
+committed to the repository, or a Docker build argument. The API volume is
+required because seeded and uploaded documents are stored under `UPLOAD_ROOT`.
 
 ## Workspace
 
@@ -80,11 +72,11 @@ is required because seeded and uploaded documents are stored under
 - `backend` — NestJS API, Prisma schema, and PostgreSQL tooling
 - `verification` — contracts that span both applications
 
-The repository uses a pnpm workspace with one root lockfile. Add dependencies to the package that uses them:
+Backend and frontend are independent pnpm projects with separate lockfiles and install directories. Add dependencies from the owning project:
 
 ```bash
-pnpm --filter web add <package>
-pnpm --filter api add <package>
+pnpm --dir frontend add <package>
+pnpm --dir backend add <package>
 ```
 
 ## Verify

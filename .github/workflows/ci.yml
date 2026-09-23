@@ -20,15 +20,11 @@ jobs:
               - 'backend/**'
               - 'verification/**'
               - 'package.json'
-              - 'pnpm-lock.yaml'
-              - 'pnpm-workspace.yaml'
               - '.github/workflows/ci.yml'
             frontend:
               - 'frontend/**'
               - 'verification/**'
               - 'package.json'
-              - 'pnpm-lock.yaml'
-              - 'pnpm-workspace.yaml'
               - '.github/workflows/ci.yml'
 
   architecture:
@@ -37,21 +33,19 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-        with:
-          version: 10.34.5
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: pnpm
-          cache-dependency-path: pnpm-lock.yaml
-      - run: pnpm install --frozen-lockfile
-      - run: pnpm run verify:architecture
+      - run: node verification/verify-bulk-reviews.mjs
+      - run: node verification/verify-profile-entry-labels.mjs
 
   backend:
     needs: changes
     if: ${{ needs.changes.outputs.backend == 'true' }}
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -61,20 +55,23 @@ jobs:
         with:
           node-version: 22
           cache: pnpm
-          cache-dependency-path: pnpm-lock.yaml
+          cache-dependency-path: backend/pnpm-lock.yaml
       - run: pnpm install --frozen-lockfile
-      - run: pnpm --filter api run lint
-      - run: pnpm --filter api run typecheck
-      - run: pnpm --filter api run verify:safety
-      - run: pnpm --filter api run verify:api-boundary
-      - run: pnpm --filter api run verify:recovery-research
-      - run: pnpm --filter api run test --runInBand
-      - run: pnpm --filter api run build
+      - run: pnpm run lint
+      - run: pnpm run typecheck
+      - run: pnpm run verify:safety
+      - run: pnpm run verify:api-boundary
+      - run: pnpm run verify:recovery-research
+      - run: pnpm run test --runInBand
+      - run: pnpm run build
 
   frontend:
     needs: changes
     if: ${{ needs.changes.outputs.frontend == 'true' }}
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
     env:
       NEXT_PUBLIC_API_URL: https://api.example.test/api
       NEXT_PUBLIC_SITE_URL: https://example.test
@@ -88,11 +85,11 @@ jobs:
         with:
           node-version: 22
           cache: pnpm
-          cache-dependency-path: pnpm-lock.yaml
+          cache-dependency-path: frontend/pnpm-lock.yaml
       - run: pnpm install --frozen-lockfile
-      - run: pnpm --filter web run lint
-      - run: pnpm --filter web run typecheck
-      - run: pnpm --filter web run test
-      - run: pnpm --filter web run verify
-      - run: pnpm --filter web run verify:safety
-      - run: pnpm --filter web run build
+      - run: pnpm run lint
+      - run: pnpm run typecheck
+      - run: pnpm run test
+      - run: pnpm run verify
+      - run: pnpm run verify:safety
+      - run: pnpm run build

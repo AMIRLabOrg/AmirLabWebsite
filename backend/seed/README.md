@@ -34,11 +34,11 @@ no setup token. Setup, password-reset, session, CSRF, and invitation tokens are
 created only by their live flows using cryptographically random values, stored
 as hashes, and delivered only when the corresponding action is requested.
 
-For an empty production database, load the API environment and run the seed
-once:
+For an empty production database, load the API environment, change to the
+`backend/` directory, and run the seed once:
 
 ```bash
-pnpm --filter api run db:seed
+pnpm run db:seed
 ```
 
 Do not put raw tokens or admin passwords in the seed JSON or commit them to the

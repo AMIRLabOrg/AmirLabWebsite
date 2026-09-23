@@ -10,12 +10,12 @@ cleanup() {
 }
 trap cleanup EXIT INT TERM
 
-pnpm --filter api run dev &
+pnpm --dir backend run dev &
 api_pid=$!
 
 for attempt in {1..60}; do
   if curl --silent --fail http://127.0.0.1:3001/api/health >/dev/null; then
-    exec pnpm --filter web run dev
+    exec pnpm --dir frontend run dev
   fi
   if ! kill -0 "$api_pid" 2>/dev/null; then
     wait "$api_pid"

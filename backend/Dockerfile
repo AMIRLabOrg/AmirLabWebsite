@@ -4,15 +4,13 @@ WORKDIR /app
 RUN corepack enable
 
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
-COPY backend/package.json backend/package.json
-COPY backend/prisma backend/prisma
-COPY backend/prisma.config.ts backend/prisma.config.ts
-COPY frontend/package.json frontend/package.json
+COPY prisma prisma
+COPY prisma.config.ts ./
 RUN pnpm install --frozen-lockfile
 
-COPY backend backend
-RUN pnpm --filter api run build
-COPY fly.api.entrypoint.sh /usr/local/bin/fly-api-entrypoint
+COPY . .
+RUN pnpm run build
+COPY fly-entrypoint.sh /usr/local/bin/fly-api-entrypoint
 RUN chmod +x /usr/local/bin/fly-api-entrypoint
 
 ENV NODE_ENV=production
