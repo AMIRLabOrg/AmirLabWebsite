@@ -7,7 +7,7 @@ jest.mock('../../generated/prisma/client', () => ({
   ProjectStatus: { ACTIVE: 'ACTIVE' },
   ProjectTaskStatus: { BLOCKED: 'BLOCKED', DONE: 'DONE' },
   ResearchItemType: { DATASET: 'DATASET', PAPER: 'PAPER' },
-  ReviewStatus: { PUBLISHED: 'PUBLISHED' },
+  ReviewStatus: { ARCHIVED: 'ARCHIVED', PUBLISHED: 'PUBLISHED' },
 }));
 
 import { AccountStatus, PlatformRole } from '../../generated/prisma/client';
@@ -94,6 +94,7 @@ describe('WorkspaceService overview', () => {
     expect(prisma.project.findMany).toHaveBeenCalledWith(
       expect.objectContaining({
         where: {
+          researchItem: { is: { reviewStatus: { not: 'ARCHIVED' } } },
           memberships: {
             some: { personId: 'person-id', status: 'ACTIVE' },
           },
@@ -135,12 +136,20 @@ describe('WorkspaceService overview', () => {
     });
 
     expect(prisma.project.findMany).toHaveBeenCalledWith(
-      expect.objectContaining({ where: {} }),
+      expect.objectContaining({
+        where: {
+          researchItem: { is: { reviewStatus: { not: 'ARCHIVED' } } },
+        },
+      }),
     );
     expect(prisma.projectTask.findMany).toHaveBeenCalledTimes(1);
     expect(prisma.projectTask.findMany).toHaveBeenCalledWith({
       select: { completedAt: true, dueAt: true, status: true },
-      where: { project: {} },
+      where: {
+        project: {
+          researchItem: { is: { reviewStatus: { not: 'ARCHIVED' } } },
+        },
+      },
     });
     expect(prisma.researchItem.count).toHaveBeenCalledWith({
       where: {

@@ -95,6 +95,7 @@ describe('WeeklyReportsService', () => {
     expect(prisma.project.findMany).toHaveBeenCalledWith(
       expect.objectContaining({
         where: {
+          researchItem: { is: { reviewStatus: { not: 'ARCHIVED' } } },
           memberships: {
             some: { personId: member.person.id, status: 'ACTIVE' },
           },

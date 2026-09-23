@@ -12,6 +12,7 @@ import {
 import {
   ArrowLeft,
   ArrowUpRight,
+  Archive,
   Plus,
   Save,
   Send,
@@ -396,16 +397,19 @@ export function ProjectManager({ id }: { id: string }) {
       {archived ? (
         <section
           aria-label="Archived project notice"
-          className="mb-4 flex items-center justify-between gap-4 border border-[#d7a437] border-l-4 bg-[#fff5d6] px-4 py-3 text-[#513b00] max-[640px]:items-start max-[640px]:flex-col"
+          className="mb-4 flex min-h-20 items-center justify-between gap-5 border border-[#9a6500] border-l-[7px] bg-[#f3c64e] px-5 py-4 text-[#211800] shadow-[0_2px_0_rgba(33,24,0,.12)] max-[640px]:items-start max-[640px]:flex-col"
           role="status"
         >
-          <div>
-            <strong className="block font-semibold">
-              Archived · Read only
-            </strong>
-            <span className="text-[.78rem]">
-              This project is locked. Unarchive it to make changes.
-            </span>
+          <div className="flex items-start gap-3">
+            <Archive aria-hidden="true" className="mt-0.5 shrink-0" size={19} />
+            <div>
+              <strong className="block text-[.91rem] font-bold tracking-[.01em]">
+                This project is archived
+              </strong>
+              <span className="text-[.78rem]">
+                This project is locked. Unarchive it to make changes.
+              </span>
+            </div>
           </div>
           <ButtonControl
             disabled={busyAction === "unarchive"}
