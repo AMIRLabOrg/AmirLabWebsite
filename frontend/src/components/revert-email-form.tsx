@@ -106,7 +106,7 @@ export function RevertEmailForm() {
           type="button"
           variant="primary"
         >
-          {saving ? "Reverting…" : "Revert email change"}
+          Revert email change
         </ButtonControl>
       </div>
     </div>

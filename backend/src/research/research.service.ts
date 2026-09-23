@@ -611,7 +611,9 @@ export class ResearchService {
       throw new BadRequestException('A publish-now override requires a reason');
     }
     const publishesDirectly =
-      dto.publishNow === true || (!staff && mode === 'AUTOMATIC');
+      user.role === PlatformRole.ADMIN ||
+      dto.publishNow === true ||
+      (!staff && mode === 'AUTOMATIC');
     const item = await this.prisma.$transaction(async (transaction) => {
       const created = await transaction.researchItem.create({
         data: {
@@ -700,7 +702,12 @@ export class ResearchService {
       });
     }
     await this.discovery.enqueue(item.id, canonicalUrl);
-    return item;
+    return {
+      ...item,
+      outcome: publishesDirectly
+        ? ('APPLIED' as const)
+        : ('QUEUED_FOR_REVIEW' as const),
+    };
   }
 
   async rediscover(id: string) {

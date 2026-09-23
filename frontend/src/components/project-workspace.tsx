@@ -17,7 +17,6 @@ import {
   Send,
   Trash2,
 } from "lucide-react";
-import { useAuth } from "@/components/auth-provider";
 import { useNotifications } from "@/components/notification-provider";
 import { ButtonControl } from "@/components/ui/button-control";
 import { CheckboxControl } from "@/components/ui/checkbox-control";
@@ -42,6 +41,7 @@ interface WorkspaceProject {
     slug: string;
     title: string | null;
     summary: string | null;
+    reviewStatus: string;
     projectOutputs: Array<{
       output: { id: string; title: string | null; type: string };
     }>;
@@ -89,7 +89,12 @@ interface WorkspaceProject {
     access: string;
   }>;
   resources: Array<{ id: string; label: string; kind: string; url: string }>;
-  changeRequests: Array<{ id: string; kind: string; status: string }>;
+  changeRequests: Array<{
+    id: string;
+    kind: string;
+    status: string;
+    submittedAt: string;
+  }>;
 }
 
 interface LinkablePerson {
@@ -169,7 +174,9 @@ export function ProjectIndex() {
                     data-placeholder={loading ? "label" : undefined}
                     data-placeholder-width="medium"
                   >
-                    {project.status?.replaceAll("_", " ") ?? "Project"}
+                    {project.researchItem.reviewStatus === "ARCHIVED"
+                      ? "ARCHIVED"
+                      : (project.status?.replaceAll("_", " ") ?? "Project")}
                   </span>
                   <h2
                     className={cn(
@@ -291,24 +298,26 @@ const taskPriorityOptions = [
 ];
 
 export function ProjectManager({ id }: { id: string }) {
-  const { user } = useAuth();
   const { showToast } = useNotifications();
   const [project, setProject] = useState<WorkspaceProject | null>(null);
   const [tab, setTab] = useState<Tab>("overview");
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [busyAction, setBusyAction] = useState<string>();
-  const [publishNow, setPublishNow] = useState(false);
-  const [overrideReason, setOverrideReason] = useState(
-    "Administrator explicitly published this project workspace change.",
-  );
   const load = useCallback(
     () =>
       apiRequest<WorkspaceProject>(`/projects/${id}/workspace`, {
         method: "GET",
       })
-        .then(setProject)
-        .catch((value: Error) => setError(value.message)),
+        .then((nextProject) => {
+          setProject(nextProject);
+          setError("");
+          return true;
+        })
+        .catch((value: Error) => {
+          setError(value.message);
+          return false;
+        }),
     [id],
   );
   useEffect(() => {
@@ -327,25 +336,50 @@ export function ProjectManager({ id }: { id: string }) {
     setBusyAction(action);
     setError("");
     setMessage("");
+    let mutationApplied = false;
     try {
-      const result = await apiRequest<{ status?: string }>(path, {
+      const result = await apiRequest<{
+        outcome?: "APPLIED" | "QUEUED_FOR_REVIEW";
+        direct?: boolean;
+        status?: string;
+      }>(path, {
         method,
         headers: { "content-type": "application/json" },
         body: JSON.stringify(body),
       });
+      mutationApplied = true;
       const nextMessage =
-        result?.status === "NEEDS_REVIEW"
+        result?.outcome === "QUEUED_FOR_REVIEW" ||
+        (result?.outcome === undefined &&
+          (result?.direct === false || result?.status === "NEEDS_REVIEW"))
           ? "Saved as a review request."
           : "Changes saved.";
+      const refreshed = await load();
+      if (!refreshed) {
+        const refreshMessage =
+          "Changes were saved, but the project could not be refreshed.";
+        setMessage(refreshMessage);
+        showToast({
+          body: refreshMessage,
+          title: "Project saved, refresh failed",
+          tone: "error",
+        });
+        return;
+      }
       setMessage(nextMessage);
       showToast({ body: nextMessage, title: "Project updated" });
-      await load();
     } catch (value) {
-      const message = value instanceof Error ? value.message : "Unable to save";
+      const message = mutationApplied
+        ? "Changes were saved, but the project could not be refreshed."
+        : value instanceof Error
+          ? value.message
+          : "Unable to save";
       setError(message);
       showToast({
         body: message,
-        title: "Project was not saved",
+        title: mutationApplied
+          ? "Project saved, refresh failed"
+          : "Project was not saved",
         tone: "error",
       });
     } finally {
@@ -354,13 +388,36 @@ export function ProjectManager({ id }: { id: string }) {
   }
   const loadingProject = !project;
   const currentProject = project ?? emptyProject(id);
+  const archived = currentProject.researchItem.reviewStatus === "ARCHIVED";
   const deadlines = projectDeadlineSummary(currentProject);
-  const override =
-    user?.role === "ADMIN" && publishNow
-      ? { publishNow: true, overrideReason }
-      : {};
+
   return (
     <div className="grid min-w-0" data-loading={loadingProject || undefined}>
+      {archived ? (
+        <section
+          aria-label="Archived project notice"
+          className="mb-4 flex items-center justify-between gap-4 border border-[#d7a437] border-l-4 bg-[#fff5d6] px-4 py-3 text-[#513b00] max-[640px]:items-start max-[640px]:flex-col"
+          role="status"
+        >
+          <div>
+            <strong className="block font-semibold">
+              Archived · Read only
+            </strong>
+            <span className="text-[.78rem]">
+              This project is locked. Unarchive it to make changes.
+            </span>
+          </div>
+          <ButtonControl
+            disabled={busyAction === "unarchive"}
+            onClick={() =>
+              submit("unarchive", `/projects/${id}/unarchive`, "POST", {})
+            }
+            variant="primary"
+          >
+            Unarchive project
+          </ButtonControl>
+        </section>
+      ) : null}
       <div className="flex items-center justify-between gap-4 border-b border-line pb-6 max-[640px]:items-start max-[640px]:flex-col">
         <Link
           className="inline-flex items-center gap-[.4rem] justify-self-start text-[.78rem] font-bold text-ink-muted hover:text-brand"
@@ -380,7 +437,10 @@ export function ProjectManager({ id }: { id: string }) {
       <header className="flex items-end justify-between gap-8 border-b border-line py-4 pb-[1.15rem] max-[640px]:items-start max-[640px]:flex-col max-[640px]:gap-4">
         <div className="min-w-0">
           <p className="mb-[.42rem] font-mono text-[.61rem] font-semibold tracking-[.11em] text-brand uppercase">
-            {currentProject.status?.replaceAll("_", " ") ?? "Project workspace"}
+            {currentProject.researchItem.reviewStatus === "ARCHIVED"
+              ? "ARCHIVED"
+              : (currentProject.status?.replaceAll("_", " ") ??
+                "Project workspace")}
           </p>
           <h1
             className={cn(
@@ -484,32 +544,7 @@ export function ProjectManager({ id }: { id: string }) {
           Open timeline <ArrowUpRight size={14} />
         </button>
       </div>
-      {user?.role === "ADMIN" ? (
-        <div className="mt-4 grid grid-cols-[minmax(240px,.75fr)_minmax(260px,1fr)] items-end gap-4 rounded-[3px] border border-[color-mix(in_srgb,var(--brand)_18%,var(--line))] bg-brand-soft p-4 max-[900px]:grid-cols-1">
-          <div>
-            <p className="mb-[.42rem] font-mono text-[.61rem] font-semibold tracking-[.11em] text-brand uppercase">
-              Admin review override
-            </p>
-            <CheckboxControl
-              checked={publishNow}
-              id="publish-now"
-              onCheckedChange={setPublishNow}
-            >
-              Publish this change immediately
-            </CheckboxControl>
-          </div>
-          {publishNow ? (
-            <label className="grid min-w-0 gap-[.35rem] text-[.64rem] font-semibold">
-              Reason
-              <InputControl
-                aria-label="Publish override reason"
-                value={overrideReason}
-                onChange={(event) => setOverrideReason(event.target.value)}
-              />
-            </label>
-          ) : null}
-        </div>
-      ) : null}
+
       <nav className="flex gap-6 overflow-x-auto border-b border-line">
         {(
           [
@@ -641,104 +676,103 @@ export function ProjectManager({ id }: { id: string }) {
           </dl>
         </aside>
         <main>
-          {tab === "overview" ? (
-            <Overview loading={loadingProject} project={currentProject} />
-          ) : null}
-          {!loadingProject && tab === "tasks" ? (
-            <Tasks
-              project={currentProject}
-              busy={busyAction === "tasks"}
-              create={(body) =>
-                submit("tasks", `/projects/${id}/tasks`, "POST", body)
-              }
-              update={(taskId, body) =>
-                submit(
-                  "tasks",
-                  `/projects/${id}/tasks/${taskId}`,
-                  "PATCH",
-                  body,
-                )
-              }
-              remove={(taskId) =>
-                submit(
-                  "tasks",
-                  `/projects/${id}/tasks/${taskId}`,
-                  "DELETE",
-                  undefined,
-                )
-              }
-            />
-          ) : null}
-          {!loadingProject && tab === "timeline" ? (
-            <Timeline
-              project={currentProject}
-              weight={weight}
-              busy={busyAction === "timeline"}
-              save={(milestones) =>
-                submit("timeline", `/projects/${id}/milestones`, "PUT", {
-                  milestones,
-                  ...override,
-                })
-              }
-            />
-          ) : null}
-          {!loadingProject && tab === "updates" ? (
-            <Updates
-              project={currentProject}
-              busy={busyAction === "updates"}
-              save={(body) =>
-                submit("updates", `/projects/${id}/updates`, "POST", {
-                  ...body,
-                  ...override,
-                })
-              }
-            />
-          ) : null}
-          {!loadingProject && tab === "people" ? (
-            <People
-              project={currentProject}
-              busy={busyAction === "people"}
-              save={(body) =>
-                submit("people", `/projects/${id}/invitations`, "POST", {
-                  ...body,
-                  ...override,
-                })
-              }
-            />
-          ) : null}
-          {!loadingProject && tab === "outputs" ? (
-            <Outputs
-              project={currentProject}
-              busy={busyAction === "output"}
-              output={(body) =>
-                submit("output", `/projects/${id}/outputs`, "POST", {
-                  ...body,
-                  ...override,
-                })
-              }
-              resource={(body) =>
-                submit("resource", `/projects/${id}/resources`, "POST", {
-                  ...body,
-                  ...override,
-                })
-              }
-            />
-          ) : null}
-          {!loadingProject && tab === "settings" ? (
-            <Settings
-              project={currentProject}
-              busy={busyAction === "settings" || busyAction === "archive"}
-              save={(body) =>
-                submit("settings", `/projects/${id}`, "PATCH", {
-                  ...body,
-                  ...override,
-                })
-              }
-              archive={() =>
-                submit("archive", `/projects/${id}/archive`, "POST", override)
-              }
-            />
-          ) : null}
+          <fieldset className="contents border-0 p-0" disabled={archived}>
+            <legend className="sr-only">
+              {archived ? "Archived project, read only" : "Project workspace"}
+            </legend>
+            {tab === "overview" ? (
+              <Overview loading={loadingProject} project={currentProject} />
+            ) : null}
+            {!loadingProject && tab === "tasks" ? (
+              <Tasks
+                project={currentProject}
+                busy={busyAction === "tasks"}
+                create={(body) =>
+                  submit("tasks", `/projects/${id}/tasks`, "POST", body)
+                }
+                update={(taskId, body) =>
+                  submit(
+                    "tasks",
+                    `/projects/${id}/tasks/${taskId}`,
+                    "PATCH",
+                    body,
+                  )
+                }
+                remove={(taskId) =>
+                  submit(
+                    "tasks",
+                    `/projects/${id}/tasks/${taskId}`,
+                    "DELETE",
+                    undefined,
+                  )
+                }
+              />
+            ) : null}
+            {!loadingProject && tab === "timeline" ? (
+              <Timeline
+                project={currentProject}
+                weight={weight}
+                busy={busyAction === "timeline"}
+                save={(milestones) =>
+                  submit("timeline", `/projects/${id}/milestones`, "PUT", {
+                    milestones,
+                  })
+                }
+              />
+            ) : null}
+            {!loadingProject && tab === "updates" ? (
+              <Updates
+                project={currentProject}
+                busy={busyAction === "updates"}
+                save={(body) =>
+                  submit("updates", `/projects/${id}/updates`, "POST", {
+                    ...body,
+                  })
+                }
+              />
+            ) : null}
+            {!loadingProject && tab === "people" ? (
+              <People
+                project={currentProject}
+                busy={busyAction === "people"}
+                save={(body) =>
+                  submit("people", `/projects/${id}/invitations`, "POST", {
+                    ...body,
+                  })
+                }
+              />
+            ) : null}
+            {!loadingProject && tab === "outputs" ? (
+              <Outputs
+                project={currentProject}
+                busy={busyAction === "output"}
+                output={(body) =>
+                  submit("output", `/projects/${id}/outputs`, "POST", {
+                    ...body,
+                  })
+                }
+                resource={(body) =>
+                  submit("resource", `/projects/${id}/resources`, "POST", {
+                    ...body,
+                  })
+                }
+              />
+            ) : null}
+            {!loadingProject && tab === "settings" ? (
+              <Settings
+                project={currentProject}
+                busy={busyAction === "settings" || busyAction === "archive"}
+                save={(body) =>
+                  submit("settings", `/projects/${id}`, "PATCH", {
+                    ...body,
+                  })
+                }
+                archive={() =>
+                  submit("archive", `/projects/${id}/archive`, "POST", {})
+                }
+              />
+            ) : null}
+          </fieldset>
         </main>
       </div>
     </div>
@@ -796,6 +830,33 @@ function Overview({
           </p>
         </div>
       </div>
+      {project.changeRequests.length > 0 ? (
+        <section aria-label="Pending project changes" className="grid gap-3">
+          <header className="flex items-end justify-between gap-4">
+            <p className="mb-[.42rem] font-mono text-[.61rem] font-semibold tracking-[.11em] text-brand uppercase">
+              Review queue
+            </p>
+            <h2 className="mt-[.4rem] mb-0 font-serif text-[clamp(1.3rem,2.5vw,1.8rem)] font-normal">
+              Pending review
+            </h2>
+          </header>
+          <ul className="m-0 grid list-none border-t border-line p-0">
+            {project.changeRequests.map((request) => (
+              <li
+                className="flex items-center justify-between gap-4 border-b border-line py-3"
+                key={request.id}
+              >
+                <span className="text-[.75rem] font-medium">
+                  {request.kind.replaceAll("_", " ").toLowerCase()}
+                </span>
+                <span className="font-mono text-[.58rem] text-ink-muted">
+                  Submitted {new Date(request.submittedAt).toLocaleDateString()}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
       <header className="flex items-end justify-between gap-4">
         <p className="mb-[.42rem] font-mono text-[.61rem] font-semibold tracking-[.11em] text-brand uppercase">
           Scope
@@ -953,7 +1014,7 @@ function Tasks({
           type="submit"
           variant="primary"
         >
-          <Plus size={15} /> {busy ? "Adding…" : "Add task"}
+          <Plus size={15} /> Add task
         </ButtonControl>
       </form>
       <div className="grid border-t border-line">
@@ -1178,7 +1239,7 @@ function Timeline({
         onClick={() => save(items)}
         variant="primary"
       >
-        <Save size={15} /> {busy ? "Saving…" : "Save milestones"}
+        <Save size={15} /> Save milestones
       </ButtonControl>
     </div>
   );
@@ -1222,7 +1283,7 @@ function Updates({
             loading={busy}
             onClick={() => save({ title, body, status: "DRAFT" })}
           >
-            {busy ? "Saving…" : "Save draft"}
+            Save draft
           </ButtonControl>
           <ButtonControl
             disabled={busy}
@@ -1230,7 +1291,7 @@ function Updates({
             onClick={() => save({ title, body, status: "PUBLISHED" })}
             variant="primary"
           >
-            {busy ? "Publishing…" : "Publish"} <Send size={14} />
+            Publish <Send size={14} />
           </ButtonControl>
         </div>
       </div>
@@ -1358,7 +1419,7 @@ function People({
           loading={busy}
           type="submit"
         >
-          {busy ? "Adding…" : "Add member"}
+          Add member
         </ButtonControl>
       </form>
     </div>
@@ -1489,7 +1550,7 @@ function Outputs({
           loading={busy}
           type="submit"
         >
-          {busy ? "Linking…" : "Link output"}
+          Link output
         </ButtonControl>
       </form>
       <form
@@ -1522,7 +1583,7 @@ function Outputs({
           type="submit"
           variant="primary"
         >
-          {busy ? "Adding…" : "Add resource"}
+          Add resource
         </ButtonControl>
       </form>
     </div>
@@ -1584,7 +1645,7 @@ function Settings({
           />
         </label>
         <label className="grid gap-[.35rem] text-[.64rem] font-semibold">
-          Status
+          Schedule status
           <SelectControl
             ariaLabel="Project status"
             onValueChange={setStatus}
@@ -1622,17 +1683,20 @@ function Settings({
           <Save size={15} /> Save settings
         </ButtonControl>
       </form>
-      <div className="flex items-center justify-between rounded-[3px] border border-[#efcccc] bg-danger-soft p-4 max-[640px]:items-stretch max-[640px]:flex-col max-[640px]:gap-3">
-        <div>
-          <strong>Archive project</strong>
-          <p className="m-0 text-[.75rem] leading-[1.55] text-ink-muted">
-            Remove it from active listings while retaining its verified record.
-          </p>
+      {project.researchItem.reviewStatus !== "ARCHIVED" ? (
+        <div className="flex items-center justify-between rounded-[3px] border border-[#efcccc] bg-danger-soft p-4 max-[640px]:items-stretch max-[640px]:flex-col max-[640px]:gap-3">
+          <div>
+            <strong>Archive project</strong>
+            <p className="m-0 text-[.75rem] leading-[1.55] text-ink-muted">
+              Remove it from active listings while retaining its verified
+              record.
+            </p>
+          </div>
+          <ButtonControl disabled={busy} onClick={archive} variant="danger">
+            Archive
+          </ButtonControl>
         </div>
-        <ButtonControl disabled={busy} onClick={archive} variant="danger">
-          Archive
-        </ButtonControl>
-      </div>
+      ) : null}
     </div>
   );
 }
@@ -1678,6 +1742,7 @@ function emptyProject(id: string): WorkspaceProject {
     researchItem: {
       id,
       projectOutputs: [],
+      reviewStatus: "DRAFT",
       slug: "",
       summary: null,
       title: null,

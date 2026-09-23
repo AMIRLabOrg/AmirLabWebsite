@@ -290,13 +290,10 @@ export function ProfileEditor({ userId }: ProfileEditorProps) {
       body.set("removeAvatar", String(removeAvatar));
       if (avatar) body.set("avatar", avatar);
     }
-    if (!userId && user?.role === "ADMIN") {
-      body.set("publishNow", "true");
-      body.set("overrideReason", "Administrator edited own profile.");
-    }
-
     const endpoint = userId ? `/users/${userId}/profile` : "/profile/me";
 
+    let accountUpdated = false;
+    let profileSubmitted = false;
     try {
       if (userId) {
         await apiRequest(`/users/${userId}`, {
@@ -309,11 +306,16 @@ export function ProfileEditor({ userId }: ProfileEditorProps) {
           headers: { "content-type": "application/json" },
           method: "PATCH",
         });
+        accountUpdated = true;
       }
       const result = await apiRequest<
-        { direct: true } | Omit<ProfileEditRequest, "person">
+        | { outcome: "APPLIED"; direct: true }
+        | (Omit<ProfileEditRequest, "person"> & {
+            outcome: "QUEUED_FOR_REVIEW";
+          })
       >(endpoint, { body, method: "POST" });
-      if ("direct" in result) {
+      profileSubmitted = true;
+      if (result.outcome === "APPLIED") {
         const fetchEndpoint = userId
           ? `/users/${userId}/profile`
           : "/profile/me";
@@ -338,12 +340,32 @@ export function ProfileEditor({ userId }: ProfileEditorProps) {
       }
       setAvatar(undefined);
     } catch (error) {
-      const message =
-        error instanceof Error ? error.message : "Unable to submit profile.";
+      if (accountUpdated && !profileSubmitted && userId) {
+        try {
+          const current = await apiRequest<MyProfile>(
+            `/users/${userId}/profile`,
+            { method: "GET" },
+          );
+          setRecord(current);
+        } catch {
+          // Keep the form values; the account update already succeeded.
+        }
+      }
+      const message = profileSubmitted
+        ? "Profile changes were saved, but the current profile could not be refreshed."
+        : accountUpdated
+          ? "Account details were updated, but profile changes were not saved."
+          : error instanceof Error
+            ? error.message
+            : "Unable to submit profile.";
       setMessage(message);
       showToast({
         body: message,
-        title: "Profile was not saved",
+        title: profileSubmitted
+          ? "Profile saved, refresh failed"
+          : accountUpdated
+            ? "Profile was only partly saved"
+            : "Profile was not saved",
         tone: "error",
       });
     } finally {
@@ -417,11 +439,9 @@ export function ProfileEditor({ userId }: ProfileEditorProps) {
           type="submit"
           variant="primary"
         >
-          {saving
-            ? "Saving…"
-            : userId || user?.role === "ADMIN"
-              ? "Save and publish"
-              : "Submit for review"}
+          {userId || user?.role === "ADMIN"
+            ? "Save and publish"
+            : "Submit for review"}
         </ButtonControl>
       </header>
       {!moderatorProfile ? (

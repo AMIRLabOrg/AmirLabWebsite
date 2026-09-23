@@ -47,8 +47,12 @@ export function ProjectReviewQueue() {
         setItems(nextItems);
         reviewIssues.clear();
         setError("");
+        return true;
       })
-      .catch((value: Error) => setError(value.message))
+      .catch((value: Error) => {
+        setError(value.message);
+        return false;
+      })
       .finally(() => setLoading(false));
   }
 
@@ -90,7 +94,11 @@ export function ProjectReviewQueue() {
       headers: { "content-type": "application/json" },
       method: "POST",
     });
-    await load();
+    if (!(await load())) {
+      setError(
+        "The review decision was saved, but the queue could not refresh.",
+      );
+    }
     void refreshUnreadCount().catch(() => undefined);
   }
 
@@ -171,7 +179,11 @@ export function ProjectReviewQueue() {
       method: "POST",
     });
     bulk.clear();
-    await load();
+    if (!(await load())) {
+      setError(
+        "The review decisions were saved, but the queue could not refresh.",
+      );
+    }
     void refreshUnreadCount().catch(() => undefined);
   }
 

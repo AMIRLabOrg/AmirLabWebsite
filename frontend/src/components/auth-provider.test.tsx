@@ -26,7 +26,7 @@ describe("AuthProvider", () => {
     vi.useRealTimers();
   });
 
-  it("keeps checking until a temporarily unavailable API is ready", async () => {
+  it("clears loading and keeps retrying until a temporarily unavailable API is ready", async () => {
     request
       .mockRejectedValueOnce(
         new ApiRequestError("Unable to reach the server", 0),
@@ -52,7 +52,7 @@ describe("AuthProvider", () => {
     );
 
     await act(async () => vi.advanceTimersByTimeAsync(7_000));
-    expect(screen.getByText("loading")).toBeTruthy();
+    expect(screen.getByText("guest")).toBeTruthy();
 
     await act(async () => vi.advanceTimersByTimeAsync(8_000));
     expect(screen.getByText("admin@amirl.org")).toBeTruthy();

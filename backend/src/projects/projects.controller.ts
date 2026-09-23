@@ -157,6 +157,14 @@ export class ProjectsController {
   ) {
     return this.projects.archive(id, body, user);
   }
+
+  @Post(':id/unarchive')
+  unarchive(
+    @Param('id', ParseUUIDPipe) id: string,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    return this.projects.unarchive(id, user);
+  }
 }
 
 @Controller('project-change-reviews')

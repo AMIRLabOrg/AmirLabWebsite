@@ -34,7 +34,13 @@ function rememberCsrfToken(session: AuthSession): void {
 }
 
 function isUnauthorized(error: unknown): boolean {
-  return error instanceof ApiRequestError && error.status === 401;
+  return (
+    (error instanceof ApiRequestError && error.status === 401) ||
+    (error !== null &&
+      typeof error === "object" &&
+      "status" in error &&
+      error.status === 401)
+  );
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -83,12 +89,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         })
         .catch((caught) => {
           if (!active) return;
-          if (isUnauthorized(caught)) {
-            sessionStorage.removeItem("amirl_csrf");
-            setUser(null);
-            setLoading(false);
-            return;
-          }
+          const unauthorized = isUnauthorized(caught);
+          if (unauthorized) sessionStorage.removeItem("amirl_csrf");
+          setUser(null);
+          setLoading(false);
+          if (unauthorized) return;
           const delay = Math.min(1_000 * 2 ** Math.min(attempts - 1, 3), 8_000);
           retry = window.setTimeout(loadSession, delay);
         });

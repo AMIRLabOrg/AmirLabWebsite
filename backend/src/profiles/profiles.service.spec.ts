@@ -38,6 +38,116 @@ async function createProfilesService({
 }
 
 describe('ProfilesService review', () => {
+  it('publishes administrator profile edits immediately under manual policy', async () => {
+    const transaction = {
+      auditRecord: { create: jest.fn().mockResolvedValue({}) },
+      person: { update: jest.fn().mockResolvedValue({}) },
+      profileEditRequest: {
+        deleteMany: jest.fn().mockResolvedValue({ count: 0 }),
+      },
+    };
+    const prisma = {
+      $transaction: jest.fn(
+        (callback: (client: typeof transaction) => Promise<void>) =>
+          callback(transaction),
+      ),
+      person: {
+        findUnique: jest.fn().mockResolvedValue({
+          avatarId: null,
+          id: 'admin-person-id',
+          profileEditRequest: null,
+          userId: 'admin-id',
+        }),
+      },
+    };
+    const service = await createProfilesService({
+      assets: { remove: jest.fn() },
+      notifications: { notifyReviewers: jest.fn() },
+      prisma,
+      profileSync: { normalizePublishedOutputsForPeople: jest.fn() },
+      settings: {
+        verification: jest.fn().mockResolvedValue({ profileEdit: 'MANUAL' }),
+      },
+    });
+
+    const result = await service.submit(
+      { profile: JSON.stringify({ fullName: 'Updated Admin' }) },
+      {
+        email: 'admin@example.org',
+        id: 'admin-id',
+        person: {
+          avatar: null,
+          fullName: 'Admin User',
+          id: 'admin-person-id',
+          isPublished: false,
+          rank: null,
+          slug: 'admin-user',
+        },
+        role: PlatformRole.ADMIN,
+        status: AccountStatus.ACTIVE,
+      },
+    );
+
+    expect(result).toEqual({ outcome: 'APPLIED', direct: true });
+    expect(transaction.person.update).toHaveBeenCalledTimes(1);
+    expect(transaction.profileEditRequest.deleteMany).toHaveBeenCalledWith({
+      where: { personId: 'admin-person-id' },
+    });
+  });
+
+  it('returns an explicit queued outcome for member profile edits under manual policy', async () => {
+    const request = {
+      avatarAsset: null,
+      id: 'profile-request-id',
+      payload: { fullName: 'Member User' },
+      revision: 1,
+      status: ProfileReviewStatus.NEEDS_REVIEW,
+    };
+    const service = await createProfilesService({
+      assets: { remove: jest.fn() },
+      notifications: {
+        notifyReviewers: jest.fn().mockResolvedValue(undefined),
+      },
+      prisma: {
+        person: {
+          findUnique: jest.fn().mockResolvedValue({
+            avatarId: null,
+            fullName: 'Member User',
+            id: 'member-person-id',
+            profileEditRequest: null,
+          }),
+        },
+        profileEditRequest: {
+          upsert: jest.fn().mockResolvedValue(request),
+        },
+      },
+      profileSync: {},
+      settings: {
+        verification: jest.fn().mockResolvedValue({ profileEdit: 'MANUAL' }),
+      },
+    });
+
+    const result = await service.submit(
+      { profile: JSON.stringify({ fullName: 'Member User' }) },
+      {
+        email: 'member@example.org',
+        id: 'member-id',
+        person: {
+          avatar: null,
+          fullName: 'Member User',
+          id: 'member-person-id',
+          isPublished: true,
+          rank: null,
+          slug: 'member-user',
+        },
+        role: PlatformRole.MEMBER,
+        status: AccountStatus.ACTIVE,
+      },
+    );
+
+    expect(result).toEqual({ ...request, outcome: 'QUEUED_FOR_REVIEW' });
+  });
+
   it('preserves the published avatar when a text-only edit is approved', async () => {
     const assets = { remove: jest.fn() };
     const notifications = { create: jest.fn().mockResolvedValue(undefined) };

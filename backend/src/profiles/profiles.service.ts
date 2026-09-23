@@ -152,10 +152,14 @@ export class ProfilesService {
       throw new BadRequestException('A publish-now override requires a reason');
     }
 
-    if (verification.profileEdit === 'AUTOMATIC' || publishNow) {
+    if (
+      user.role === PlatformRole.ADMIN ||
+      verification.profileEdit === 'AUTOMATIC' ||
+      publishNow
+    ) {
       return this.publishProfile(personId, dto, user, avatar, {
         scope,
-        skipAuth: true,
+        skipAuth: !publishNow,
       });
     }
 
@@ -201,7 +205,7 @@ export class ProfilesService {
       actionUrl: `/workspace/profile-reviews/${request.id}`,
       payload: { profileEditRequestId: request.id },
     });
-    return request;
+    return { ...request, outcome: 'QUEUED_FOR_REVIEW' as const };
   }
 
   private async publishProfile(
@@ -273,7 +277,7 @@ export class ProfilesService {
         await this.assets.remove(assetId);
       }
     }
-    return { direct: true };
+    return { outcome: 'APPLIED' as const, direct: true };
   }
 
   async reviewQueue(query: ProfileReviewQueryDto) {

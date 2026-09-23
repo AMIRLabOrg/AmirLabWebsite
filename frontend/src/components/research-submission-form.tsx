@@ -26,15 +26,14 @@ export function ResearchSubmissionForm() {
   const staff = Boolean(user && user.role !== "MEMBER");
   const [error, setError] = useState<string>();
   const [loading, setLoading] = useState(false);
-  const [people, setPeople] =
-    useState<
-      Array<{
-        id: string;
-        fullName: string;
-        roleTitle: string | null;
-        headline: string | null;
-      }>
-    >();
+  const [people, setPeople] = useState<
+    Array<{
+      id: string;
+      fullName: string;
+      roleTitle: string | null;
+      headline: string | null;
+    }>
+  >();
   const [submitterPersonId, setSubmitterPersonId] = useState("");
 
   useEffect(() => {
@@ -102,17 +101,26 @@ export function ResearchSubmissionForm() {
         type,
         ...(staff ? { submitterPersonId: effectiveSubmitterPersonId } : {}),
       };
-      await apiRequest<{ reviewStatus: string }>("/research", {
+      const result = await apiRequest<{
+        outcome: "APPLIED" | "QUEUED_FOR_REVIEW";
+        reviewStatus: string;
+      }>("/research", {
         body: JSON.stringify(body),
         headers: { "content-type": "application/json" },
         method: "POST",
       });
       formElement.reset();
       showToast({
-        body: "The source and registered contributor matches are being checked before review.",
-        title: staff
-          ? "Research record submitted on behalf"
-          : "Research output submitted",
+        body:
+          result.outcome === "QUEUED_FOR_REVIEW"
+            ? "The source and registered contributor matches are being checked before review."
+            : "The research output is published. Source details are being checked.",
+        title:
+          result.outcome === "QUEUED_FOR_REVIEW"
+            ? staff
+              ? "Research record submitted on behalf"
+              : "Research output submitted"
+            : "Research output published",
       });
     } catch (caught) {
       const message =
@@ -211,11 +219,7 @@ export function ResearchSubmissionForm() {
             type="submit"
             variant="primary"
           >
-            {loading
-              ? "Saving…"
-              : staff
-                ? "Submit on behalf for review"
-                : "Submit for review"}
+            {staff ? "Submit on behalf for review" : "Submit for review"}
           </ButtonControl>
         </div>
       </WorkspaceRecordForm>

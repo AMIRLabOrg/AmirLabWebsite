@@ -20,6 +20,7 @@ interface VerificationPolicy {
   newDataset: VerificationMode;
   newProject: VerificationMode;
   updateProject: VerificationMode;
+  archiveProject: VerificationMode;
 }
 
 interface RankPolicy {
@@ -86,7 +87,11 @@ const LABELS: Record<keyof VerificationPolicy, [string, string]> = {
   ],
   updateProject: [
     "Project changes",
-    "Milestones, updates, people, outputs, resources, and settings.",
+    "Project details, milestones, updates, people, outputs, and resources.",
+  ],
+  archiveProject: [
+    "Project archiving",
+    "Move a project out of active listings while retaining its record.",
   ],
 };
 
@@ -129,7 +134,7 @@ export function AdminSettings() {
     setMessage("");
     setSaving(true);
     try {
-      await Promise.all([
+      const results = await Promise.allSettled([
         apiRequest("/settings/verification", {
           body: JSON.stringify(verification),
           headers: { "content-type": "application/json" },
@@ -146,6 +151,31 @@ export function AdminSettings() {
           method: "PUT",
         }),
       ]);
+      const savedCount = results.filter(
+        (result) => result.status === "fulfilled",
+      ).length;
+      if (savedCount !== results.length) {
+        if (!savedCount) {
+          const failed = results.find((result) => result.status === "rejected");
+          throw failed?.status === "rejected"
+            ? failed.reason
+            : new Error("Unable to save settings");
+        }
+        setVerification(null);
+        setRanking(null);
+        setNotificationPolicy(null);
+        setLoading(true);
+        setReload((value) => value + 1);
+        const message =
+          "Some settings were saved and others failed. The saved values are reloading.";
+        setError(message);
+        showToast({
+          body: message,
+          title: "Settings were only partly saved",
+          tone: "error",
+        });
+        return;
+      }
       setMessage("Settings saved. Rank recalculation is queued.");
       showToast({
         body: "Settings saved. Rank recalculation is queued.",
@@ -176,6 +206,7 @@ export function AdminSettings() {
     newDataset: "AUTOMATIC",
     newProject: "AUTOMATIC",
     updateProject: "AUTOMATIC",
+    archiveProject: "MANUAL",
   };
   const displayedRanking: RankPolicy = ranking ?? {
     seniorPaperMinimum: 0,
@@ -506,7 +537,7 @@ export function AdminSettings() {
                 type="button"
               >
                 <Save size={15} />
-                {saving ? "Saving…" : "Save policy"}
+                Save policy
               </ButtonControl>
             </footer>
           </>

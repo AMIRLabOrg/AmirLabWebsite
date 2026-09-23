@@ -861,13 +861,11 @@ function TemplatesPanel({
               loading={defaultSaving}
               onClick={() => void setDefault()}
             >
-              <Star aria-hidden="true" size={15} />{" "}
-              {defaultSaving ? "Making default…" : "Make default offer"}
+              <Star aria-hidden="true" size={15} /> Make default offer
             </ButtonControl>
           ) : null}
           <ButtonControl loading={saving} type="submit" variant="primary">
-            <Save aria-hidden="true" size={15} />{" "}
-            {saving ? "Saving…" : "Save template"}
+            <Save aria-hidden="true" size={15} /> Save template
           </ButtonControl>
         </footer>
       </form>
@@ -971,8 +969,7 @@ function IssuedPanel({
                 onClick={() => void email(document)}
                 variant="primary"
               >
-                <Mail aria-hidden="true" size={14} />{" "}
-                {sendingIds.has(document.id) ? "Sending…" : "Email"}
+                <Mail aria-hidden="true" size={14} /> Email
               </ButtonControl>
             ) : null}
           </div>

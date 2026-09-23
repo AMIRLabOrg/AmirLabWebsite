@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ConflictException,
   ForbiddenException,
   Injectable,
   NotFoundException,
@@ -525,6 +526,39 @@ export class ProjectsService {
     return this.applyOrQueue(id, ProjectChangeKind.ARCHIVE, input, user);
   }
 
+  async unarchive(id: string, user: AuthenticatedUser) {
+    await this.authorize(id, user, ProjectAccess.MANAGE, false, true);
+    const project = await this.project(id);
+    if (project.researchItem.reviewStatus !== ReviewStatus.ARCHIVED) {
+      throw new BadRequestException('Project is not archived');
+    }
+    const result = await this.prisma.$transaction(async (transaction) => {
+      const item = await transaction.researchItem.update({
+        where: { id },
+        data: {
+          publishedAt: null,
+          reviewNote: null,
+          reviewStatus: ReviewStatus.VERIFIED,
+        },
+      });
+      const workspace = await transaction.project.update({
+        where: { researchItemId: id },
+        data: { publicPageEnabled: false, version: { increment: 1 } },
+      });
+      return { item, project: workspace };
+    });
+    await this.prisma.auditRecord.create({
+      data: {
+        action: 'project.unarchived',
+        actorId: user.id,
+        entityId: id,
+        entityType: 'Project',
+        details: { restoredReviewStatus: ReviewStatus.VERIFIED },
+      },
+    });
+    return { outcome: 'APPLIED' as const, direct: true, result };
+  }
+
   async reviewQueue() {
     const requests = await this.prisma.projectChangeRequest.findMany({
       where: { status: ProjectChangeStatus.NEEDS_REVIEW },
@@ -788,72 +822,7 @@ export class ProjectsService {
     dto: ReviewProjectChangeDto,
     reviewer: AuthenticatedUser,
   ) {
-    if (
-      dto.status !== ProjectChangeStatus.APPROVED &&
-      dto.status !== ProjectChangeStatus.REJECTED
-    ) {
-      throw new BadRequestException('Decision must be approved or rejected');
-    }
-    const request = await this.prisma.projectChangeRequest.findUnique({
-      where: { id },
-      include: { project: true },
-    });
-    if (!request || request.status !== ProjectChangeStatus.NEEDS_REVIEW) {
-      throw new NotFoundException('Pending project change not found');
-    }
-    const reviewNote =
-      dto.status === ProjectChangeStatus.REJECTED
-        ? dto.note?.trim()
-        : undefined;
-    if (dto.status === ProjectChangeStatus.REJECTED && !reviewNote) {
-      throw new BadRequestException('A reviewer note is required');
-    }
-    if (dto.status === ProjectChangeStatus.APPROVED) {
-      if (request.project.version !== request.baseVersion) {
-        await this.prisma.projectChangeRequest.update({
-          where: { id },
-          data: {
-            note: 'Project changed after this request was submitted',
-            reviewedAt: new Date(),
-            reviewedById: reviewer.id,
-            status: ProjectChangeStatus.STALE,
-          },
-        });
-        throw reviewConflict(
-          'This project change is stale because the project changed after submission.',
-          [
-            {
-              code: 'STALE_PROJECT_CHANGE',
-              itemId: request.id,
-              message: 'The project changed after this request was submitted.',
-              tone: 'warning',
-            },
-          ],
-        );
-      }
-      await this.applyChange(
-        request.projectId,
-        request.kind,
-        request.payload,
-        request.submittedById,
-      );
-    }
-    await this.prisma.projectChangeRequest.update({
-      where: { id },
-      data: {
-        note: reviewNote ?? null,
-        reviewedAt: new Date(),
-        reviewedById: reviewer.id,
-        status: dto.status,
-      },
-    });
-    await this.notifications.create(request.submittedById, {
-      type: NotificationType.PROJECT_CHANGED,
-      title: `Project change ${dto.status.toLowerCase()}`,
-      body:
-        reviewNote ?? `Your ${request.kind.toLowerCase()} change was reviewed.`,
-      actionUrl: `/workspace/projects/${request.projectId}`,
-    });
+    await this.bulkReview({ ...dto, ids: [id] }, reviewer);
     return { status: dto.status };
   }
 
@@ -871,7 +840,15 @@ export class ProjectsService {
       throw new BadRequestException('A publish-now override requires a reason');
     }
     const payload = stripOverride(input);
-    if (policy.updateProject === 'AUTOMATIC' || input.publishNow) {
+    const reviewMode =
+      kind === ProjectChangeKind.ARCHIVE
+        ? policy.archiveProject
+        : policy.updateProject;
+    const appliesDirectly =
+      user.role === PlatformRole.ADMIN ||
+      reviewMode === 'AUTOMATIC' ||
+      input.publishNow;
+    if (appliesDirectly) {
       const result = await this.applyChange(projectId, kind, payload, user.id);
       if (input.publishNow) {
         await this.prisma.auditRecord.create({
@@ -884,7 +861,7 @@ export class ProjectsService {
           },
         });
       }
-      return { direct: true, result };
+      return { outcome: 'APPLIED' as const, direct: true, result };
     }
     const project = await this.project(projectId);
     const request = await this.prisma.projectChangeRequest.create({
@@ -903,7 +880,7 @@ export class ProjectsService {
       actionUrl: '/workspace/project-reviews',
       payload: { projectChangeRequestId: request.id },
     });
-    return { direct: false, request };
+    return { outcome: 'QUEUED_FOR_REVIEW' as const, direct: false, request };
   }
 
   private async applyBulkChanges(
@@ -1911,8 +1888,14 @@ export class ProjectsService {
     user: AuthenticatedUser,
     required: ProjectAccess,
     reviewersMayView = false,
+    allowArchived = false,
   ): Promise<void> {
-    if (user.role === PlatformRole.ADMIN) return;
+    if (user.role === PlatformRole.ADMIN) {
+      if (required !== ProjectAccess.VIEW && !allowArchived) {
+        await this.ensureNotArchived(projectId);
+      }
+      return;
+    }
     if (reviewersMayView && user.role === PlatformRole.MODERATOR) return;
     if (!user.person) throw new ForbiddenException('Project access required');
     const membership = await this.prisma.projectMembership.findUnique({
@@ -1924,6 +1907,22 @@ export class ProjectsService {
     const level = { VIEW: 0, POST_UPDATES: 1, MANAGE: 2 };
     if (level[membership.access] < level[required]) {
       throw new ForbiddenException('Project access is insufficient');
+    }
+    if (required !== ProjectAccess.VIEW && !allowArchived) {
+      await this.ensureNotArchived(projectId);
+    }
+  }
+
+  private async ensureNotArchived(projectId: string): Promise<void> {
+    const project = await this.prisma.project.findUnique({
+      where: { researchItemId: projectId },
+      select: { researchItem: { select: { reviewStatus: true } } },
+    });
+    if (!project) throw new NotFoundException('Project not found');
+    if (project.researchItem.reviewStatus === ReviewStatus.ARCHIVED) {
+      throw new ConflictException(
+        'This project is archived and read-only. Unarchive it before editing.',
+      );
     }
   }
 

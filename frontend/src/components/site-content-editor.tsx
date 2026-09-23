@@ -3,8 +3,13 @@
 import { cn } from "@/lib/cn";
 import { loadingPlaceholder } from "@/lib/loading-style";
 import Link from "next/link";
-import { useEffect, useState, type SyntheticEvent, type ReactNode } from "react";
-import { ArrowLeft, LoaderCircle, Plus, X } from "lucide-react";
+import {
+  useEffect,
+  useState,
+  type SyntheticEvent,
+  type ReactNode,
+} from "react";
+import { ArrowLeft, Plus, X } from "lucide-react";
 import { useNotifications } from "@/components/notification-provider";
 import { StatePanel } from "@/components/state-panel";
 import { InputControl, TextareaControl } from "@/components/ui/form-controls";
@@ -191,13 +196,7 @@ export function SiteContentEditor({ page }: { page: SiteContentPage }) {
               loading={loading}
               type="submit"
             >
-              {saving ? (
-                <>
-                  <LoaderCircle aria-hidden="true" size={16} /> Saving…
-                </>
-              ) : (
-                "Publish content"
-              )}
+              Publish content
             </ButtonControl>
           </footer>
         </form>

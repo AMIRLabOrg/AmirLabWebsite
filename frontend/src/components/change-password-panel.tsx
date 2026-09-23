@@ -114,7 +114,7 @@ export function ChangePasswordPanel() {
             type="submit"
             variant="secondary"
           >
-            {saving ? "Saving…" : "Update password"}
+            Update password
           </ButtonControl>
         </div>
       </section>

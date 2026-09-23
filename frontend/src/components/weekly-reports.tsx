@@ -401,7 +401,7 @@ export function WeeklyReports() {
                   variant="secondary"
                 >
                   <Save aria-hidden="true" size={16} />
-                  {working === "save" ? "Saving…" : "Save draft"}
+                  Save draft
                 </ButtonControl>
                 <ButtonControl
                   disabled={!context || Boolean(working)}
@@ -409,7 +409,7 @@ export function WeeklyReports() {
                   variant="primary"
                 >
                   <CheckCircle2 aria-hidden="true" size={16} />
-                  {working === "submit" ? "Submitting…" : "Submit report"}
+                  Submit report
                 </ButtonControl>
               </div>
             ) : (

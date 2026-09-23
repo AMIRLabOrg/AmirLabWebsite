@@ -14,6 +14,7 @@ export interface VerificationPolicy {
   newDataset: VerificationMode;
   newProject: VerificationMode;
   updateProject: VerificationMode;
+  archiveProject: VerificationMode;
 }
 
 export interface RankPolicy {
@@ -80,6 +81,7 @@ export const DEFAULT_VERIFICATION_POLICY: VerificationPolicy = {
   newDataset: 'MANUAL',
   newProject: 'MANUAL',
   updateProject: 'AUTOMATIC',
+  archiveProject: 'MANUAL',
 };
 
 export const DEFAULT_RANK_POLICY: RankPolicy = {
@@ -351,6 +353,13 @@ function parseVerificationPolicy(value: unknown): VerificationPolicy {
       candidate.updateProject,
       DEFAULT_VERIFICATION_POLICY.updateProject,
     ),
+    archiveProject: verificationMode(
+      candidate.archiveProject,
+      verificationMode(
+        candidate.updateProject,
+        DEFAULT_VERIFICATION_POLICY.archiveProject,
+      ),
+    ),
   };
 }
 
@@ -370,6 +379,7 @@ function verificationPolicyToJson(
     newDataset: policy.newDataset,
     newProject: policy.newProject,
     updateProject: policy.updateProject,
+    archiveProject: policy.archiveProject,
   };
 }
 

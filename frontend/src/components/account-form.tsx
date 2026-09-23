@@ -2,7 +2,6 @@
 
 import { useRouter } from "next/navigation";
 import { SyntheticEvent, useEffect, useState } from "react";
-import { LoaderCircle } from "lucide-react";
 import { apiRequest } from "@/lib/client-api";
 import { StatePanel } from "@/components/state-panel";
 import { SelectControl } from "@/components/ui/select-control";
@@ -225,15 +224,7 @@ export function AccountForm({ accountId }: { accountId?: string }) {
             type="submit"
             variant="primary"
           >
-            {saving ? (
-              <>
-                <LoaderCircle aria-hidden="true" size={15} /> Saving…
-              </>
-            ) : accountId ? (
-              "Save account"
-            ) : (
-              "Create account"
-            )}
+            {accountId ? "Save account" : "Create account"}
           </ButtonControl>
         </div>
       </form>

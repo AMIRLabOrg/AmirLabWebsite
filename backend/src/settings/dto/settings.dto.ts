@@ -108,6 +108,9 @@ export class VerificationPolicyDto implements VerificationPolicy {
 
   @IsIn(['AUTOMATIC', 'MANUAL'])
   updateProject!: VerificationMode;
+
+  @IsIn(['AUTOMATIC', 'MANUAL'])
+  archiveProject!: VerificationMode;
 }
 
 export class RankPolicyDto implements RankPolicy {

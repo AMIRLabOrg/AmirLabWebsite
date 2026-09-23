@@ -203,9 +203,7 @@ export function ApplicationForm({ positions }: { positions: Position[] }) {
         }
         type="submit"
       >
-        {submission.kind === "submitting"
-          ? "Submitting…"
-          : "Submit application"}
+        Submit application
       </ButtonControl>
       <p className="-mt-[.3rem] text-[.73rem] leading-[1.5] text-ink-muted">
         The server checks the PDF again after submission. If it cannot read the

@@ -2,12 +2,55 @@ import { AcademicRank } from '../../generated/prisma/client';
 import {
   DEFAULT_APPOINTMENT_LETTER_TEMPLATE,
   DEFAULT_RANK_POLICY,
+  DEFAULT_VERIFICATION_POLICY,
+  SettingsService,
   earnedRank,
   effectiveRank,
   validateAppointmentLetterTemplate,
 } from './settings.service';
 import { BadRequestException } from '@nestjs/common';
 import { safePlaceholderValue } from '../applications/appointment-letters.service';
+
+describe('project verification policy compatibility', () => {
+  function settingsService(value: unknown) {
+    return Object.assign(Object.create(SettingsService.prototype), {
+      prisma: {
+        siteSetting: {
+          findUnique: jest
+            .fn()
+            .mockResolvedValue(value === undefined ? null : { value }),
+        },
+      },
+    }) as SettingsService;
+  }
+
+  it('defaults project archive to manual review', async () => {
+    await expect(settingsService(undefined).verification()).resolves.toEqual(
+      DEFAULT_VERIFICATION_POLICY,
+    );
+  });
+
+  it('inherits the old project edit mode until archive mode is configured', async () => {
+    await expect(
+      settingsService({ updateProject: 'AUTOMATIC' }).verification(),
+    ).resolves.toMatchObject({
+      updateProject: 'AUTOMATIC',
+      archiveProject: 'AUTOMATIC',
+    });
+  });
+
+  it('keeps archive mode independent after it is configured', async () => {
+    await expect(
+      settingsService({
+        updateProject: 'AUTOMATIC',
+        archiveProject: 'MANUAL',
+      }).verification(),
+    ).resolves.toMatchObject({
+      updateProject: 'AUTOMATIC',
+      archiveProject: 'MANUAL',
+    });
+  });
+});
 
 describe('research ranking policy', () => {
   it('requires papers and citations when Scholar data exists', () => {

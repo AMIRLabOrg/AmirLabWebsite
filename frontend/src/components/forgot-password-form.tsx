@@ -78,7 +78,7 @@ export function ForgotPasswordForm() {
       {error ? <FormMessage>{error}</FormMessage> : null}
       <div className="flex flex-wrap gap-3">
         <ButtonControl disabled={sending} type="submit" variant="primary">
-          {sending ? "Sending…" : "Send reset link"}
+          Send reset link
         </ButtonControl>
         <ButtonLink href="/login" variant="secondary">
           Cancel

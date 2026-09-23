@@ -419,7 +419,7 @@ export function ResearchConnectionsPanel() {
                           variant="secondary"
                         >
                           <Link2 aria-hidden="true" size={14} />
-                          {claiming === key ? "Requesting…" : "Request link"}
+                          Request link
                         </ButtonControl>
                       )}
                     </div>

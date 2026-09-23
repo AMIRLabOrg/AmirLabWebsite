@@ -93,7 +93,7 @@ export function AccountSetupForm({ token }: { token?: string }) {
         </p>
       ) : null}
       <ButtonControl disabled={loading} type="submit" variant="primary">
-        {loading ? "Creating password…" : "Create password"}
+        Create password
       </ButtonControl>
     </form>
   );

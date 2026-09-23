@@ -496,7 +496,7 @@ export function PositionAdminEditor({ id }: { id?: string }) {
               type="submit"
             >
               <Save aria-hidden="true" size={16} />{" "}
-              {saving ? "Saving…" : id ? "Save changes" : "Create job post"}
+              {id ? "Save changes" : "Create job post"}
             </ButtonControl>
           </div>
         </header>

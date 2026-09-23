@@ -341,8 +341,7 @@ export function DepartmentEditor({ id }: { id?: string }) {
             type="submit"
             variant="primary"
           >
-            <Save size={15} />{" "}
-            {saving ? "Saving…" : id ? "Save changes" : "Create department"}
+            <Save size={15} /> {id ? "Save changes" : "Create department"}
           </ButtonControl>
         }
         backHref="/workspace/departments"

@@ -1543,7 +1543,7 @@ function ResearchRecordEditor({
       </div>
       <div className="flex justify-end">
         <ButtonControl disabled={saving} type="submit" variant="primary">
-          {saving ? "Saving…" : "Save and re-run review"}
+          Save and re-run review
         </ButtonControl>
       </div>
     </form>
