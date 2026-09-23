@@ -202,13 +202,19 @@ function Founder({
               {loading ? "Biography is loading" : person?.biography}
             </p>
           ) : null}
-          <Link
-            className="mt-4 inline-flex w-fit items-center gap-[.45rem] text-[.78rem] font-bold text-brand"
-            href={href}
-            tabIndex={loading ? -1 : undefined}
-          >
-            View full profile <ArrowRight aria-hidden="true" size={16} />
-          </Link>
+          {loading ? (
+            <span
+              aria-hidden="true"
+              className="mt-4 h-[.75rem] w-28 bg-surface-subtle"
+            />
+          ) : (
+            <Link
+              className="mt-4 inline-flex w-fit items-center gap-[.45rem] text-[.78rem] font-bold text-brand"
+              href={href}
+            >
+              View full profile <ArrowRight aria-hidden="true" size={16} />
+            </Link>
+          )}
         </div>
       </article>
     </section>

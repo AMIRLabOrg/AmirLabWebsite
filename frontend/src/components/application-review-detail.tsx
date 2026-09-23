@@ -303,24 +303,28 @@ export function ApplicationReviewDetail({ id }: { id: string }) {
           {relevantLinks.length ? (
             <div className="grid gap-2 border-t border-line pt-4">
               <h3 className="font-serif text-base">Relevant links</h3>
-              {relevantLinks.map((link, index) => (
-                <a
-                  className={cn(
-                    "flex items-center gap-[.4rem] text-[.75rem] text-brand [overflow-wrap:anywhere]",
-                    loadingPlaceholder(loading, "text", "long"),
-                  )}
-                  data-placeholder={loading ? "text" : undefined}
-                  data-placeholder-width="long"
-                  href={link ?? "#"}
-                  key={link ?? `link-loading-${index}`}
-                  rel="noreferrer"
-                  tabIndex={loading ? -1 : undefined}
-                  target={loading ? undefined : "_blank"}
-                >
-                  {link ?? "Loading relevant link"}
-                  <ExternalLink aria-hidden="true" size={14} />
-                </a>
-              ))}
+              {relevantLinks.map((link, index) =>
+                loading ? (
+                  <span
+                    aria-hidden="true"
+                    className={loadingPlaceholder(true, "text", "long")}
+                    key={`link-loading-${index}`}
+                  >
+                    Loading relevant link
+                  </span>
+                ) : (
+                  <a
+                    className="flex items-center gap-[.4rem] text-[.75rem] text-brand [overflow-wrap:anywhere]"
+                    href={link}
+                    key={link}
+                    rel="noreferrer"
+                    target="_blank"
+                  >
+                    {link}
+                    <ExternalLink aria-hidden="true" size={14} />
+                  </a>
+                ),
+              )}
             </div>
           ) : null}
         </section>

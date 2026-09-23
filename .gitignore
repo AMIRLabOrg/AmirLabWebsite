@@ -10,4 +10,5 @@
 .DS_Store
 /internship-report-workspace/
 /verification/browser-artifacts/
+/.local-verification/
 .vercel

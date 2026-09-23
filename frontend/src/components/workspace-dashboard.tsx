@@ -236,19 +236,34 @@ export function WorkspaceDashboard() {
           >
             {loadingOverview ? "00" : staff ? pendingReviews : unreadCount}
           </strong>
-          <small className="text-[.68rem] text-ink-muted">
+          <small
+            className={cn(
+              "text-[.68rem] text-ink-muted",
+              loadingPlaceholder(loadingOverview, "text"),
+            )}
+            data-placeholder={loadingOverview ? "text" : undefined}
+          >
             {staff
               ? `${unreadCount} unread notices`
               : `${overview?.tasks.length ?? 0} open assignments`}
           </small>
         </div>
-        <Link
-          className="flex items-center gap-[.4rem] border-l border-line p-4 text-[.72rem] font-semibold whitespace-nowrap text-brand hover:bg-brand-faint max-[1050px]:hidden"
-          href={staff ? "/workspace/research" : "/workspace/tasks"}
-        >
-          {staff ? "Open review queue" : "Open due work"}{" "}
-          <ArrowRight aria-hidden="true" size={15} />
-        </Link>
+        {loadingOverview ? (
+          <span
+            aria-hidden="true"
+            className="flex w-[150px] items-center border-l border-line p-4 max-[1050px]:hidden"
+          >
+            <span className={loadingPlaceholder(true, "text", "full")} />
+          </span>
+        ) : (
+          <Link
+            className="flex items-center gap-[.4rem] border-l border-line p-4 text-[.72rem] font-semibold whitespace-nowrap text-brand hover:bg-brand-faint max-[1050px]:hidden"
+            href={staff ? "/workspace/research" : "/workspace/tasks"}
+          >
+            {staff ? "Open review queue" : "Open due work"}{" "}
+            <ArrowRight aria-hidden="true" size={15} />
+          </Link>
+        )}
       </section>
 
       {staff ? (

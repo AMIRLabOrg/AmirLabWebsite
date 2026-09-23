@@ -273,18 +273,19 @@ export function ResearchConnectionsPanel() {
                       : "Loading relationship"}
                   </small>
                 </div>
-                {loading || researchItem?.canonicalUrl ? (
+                {loading ? (
+                  <span
+                    aria-hidden="true"
+                    className={loadingPlaceholder(true, "label")}
+                  >
+                    Source
+                  </span>
+                ) : researchItem?.canonicalUrl ? (
                   <a
-                    className={cn(
-                      "inline-flex items-center gap-[.3rem] text-[.75rem] text-brand",
-                      loadingPlaceholder(loading, "label"),
-                    )}
-                    aria-disabled={loading}
-                    data-placeholder={loading ? "label" : undefined}
-                    href={researchItem?.canonicalUrl ?? "#"}
+                    className="inline-flex items-center gap-[.3rem] text-[.75rem] text-brand"
+                    href={researchItem.canonicalUrl}
                     rel="noreferrer"
-                    tabIndex={loading ? -1 : undefined}
-                    target={loading ? undefined : "_blank"}
+                    target="_blank"
                   >
                     Source <ExternalLink aria-hidden="true" size={14} />
                   </a>

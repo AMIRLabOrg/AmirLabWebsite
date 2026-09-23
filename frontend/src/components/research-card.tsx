@@ -85,20 +85,15 @@ export function ResearchCard({
         </span>
       ) : null}
       {loading ? (
-        <Link
-          aria-disabled
+        <span
+          aria-hidden="true"
           className={cn(
-            "inline-flex items-center gap-[.4rem] font-bold text-brand",
+            "h-[.7rem] w-20 bg-surface-subtle",
             index
-              ? "col-start-3 row-start-2 self-end justify-self-end text-[.66rem] max-[640px]:col-start-2 max-[640px]:row-auto max-[640px]:justify-self-start"
-              : "mt-auto pt-6 text-[.88rem]",
+              ? "col-start-3 row-start-2 self-end justify-self-end max-[640px]:col-start-2 max-[640px]:row-auto max-[640px]:justify-self-start"
+              : "mt-auto",
           )}
-          href="#"
-          tabIndex={-1}
-        >
-          Loading{" "}
-          <ExternalLink aria-hidden="true" className="opacity-10" size={15} />
-        </Link>
+        />
       ) : href && item?.type === "PROJECT" ? (
         <Link
           className={cn(

@@ -136,20 +136,19 @@ export function PositionList({
                     : "Application deadline"}
                 </span>
               </div>
-              <Link
-                aria-disabled={loading || undefined}
-                className="inline-flex items-center gap-[.35rem] pt-[.2rem] text-[.78rem] font-bold text-brand max-[640px]:justify-self-start"
-                href="#apply"
-                tabIndex={loading ? -1 : undefined}
-              >
-                Apply{" "}
-                <ArrowRight
+              {loading ? (
+                <span
                   aria-hidden="true"
-                  className={loading ? "opacity-[.12]" : undefined}
-                  data-loading-icon={loading || undefined}
-                  size={16}
+                  className="mt-[.2rem] h-[.75rem] w-16 bg-surface-subtle max-[640px]:justify-self-start"
                 />
-              </Link>
+              ) : (
+                <Link
+                  className="inline-flex items-center gap-[.35rem] pt-[.2rem] text-[.78rem] font-bold text-brand max-[640px]:justify-self-start"
+                  href="#apply"
+                >
+                  Apply <ArrowRight aria-hidden="true" size={16} />
+                </Link>
+              )}
             </article>
           ))}
         </div>

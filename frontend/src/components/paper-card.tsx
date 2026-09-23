@@ -124,21 +124,19 @@ export function PaperCard({
               ? `doi.org/${doi}`
               : "DOI not available"}
         </span>
-        {loading || source ? (
+        {loading ? (
+          <span
+            aria-hidden="true"
+            className="h-[.7rem] w-20 bg-surface-subtle"
+          />
+        ) : source ? (
           <a
-            aria-disabled={loading || undefined}
             className="inline-flex items-center gap-[.3rem] text-[.66rem] font-semibold text-brand"
-            href={loading ? undefined : (source ?? undefined)}
+            href={source}
             rel="noreferrer"
-            tabIndex={loading ? -1 : undefined}
             target="_blank"
           >
-            Read paper{" "}
-            <ArrowUpRight
-              aria-hidden="true"
-              className={loading ? "opacity-10" : undefined}
-              size={14}
-            />
+            Read paper <ArrowUpRight aria-hidden="true" size={14} />
           </a>
         ) : null}
       </footer>
