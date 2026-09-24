@@ -63,6 +63,8 @@ jobs:
       - run: pnpm run verify:api-boundary
       - run: pnpm run verify:recovery-research
       - run: pnpm run test --runInBand
+        env:
+          NODE_OPTIONS: --experimental-vm-modules
       - run: pnpm run build
 
   frontend:
