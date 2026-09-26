@@ -10,9 +10,8 @@ const footerLink = "text-[.72rem] text-ink-muted hover:text-ink";
 const footerColumn =
   "grid justify-items-start gap-[.58rem] border-t border-line-strong pt-[.62rem]";
 const siteEmail = process.env.NEXT_PUBLIC_SITE_EMAIL ?? "admin@example.test";
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
 
-export function SiteChrome({ children }: { children: ReactNode }) {
+export function SiteLayout({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const workspace = pathname.startsWith("/workspace");
   const auth = pathname.startsWith("/login") || pathname.startsWith("/auth/");
@@ -98,9 +97,7 @@ export function SiteChrome({ children }: { children: ReactNode }) {
                 © {new Date().getFullYear()} AmirLab · Non-profit academic
                 research consortium
               </span>
-              <a href={siteUrl} rel="noreferrer" target="_blank">
-                {siteUrl}
-              </a>
+
             </div>
           </div>
         </footer>

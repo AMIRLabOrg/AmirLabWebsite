@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { AuthProvider } from "@/components/auth-provider";
 import { FormValidation } from "@/components/form-validation";
 import { NotificationProvider } from "@/components/notification-provider";
-import { SiteChrome } from "@/components/site-chrome";
+import { SiteLayout } from "@/components/site-layout";
 import { NavigationProgress } from "@/components/ui/navigation-progress";
 import "./globals.css";
 
@@ -37,7 +37,7 @@ export default function RootLayout({
         <AuthProvider>
           <NotificationProvider>
             <FormValidation />
-            <SiteChrome>{children}</SiteChrome>
+            <SiteLayout>{children}</SiteLayout>
           </NotificationProvider>
         </AuthProvider>
       </body>
