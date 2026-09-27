@@ -8,6 +8,7 @@ import { useAuth } from "@/components/auth-provider";
 import { BrandLockup } from "@/components/brand-mark";
 import { useNotifications } from "@/components/notification-provider";
 import { ProfileAvatar } from "@/components/profile-avatar";
+import { FrameRuleNodes } from "@/components/ui/public-shell";
 import { cn } from "@/lib/cn";
 
 const NAVIGATION = [
@@ -38,7 +39,7 @@ export function SiteHeader() {
 
   return (
     <header className="sticky top-0 z-[60] border-b border-line-strong bg-[color-mix(in_srgb,var(--surface)_94%,transparent)] backdrop-blur-[12px]">
-      <div className="mx-auto grid min-h-[62px] w-full max-w-[var(--public-wide)] grid-cols-[minmax(230px,.8fr)_minmax(0,1.5fr)_auto] items-center gap-[clamp(1rem,2.2vw,2.2rem)] px-[clamp(1rem,3.2vw,3rem)] max-[1050px]:grid-cols-[minmax(210px,1fr)_auto_auto] max-[560px]:min-h-[58px] max-[560px]:grid-cols-[minmax(0,1fr)_auto_auto] max-[560px]:gap-2">
+      <div className="mx-auto grid min-h-[55px] w-full max-w-[var(--public-wide)] grid-cols-[minmax(230px,.8fr)_minmax(0,1.5fr)_auto] items-center gap-[clamp(1rem,2.2vw,2.2rem)] px-[var(--public-gutter)] max-[1050px]:grid-cols-[minmax(210px,1fr)_auto_auto] max-[560px]:min-h-[55px] max-[560px]:grid-cols-[minmax(0,1fr)_auto_auto] max-[560px]:gap-2">
         <Link
           className="inline-flex w-fit min-w-0 items-center"
           href="/"
@@ -50,14 +51,14 @@ export function SiteHeader() {
         <nav
           aria-label="Main navigation"
           className={cn(
-            "flex min-w-0 items-stretch justify-center gap-[clamp(.75rem,1.4vw,1.35rem)] max-[1050px]:fixed max-[1050px]:inset-x-0 max-[1050px]:top-[62px] max-[1050px]:z-[55] max-[1050px]:h-[calc(100dvh-62px)] max-[1050px]:grid-rows-[repeat(7,min-content)] max-[1050px]:content-start max-[1050px]:items-start max-[1050px]:overflow-y-auto max-[1050px]:overscroll-contain max-[1050px]:border-b max-[1050px]:border-line-strong max-[1050px]:bg-surface max-[1050px]:px-4 max-[1050px]:pt-2 max-[1050px]:pb-8 max-[560px]:top-[58px] max-[560px]:h-[calc(100dvh-58px)]",
+            "flex min-w-0 items-stretch justify-center gap-[clamp(.75rem,1.4vw,1.35rem)] max-[1050px]:fixed max-[1050px]:inset-x-0 max-[1050px]:top-[55px] max-[1050px]:z-[55] max-[1050px]:h-[calc(100dvh-55px)] max-[1050px]:grid-rows-[repeat(7,min-content)] max-[1050px]:content-start max-[1050px]:items-start max-[1050px]:overflow-y-auto max-[1050px]:overscroll-contain max-[1050px]:border-b max-[1050px]:border-line-strong max-[1050px]:bg-surface max-[1050px]:px-4 max-[1050px]:pt-2 max-[1050px]:pb-8",
             open ? "max-[1050px]:grid" : "max-[1050px]:hidden",
           )}
         >
           {NAVIGATION.map(([label, href]) => (
             <Link
               className={cn(
-                "flex min-h-[62px] items-center whitespace-nowrap border-b-2 border-b-transparent text-[.73rem] font-semibold text-ink-muted hover:text-ink-strong max-[1050px]:min-h-12 max-[1050px]:w-full max-[1050px]:justify-center max-[1050px]:border-b max-[1050px]:border-line max-[1050px]:px-[.2rem]",
+                "flex min-h-[55px] items-center whitespace-nowrap border-b-2 border-b-transparent text-[.8rem] font-medium text-ink-muted hover:text-ink-strong max-[1050px]:min-h-12 max-[1050px]:w-full max-[1050px]:justify-center max-[1050px]:border-b max-[1050px]:border-line max-[1050px]:px-[.2rem]",
                 pathname === href && "border-b-brand text-ink-strong",
               )}
               href={href}
@@ -86,7 +87,7 @@ export function SiteHeader() {
                     ? "Notifications"
                     : `${unreadCount} unread notification${unreadCount === 1 ? "" : "s"}`
                 }
-                className="relative flex h-[38px] w-[38px] items-center justify-center rounded-control border border-transparent text-ink-muted"
+                className="relative flex h-10 w-10 items-center justify-center rounded-control border border-transparent text-ink-muted"
                 href="/workspace/notifications"
                 prefetch={false}
                 title="Notifications"
@@ -113,7 +114,7 @@ export function SiteHeader() {
             </div>
           ) : (
             <Link
-              className="inline-flex min-h-9 items-center justify-center rounded-control border border-line-strong bg-transparent px-[.78rem] py-2 text-[.78rem] font-semibold hover:bg-brand-faint"
+              className="inline-flex min-h-[var(--control-height)] items-center justify-center rounded-control border border-line-strong bg-transparent px-[.78rem] py-2 text-[.78rem] font-semibold hover:bg-brand-faint"
               href="/login"
               prefetch={false}
             >
@@ -124,13 +125,17 @@ export function SiteHeader() {
         <button
           aria-expanded={open}
           aria-label={open ? "Close menu" : "Open menu"}
-          className="hidden h-[38px] w-[38px] items-center justify-center rounded-control border border-line-strong bg-transparent p-0 max-[1050px]:inline-flex"
+          className="hidden h-10 w-10 items-center justify-center rounded-control border border-line-strong bg-transparent p-0 max-[1050px]:inline-flex"
           onClick={() => setOpen((value) => !value)}
           type="button"
         >
           {open ? <X aria-hidden="true" /> : <Menu aria-hidden="true" />}
         </button>
       </div>
+      <FrameRuleNodes
+        className="bottom-[-.5px] z-10"
+        nodeSurfaceClassName="bg-surface"
+      />
     </header>
   );
 }

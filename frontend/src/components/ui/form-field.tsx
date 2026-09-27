@@ -17,14 +17,27 @@ export function FormField({
   labelClassName?: string;
 }) {
   return (
-    <div className={cn("field grid content-start gap-[.45rem]", className)}>
+    <div className={cn(className, "field grid content-start gap-1.5")}>
       {label ? (
         htmlFor ? (
-          <label className={labelClassName} htmlFor={htmlFor}>
+          <label
+            className={cn(
+              labelClassName,
+              "font-sans text-[11px] leading-[1.4] font-medium text-ink-muted",
+            )}
+            htmlFor={htmlFor}
+          >
             {label}
           </label>
         ) : (
-          <span className={labelClassName}>{label}</span>
+          <span
+            className={cn(
+              labelClassName,
+              "font-sans text-[11px] leading-[1.4] font-medium text-ink-muted",
+            )}
+          >
+            {label}
+          </span>
         )
       ) : null}
       {children}

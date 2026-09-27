@@ -5,6 +5,7 @@ import { Check, ChevronDown, Search } from "lucide-react";
 import { useEffect, useId, useMemo, useState } from "react";
 import { cn } from "@/lib/cn";
 import { loadingPlaceholder } from "@/lib/loading-style";
+import { formControlClass, InputControl } from "./form-controls";
 
 export interface SearchableSelectOption {
   label: string;
@@ -91,7 +92,8 @@ export function SearchableSelect({
       <Popover.Trigger
         aria-label={ariaLabel}
         className={cn(
-          "inline-flex h-[var(--control-height)] min-h-[var(--control-height)] w-full min-w-[170px] cursor-pointer items-center justify-between gap-3 rounded-control border border-line bg-surface px-4 py-0 text-left text-[.9rem] font-normal text-ink transition-[border-color,box-shadow,background] duration-150 hover:border-[color-mix(in_srgb,var(--brand)_42%,var(--line))] data-[state=open]:border-brand focus-visible:border-brand focus-visible:shadow-[var(--focus-ring)] disabled:cursor-not-allowed disabled:bg-surface-subtle disabled:text-ink-faint motion-reduce:transition-none",
+          formControlClass,
+          "inline-flex min-w-[170px] cursor-pointer items-center justify-between gap-3 text-left",
           placeholderLoading && loadingPlaceholder(true, "control"),
         )}
         data-placeholder={placeholderLoading ? "control" : undefined}
@@ -116,9 +118,9 @@ export function SearchableSelect({
           className="z-[100] w-[var(--radix-popover-trigger-width)] overflow-hidden rounded-[calc(3px+.35rem)] border border-line bg-surface p-[.35rem] shadow-[0_18px_50px_color-mix(in_srgb,var(--brand-hover)_16%,transparent)] animate-[popover-enter_160ms_ease-out] motion-reduce:animate-none"
           sideOffset={6}
         >
-          <div className="mb-[.35rem] grid grid-cols-[20px_minmax(0,1fr)] items-center rounded-[3px] border border-line px-[.55rem]">
+          <div className="mb-[.35rem] grid grid-cols-[20px_minmax(0,1fr)] items-center rounded-[var(--radius-field)] border border-line px-[.55rem] transition-[border-color,box-shadow] hover:border-line-strong focus-within:border-brand focus-within:shadow-[var(--focus-ring)]">
             <Search aria-hidden="true" className="text-ink-muted" size={15} />
-            <input
+            <InputControl
               aria-activedescendant={
                 filtered.length
                   ? `${listId}-option-${resolvedActiveIndex}`
@@ -129,7 +131,7 @@ export function SearchableSelect({
               aria-expanded={open}
               aria-label={searchPlaceholder}
               autoFocus
-              className="min-h-[38px] w-full border-0 bg-transparent py-[.45rem] text-ink outline-none"
+              className="!h-[38px] !min-h-[38px] !min-w-0 !rounded-none !border-0 !bg-transparent !px-0 !py-[.45rem] !shadow-none focus-visible:!border-0 focus-visible:!shadow-none"
               onChange={(event) => {
                 setQuery(event.target.value);
                 setActiveIndex(0);

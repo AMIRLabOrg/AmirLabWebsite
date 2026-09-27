@@ -145,11 +145,14 @@
     "IBM Plex Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   --font-serif: Fraunces, Charter, "Iowan Old Style", Georgia, serif;
   --font-mono: "IBM Plex Mono", "SFMono-Regular", Consolas, monospace;
-  --radius-control: 3px;
+  --radius-control: 4px;
+  --radius-field: var(--radius-control);
+  --radius-checkbox: 4px;
   --radius-small: 2px;
-  --radius-panel: 4px;
-  --radius-dialog: 6px;
-  --control-height: 42px;
+  --radius-panel: 5px;
+  --radius-dialog: 9px;
+  --control-height: 40px;
+  --control-text-size: 13px;
   --workspace-gutter: clamp(1rem, 2.1vw, 2rem);
   --workspace-wide: 1400px;
   --workspace-reading: 1280px;
@@ -169,10 +172,68 @@
   --space-16: 4rem;
   --shadow-panel: none;
   --shadow-float: 0 18px 48px rgb(18 29 56 / 12%);
-  --focus-ring: 0 0 0 2px color-mix(in srgb, var(--brand) 24%, transparent);
+  --focus-ring: 0 0 0 3px color-mix(in srgb, var(--brand) 24%, transparent);
   --selection: color-mix(in srgb, var(--brand) 18%, var(--surface));
   --motion-fast: 140ms;
   --motion-standard: 200ms;
+}
+
+body:has(.public-site),
+.public-site {
+  color-scheme: light;
+  --canvas: #f7f8f6;
+  --paper: #fff;
+  --surface: #fff;
+  --surface-subtle: #f1f3f1;
+  --surface-raised: #f1f3f1;
+  --ink: #1f2421;
+  --ink-strong: #151a18;
+  --ink-muted: #66716b;
+  --ink-faint: #727a75;
+  --line: #dde2de;
+  --line-strong: #b7c0ba;
+  --brand-soft: #e9effb;
+  --brand-faint: #f2f5fc;
+  --link-soft: #e9effb;
+  --signal-soft: #e9effb;
+  --public-wide: 1240px;
+  --public-gutter: clamp(1rem, 3.2vw, 3rem);
+  --radius-control: 4px;
+  --radius-field: var(--radius-control);
+  --radius-checkbox: 4px;
+  --radius-panel: 5px;
+  --radius-dialog: 9px;
+  --control-height: 40px;
+  --control-text-size: 13px;
+  --focus-ring: 0 0 0 3px color-mix(in srgb, var(--brand) 24%, transparent);
+}
+
+.public-site {
+  overflow-x: clip;
+  background: var(--canvas);
+  color: var(--ink);
+}
+
+.public-site .font-serif {
+  font-family: var(--font-sans);
+}
+
+.public-site input[type="search"] {
+  appearance: none;
+}
+
+.public-site input[type="search"]::-webkit-search-cancel-button {
+  appearance: none;
+}
+
+.public-site main {
+  container-type: inline-size;
+}
+
+[data-placeholder],
+[data-placeholder] * {
+  color: transparent !important;
+  text-decoration-color: transparent !important;
 }
 
 @theme inline {
@@ -320,6 +381,10 @@
   }
   :focus-visible {
     outline: none;
+  }
+  .public-site :focus-visible {
+    outline: 2px solid var(--brand);
+    outline-offset: 2px;
   }
   h1,
   h2,

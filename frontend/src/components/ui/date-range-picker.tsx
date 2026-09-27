@@ -4,6 +4,7 @@ import * as Popover from "@radix-ui/react-popover";
 import { CalendarDays, ChevronLeft, ChevronRight } from "lucide-react";
 import { useMemo, useRef, useState } from "react";
 import { cn } from "@/lib/cn";
+import { formControlClass } from "./form-controls";
 
 interface DateRangePickerProps {
   from: string;
@@ -118,7 +119,10 @@ export function DateRangePicker({ from, onChange, to }: DateRangePickerProps) {
       open={open}
     >
       <Popover.Trigger
-        className="inline-flex h-[var(--control-height)] min-h-[var(--control-height)] w-full min-w-[220px] cursor-pointer items-center justify-center gap-[.55rem] whitespace-nowrap rounded-control border border-line bg-surface px-[.8rem] py-0 text-[.82rem] text-ink transition-[border-color,box-shadow,background] duration-150 hover:border-[color-mix(in_srgb,var(--brand)_42%,var(--line))] data-[state=open]:border-brand focus-visible:border-brand focus-visible:shadow-[var(--focus-ring)] motion-reduce:transition-none"
+        className={cn(
+          formControlClass,
+          "inline-flex min-w-[220px] cursor-pointer items-center justify-center gap-[.55rem] whitespace-nowrap",
+        )}
         type="button"
       >
         <CalendarDays
