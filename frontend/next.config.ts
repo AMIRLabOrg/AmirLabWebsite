@@ -1,7 +1,7 @@
 import type { NextConfig } from "next";
 
 const apiUrl = new URL(
-  process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001/api",
+  process.env.NEXT_PUBLIC_API_URL?.trim() || "http://localhost:3001/api",
 );
 const apiPath = apiUrl.pathname.replace(/\/+$/, "");
 
