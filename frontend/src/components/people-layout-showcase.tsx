@@ -4,7 +4,10 @@ import Link from "next/link";
 import { useState } from "react";
 import { ArrowDown, ArrowRight, ArrowUp, MoveUpRight } from "lucide-react";
 import { PersonPortrait } from "@/components/person-portrait";
-import { FrameRule } from "@/components/ui/public-shell";
+import {
+  FrameIntersectionNode,
+  FrameRule,
+} from "@/components/ui/public-shell";
 import { cn } from "@/lib/cn";
 import { loadingPlaceholder } from "@/lib/loading-style";
 import { peopleGroup, type PeopleGroup } from "@/lib/people-groups";
@@ -370,15 +373,9 @@ function Member({
       {odd && !fullWidth ? (
         <>
           {position === 0 ? (
-            <span
-              aria-hidden="true"
-              className="absolute top-[-3px] right-[-3px] h-1.5 w-1.5 border border-line-strong bg-canvas"
-            />
+            <FrameIntersectionNode className="absolute top-[-3px] right-[-3px]" />
           ) : null}
-          <span
-            aria-hidden="true"
-            className="absolute right-[-3px] bottom-[-3px] h-1.5 w-1.5 border border-line-strong bg-canvas"
-          />
+          <FrameIntersectionNode className="absolute right-[-3px] bottom-[-3px]" />
         </>
       ) : null}
     </>

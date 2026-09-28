@@ -1,7 +1,10 @@
 import { ArrowRight } from "lucide-react";
 import { MotionScene } from "@/components/motion-scene";
 import { ButtonLink } from "@/components/ui/button-control";
-import { FrameRule } from "@/components/ui/public-shell";
+import {
+  FrameIntersectionNode,
+  FrameRule,
+} from "@/components/ui/public-shell";
 import { cn } from "@/lib/cn";
 import { loadingPlaceholder } from "@/lib/loading-style";
 import { DEFAULT_ABOUT_CONTENT } from "@/lib/site-content";
@@ -109,14 +112,8 @@ export function AboutPageView({
             >
               {index < content.facts.length - 1 ? (
                 <>
-                  <span
-                    aria-hidden="true"
-                    className="absolute top-[-3px] right-[-3px] hidden h-1.5 w-1.5 border border-line-strong bg-canvas lg:block"
-                  />
-                  <span
-                    aria-hidden="true"
-                    className="absolute right-[-3px] bottom-[-3px] hidden h-1.5 w-1.5 border border-line-strong bg-canvas lg:block"
-                  />
+                  <FrameIntersectionNode className="absolute top-[-3px] right-[-3px] hidden lg:block" />
+                  <FrameIntersectionNode className="absolute right-[-3px] bottom-[-3px] hidden lg:block" />
                 </>
               ) : null}
               <span
@@ -207,13 +204,13 @@ export function AboutPageView({
               >
                 {index % 2 === 0 ? (
                   <>
-                    <span
-                      aria-hidden="true"
-                      className="absolute top-[-3px] right-[-3px] hidden h-1.5 w-1.5 border border-line-strong bg-surface lg:block"
+                    <FrameIntersectionNode
+                      className="absolute top-[-3px] right-[-3px] hidden lg:block"
+                      nodeSurfaceClassName="bg-surface"
                     />
-                    <span
-                      aria-hidden="true"
-                      className="absolute right-[-3px] bottom-[-3px] hidden h-1.5 w-1.5 border border-line-strong bg-surface lg:block"
+                    <FrameIntersectionNode
+                      className="absolute right-[-3px] bottom-[-3px] hidden lg:block"
+                      nodeSurfaceClassName="bg-surface"
                     />
                   </>
                 ) : null}

@@ -2,7 +2,10 @@ import { AnimatedCounter } from "./animated-counter";
 import type { PublicStats } from "@/lib/types";
 import { cn } from "@/lib/cn";
 import { loadingPlaceholder } from "@/lib/loading-style";
-import { PublicSection } from "@/components/ui/public-shell";
+import {
+  FrameIntersectionNode,
+  PublicSection,
+} from "@/components/ui/public-shell";
 
 export function ResearchStats({
   stats,
@@ -72,14 +75,8 @@ export function ResearchStats({
           </span>
           {index < values.length - 1 ? (
             <>
-              <span
-                aria-hidden="true"
-                className="absolute top-[-3px] right-[-3px] hidden h-1.5 w-1.5 border border-line-strong bg-canvas lg:block"
-              />
-              <span
-                aria-hidden="true"
-                className="absolute right-[-3px] bottom-[-3px] hidden h-1.5 w-1.5 border border-line-strong bg-canvas lg:block"
-              />
+              <FrameIntersectionNode className="absolute top-[-3px] right-[-3px] hidden lg:block" />
+              <FrameIntersectionNode className="absolute right-[-3px] bottom-[-3px] hidden lg:block" />
             </>
           ) : null}
         </article>

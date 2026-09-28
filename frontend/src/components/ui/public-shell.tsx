@@ -25,6 +25,26 @@ export function PublicShell({
 
 type FrameBoundary = "none" | "top" | "bottom" | "both";
 
+export function FrameIntersectionNode({
+  className,
+  nodeSurfaceClassName = "bg-canvas",
+  ...props
+}: ComponentPropsWithoutRef<"span"> & {
+  nodeSurfaceClassName?: string;
+}) {
+  return (
+    <span
+      aria-hidden="true"
+      className={cn(
+        "z-20 h-1.5 w-1.5 border border-line-strong shadow-[0_0_0_1px_var(--canvas)]",
+        nodeSurfaceClassName,
+        className,
+      )}
+      {...props}
+    />
+  );
+}
+
 /**
  * The shared outer frame for a public page section. It owns viewport rules and
  * the centered content gutter so pages never draw those lines themselves.
@@ -169,10 +189,6 @@ export function FrameRuleNodes({
   scope?: "viewport" | "contained";
   nodeSurfaceClassName?: string;
 }) {
-  const node = cn(
-    "h-1.5 w-1.5 border border-line-strong",
-    nodeSurfaceClassName,
-  );
   return (
     <div
       aria-hidden="true"
@@ -183,17 +199,13 @@ export function FrameRuleNodes({
     >
       {scope === "viewport" ? (
         <>
-          <span
-            className={cn(
-              "absolute left-[4.25%] top-0 -translate-x-1/2 -translate-y-1/2",
-              node,
-            )}
+          <FrameIntersectionNode
+            className="absolute left-[4.25%] top-0 -translate-x-1/2 -translate-y-1/2"
+            nodeSurfaceClassName={nodeSurfaceClassName}
           />
-          <span
-            className={cn(
-              "absolute top-0 right-[5.4%] translate-x-1/2 -translate-y-1/2",
-              node,
-            )}
+          <FrameIntersectionNode
+            className="absolute top-0 right-[5.4%] translate-x-1/2 -translate-y-1/2"
+            nodeSurfaceClassName={nodeSurfaceClassName}
           />
         </>
       ) : null}
@@ -203,17 +215,13 @@ export function FrameRuleNodes({
           scope === "viewport" && "max-w-[var(--public-wide)]",
         )}
       >
-        <span
-          className={cn(
-            "absolute top-0 left-0 -translate-x-1/2 -translate-y-1/2",
-            node,
-          )}
+        <FrameIntersectionNode
+          className="absolute top-0 left-0 -translate-x-1/2 -translate-y-1/2"
+          nodeSurfaceClassName={nodeSurfaceClassName}
         />
-        <span
-          className={cn(
-            "absolute top-0 right-0 translate-x-1/2 -translate-y-1/2",
-            node,
-          )}
+        <FrameIntersectionNode
+          className="absolute top-0 right-0 translate-x-1/2 -translate-y-1/2"
+          nodeSurfaceClassName={nodeSurfaceClassName}
         />
       </div>
     </div>
@@ -273,10 +281,6 @@ export function FrameNodes({
   edge?: "top" | "bottom" | "both";
   nodeSurfaceClassName?: string;
 }) {
-  const node = cn(
-    "h-1.5 w-1.5 border border-line-strong",
-    nodeSurfaceClassName,
-  );
   return (
     <div
       aria-hidden="true"
@@ -287,33 +291,25 @@ export function FrameNodes({
     >
       {edge !== "bottom" ? (
         <>
-          <span
-            className={cn(
-              "absolute top-[-.5px] left-0 -translate-x-1/2 -translate-y-1/2",
-              node,
-            )}
+          <FrameIntersectionNode
+            className="absolute top-[-.5px] left-0 -translate-x-1/2 -translate-y-1/2"
+            nodeSurfaceClassName={nodeSurfaceClassName}
           />
-          <span
-            className={cn(
-              "absolute top-[-.5px] right-0 translate-x-1/2 -translate-y-1/2",
-              node,
-            )}
+          <FrameIntersectionNode
+            className="absolute top-[-.5px] right-0 translate-x-1/2 -translate-y-1/2"
+            nodeSurfaceClassName={nodeSurfaceClassName}
           />
         </>
       ) : null}
       {edge !== "top" ? (
         <>
-          <span
-            className={cn(
-              "absolute bottom-[-.5px] left-0 -translate-x-1/2 translate-y-1/2",
-              node,
-            )}
+          <FrameIntersectionNode
+            className="absolute bottom-[-.5px] left-0 -translate-x-1/2 translate-y-1/2"
+            nodeSurfaceClassName={nodeSurfaceClassName}
           />
-          <span
-            className={cn(
-              "absolute right-0 bottom-[-.5px] translate-x-1/2 translate-y-1/2",
-              node,
-            )}
+          <FrameIntersectionNode
+            className="absolute right-0 bottom-[-.5px] translate-x-1/2 translate-y-1/2"
+            nodeSurfaceClassName={nodeSurfaceClassName}
           />
         </>
       ) : null}

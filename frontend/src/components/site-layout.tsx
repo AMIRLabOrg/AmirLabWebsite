@@ -18,7 +18,11 @@ const siteEmail = process.env.NEXT_PUBLIC_SITE_EMAIL ?? "admin@example.test";
 export function SiteLayout({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const workspace = pathname.startsWith("/workspace");
-  const auth = pathname.startsWith("/login") || pathname.startsWith("/auth/");
+  const auth =
+    pathname.startsWith("/auth/") ||
+    ["/login", "/forgot-password", "/reset-password", "/revert-email"].includes(
+      pathname,
+    );
   return (
     <div className={workspace ? undefined : "public-site"}>
       {workspace || auth ? null : <SiteHeader />}
