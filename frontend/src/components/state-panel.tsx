@@ -4,6 +4,7 @@ import { AlertTriangle, Inbox, SearchX, ShieldAlert } from "lucide-react";
 import type { ReactNode } from "react";
 import { ButtonControl, ButtonLink } from "@/components/ui/button-control";
 import { FramedCollection, FrameNodes } from "@/components/ui/public-shell";
+import { WorkspaceRuleBand } from "@/components/ui/workspace-surface";
 import { cn } from "@/lib/cn";
 
 const ICONS = {
@@ -22,7 +23,7 @@ export function StatePanel({
 }: {
   action?: { href?: string; label: string; onClick?: () => void };
   body: ReactNode;
-  frame?: boolean;
+  frame?: boolean | "workspace";
   title: string;
   variant?: keyof typeof ICONS;
 }) {
@@ -35,10 +36,13 @@ export function StatePanel({
         : "border-line text-ink-muted";
   const panel = (
     <div
-      className="relative flex flex-col items-center border-y border-line-strong bg-transparent px-8 py-16 text-center"
+      className={cn(
+        "relative flex flex-col items-center bg-transparent px-8 py-16 text-center",
+        frame === "workspace" ? "" : "border-y border-line-strong",
+      )}
       role={variant === "error" ? "alert" : "status"}
     >
-      <FrameNodes />
+      {frame === true ? <FrameNodes /> : null}
       <span
         className={cn(
           "mb-[1.2rem] flex h-12 w-12 items-center justify-center border bg-canvas",
@@ -59,5 +63,10 @@ export function StatePanel({
     </div>
   );
 
+  if (frame === "workspace") {
+    return (
+      <WorkspaceRuleBand contentClassName="px-0">{panel}</WorkspaceRuleBand>
+    );
+  }
   return frame ? <FramedCollection>{panel}</FramedCollection> : panel;
 }

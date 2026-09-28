@@ -18,6 +18,7 @@ import { useAuth } from "@/components/auth-provider";
 import { ConfirmDialog } from "@/components/confirm-dialog";
 import { useNotifications } from "@/components/notification-provider";
 import { StatePanel } from "@/components/state-panel";
+import { WorkspaceFrameNodes } from "@/components/ui/workspace-surface";
 import { API_URL } from "@/lib/api";
 import { apiRequest } from "@/lib/client-api";
 import type {
@@ -420,11 +421,12 @@ export function ProfileEditor({ userId }: ProfileEditorProps) {
   return (
     <form
       aria-busy={editorLoading}
-      className="mx-auto grid w-full max-w-[1180px] grid-cols-[minmax(0,1fr)_320px] items-start gap-[1.35rem] max-[980px]:grid-cols-1"
+      className="grid w-full grid-cols-[minmax(0,1fr)_320px] items-start gap-[1.35rem] max-[980px]:grid-cols-1"
       data-loading={editorLoading || undefined}
       onSubmit={submit}
     >
-      <header className="sticky top-[84px] z-10 col-span-full flex items-center justify-between gap-4 rounded-panel border border-line bg-[color-mix(in_srgb,var(--surface)_92%,transparent)] py-[.7rem] pl-4 pr-[.9rem] shadow-[var(--shadow-panel)] backdrop-blur-[12px] max-[640px]:top-[74px] max-[640px]:flex-col max-[640px]:items-stretch">
+      <header className="sticky top-[52px] z-10 col-span-full -mx-[var(--workspace-gutter)] flex items-center justify-between gap-4 border-y border-line-strong bg-[color-mix(in_srgb,var(--surface)_94%,transparent)] px-[var(--workspace-gutter)] py-[.7rem] backdrop-blur-[12px] max-[820px]:top-[65px] max-[640px]:mx-0 max-[640px]:flex-col max-[640px]:items-stretch max-[640px]:px-4">
+        <WorkspaceFrameNodes />
         <p className="m-0 flex items-center gap-[.55rem] text-[.76rem] text-ink-muted">
           <span className="h-[7px] w-[7px] rounded-full bg-brand" />
           {userId || user?.role === "ADMIN"
@@ -445,7 +447,8 @@ export function ProfileEditor({ userId }: ProfileEditorProps) {
         </ButtonControl>
       </header>
       {!moderatorProfile ? (
-        <section className="col-span-full flex items-center gap-[1.6rem] rounded-panel border border-line bg-surface p-[1.6rem] shadow-[var(--shadow-panel)] max-[640px]:flex-col max-[640px]:items-start">
+        <section className="relative col-span-full -mx-[var(--workspace-gutter)] flex items-center gap-[1.6rem] border-y border-line-strong bg-transparent px-[var(--workspace-gutter)] py-[1.6rem] max-[640px]:mx-0 max-[640px]:flex-col max-[640px]:items-start max-[640px]:px-4">
+          <WorkspaceFrameNodes />
           <div
             className={cn(
               "relative flex h-28 w-28 flex-[0_0_112px] items-center justify-center rounded-full border border-dashed border-[color-mix(in_srgb,var(--brand)_36%,transparent)]",
@@ -498,7 +501,7 @@ export function ProfileEditor({ userId }: ProfileEditorProps) {
             </p>
             <h1
               className={cn(
-                "mb-2 mt-[.35rem] font-serif text-[clamp(1.8rem,3vw,2.35rem)] font-semibold leading-[1.05] tracking-[-.035em]",
+                "mb-2 mt-[.35rem] font-sans text-[clamp(1.8rem,3vw,2.35rem)] font-semibold leading-[1.05] tracking-[-.035em]",
                 loadingPlaceholder(editorLoading, "text", "long"),
               )}
               data-placeholder={editorLoading ? "text" : undefined}
@@ -528,7 +531,15 @@ export function ProfileEditor({ userId }: ProfileEditorProps) {
           </div>
         </section>
       ) : null}
-      <section className="col-start-1 grid gap-[1.2rem] rounded-panel border border-line bg-surface p-[1.55rem] shadow-[var(--shadow-panel)] max-[980px]:col-start-1">
+      <section
+        className={cn(
+          "relative grid gap-[1.2rem] border-y border-line-strong bg-transparent py-[1.55rem]",
+          adminProfile
+            ? "col-span-full -mx-[var(--workspace-gutter)] px-[var(--workspace-gutter)] max-[640px]:mx-0 max-[640px]:px-4"
+            : "col-start-1 -ml-[var(--workspace-gutter)] pl-[var(--workspace-gutter)] pr-[1.55rem] max-[980px]:col-start-1 max-[640px]:ml-0 max-[640px]:px-4",
+        )}
+      >
+        <WorkspaceFrameNodes />
         <div className="mb-0 flex items-end justify-between gap-8 border-b border-line pb-[.95rem]">
           <div>
             <p className="m-0 mb-4 font-[var(--font-sans)] text-[.75rem] font-extrabold uppercase tracking-[.12em] text-brand">
@@ -690,7 +701,8 @@ export function ProfileEditor({ userId }: ProfileEditorProps) {
       </section>
 
       {researchProfile ? (
-        <section className="col-start-1 grid gap-[1.2rem] rounded-panel border border-line bg-surface p-[1.55rem] shadow-[var(--shadow-panel)] max-[980px]:col-start-1">
+        <section className="relative col-start-1 -ml-[var(--workspace-gutter)] grid gap-[1.2rem] border-y border-line-strong bg-transparent py-[1.55rem] pr-[1.55rem] pl-[var(--workspace-gutter)] max-[980px]:col-start-1 max-[640px]:ml-0 max-[640px]:px-4">
+          <WorkspaceFrameNodes />
           <div className="mb-0 flex items-end justify-between gap-8 border-b border-line pb-[.95rem]">
             <div>
               <p className="m-0 mb-4 font-[var(--font-sans)] text-[.75rem] font-extrabold uppercase tracking-[.12em] text-brand">
@@ -769,7 +781,7 @@ export function ProfileEditor({ userId }: ProfileEditorProps) {
                 />
                 <ButtonControl
                   aria-label={`Remove link ${index + 1}`}
-                  className="min-h-[42px] rounded-full p-0 text-ink-muted"
+                  className="min-h-[42px] rounded-control p-0 text-ink-muted"
                   loading={editorLoading}
                   onClick={() =>
                     setProfile({
@@ -790,7 +802,8 @@ export function ProfileEditor({ userId }: ProfileEditorProps) {
       ) : null}
 
       {researchProfile ? (
-        <section className="col-start-1 grid gap-[1.2rem] rounded-panel border border-line bg-surface p-[1.55rem] shadow-[var(--shadow-panel)] max-[980px]:col-start-1">
+        <section className="relative col-start-1 -ml-[var(--workspace-gutter)] grid gap-[1.2rem] border-y border-line-strong bg-transparent py-[1.55rem] pr-[1.55rem] pl-[var(--workspace-gutter)] max-[980px]:col-start-1 max-[640px]:ml-0 max-[640px]:px-4">
+          <WorkspaceFrameNodes />
           <div className="mb-0 flex items-end justify-between gap-8 border-b border-line pb-[.95rem]">
             <div>
               <p className="m-0 mb-4 font-[var(--font-sans)] text-[.75rem] font-extrabold uppercase tracking-[.12em] text-brand">
@@ -822,14 +835,14 @@ export function ProfileEditor({ userId }: ProfileEditorProps) {
           <div className="grid gap-[.8rem]">
             {profile.sections.map((section, index) => (
               <article
-                className="grid gap-4 rounded-panel border border-line bg-transparent p-4"
+                className="grid gap-4 border-y border-line-strong bg-transparent p-4"
                 key={index}
               >
                 <div className="flex items-center justify-between">
                   <span>{String(index + 1).padStart(2, "0")}</span>
                   <ButtonControl
                     aria-label={`Remove section ${index + 1}`}
-                    className="min-h-[42px] rounded-full p-0 text-ink-muted"
+                    className="min-h-[42px] rounded-control p-0 text-ink-muted"
                     loading={editorLoading}
                     onClick={() =>
                       setProfile({
@@ -909,7 +922,7 @@ export function ProfileEditor({ userId }: ProfileEditorProps) {
                     </div>
                     {section.subsections.map((subsection, subsectionIndex) => (
                       <article
-                        className="grid gap-4 rounded-panel border border-line bg-transparent p-4"
+                        className="grid gap-4 border-y border-line-strong bg-transparent p-4"
                         key={subsectionIndex}
                       >
                         <div className="flex items-center justify-between">
@@ -918,7 +931,7 @@ export function ProfileEditor({ userId }: ProfileEditorProps) {
                           </span>
                           <ButtonControl
                             aria-label={`Remove subsection ${subsectionIndex + 1}`}
-                            className="min-h-[42px] rounded-full p-0 text-ink-muted"
+                            className="min-h-[42px] rounded-control p-0 text-ink-muted"
                             loading={editorLoading}
                             disabled={section.subsections.length === 1}
                             onClick={() => {
@@ -993,7 +1006,7 @@ export function ProfileEditor({ userId }: ProfileEditorProps) {
                                   </span>
                                   <ButtonControl
                                     aria-label={`Remove entry ${entryIndex + 1}`}
-                                    className="min-h-[36px] rounded-full p-0 text-ink-muted"
+                                    className="min-h-[36px] rounded-control p-0 text-ink-muted"
                                     disabled={subsection.entries.length === 1}
                                     loading={editorLoading}
                                     onClick={() => {
@@ -1091,7 +1104,7 @@ export function ProfileEditor({ userId }: ProfileEditorProps) {
       {researchProfile || userId ? (
         <aside className="sticky top-[152px] col-start-2 row-[3/span_3] grid gap-4 max-[980px]:static max-[980px]:col-start-1 max-[980px]:row-auto max-[980px]:grid-cols-2 max-[640px]:grid-cols-1">
           {userId ? (
-            <section className="col-start-1 grid gap-[1.2rem] rounded-panel border border-line bg-surface p-[1.55rem] shadow-[var(--shadow-panel)] max-[980px]:col-start-1">
+            <section className="col-start-1 grid gap-[1.2rem] border-y border-line-strong bg-transparent p-[1.55rem] max-[980px]:col-start-1">
               <div className="mb-0 flex items-end justify-between gap-8 border-b border-line pb-[.95rem]">
                 <div>
                   <h2 className="text-[1.35rem] font-semibold">
@@ -1143,7 +1156,7 @@ export function ProfileEditor({ userId }: ProfileEditorProps) {
           ) : null}
           {researchProfile ? (
             <>
-              <section className="rounded-panel border border-line bg-surface p-[1.35rem] shadow-[var(--shadow-panel)]">
+              <section className="border-y border-line-strong bg-transparent p-[1.35rem]">
                 <p className="m-0 mb-4 font-[var(--font-sans)] text-[.75rem] font-extrabold uppercase tracking-[.12em] text-brand">
                   Live preview
                 </p>
@@ -1159,7 +1172,7 @@ export function ProfileEditor({ userId }: ProfileEditorProps) {
                   <div>
                     <strong
                       className={cn(
-                        "block font-serif text-[1.05rem] font-semibold",
+                        "block font-sans text-[1.05rem] font-semibold",
                         loadingPlaceholder(editorLoading, "text", "long"),
                       )}
                       data-placeholder={editorLoading ? "text" : undefined}
@@ -1198,7 +1211,7 @@ export function ProfileEditor({ userId }: ProfileEditorProps) {
                       : "Add a short biography so visitors understand your work and role in the lab.")}
                 </p>
               </section>
-              <section className="rounded-panel border border-line bg-surface p-[1.35rem] shadow-[var(--shadow-panel)]">
+              <section className="border-y border-line-strong bg-transparent p-[1.35rem]">
                 <div className="flex items-baseline justify-between">
                   <p className="m-0 mb-4 font-[var(--font-sans)] text-[.75rem] font-extrabold uppercase tracking-[.12em] text-brand">
                     Completeness

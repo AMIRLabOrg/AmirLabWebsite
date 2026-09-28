@@ -26,6 +26,10 @@ import { useBulkSelection } from "@/lib/use-bulk-selection";
 import { StatePanel } from "@/components/state-panel";
 import type { PaginatedResponse } from "@/lib/types";
 import { useNotifications } from "@/components/notification-provider";
+import {
+  WorkspaceFrameNodes,
+  WorkspaceRuleBand,
+} from "@/components/ui/workspace-surface";
 
 interface ReviewResearch {
   id: string;
@@ -656,7 +660,7 @@ export function ResearchReviewQueue({ selectedId }: { selectedId?: string }) {
 
   return (
     <div className="grid min-w-0 gap-4">
-      <div className="grid min-w-0 grid-cols-[minmax(220px,1.5fr)_repeat(3,minmax(140px,.7fr))] items-end gap-[.8rem] rounded-panel border border-line bg-surface p-4 max-[980px]:grid-cols-2 max-[640px]:grid-cols-1">
+      <WorkspaceRuleBand contentClassName="grid min-w-0 grid-cols-[minmax(220px,1.5fr)_repeat(3,minmax(140px,.7fr))] items-end gap-[.8rem] px-[calc(var(--workspace-gutter)+1rem)] py-4 max-[980px]:grid-cols-2 max-[640px]:grid-cols-1 max-[640px]:px-4">
         <ToolbarSearchField
           id="research-review-search"
           label="Search queue"
@@ -718,7 +722,7 @@ export function ResearchReviewQueue({ selectedId }: { selectedId?: string }) {
             value={sort}
           />
         </FormField>
-      </div>
+      </WorkspaceRuleBand>
       {loading || visibleItems.length ? (
         <BulkReviewBar
           actions={commonBulkActions}
@@ -740,6 +744,7 @@ export function ResearchReviewQueue({ selectedId }: { selectedId?: string }) {
       ) : null}
       {error && !result && !loading ? (
         <StatePanel
+          frame="workspace"
           action={{
             label: "Retry",
             onClick: () => {
@@ -752,11 +757,11 @@ export function ResearchReviewQueue({ selectedId }: { selectedId?: string }) {
           variant="error"
         />
       ) : (
-        <div className="grid min-w-0 grid-cols-[minmax(300px,360px)_minmax(0,1fr)] items-start gap-5 max-[960px]:grid-cols-1">
+        <WorkspaceRuleBand contentClassName="grid min-w-0 grid-cols-[minmax(300px,392px)_minmax(0,1fr)] items-start !px-0 max-[960px]:grid-cols-1">
           <aside
-            className={`sticky top-[88px] grid max-h-[calc(100svh-104px)] min-w-0 grid-rows-[auto_minmax(0,1fr)] gap-[.35rem] overflow-hidden rounded-panel border border-line bg-surface p-4 max-[960px]:static max-[960px]:max-h-none ${refreshing ? "opacity-70" : ""}`}
+            className={`grid min-w-0 content-start border-r border-line-strong bg-transparent max-[960px]:border-r-0 max-[960px]:border-b ${refreshing ? "opacity-70" : ""}`}
           >
-            <div className="grid min-w-0 items-stretch gap-3 border-b border-line pb-[.85rem]">
+            <div className="grid min-w-0 items-stretch gap-3 border-b border-line px-[var(--workspace-gutter)] py-4">
               <div>
                 <p className="m-0 mb-4 font-[var(--font-sans)] text-[.75rem] font-extrabold uppercase tracking-[.12em] text-brand">
                   Review queue
@@ -774,16 +779,14 @@ export function ResearchReviewQueue({ selectedId }: { selectedId?: string }) {
               ) : null}
             </div>
             {renderedItems.length ? (
-              <div
-                className="min-h-0 overflow-y-auto pr-1 [scrollbar-color:var(--ink-faint)_transparent] [scrollbar-width:thin]"
-                data-loading={loadingRows || undefined}
-              >
-                <div className="flex flex-col divide-y divide-line rounded-panel border border-line overflow-hidden">
+              <div data-loading={loadingRows || undefined}>
+                <div className="flex flex-col">
                   {renderedItems.map((candidate) => (
                     <div
-                      className={`relative grid min-w-0 grid-cols-[auto_minmax(0,1fr)] items-stretch overflow-hidden transition-colors ${candidate.id === selected ? "bg-brand-soft" : "bg-surface hover:bg-surface-subtle"}`}
+                      className={`relative grid min-w-0 grid-cols-[auto_minmax(0,1fr)] items-stretch border-b border-line-strong transition-colors last:border-b-0 ${candidate.id === selected ? "bg-brand-soft" : "bg-transparent hover:bg-surface-subtle"}`}
                       key={candidate.id}
                     >
+                      <WorkspaceFrameNodes edge="bottom" />
                       {!loadingRows ? (
                         <ReviewIssueStamp
                           className="right-2 top-2"
@@ -848,7 +851,7 @@ export function ResearchReviewQueue({ selectedId }: { selectedId?: string }) {
             )}
           </aside>
           <section
-            className="sticky top-[88px] grid max-h-[calc(100svh-104px)] min-w-0 gap-4 overflow-y-auto rounded-panel border border-line bg-surface p-5 [scrollbar-color:var(--ink-faint)_transparent] [scrollbar-width:thin] max-[960px]:static max-[960px]:max-h-none"
+            className="grid min-w-0 gap-4 bg-transparent p-5 max-[960px]:px-[var(--workspace-gutter)]"
             data-loading={loadingDetail || undefined}
           >
             {item ? (
@@ -876,7 +879,7 @@ export function ResearchReviewQueue({ selectedId }: { selectedId?: string }) {
                   </div>
                   <h2
                     className={cn(
-                      "m-0 font-serif text-[clamp(1.75rem,2.7vw,2.45rem)] leading-[1.08] [overflow-wrap:anywhere]",
+                      "m-0 font-sans text-[clamp(1.75rem,2.7vw,2.45rem)] leading-[1.08] [overflow-wrap:anywhere]",
                       loadingPlaceholder(loadingDetail, "text", "full"),
                     )}
                     data-placeholder={loadingDetail ? "text" : undefined}
@@ -922,6 +925,7 @@ export function ResearchReviewQueue({ selectedId }: { selectedId?: string }) {
                     <ButtonControl
                       compact
                       disabled={loadingDetail}
+                      loading={loadingDetail}
                       onClick={() =>
                         setEditingId((current) =>
                           current === item.id ? undefined : item.id,
@@ -941,9 +945,10 @@ export function ResearchReviewQueue({ selectedId }: { selectedId?: string }) {
                   />
                 ) : null}
                 <section
-                  className="grid gap-4 rounded-panel border border-line bg-surface p-[clamp(1rem,2vw,1.35rem)]"
+                  className="relative mx-[-1.25rem] grid w-[calc(100%+2.5rem)] gap-4 border-y border-line-strong bg-transparent p-[clamp(1rem,2vw,1.35rem)]"
                   aria-label="Source discovery"
                 >
+                  <WorkspaceFrameNodes />
                   <div className="flex items-center justify-between gap-4 max-[640px]:flex-col max-[640px]:items-start">
                     <div className="flex items-center gap-[.7rem]">
                       <Badge
@@ -960,7 +965,14 @@ export function ResearchReviewQueue({ selectedId }: { selectedId?: string }) {
                           : (item.sourceSnapshot?.status.toLowerCase() ??
                             "not checked")}
                       </Badge>
-                      <h3 className="font-serif text-[clamp(1.15rem,1.7vw,1.35rem)] leading-[1.2]">
+                      <h3
+                        className={cn(
+                          "font-sans text-[clamp(1.15rem,1.7vw,1.35rem)] leading-[1.2]",
+                          loadingPlaceholder(loadingDetail, "text", "medium"),
+                        )}
+                        data-placeholder={loadingDetail ? "text" : undefined}
+                        data-placeholder-width="medium"
+                      >
                         Canonical source evidence
                       </h3>
                     </div>
@@ -1032,11 +1044,19 @@ export function ResearchReviewQueue({ selectedId }: { selectedId?: string }) {
                   )}
                 </section>
                 <section
-                  className="grid gap-4 rounded-panel border border-line bg-surface p-[clamp(1rem,2vw,1.35rem)]"
+                  className="relative mx-[-1.25rem] grid w-[calc(100%+2.5rem)] gap-4 border-y border-line-strong bg-transparent p-[clamp(1rem,2vw,1.35rem)]"
                   aria-label="Contributor verification"
                 >
+                  <WorkspaceFrameNodes />
                   <div className="flex items-center justify-between gap-4">
-                    <h3 className="font-serif text-[clamp(1.15rem,1.7vw,1.35rem)] leading-[1.2]">
+                    <h3
+                      className={cn(
+                        "font-sans text-[clamp(1.15rem,1.7vw,1.35rem)] leading-[1.2]",
+                        loadingPlaceholder(loadingDetail, "text", "medium"),
+                      )}
+                      data-placeholder={loadingDetail ? "text" : undefined}
+                      data-placeholder-width="medium"
+                    >
                       Contributor relationships
                     </h3>
                     <span
@@ -1369,7 +1389,7 @@ export function ResearchReviewQueue({ selectedId }: { selectedId?: string }) {
               </p>
             )}
           </section>
-        </div>
+        </WorkspaceRuleBand>
       )}
     </div>
   );
@@ -1386,14 +1406,14 @@ function ResearchRecordEditor({
 }) {
   return (
     <form
-      className="grid gap-4 rounded-panel border border-line-strong bg-canvas p-[clamp(1rem,2vw,1.35rem)]"
+      className="grid gap-4 border border-line-strong bg-canvas p-[clamp(1rem,2vw,1.35rem)]"
       onSubmit={onSubmit}
     >
       <div className="grid gap-1">
         <span className="font-mono text-[.62rem] uppercase tracking-[.08em] text-brand">
           Record editor
         </span>
-        <strong className="font-serif text-[1.2rem] font-normal">
+        <strong className="font-sans text-[1.2rem] font-normal">
           Edit and re-run verification
         </strong>
         <p className="m-0 text-[.78rem] leading-[1.5] text-ink-muted">

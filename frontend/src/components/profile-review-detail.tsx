@@ -153,7 +153,7 @@ export function ProfileReviewDetail({ id }: { id: string }) {
 
   return (
     <div className="grid gap-4" data-loading={loading || undefined}>
-      <section className="relative rounded-panel border border-line bg-surface p-5">
+      <section className="relative border-y border-line-strong bg-transparent p-5">
         <ReviewIssueStamp issue={reviewIssues[0]} />
         <div>
           <p className="m-0 mb-4 font-[var(--font-sans)] text-[.75rem] font-extrabold uppercase tracking-[.12em] text-brand">
@@ -161,7 +161,7 @@ export function ProfileReviewDetail({ id }: { id: string }) {
           </p>
           <h2
             className={cn(
-              "font-serif text-[clamp(1.6rem,3vw,2.4rem)] font-medium leading-[1.08]",
+              "font-sans text-[clamp(1.6rem,3vw,2.4rem)] font-medium leading-[1.08]",
               loadingPlaceholder(loading, "text", "long"),
             )}
             data-placeholder="text"
@@ -219,7 +219,7 @@ export function ProfileReviewDetail({ id }: { id: string }) {
       />
 
       {loading || request?.status === "NEEDS_REVIEW" ? (
-        <section className="grid gap-4 rounded-panel border border-line bg-surface p-5">
+        <section className="grid gap-4 border-y border-line-strong bg-transparent p-5">
           <ReviewActions
             loading={loading}
             actions={[
@@ -328,7 +328,7 @@ function ProfileDiff({
 
   return (
     <section
-      className="grid gap-4 rounded-panel border border-line bg-surface p-5"
+      className="grid gap-4 border-y border-line-strong bg-transparent p-5"
       data-loading={loading || undefined}
     >
       <div className="flex items-end justify-between gap-4 border-b border-line pb-4 max-[640px]:flex-col max-[640px]:items-start">
@@ -338,7 +338,7 @@ function ProfileDiff({
           </p>
           <h2
             className={cn(
-              "m-0 font-serif text-[clamp(1.4rem,2.4vw,2rem)] font-normal leading-[1.1]",
+              "m-0 font-sans text-[clamp(1.4rem,2.4vw,2rem)] font-normal leading-[1.1]",
               loadingPlaceholder(loading, "text", "medium"),
             )}
             data-placeholder={loading ? "text" : undefined}

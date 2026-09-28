@@ -21,6 +21,7 @@ export const InputControl = forwardRef<
         loading && loadingPlaceholder(true, "control"),
         className,
       )}
+      data-loading={loading || undefined}
       data-placeholder={loading ? "control" : props["data-placeholder"]}
       {...props}
     />
@@ -43,6 +44,7 @@ export const TextareaControl = forwardRef<
         loading && loadingPlaceholder(true, "control"),
         className,
       )}
+      data-loading={loading || undefined}
       data-placeholder={loading ? "control" : props["data-placeholder"]}
       {...props}
     />

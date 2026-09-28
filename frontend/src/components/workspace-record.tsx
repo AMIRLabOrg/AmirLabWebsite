@@ -3,6 +3,10 @@ import { loadingPlaceholder } from "@/lib/loading-style";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import type { ComponentPropsWithoutRef, ReactNode } from "react";
+import {
+  WorkspaceFrameNodes,
+  WorkspaceRuleBand,
+} from "@/components/ui/workspace-surface";
 
 interface WorkspaceRecordProps {
   actions?: ReactNode;
@@ -16,32 +20,41 @@ interface WorkspaceRecordProps {
 }
 
 export function WorkspaceRecordForm({
+  children,
   className,
   ...props
 }: ComponentPropsWithoutRef<"form">) {
   return (
     <form
-      className={cn(
-        "mx-auto grid w-full max-w-[820px] gap-[1.35rem] rounded-panel border border-line bg-surface p-[clamp(1.25rem,3vw,2rem)]",
-        className,
-      )}
+      className="relative mx-[calc(var(--workspace-gutter)*-1)] border-y border-line-strong bg-transparent max-[640px]:mx-0"
       {...props}
-    />
+    >
+      <WorkspaceFrameNodes />
+      <div className={cn("mx-auto grid w-full max-w-[820px] gap-[1.35rem] px-[var(--workspace-gutter)] py-[clamp(1.25rem,3vw,2rem)] max-[640px]:px-4", className)}>
+        {children}
+      </div>
+    </form>
   );
 }
 
 export function WorkspaceRecordPanel({
+  children,
   className,
   ...props
 }: ComponentPropsWithoutRef<"section">) {
   return (
     <section
       className={cn(
-        "mx-auto grid w-full max-w-[820px] gap-[1.35rem] rounded-panel border border-line bg-surface p-[clamp(1.25rem,3vw,2rem)]",
+        "relative mx-[calc(var(--workspace-gutter)*-1)] border-y border-line-strong bg-transparent max-[640px]:mx-0",
         className,
       )}
       {...props}
-    />
+    >
+      <WorkspaceFrameNodes />
+      <div className="mx-auto grid w-full max-w-[820px] gap-[1.35rem] px-[var(--workspace-gutter)] py-[clamp(1.25rem,3vw,2rem)] max-[640px]:px-4">
+        {children}
+      </div>
+    </section>
   );
 }
 
@@ -67,7 +80,7 @@ export function WorkspaceRecordPanelTitle({
   return (
     <h2
       className={cn(
-        "m-0 font-serif text-[clamp(1.4rem,2.4vw,2rem)] font-normal leading-[1.1]",
+        "m-0 font-sans text-[clamp(1.4rem,2.4vw,2rem)] font-normal leading-[1.1]",
         className,
       )}
       {...props}
@@ -87,7 +100,7 @@ export function WorkspaceRecord({
 }: WorkspaceRecordProps) {
   return (
     <div
-      className="mx-auto grid w-full max-w-[1280px] gap-6 pb-20"
+      className="grid w-full gap-6 pb-20"
       data-loading={loading || undefined}
     >
       <Link
@@ -96,14 +109,14 @@ export function WorkspaceRecord({
       >
         <ArrowLeft aria-hidden="true" size={15} /> {backLabel}
       </Link>
-      <header className="flex items-end justify-between gap-4 border-b border-line pb-6 max-[700px]:flex-col max-[700px]:items-stretch">
+      <WorkspaceRuleBand contentClassName="flex items-end justify-between gap-4 py-6 max-[700px]:flex-col max-[700px]:items-stretch">
         <div>
           <p className="m-0 mb-4 font-[var(--font-sans)] text-[.75rem] font-extrabold uppercase tracking-[.12em] text-brand">
             {eyebrow}
           </p>
           <h1
             className={cn(
-              "mt-[.3rem] font-serif text-[clamp(2.15rem,4.6vw,3.65rem)] font-normal leading-[.98] tracking-[-.035em]",
+              "mt-[.3rem] font-sans text-[clamp(2.15rem,4.6vw,3.65rem)] font-normal leading-[.98] tracking-[-.035em]",
               loadingPlaceholder(loading, "text", "long"),
             )}
             data-placeholder={loading ? "text" : undefined}
@@ -122,7 +135,7 @@ export function WorkspaceRecord({
             {actions}
           </div>
         ) : null}
-      </header>
+      </WorkspaceRuleBand>
       {children}
     </div>
   );

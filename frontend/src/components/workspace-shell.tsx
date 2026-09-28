@@ -15,6 +15,10 @@ import { useAuth } from "@/components/auth-provider";
 import { ConfirmDialog } from "@/components/confirm-dialog";
 import { useNotifications } from "@/components/notification-provider";
 import { ProfileAvatar } from "@/components/profile-avatar";
+import {
+  WorkspaceFrameRails,
+  WorkspaceRailRuleNodes,
+} from "@/components/ui/workspace-surface";
 import { cn } from "@/lib/cn";
 import {
   isWorkspaceNavigationActive,
@@ -59,7 +63,10 @@ export function WorkspaceShell({ children }: { children: ReactNode }) {
     workspaceNavigationItem(pathname, navigationGroups)?.label ?? "Workspace";
 
   return (
-    <div data-loading={loading || !user || undefined}>
+    <div
+      className="workspace-site"
+      data-loading={loading || !user || undefined}
+    >
       <div
         className={cn(
           "grid min-h-screen w-full items-stretch bg-canvas transition-[grid-template-columns] duration-300 ease-in-out max-[820px]:block",
@@ -68,10 +75,10 @@ export function WorkspaceShell({ children }: { children: ReactNode }) {
             : "grid-cols-[64px_minmax(0,1fr)]",
         )}
       >
-        <aside className="sticky top-0 flex h-screen min-w-0 flex-col overflow-y-auto overflow-x-hidden border-r border-line bg-paper pb-4 max-[820px]:static max-[820px]:h-auto max-[820px]:w-full max-[820px]:overflow-visible max-[820px]:border-r-0 max-[820px]:border-b max-[820px]:pt-[.65rem] max-[820px]:pb-0">
+        <aside className="sticky top-0 flex h-screen min-w-0 flex-col overflow-y-auto overflow-x-hidden border-r border-line-strong bg-surface pb-4 max-[820px]:static max-[820px]:h-auto max-[820px]:w-full max-[820px]:overflow-visible max-[820px]:border-r-0 max-[820px]:border-b max-[820px]:pt-[.65rem] max-[820px]:pb-0">
           <div
             className={cn(
-              "flex items-center h-[52px] gap-2 border-b border-line-strong max-[820px]:border-b-0 max-[820px]:h-auto max-[820px]:pb-[.55rem]",
+              "flex h-[52px] items-center gap-2 border-b border-line-strong max-[820px]:h-auto max-[820px]:border-b-0 max-[820px]:pb-[.55rem]",
               sidebarOpen
                 ? "justify-between px-[.85rem]"
                 : "justify-center px-0",
@@ -96,13 +103,13 @@ export function WorkspaceShell({ children }: { children: ReactNode }) {
           <nav
             aria-label="Workspace navigation"
             className={cn(
-              "mt-[.85rem] grid gap-[.55rem] max-[820px]:-mx-4 max-[820px]:mt-0 max-[820px]:flex max-[820px]:gap-0 max-[820px]:overflow-x-auto max-[820px]:px-4 max-[820px]:[scrollbar-width:none]",
+              "mt-[.6rem] grid gap-[.35rem] max-[820px]:-mx-4 max-[820px]:mt-0 max-[820px]:flex max-[820px]:gap-0 max-[820px]:overflow-x-auto max-[820px]:px-4 max-[820px]:[scrollbar-width:none]",
               sidebarOpen ? "px-[.85rem]" : "px-[.4rem]",
             )}
           >
             {navigationGroups.map((group) => (
               <div
-                className="grid gap-0 border-b border-line pb-[.55rem] max-[820px]:contents"
+                className="grid gap-0 border-b border-line pb-[.4rem] max-[820px]:contents"
                 key={group.label}
               >
                 {sidebarOpen ? (
@@ -128,7 +135,7 @@ export function WorkspaceShell({ children }: { children: ReactNode }) {
                   return (
                     <Link
                       className={cn(
-                        "flex min-h-[33px] items-center gap-2 border-l-2 border-transparent py-[.42rem] text-[.69rem] font-semibold text-ink-muted hover:bg-brand-faint hover:text-brand transition-colors max-[820px]:min-h-[38px] max-[820px]:shrink-0 max-[820px]:border-b-2 max-[820px]:border-l-0",
+                        "flex min-h-[35px] items-center gap-2 border-l-2 border-transparent py-[.42rem] text-[.69rem] font-semibold text-ink-muted transition-colors hover:bg-brand-faint hover:text-brand max-[820px]:min-h-[38px] max-[820px]:shrink-0 max-[820px]:border-b-2 max-[820px]:border-l-0",
                         sidebarOpen
                           ? "px-[.48rem]"
                           : "justify-center px-0 relative",
@@ -199,8 +206,10 @@ export function WorkspaceShell({ children }: { children: ReactNode }) {
             )}
           </div>
         </aside>
-        <div className="grid min-w-0 grid-rows-[52px_minmax(0,1fr)] max-[820px]:grid-rows-[65px_minmax(0,1fr)]">
-          <header className="sticky top-0 z-30 flex min-h-[52px] items-center justify-between border-b border-line bg-[color-mix(in_srgb,var(--canvas)_96%,transparent)] px-[clamp(1rem,2vw,1.8rem)] py-[.45rem]">
+        <div className="relative grid min-w-0 grid-rows-[52px_minmax(0,1fr)] max-[820px]:grid-rows-[65px_minmax(0,1fr)]">
+          <WorkspaceFrameRails />
+          <header className="sticky top-0 z-30 flex min-h-[52px] items-center justify-between border-b border-line-strong bg-[color-mix(in_srgb,var(--surface)_94%,transparent)] px-[clamp(1rem,2vw,1.8rem)] py-[.45rem] backdrop-blur-[12px]">
+            <WorkspaceRailRuleNodes />
             <div className="flex items-center gap-[clamp(.5rem,2vw,1rem)]">
               <div className="grid gap-[.12rem]">
                 <span
@@ -253,7 +262,7 @@ export function WorkspaceShell({ children }: { children: ReactNode }) {
           </header>
           <div
             className={cn(
-              "min-w-0",
+              "relative z-[1] min-w-0",
               pathname === "/workspace/chat"
                 ? "min-h-0 overflow-hidden p-0"
                 : "p-0 max-[820px]:px-4",

@@ -23,6 +23,7 @@ import { ButtonControl, ButtonLink } from "@/components/ui/button-control";
 import { FormField } from "@/components/ui/form-field";
 import { ReviewIssueStamp } from "@/components/ui/semantic-status";
 import type { ReviewIssue } from "@/lib/review-issues";
+import { WorkspaceRuleBand } from "@/components/ui/workspace-surface";
 
 interface ApplicationSummary {
   id: string;
@@ -109,7 +110,7 @@ export function ApplicationReviewQueue() {
 
   return (
     <DataTableShell>
-      <div className="grid min-w-0 grid-cols-[minmax(220px,1.4fr)_repeat(2,minmax(140px,.52fr))_minmax(220px,.8fr)_auto] items-end gap-[.8rem] rounded-panel border border-line bg-surface p-4 max-[980px]:grid-cols-2 max-[640px]:grid-cols-1">
+      <WorkspaceRuleBand contentClassName="grid min-w-0 grid-cols-[minmax(220px,1.4fr)_repeat(2,minmax(140px,.52fr))_minmax(220px,.8fr)_auto] items-end gap-[.8rem] px-[calc(var(--workspace-gutter)+1rem)] py-4 max-[980px]:grid-cols-2 max-[640px]:grid-cols-1 max-[640px]:px-4">
         <ToolbarSearchField
           id="application-search"
           label="Search"
@@ -167,7 +168,7 @@ export function ApplicationReviewQueue() {
         <ButtonControl disabled={!filtered} onClick={clear}>
           Clear
         </ButtonControl>
-      </div>
+      </WorkspaceRuleBand>
 
       {error && result ? (
         <p className="m-0 flex items-center gap-[.45rem] text-[.82rem] leading-[1.5] text-ink-muted rounded-panel bg-danger-soft p-[.8rem] text-danger">
@@ -177,6 +178,7 @@ export function ApplicationReviewQueue() {
 
       {error && !result ? (
         <StatePanel
+          frame="workspace"
           action={{
             label: "Retry",
             onClick: () => {
@@ -345,6 +347,7 @@ export function ApplicationReviewQueue() {
         </>
       ) : (
         <StatePanel
+          frame="workspace"
           action={
             filtered ? { label: "Clear filters", onClick: clear } : undefined
           }

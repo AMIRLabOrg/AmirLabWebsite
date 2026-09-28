@@ -30,6 +30,7 @@ import {
   SemanticStatus,
 } from "@/components/ui/semantic-status";
 import type { ReviewIssue } from "@/lib/review-issues";
+import { WorkspaceRuleBand } from "@/components/ui/workspace-surface";
 
 export function ProfileReviewQueue() {
   const router = useRouter();
@@ -180,7 +181,7 @@ export function ProfileReviewQueue() {
 
   return (
     <DataTableShell>
-      <div className="grid min-w-0 grid-cols-[minmax(220px,1fr)_minmax(160px,.7fr)_auto] items-end gap-[.8rem] rounded-panel border border-line bg-surface p-4 max-[760px]:grid-cols-1">
+      <WorkspaceRuleBand contentClassName="grid min-w-0 grid-cols-[minmax(220px,1fr)_minmax(160px,.7fr)_auto] items-end gap-[.8rem] px-[calc(var(--workspace-gutter)+1rem)] py-4 max-[760px]:grid-cols-1 max-[640px]:px-4">
         <ToolbarSearchField
           id="profile-review-search"
           label="Search"
@@ -211,7 +212,7 @@ export function ProfileReviewQueue() {
         <ButtonControl disabled={!filtered} onClick={clear} variant="secondary">
           Clear
         </ButtonControl>
-      </div>
+      </WorkspaceRuleBand>
 
       {loading || result?.items.length ? (
         <BulkReviewBar
@@ -240,6 +241,7 @@ export function ProfileReviewQueue() {
       ) : null}
       {error && !result ? (
         <StatePanel
+          frame="workspace"
           action={{
             label: "Retry",
             onClick: () => {
@@ -410,6 +412,7 @@ export function ProfileReviewQueue() {
         </>
       ) : (
         <StatePanel
+          frame="workspace"
           action={
             filtered ? { label: "Clear search", onClick: clear } : undefined
           }

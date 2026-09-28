@@ -28,7 +28,7 @@ export function PasswordField({ id, label, ...props }: PasswordFieldProps) {
           aria-label={buttonLabel}
           className="absolute right-[.35rem] top-1/2 -translate-y-1/2 text-ink-muted hover:text-brand"
           onClick={() => setVisible((current) => !current)}
-          shape="round"
+          shape="control"
           size="md"
           title={buttonLabel}
           variant="bare"

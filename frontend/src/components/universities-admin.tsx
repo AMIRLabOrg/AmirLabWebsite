@@ -25,6 +25,10 @@ import { CheckboxControl } from "@/components/ui/checkbox-control";
 import { FileInputControl, InputControl } from "@/components/ui/form-controls";
 import type { University } from "@/lib/types";
 import { ButtonControl } from "@/components/ui/button-control";
+import {
+  WorkspaceCollection,
+  WorkspaceRow,
+} from "@/components/ui/workspace-surface";
 
 const EMPTY_UNIVERSITY: University = {
   createdAt: "",
@@ -81,6 +85,7 @@ export function UniversityIndex() {
     <AdminOnly>
       {error && !loading ? (
         <StatePanel
+          frame="workspace"
           action={{ label: "Retry", onClick: load }}
           body="The connection dropped. Nothing was changed."
           title={error}
@@ -88,67 +93,69 @@ export function UniversityIndex() {
         />
       ) : !loading && !universities.length ? (
         <StatePanel
+          frame="workspace"
           body="Create the first collaborating university from the page action above."
           title="No universities yet"
         />
       ) : (
-        <div className="grid gap-[.7rem]" data-loading={loading || undefined}>
+        <WorkspaceCollection data-loading={loading || undefined}>
           {(loading && !universities.length
             ? Array.from({ length: 4 }, () => undefined)
             : universities
           ).map((university, index) => (
-            <Link
-              aria-disabled={loading || !university}
-              className="flex items-center justify-between gap-4 rounded-panel border border-line bg-surface px-[1.1rem] py-4 text-inherit hover:border-[color-mix(in_srgb,var(--brand)_45%,var(--line))]"
-              href={
-                university ? `/workspace/universities/${university.id}` : "#"
-              }
-              key={university?.id ?? `university-loading-${index}`}
-              tabIndex={loading ? -1 : undefined}
-            >
-              <div>
-                <strong
-                  className={cn(
-                    "text-[.98rem] leading-[1.35]",
-                    loadingPlaceholder(loading, "text", "long"),
-                  )}
-                  data-placeholder="text"
-                  data-placeholder-width="long"
-                >
-                  {university?.name ||
-                    (loading ? "Loading university" : "Unnamed university")}
-                </strong>
-                <div className="mt-[.35rem]">
-                  {university ? (
-                    <SemanticStatus
-                      loading={loading}
-                      tone={university.isPublished ? "success" : "warning"}
-                    >
-                      {university.isPublished ? "Published" : "Draft"}
-                    </SemanticStatus>
-                  ) : (
-                    <small
-                      className={cn(
-                        "font-mono text-[.7rem] text-ink-muted",
-                        loadingPlaceholder(loading, "label", "medium"),
-                      )}
-                      data-placeholder="label"
-                      data-placeholder-width="medium"
-                    >
-                      Loading status
-                    </small>
-                  )}
+            <WorkspaceRow key={university?.id ?? `university-loading-${index}`}>
+              <Link
+                aria-disabled={loading || !university}
+                className="flex min-h-[84px] items-center justify-between gap-4 bg-transparent px-[1.1rem] py-4 text-inherit transition-colors hover:bg-brand-faint"
+                href={
+                  university ? `/workspace/universities/${university.id}` : "#"
+                }
+                tabIndex={loading ? -1 : undefined}
+              >
+                <div>
+                  <strong
+                    className={cn(
+                      "text-[.98rem] leading-[1.35]",
+                      loadingPlaceholder(loading, "text", "long"),
+                    )}
+                    data-placeholder="text"
+                    data-placeholder-width="long"
+                  >
+                    {university?.name ||
+                      (loading ? "Loading university" : "Unnamed university")}
+                  </strong>
+                  <div className="mt-[.35rem]">
+                    {university ? (
+                      <SemanticStatus
+                        loading={loading}
+                        tone={university.isPublished ? "success" : "warning"}
+                      >
+                        {university.isPublished ? "Published" : "Draft"}
+                      </SemanticStatus>
+                    ) : (
+                      <small
+                        className={cn(
+                          "font-mono text-[.7rem] text-ink-muted",
+                          loadingPlaceholder(loading, "label", "medium"),
+                        )}
+                        data-placeholder="label"
+                        data-placeholder-width="medium"
+                      >
+                        Loading status
+                      </small>
+                    )}
+                  </div>
                 </div>
-              </div>
-              <ArrowRight
-                aria-hidden="true"
-                className={loading ? "opacity-[.12]" : undefined}
-                data-loading-icon={loading ? "true" : undefined}
-                size={17}
-              />
-            </Link>
+                <ArrowRight
+                  aria-hidden="true"
+                  className={loading ? "opacity-[.12]" : undefined}
+                  data-loading-icon={loading ? "true" : undefined}
+                  size={17}
+                />
+              </Link>
+            </WorkspaceRow>
           ))}
-        </div>
+        </WorkspaceCollection>
       )}
     </AdminOnly>
   );
@@ -357,7 +364,7 @@ export function UniversityEditor({ id }: { id?: string }) {
             <span className="text-[.78rem] font-semibold leading-[1.35] text-ink">
               Logo
             </span>
-            <span className="relative flex min-h-[120px] items-center justify-center overflow-hidden rounded-panel border border-dashed border-[color-mix(in_srgb,var(--brand)_36%,transparent)] bg-surface-subtle p-4 transition-colors hover:border-brand hover:bg-[color-mix(in_srgb,var(--brand-soft)_50%,transparent)]">
+            <span className="relative flex min-h-[120px] items-center justify-center overflow-hidden rounded-control border border-dashed border-[color-mix(in_srgb,var(--brand)_36%,transparent)] bg-surface-subtle p-4 transition-colors hover:border-brand hover:bg-[color-mix(in_srgb,var(--brand-soft)_50%,transparent)]">
               {logoFile ? (
                 <Image
                   alt="New logo preview"

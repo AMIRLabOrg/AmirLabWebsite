@@ -115,10 +115,10 @@ export function SearchableSelect({
       <Popover.Portal>
         <Popover.Content
           align="start"
-          className="z-[100] w-[var(--radix-popover-trigger-width)] overflow-hidden rounded-[calc(3px+.35rem)] border border-line bg-surface p-[.35rem] shadow-[0_18px_50px_color-mix(in_srgb,var(--brand-hover)_16%,transparent)] animate-[popover-enter_160ms_ease-out] motion-reduce:animate-none"
+          className="z-[100] w-[var(--radix-popover-trigger-width)] overflow-hidden rounded-control border border-line-strong bg-canvas p-1 shadow-[var(--shadow-float)] animate-[popover-enter_160ms_ease-out] motion-reduce:animate-none"
           sideOffset={6}
         >
-          <div className="mb-[.35rem] grid grid-cols-[20px_minmax(0,1fr)] items-center rounded-[var(--radius-field)] border border-line px-[.55rem] transition-[border-color,box-shadow] hover:border-line-strong focus-within:border-brand focus-within:shadow-[var(--focus-ring)]">
+          <div className="mb-1 grid grid-cols-[20px_minmax(0,1fr)] items-center rounded-control border border-line-strong px-2 transition-[border-color,box-shadow] focus-within:border-brand focus-within:shadow-[var(--focus-ring)]">
             <Search aria-hidden="true" className="text-ink-muted" size={15} />
             <InputControl
               aria-activedescendant={
@@ -170,7 +170,7 @@ export function SearchableSelect({
             />
           </div>
           <div
-            className="grid max-h-[min(360px,45vh)] gap-[var(--space-1)] overflow-auto rounded-b-[3px] [scrollbar-color:var(--ink-faint)_transparent] [scrollbar-width:thin]"
+            className="grid max-h-[min(360px,45vh)] gap-0.5 overflow-auto [scrollbar-color:var(--ink-faint)_transparent] [scrollbar-width:thin]"
             id={listId}
             role="listbox"
           >
@@ -182,7 +182,7 @@ export function SearchableSelect({
               filtered.map((option, index) => (
                 <button
                   aria-selected={option.value === value}
-                  className="flex min-h-10 cursor-pointer items-center justify-between gap-3 rounded-[2px] border-0 bg-transparent px-[.65rem] py-[.55rem] text-left text-[.82rem] font-normal text-ink hover:bg-brand-soft hover:text-brand focus-visible:bg-brand-soft focus-visible:text-brand data-[active]:bg-brand-soft data-[active]:text-brand aria-selected:bg-brand-soft aria-selected:font-[650] aria-selected:text-brand"
+                  className="flex min-h-9 cursor-pointer items-center justify-between gap-3 rounded-control border-0 bg-transparent px-2.5 py-2 text-left text-[.76rem] font-normal text-ink outline-none hover:bg-brand-faint hover:text-brand focus-visible:bg-brand-faint focus-visible:text-brand data-[active]:bg-brand-faint data-[active]:text-brand aria-selected:bg-brand-faint aria-selected:font-semibold aria-selected:text-brand"
                   data-active={index === resolvedActiveIndex ? "" : undefined}
                   id={`${listId}-option-${index}`}
                   key={option.value}

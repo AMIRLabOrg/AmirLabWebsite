@@ -58,6 +58,7 @@ export function SelectControl({
           loading && loadingPlaceholder(true, "control"),
           className,
         )}
+        data-loading={loading || undefined}
         data-placeholder={loading ? "control" : undefined}
         id={id}
       >
@@ -69,8 +70,8 @@ export function SelectControl({
       <Select.Portal>
         <Select.Content
           className={cn(
-            "z-[100] min-w-[var(--radix-select-trigger-width)] overflow-hidden rounded-[5px] border border-line bg-surface p-[.3rem] shadow-[0_18px_50px_color-mix(in_srgb,var(--brand-hover)_16%,transparent)] animate-[popover-enter_160ms_ease-out] motion-reduce:animate-none",
-            compact && "rounded-[3px] p-1",
+            "z-[100] min-w-[var(--radix-select-trigger-width)] overflow-hidden rounded-control border border-line-strong bg-canvas p-1 shadow-[var(--shadow-float)] animate-[popover-enter_160ms_ease-out] motion-reduce:animate-none",
+            compact && "rounded-control",
           )}
           position="popper"
           sideOffset={6}
@@ -78,7 +79,7 @@ export function SelectControl({
           <Select.Viewport className="grid gap-[var(--space-1)]">
             {options.map((option) => (
               <Select.Item
-                className="flex min-h-[38px] cursor-pointer select-none items-center justify-between rounded-[2px] px-[.65rem] py-[.55rem] text-[.8rem] text-ink data-[highlighted]:bg-brand-soft data-[highlighted]:text-brand data-[state=checked]:font-[650]"
+                className="flex min-h-9 cursor-pointer select-none items-center justify-between rounded-control px-2.5 py-2 text-[.76rem] text-ink outline-none data-[highlighted]:bg-brand-faint data-[highlighted]:text-brand data-[state=checked]:bg-brand-faint data-[state=checked]:font-semibold data-[state=checked]:text-brand"
                 key={option.value}
                 value={option.value}
               >

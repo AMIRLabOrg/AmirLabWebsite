@@ -20,6 +20,11 @@ import {
   SemanticStatus,
 } from "@/components/ui/semantic-status";
 import { useReviewIssues } from "@/lib/use-review-issues";
+import {
+  WorkspaceCollection,
+  WorkspaceRow,
+  WorkspaceRuleBand,
+} from "@/components/ui/workspace-surface";
 
 interface NotificationPage extends PaginatedResponse<NotificationRecord> {
   unreadCount: number;
@@ -219,7 +224,7 @@ export function NotificationInbox() {
 
   return (
     <div className="grid min-w-0 gap-4">
-      <div className="grid min-w-0 grid-cols-[minmax(180px,.8fr)_minmax(220px,1fr)_auto] items-end gap-[.8rem] rounded-panel border border-line bg-surface p-4 max-[960px]:grid-cols-2 max-[640px]:grid-cols-1">
+      <WorkspaceRuleBand contentClassName="grid min-w-0 grid-cols-[minmax(180px,.8fr)_minmax(220px,1fr)_auto] items-end gap-[.8rem] px-[calc(var(--workspace-gutter)+1rem)] py-4 max-[960px]:grid-cols-2 max-[640px]:grid-cols-1 max-[640px]:px-4">
         <FormField htmlFor="notification-status" label="Status">
           <SelectControl
             id="notification-status"
@@ -260,10 +265,11 @@ export function NotificationInbox() {
         >
           Clear filters
         </ButtonControl>
-      </div>
+      </WorkspaceRuleBand>
 
       {error && !result ? (
         <StatePanel
+          frame="workspace"
           action={{
             label: "Retry",
             onClick: () => {
@@ -277,8 +283,7 @@ export function NotificationInbox() {
         />
       ) : loading || result?.items.length ? (
         <>
-          <div
-            className="grid gap-3"
+          <WorkspaceCollection
             aria-live="polite"
             data-loading={loading || undefined}
           >
@@ -286,8 +291,8 @@ export function NotificationInbox() {
               ? Array.from({ length: 5 }, () => undefined)
               : (result?.items ?? [])
             ).map((notification, index) => (
-              <article
-                className={`relative grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-6 rounded-panel border bg-surface p-4 pr-10 [overflow-wrap:anywhere] max-[640px]:grid-cols-1 ${notification?.readAt ? "border-line" : "border-[color-mix(in_srgb,var(--brand)_45%,var(--line))] border-l-[3px] border-l-brand pl-[calc(1rem+3px)]"}`}
+              <WorkspaceRow
+                className={`relative grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-6 bg-transparent p-4 pr-10 [overflow-wrap:anywhere] max-[640px]:grid-cols-1 ${notification?.readAt ? "" : "before:absolute before:inset-y-0 before:left-0 before:w-[3px] before:bg-brand before:content-['']"}`}
                 key={notification?.id ?? `notification-loading-${index}`}
               >
                 {notification ? (
@@ -377,9 +382,9 @@ export function NotificationInbox() {
                     </ButtonControl>
                   ) : null}
                 </div>
-              </article>
+              </WorkspaceRow>
             ))}
-          </div>
+          </WorkspaceCollection>
           <PaginationControls
             loading={loading}
             onPageChange={(nextPage) => {
@@ -394,6 +399,7 @@ export function NotificationInbox() {
         </>
       ) : (
         <StatePanel
+          frame="workspace"
           action={
             from || to || read !== "ALL"
               ? {

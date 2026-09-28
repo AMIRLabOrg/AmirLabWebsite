@@ -1,5 +1,6 @@
 import type { ComponentPropsWithoutRef } from "react";
 import { cn } from "@/lib/cn";
+import { WorkspaceRuleBand } from "@/components/ui/workspace-surface";
 
 export function DataTableShell({
   className,
@@ -9,17 +10,18 @@ export function DataTableShell({
 }
 
 export function DataTableCard({
+  children,
   className,
   ...props
 }: ComponentPropsWithoutRef<"div">) {
   return (
-    <div
-      className={cn(
-        "min-w-0 overflow-x-auto rounded-panel border border-line bg-surface",
-        className,
-      )}
+    <WorkspaceRuleBand
+      className={className}
+      contentClassName="overflow-x-auto !px-0"
       {...props}
-    />
+    >
+      {children}
+    </WorkspaceRuleBand>
   );
 }
 
@@ -45,7 +47,7 @@ export function DataTableHeadCell({
   return (
     <th
       className={cn(
-        "border-b border-table-line px-[.9rem] py-3 text-left font-mono text-[.64rem] font-medium uppercase tracking-[.06em] text-ink-muted",
+        "border-b border-table-line px-[.9rem] py-3 text-left font-mono text-[.64rem] font-medium uppercase tracking-[.06em] text-ink-muted first:pl-[var(--workspace-gutter)] last:pr-[var(--workspace-gutter)]",
         className,
       )}
       {...props}
@@ -60,7 +62,7 @@ export function DataTableCell({
   return (
     <td
       className={cn(
-        "border-b border-line px-[.9rem] py-[.85rem] align-middle",
+        "border-b border-line px-[.9rem] py-[.85rem] align-middle first:pl-[var(--workspace-gutter)] last:pr-[var(--workspace-gutter)]",
         className,
       )}
       {...props}

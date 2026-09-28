@@ -17,7 +17,7 @@ import {
   WorkspaceEmpty,
   WorkspaceHero,
   WorkspacePanel,
-  WorkspaceSplit,
+  WorkspaceRuleBand,
   WorkspaceSurface,
 } from "@/components/ui/workspace-surface";
 import { ApiRequestError, apiRequest } from "@/lib/client-api";
@@ -258,8 +258,8 @@ export function WeeklyReportReview() {
         successTitle="Bulk weekly report review saved"
       />
 
-      <WorkspaceSplit>
-        <div className="sticky top-[88px] max-h-[calc(100svh-104px)] min-w-0 overflow-y-auto [scrollbar-color:var(--ink-faint)_transparent] [scrollbar-width:thin] max-[900px]:static max-[900px]:max-h-none">
+      <WorkspaceRuleBand contentClassName="grid grid-cols-[minmax(0,1.22fr)_minmax(320px,.78fr)] !px-0 max-[900px]:grid-cols-1">
+        <div className="min-w-0 [&>section]:border-0">
           <WorkspacePanel
             description="Select a report to inspect its evidence and plan."
             eyebrow="Queue"
@@ -369,7 +369,7 @@ export function WeeklyReportReview() {
           </WorkspacePanel>
         </div>
 
-        <div className="sticky top-[88px] max-h-[calc(100svh-104px)] min-w-0 overflow-y-auto [scrollbar-color:var(--ink-faint)_transparent] [scrollbar-width:thin] max-[900px]:static max-[900px]:max-h-none">
+        <div className="min-w-0 border-l border-line-strong [&>section]:border-0 max-[900px]:border-l-0 max-[900px]:border-t">
           <WorkspacePanel
             description="Review outcomes and blockers in the context of the projects covered."
             eyebrow="Report detail"
@@ -507,7 +507,7 @@ export function WeeklyReportReview() {
             )}
           </WorkspacePanel>
         </div>
-      </WorkspaceSplit>
+      </WorkspaceRuleBand>
     </WorkspaceSurface>
   );
 }

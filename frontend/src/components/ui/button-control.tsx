@@ -133,6 +133,7 @@ export function ButtonLink({
       {...props}
       aria-busy={loading || undefined}
       aria-disabled={loading || props["aria-disabled"] || undefined}
+      data-loading={loading || undefined}
       data-placeholder={loading ? "control" : undefined}
       tabIndex={loading ? -1 : tabIndex}
     >
@@ -176,6 +177,7 @@ export const ButtonAnchor = forwardRef<
       {...props}
       aria-busy={loading || undefined}
       aria-disabled={loading || props["aria-disabled"] || undefined}
+      data-loading={loading || undefined}
       data-placeholder={loading ? "control" : undefined}
       tabIndex={loading ? -1 : tabIndex}
     >

@@ -20,6 +20,11 @@ import {
   SemanticStatus,
 } from "@/components/ui/semantic-status";
 import { useReviewIssues } from "@/lib/use-review-issues";
+import {
+  WorkspaceCollection,
+  WorkspaceRow,
+  WorkspaceRuleBand,
+} from "@/components/ui/workspace-surface";
 
 const ROLES = ["MEMBER", "MODERATOR", "ADMIN"] as const;
 const RANKS = [
@@ -253,7 +258,7 @@ export function UserManagement() {
 
       {error && result ? <FormMessage>{error}</FormMessage> : null}
 
-      <div className="grid min-w-0 grid-cols-[minmax(210px,1.5fr)_repeat(4,minmax(120px,.65fr))] items-end gap-[.8rem] rounded-panel border border-line bg-surface p-4 max-[980px]:grid-cols-2 max-[640px]:grid-cols-1">
+      <WorkspaceRuleBand contentClassName="grid min-w-0 grid-cols-[minmax(210px,1.5fr)_repeat(4,minmax(120px,.65fr))] items-end gap-[.8rem] px-[calc(var(--workspace-gutter)+1rem)] py-4 max-[980px]:grid-cols-2 max-[640px]:grid-cols-1 max-[640px]:px-4">
         <FormField
           className="min-w-0"
           htmlFor="account-search"
@@ -349,10 +354,11 @@ export function UserManagement() {
             value={sort}
           />
         </FormField>
-      </div>
+      </WorkspaceRuleBand>
 
       {error && !result ? (
         <StatePanel
+          frame="workspace"
           action={{
             label: "Retry",
             onClick: () => {
@@ -366,11 +372,12 @@ export function UserManagement() {
         />
       ) : !loading && !accounts.length ? (
         <StatePanel
+          frame="workspace"
           body="Create the first member account from the page action above."
           title="No accounts yet"
         />
       ) : (
-        <section className="grid gap-4" data-loading={loading || undefined}>
+        <WorkspaceCollection data-loading={loading || undefined}>
           {(loading && !accounts.length
             ? Array.from({ length: 4 }, () => undefined)
             : accounts
@@ -379,8 +386,8 @@ export function UserManagement() {
               ? actionIssues.forItem(account.id)[0]
               : undefined;
             return (
-              <article
-                className="relative grid min-w-0 grid-cols-[minmax(220px,4fr)_minmax(260px,5fr)_minmax(360px,3fr)] items-center gap-4 rounded-panel border border-line bg-surface p-4 pr-10 max-[1180px]:grid-cols-1 max-[700px]:grid-cols-1"
+              <WorkspaceRow
+                className="relative grid min-w-0 grid-cols-[minmax(220px,4fr)_minmax(260px,5fr)_minmax(360px,3fr)] items-center gap-4 bg-transparent p-4 pr-10 max-[1180px]:grid-cols-1 max-[700px]:grid-cols-1"
                 key={account?.id ?? `account-loading-${index}`}
               >
                 {account ? <ReviewIssueStamp issue={issue} /> : null}
@@ -436,7 +443,14 @@ export function UserManagement() {
                   </div>
                 </div>
                 <div className="grid min-w-0 gap-[.35rem]">
-                  <span className="text-[.68rem] text-ink-muted">
+                  <span
+                    className={cn(
+                      "text-[.68rem] text-ink-muted",
+                      loadingPlaceholder(loading, "label", "short"),
+                    )}
+                    data-placeholder={loading ? "label" : undefined}
+                    data-placeholder-width="short"
+                  >
                     Account email
                   </span>
                   {loading ? (
@@ -514,10 +528,10 @@ export function UserManagement() {
                     {new Date(account.setupEmailQueuedAt).toLocaleString()}
                   </p>
                 ) : null}
-              </article>
+              </WorkspaceRow>
             );
           })}
-        </section>
+        </WorkspaceCollection>
       )}
       {loading || result ? (
         <PaginationControls
