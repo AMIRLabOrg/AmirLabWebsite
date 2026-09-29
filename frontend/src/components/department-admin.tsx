@@ -112,7 +112,7 @@ export function DepartmentIndex() {
             <WorkspaceRow key={department?.id ?? `department-loading-${index}`}>
               <Link
                 aria-disabled={loading || !department}
-                className="flex min-h-[84px] items-center justify-between gap-4 bg-transparent px-[1.1rem] py-4 text-inherit transition-colors hover:bg-brand-faint"
+                className="flex min-h-[64px] items-center justify-between gap-4 bg-transparent py-[.72rem] text-inherit transition-colors hover:bg-surface-subtle"
                 href={
                   department ? `/workspace/departments/${department.id}` : "#"
                 }
@@ -121,7 +121,7 @@ export function DepartmentIndex() {
                 <div>
                   <strong
                     className={cn(
-                      "text-[.98rem] leading-[1.35]",
+                      "text-[.84rem] font-medium leading-[1.35]",
                       loadingPlaceholder(loading, "text", "long"),
                     )}
                     data-placeholder="text"
@@ -132,7 +132,7 @@ export function DepartmentIndex() {
                   <div className="mt-[.35rem] flex flex-wrap items-center gap-2">
                     <small
                       className={cn(
-                        "font-mono text-[.7rem] text-ink-muted",
+                        "font-mono text-[.6rem] text-ink-muted",
                         loadingPlaceholder(loading, "label", "medium"),
                       )}
                       data-placeholder="label"
@@ -430,9 +430,7 @@ export function DepartmentEditor({ id }: { id?: string }) {
           ) : null}
         </WorkspaceRecordForm>
         {id ? (
-          <WorkspaceRecordPanel
-            data-loading={loading || undefined}
-          >
+          <WorkspaceRecordPanel data-loading={loading || undefined}>
             <header className="grid gap-[.35rem] border-b border-line pb-[1.15rem]">
               <p className="m-0 font-mono text-[.62rem] font-semibold uppercase tracking-[.1em] text-brand">
                 Membership

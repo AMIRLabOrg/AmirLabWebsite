@@ -2,11 +2,19 @@ import type { ComponentPropsWithoutRef, ReactNode } from "react";
 import { cn } from "@/lib/cn";
 import { loadingPlaceholder } from "@/lib/loading-style";
 
+// Wide and reading pages use the full workspace content box.
 const measureClass = {
-  wide: "max-w-[var(--workspace-wide)]",
-  reading: "max-w-[var(--workspace-wide)]",
-  form: "max-w-[var(--workspace-form)]",
+  wide: "",
+  reading: "",
+  form: "max-w-[min(var(--workspace-form),calc(100%_-_2*var(--frame-mobile-inner)))]",
 } as const;
+
+/**
+ * The workspace content box. Its edges are the workspace rails at every width
+ * (see --frame-inner with --frame-wide: var(--workspace-wide)).
+ */
+export const workspaceShellClass =
+  "mx-auto w-full max-w-[min(var(--workspace-wide),calc(100%_-_2*var(--frame-mobile-inner)))] px-[var(--workspace-gutter)]";
 
 export function WorkspaceSurface({
   children,
@@ -18,73 +26,13 @@ export function WorkspaceSurface({
   return (
     <main
       className={cn(
-        "relative z-[1] mx-auto grid min-h-[calc(100svh-52px)] w-full gap-[1.15rem] px-[var(--workspace-gutter)] pt-[1.4rem] pb-12 max-[820px]:min-h-0 max-[640px]:gap-[.9rem] max-[640px]:px-0 max-[640px]:pt-4 max-[640px]:pb-10",
+        workspaceShellClass,
+        "relative grid min-h-[calc(100svh-64px)] gap-[1.5rem] pt-[1.75rem] pb-12 max-[820px]:min-h-0 max-[640px]:gap-[.9rem] max-[640px]:pt-4 max-[640px]:pb-10",
         measureClass[measure],
       )}
     >
       {children}
     </main>
-  );
-}
-
-/**
- * One continuous frame owner for the entire workspace main column. Page
- * surfaces align to these rails but never redraw them.
- */
-export function WorkspaceFrameRails({ className }: { className?: string }) {
-  return (
-    <div
-      aria-hidden="true"
-      className={cn(
-        "pointer-events-none absolute inset-0 z-0 hidden overflow-hidden min-[821px]:block",
-        className,
-      )}
-    >
-      <i className="absolute inset-y-0 left-[4.25%] border-l border-dashed border-line-strong/45" />
-      <div className="absolute inset-y-0 left-1/2 w-full max-w-[var(--workspace-wide)] -translate-x-1/2 border-x border-line-strong/70" />
-      <i className="absolute inset-y-0 right-[5.4%] border-l border-dashed border-line-strong/45" />
-    </div>
-  );
-}
-
-export function WorkspaceRailRuleNodes({ className }: { className?: string }) {
-  const node =
-    "z-20 h-1.5 w-1.5 border border-line-strong bg-surface shadow-[0_0_0_1px_var(--canvas)]";
-  return (
-    <span
-      aria-hidden="true"
-      className={cn(
-        "pointer-events-none absolute inset-x-0 bottom-0 z-10 hidden min-[821px]:block",
-        className,
-      )}
-    >
-      <i
-        className={cn(
-          "absolute bottom-0 left-[4.25%] -translate-x-1/2 translate-y-1/2",
-          node,
-        )}
-      />
-      <i
-        className={cn(
-          "absolute right-[5.4%] bottom-0 translate-x-1/2 translate-y-1/2",
-          node,
-        )}
-      />
-      <span className="absolute inset-x-0 bottom-0 mx-auto h-0 w-full max-w-[var(--workspace-wide)]">
-        <i
-          className={cn(
-            "absolute bottom-0 left-0 -translate-x-1/2 translate-y-1/2",
-            node,
-          )}
-        />
-        <i
-          className={cn(
-            "absolute right-0 bottom-0 translate-x-1/2 translate-y-1/2",
-            node,
-          )}
-        />
-      </span>
-    </span>
   );
 }
 
@@ -103,16 +51,15 @@ export function WorkspaceHero({
 }) {
   return (
     <header className="relative mx-[calc(var(--workspace-gutter)*-1)] grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-end gap-5 border-b border-line-strong px-[var(--workspace-gutter)] pt-[.4rem] pb-[1.15rem] max-[640px]:grid-cols-1 max-[640px]:items-start">
-      <WorkspaceFrameNodes edge="bottom" />
       <div className="min-w-0">
         <p className="mb-[.42rem] font-mono text-[.61rem] font-semibold tracking-[.11em] text-brand uppercase">
           {eyebrow}
         </p>
-        <h1 className="m-0 font-serif text-[clamp(2rem,3.5vw,3.15rem)] leading-none font-medium tracking-[-.04em] max-[640px]:text-[clamp(2rem,11vw,2.75rem)]">
+        <h1 className="m-0 font-serif text-[clamp(1.85rem,2.7vw,2.35rem)] leading-[1.02] font-medium tracking-[-.035em] max-[640px]:text-[clamp(1.8rem,9vw,2.25rem)]">
           {title}
         </h1>
         {description ? (
-          <p className="mt-[.65rem] mb-0 max-w-[760px] text-[.78rem] leading-[1.55] text-ink-muted">
+          <p className="mt-[.65rem] mb-0 max-w-[700px] text-[.76rem] leading-[1.55] text-ink-muted">
             {description}
           </p>
         ) : null}
@@ -145,8 +92,7 @@ export function WorkspacePanel({
   title: ReactNode;
 }) {
   return (
-    <section className="relative min-w-0 border-y border-line-strong bg-transparent">
-      <WorkspaceFrameNodes />
+    <section className="relative min-w-0 border border-line-strong bg-surface">
       <header className="flex items-start justify-between gap-[1.2rem] border-b border-line px-4 py-[.9rem] max-[640px]:flex-col max-[640px]:p-[.8rem]">
         <div>
           {eyebrow ? (
@@ -172,8 +118,7 @@ export function WorkspacePanel({
 
 export function WorkspaceMetricStrip({ children }: { children: ReactNode }) {
   return (
-    <section className="relative grid grid-cols-4 border-y border-line-strong bg-transparent max-[900px]:grid-cols-2">
-      <WorkspaceFrameNodes />
+    <section className="relative grid grid-cols-4 border border-line-strong bg-surface max-[900px]:grid-cols-2">
       {children}
     </section>
   );
@@ -244,92 +189,28 @@ export function WorkspaceEmpty({ children }: { children: ReactNode }) {
   );
 }
 
-export function WorkspaceFrameNodes({
-  className,
-  edge = "both",
-  surfaceClassName = "bg-canvas",
-}: {
-  className?: string;
-  edge?: "top" | "bottom" | "both";
-  surfaceClassName?: string;
-}) {
-  const node = cn(
-    "z-20 h-1.5 w-1.5 border border-line-strong shadow-[0_0_0_1px_var(--canvas)]",
-    surfaceClassName,
-  );
-  return (
-    <span
-      aria-hidden="true"
-      className={cn(
-        "pointer-events-none absolute inset-0 z-10 hidden min-[821px]:block",
-        className,
-      )}
-    >
-      {edge !== "bottom" ? (
-        <>
-          <i
-            className={cn(
-              "absolute top-0 left-0 -translate-x-1/2 -translate-y-1/2",
-              node,
-            )}
-          />
-          <i
-            className={cn(
-              "absolute top-0 right-0 translate-x-1/2 -translate-y-1/2",
-              node,
-            )}
-          />
-        </>
-      ) : null}
-      {edge !== "top" ? (
-        <>
-          <i
-            className={cn(
-              "absolute bottom-0 left-0 -translate-x-1/2 translate-y-1/2",
-              node,
-            )}
-          />
-          <i
-            className={cn(
-              "absolute right-0 bottom-0 translate-x-1/2 translate-y-1/2",
-              node,
-            )}
-          />
-        </>
-      ) : null}
-    </span>
-  );
-}
-
 /**
- * A major workspace band. Its rules meet the page rails while its contents
- * retain the shared workspace gutter. Child content must draw only its own
- * internal dividers, never another inset frame.
+ * An inset workspace panel aligned inside the persistent page rails. Internal
+ * dividers belong to the child content; the panel owns the outer rectangle.
  */
 export function WorkspaceRuleBand({
   children,
   className,
   contentClassName,
-  edge = "both",
   ...props
 }: ComponentPropsWithoutRef<"section"> & {
   contentClassName?: string;
-  edge?: "top" | "bottom" | "both";
 }) {
   return (
     <section
       className={cn(
-        "relative mx-[calc(var(--workspace-gutter)*-1)] min-w-0 border-y border-line-strong bg-transparent max-[640px]:mx-0",
+        "relative min-w-0 border border-line-strong bg-surface",
         className,
       )}
       {...props}
     >
-      <WorkspaceFrameNodes edge={edge} />
       <div
-        className={cn(
-          "min-w-0 px-[var(--workspace-gutter)] max-[640px]:px-0",
-          contentClassName,
-        )}
+        className={cn("min-w-0 px-[var(--workspace-gutter)]", contentClassName)}
       >
         {children}
       </div>
@@ -359,14 +240,54 @@ export function WorkspaceRow({
   ...props
 }: ComponentPropsWithoutRef<"div">) {
   return (
-    <div
-      className="relative border-b border-line-strong last:border-b-0"
-      {...props}
-    >
-      <div className="min-w-0 px-[var(--workspace-gutter)] max-[640px]:px-0">
+    <div className="relative border-b border-line last:border-b-0" {...props}>
+      <div className="min-w-0 px-[var(--workspace-gutter)]">
         <div className={cn("min-w-0", className)}>{children}</div>
       </div>
-      <WorkspaceFrameNodes edge="bottom" />
     </div>
+  );
+}
+
+// Both panes stay in view on desktop and scroll internally (RULES §7).
+const reviewPane =
+  "sticky top-[88px] max-h-[calc(100svh-104px)] min-w-0 overflow-y-auto max-[960px]:static max-[960px]:max-h-none max-[960px]:overflow-visible";
+
+/**
+ * The master/detail card shared by every review queue: the queue pane on the
+ * left, the open record on the right. The detail pane is a size container so
+ * record layouts adapt to the pane, not the viewport.
+ */
+export function ReviewSplit({
+  detail,
+  detailLoading = false,
+  dimQueue = false,
+  queue,
+}: {
+  detail: ReactNode;
+  detailLoading?: boolean;
+  dimQueue?: boolean;
+  queue: ReactNode;
+}) {
+  return (
+    <WorkspaceRuleBand contentClassName="grid min-w-0 grid-cols-[minmax(300px,392px)_minmax(0,1fr)] items-start !px-0 max-[960px]:grid-cols-1">
+      <aside
+        className={cn(
+          reviewPane,
+          "grid content-start border-r border-line max-[960px]:border-r-0 max-[960px]:border-b",
+          dimQueue && "opacity-70",
+        )}
+      >
+        {queue}
+      </aside>
+      <section
+        className={cn(
+          reviewPane,
+          "@container grid content-start gap-4 p-5 max-[960px]:px-[var(--workspace-gutter)]",
+        )}
+        data-loading={detailLoading || undefined}
+      >
+        {detail}
+      </section>
+    </WorkspaceRuleBand>
   );
 }

@@ -4,14 +4,7 @@ import { useState } from "react";
 import { ArrowDown, ArrowUp } from "lucide-react";
 import { PaperCard } from "@/components/paper-card";
 import { ResearchCard } from "@/components/research-card";
-import {
-  Eyebrow,
-  FrameRails,
-  FrameNodes,
-  FrameRule,
-  FrameRuleNodes,
-  PublicShell,
-} from "@/components/ui/public-shell";
+import { Eyebrow, FrameRule, PublicShell } from "@/components/ui/public-shell";
 import { cn } from "@/lib/cn";
 import { loadingPlaceholder } from "@/lib/loading-style";
 import type { Person, ResearchItem, ResearchItemType } from "@/lib/types";
@@ -57,15 +50,11 @@ export function PersonResearchOutputs({
     <section
       aria-busy={loading || undefined}
       aria-labelledby="verified-research-title"
-      className={cn(
-        "relative bg-canvas py-[clamp(3.5rem,7vw,6rem)]",
-        borderBottom && "border-b border-line-strong",
-      )}
+      className="relative bg-canvas py-[clamp(3.5rem,7vw,6rem)]"
       data-loading={loading || undefined}
     >
-      {borderBottom ? <FrameRuleNodes className="bottom-0 z-10" /> : null}
-      <FrameRails mode="content" />
-      <PublicShell className="relative z-[1] grid gap-12">
+      {borderBottom ? <FrameRule edge="bottom" /> : null}
+      <PublicShell className="grid gap-12">
         <div className="max-w-[620px]">
           <Eyebrow
             aria-hidden={loading || undefined}
@@ -104,11 +93,8 @@ export function PersonResearchOutputs({
               : items.slice(0, PREVIEW_SIZE);
           return (
             <section className="relative grid gap-5" key={type}>
-              <div className="relative mx-[calc(var(--public-gutter)*-1)] border-t border-line-strong lg:border-t-0 max-[640px]:border-x-0">
-                <FrameRule edge="top" />
-                <FrameNodes className="z-10 lg:hidden" edge="top" />
-                <div className="relative flex items-center justify-between border-b border-line-strong px-[var(--public-gutter)] pt-3 pb-[.7rem] max-[640px]:px-0">
-                  <FrameNodes className="z-10" edge="bottom" />
+              <div className="-mx-[var(--public-gutter)] border-t border-line-strong">
+                <div className="flex items-center justify-between border-b border-line-strong px-[var(--public-gutter)] pt-3 pb-[.7rem]">
                   <h3
                     aria-hidden={loading || undefined}
                     className={cn(
@@ -129,7 +115,7 @@ export function PersonResearchOutputs({
                     {loading ? "00" : items.length}
                   </span>
                 </div>
-                <div className="grid px-[var(--public-gutter)] max-[640px]:px-0">
+                <div className="grid px-[var(--public-gutter)]">
                   {visible.map((item, index) =>
                     type === "PAPER" ? (
                       <PaperCard

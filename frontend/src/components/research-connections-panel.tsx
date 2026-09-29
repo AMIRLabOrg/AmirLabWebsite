@@ -181,7 +181,7 @@ export function ResearchConnectionsPanel() {
   if (!authLoading && staff) {
     return (
       <section
-        className="workspace-rail-section mt-6 grid gap-6 py-[clamp(1.2rem,3vw,2rem)]"
+        className="frame-rail-section mt-6 grid gap-6 py-[clamp(1.2rem,3vw,2rem)]"
         aria-labelledby="research-admin-title"
       >
         <div>
@@ -210,7 +210,7 @@ export function ResearchConnectionsPanel() {
   }
   return (
     <section
-      className="workspace-rail-section mt-6 grid gap-6 py-[clamp(1.2rem,3vw,2rem)]"
+      className="frame-rail-section mt-6 grid gap-6 py-[clamp(1.2rem,3vw,2rem)]"
       aria-labelledby="research-connections-title"
       data-loading={loading || undefined}
     >

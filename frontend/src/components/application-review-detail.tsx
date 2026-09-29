@@ -2,10 +2,8 @@
 
 import { cn } from "@/lib/cn";
 import { loadingPlaceholder } from "@/lib/loading-style";
-import Link from "next/link";
-import { ArrowLeft, ExternalLink, FileText } from "lucide-react";
+import { ExternalLink, FileText } from "lucide-react";
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
 import { ReviewActions } from "./review-actions";
 import { StatePanel } from "./state-panel";
 import { useAuth } from "./auth-provider";
@@ -131,8 +129,17 @@ function ParsedResume({
   );
 }
 
-export function ApplicationReviewDetail({ id }: { id: string }) {
-  const router = useRouter();
+/**
+ * The open application inside the review split. `id` is undefined while the
+ * queue's first load is pending (renders the loading structure).
+ */
+export function ApplicationReviewDetail({
+  id,
+  onDecided,
+}: {
+  id: string | undefined;
+  onDecided: () => void;
+}) {
   const { user } = useAuth();
   const { refreshUnreadCount } = useNotifications();
   const [application, setApplication] = useState<ReviewApplication>();
@@ -142,6 +149,7 @@ export function ApplicationReviewDetail({ id }: { id: string }) {
   const reviewIssues = useReviewIssues();
 
   useEffect(() => {
+    if (!id) return;
     let active = true;
     void apiRequest<ReviewApplication>(`/applications/${id}`, { method: "GET" })
       .then((item) => {
@@ -175,8 +183,7 @@ export function ApplicationReviewDetail({ id }: { id: string }) {
       method: "POST",
     });
     void refreshUnreadCount().catch(() => undefined);
-    router.push("/workspace/applications");
-    router.refresh();
+    onDecided();
   }
 
   if (!loading && !application)
@@ -205,13 +212,7 @@ export function ApplicationReviewDetail({ id }: { id: string }) {
 
   return (
     <div className="grid min-w-0 gap-5" data-loading={loading || undefined}>
-      <Link
-        className="inline-flex w-fit items-center gap-[.4rem] text-[.78rem] text-ink-muted hover:text-brand"
-        href="/workspace/applications"
-      >
-        <ArrowLeft aria-hidden="true" size={15} /> Applications
-      </Link>
-      <header className="workspace-rail-section flex items-start justify-between gap-8 py-6 max-[640px]:flex-col">
+      <header className="relative flex items-start justify-between gap-8 border-b border-line pb-5 @max-[520px]:flex-col">
         {application ? (
           <ReviewIssueStamp issue={reviewIssues.forItem(application.id)[0]} />
         ) : null}
@@ -251,8 +252,8 @@ export function ApplicationReviewDetail({ id }: { id: string }) {
           {status.replaceAll("_", " ").toLowerCase()}
         </Badge>
       </header>
-      <div className="workspace-rail-section grid grid-cols-[minmax(0,1.35fr)_minmax(300px,.65fr)] items-start !px-0 max-[820px]:grid-cols-1">
-        <section className="min-w-0 p-6">
+      <div className="grid grid-cols-[minmax(0,1.35fr)_minmax(240px,.65fr)] items-start border-b border-line @max-[640px]:grid-cols-1">
+        <section className="min-w-0 py-5 pr-5 @max-[640px]:pr-0">
           <h2 className="mb-5 font-sans text-[1.3rem]">Parsed information</h2>
           <dl className="m-0 grid gap-0">
             <div className="grid grid-cols-[120px_minmax(0,1fr)] gap-4 border-t border-line py-[.8rem]">
@@ -328,7 +329,7 @@ export function ApplicationReviewDetail({ id }: { id: string }) {
             </div>
           ) : null}
         </section>
-        <aside className="min-w-0 border-l border-line-strong p-6 max-[820px]:border-t max-[820px]:border-l-0">
+        <aside className="min-w-0 border-l border-line py-5 pl-5 @max-[640px]:border-t @max-[640px]:border-l-0 @max-[640px]:pl-0">
           <h2 className="mb-5 font-sans text-[1.3rem]">Original file</h2>
           <div className="flex flex-col items-center border-y border-line-strong bg-canvas px-4 py-8 text-center">
             <FileText
@@ -440,7 +441,7 @@ export function ApplicationReviewDetail({ id }: { id: string }) {
         </aside>
       </div>
       {loading || canDecide ? (
-        <div className="workspace-rail-section sticky bottom-3 z-[5] grid gap-4 bg-[color-mix(in_srgb,var(--canvas)_94%,transparent)] py-5 backdrop-blur-[12px]">
+        <div className="sticky bottom-0 z-[5] grid gap-4 border-t border-line bg-[color-mix(in_srgb,var(--surface)_94%,transparent)] py-4 backdrop-blur-[12px]">
           <ReviewActions
             loading={loading}
             actions={[

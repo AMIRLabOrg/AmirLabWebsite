@@ -3,7 +3,7 @@
 import { AlertTriangle, Inbox, SearchX, ShieldAlert } from "lucide-react";
 import type { ReactNode } from "react";
 import { ButtonControl, ButtonLink } from "@/components/ui/button-control";
-import { FramedCollection, FrameNodes } from "@/components/ui/public-shell";
+import { FramedCollection } from "@/components/ui/public-shell";
 import { WorkspaceRuleBand } from "@/components/ui/workspace-surface";
 import { cn } from "@/lib/cn";
 
@@ -37,22 +37,23 @@ export function StatePanel({
   const panel = (
     <div
       className={cn(
-        "relative flex flex-col items-center bg-transparent px-8 py-16 text-center",
-        frame === "workspace" ? "" : "border-y border-line-strong",
+        "relative flex flex-col items-center bg-transparent text-center",
+        frame === "workspace"
+          ? "px-6 py-10"
+          : "border-y border-line-strong px-8 py-16",
       )}
       role={variant === "error" ? "alert" : "status"}
     >
-      {frame === true ? <FrameNodes /> : null}
       <span
         className={cn(
-          "mb-[1.2rem] flex h-12 w-12 items-center justify-center border bg-canvas",
+          "mb-4 flex h-10 w-10 items-center justify-center border bg-canvas",
           iconTone,
         )}
       >
-        <Icon aria-hidden="true" size={21} />
+        <Icon aria-hidden="true" size={18} />
       </span>
-      <h2 className="font-sans text-xl font-medium">{title}</h2>
-      <div className="mx-auto mt-[.55rem] mb-[1.2rem] max-w-[420px] text-[.86rem] leading-[1.6] text-ink-muted">
+      <h2 className="font-sans text-[1rem] font-medium">{title}</h2>
+      <div className="mx-auto mt-[.45rem] mb-4 max-w-[420px] text-[.76rem] leading-[1.55] text-ink-muted">
         {body}
       </div>
       {action?.href ? (

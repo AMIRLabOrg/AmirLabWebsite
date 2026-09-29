@@ -4,10 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { ArrowDown, ArrowRight, ArrowUp, MoveUpRight } from "lucide-react";
 import { PersonPortrait } from "@/components/person-portrait";
-import {
-  FrameIntersectionNode,
-  FrameRule,
-} from "@/components/ui/public-shell";
+import { FrameRule, publicShellClass } from "@/components/ui/public-shell";
 import { cn } from "@/lib/cn";
 import { loadingPlaceholder } from "@/lib/loading-style";
 import { peopleGroup, type PeopleGroup } from "@/lib/people-groups";
@@ -87,11 +84,16 @@ function Founder({
   const href = person ? `/people/${person.slug}` : "/people";
   return (
     <section className="relative" data-loading={loading || undefined}>
-      <div className="relative mx-auto w-full max-w-[var(--public-wide)] px-[var(--public-gutter)] pt-[1.2rem] pb-[2.6rem] max-[720px]:pt-[1rem]">
+      <div
+        className={cn(
+          publicShellClass,
+          "pt-[1.2rem] pb-[2.6rem] max-[720px]:pt-[1rem] max-[480px]:pb-[1.8rem]",
+        )}
+      >
         <PeopleHeading title="Founder & Research Director" />
-        <article className="grid grid-cols-[minmax(220px,320px)_minmax(0,1fr)] items-stretch gap-[clamp(1.8rem,4vw,4rem)] max-[720px]:grid-cols-[120px_minmax(0,1fr)] max-[480px]:grid-cols-1">
+        <article className="grid grid-cols-[minmax(220px,320px)_minmax(0,1fr)] items-stretch gap-[clamp(1.8rem,4vw,4rem)] max-[720px]:grid-cols-[120px_minmax(0,1fr)] max-[480px]:grid-cols-[96px_minmax(0,1fr)] max-[480px]:items-center max-[480px]:gap-4">
           {loading ? (
-            <div aria-hidden="true" className="max-[480px]:max-w-[180px]">
+            <div aria-hidden="true" className="min-w-0">
               <PersonPortrait
                 loading
                 person={person}
@@ -100,7 +102,7 @@ function Founder({
               />
             </div>
           ) : (
-            <Link className="max-[480px]:max-w-[180px]" href={href}>
+            <Link className="min-w-0" href={href}>
               <PersonPortrait
                 loading={loading}
                 person={person}
@@ -112,7 +114,7 @@ function Founder({
           <div className="grid min-w-0 max-w-[760px] content-center">
             <h2
               className={cn(
-                "mb-0 mt-[.15rem] font-sans text-[clamp(2rem,3.8vw,3.6rem)] font-medium leading-[.98] tracking-[-.045em] max-[720px]:text-[clamp(1.65rem,8vw,2.4rem)]",
+                "mb-0 mt-[.15rem] font-sans text-[clamp(2rem,3.8vw,3.6rem)] font-medium leading-[.98] tracking-[-.045em] max-[720px]:text-[clamp(1.65rem,8vw,2.4rem)] max-[480px]:text-[clamp(1.35rem,6.5vw,1.7rem)]",
                 loadingPlaceholder(loading, "text", "long"),
               )}
               data-placeholder={loading ? "text" : undefined}
@@ -169,7 +171,7 @@ function Founder({
               />
             ) : (
               <Link
-                className="mt-4 inline-flex w-fit items-center gap-[.45rem] text-[.78rem] font-bold text-brand"
+                className="mt-4 inline-flex w-fit items-center gap-[.45rem] text-[.78rem] font-bold text-brand max-[480px]:mt-3 max-[480px]:text-[.72rem]"
                 href={href}
               >
                 View full profile <ArrowRight aria-hidden="true" size={16} />
@@ -226,11 +228,11 @@ function PeopleSection({
 }) {
   return (
     <section className="relative" data-loading={loading || undefined}>
-      {showRule ? <FrameRule edge="top" /> : null}
+      {showRule ? <FrameRule edge="top" stroke="dashed" /> : null}
       <div
         className={cn(
-          "mx-auto w-full max-w-[var(--public-wide)] px-[var(--public-gutter)] pt-[1.3rem] pb-[2.4rem] max-[720px]:pb-[1.8rem]",
-          showRule && "border-t border-line-strong lg:border-t-0",
+          publicShellClass,
+          "pt-[1.3rem] pb-[2.4rem] max-[720px]:pb-[1.8rem]",
         )}
       >
         <PeopleHeading count={members.length} loading={loading} title={title} />
@@ -259,7 +261,7 @@ function MemberCollection({
 
   return (
     <>
-      <div className="grid grid-cols-2 border-t border-line max-[720px]:grid-cols-1">
+      <div className="-mx-[var(--public-gutter)] grid grid-cols-2 border-t border-line max-[720px]:grid-cols-1">
         {visibleMembers.map((person, index) => (
           <Member
             key={person?.id ?? `loading-${index}`}
@@ -315,11 +317,9 @@ function Member({
     value.toLowerCase().replace(/s\b/g, "");
   const showRole = !person || compactLabel(role) !== compactLabel(groupTitle);
   const className = cn(
-    "group relative grid min-w-0 grid-cols-[66px_minmax(0,1fr)_auto] items-center gap-[.85rem] border-b border-line py-[.82rem] pr-[.9rem] text-inherit no-underline max-[480px]:grid-cols-[56px_minmax(0,1fr)_auto]",
-    fullWidth && "col-span-2 border-r-0 px-0 max-[720px]:col-span-1",
-    odd && !fullWidth
-      ? "border-r border-line pr-[1.4rem] max-[720px]:border-r-0 max-[720px]:pr-[.4rem]"
-      : !fullWidth && "pl-[1.4rem] max-[720px]:pl-0",
+    "group relative grid min-w-0 grid-cols-[66px_minmax(0,1fr)_auto] items-center gap-[.85rem] border-b border-line px-[var(--public-gutter)] py-[.82rem] text-inherit no-underline max-[480px]:grid-cols-[56px_minmax(0,1fr)_auto]",
+    fullWidth && "col-span-2 max-[720px]:col-span-1",
+    odd && !fullWidth && "border-r border-line max-[720px]:border-r-0",
   );
   const content = (
     <>
@@ -370,14 +370,6 @@ function Member({
         data-loading-icon={loading || undefined}
         size={19}
       />
-      {odd && !fullWidth ? (
-        <>
-          {position === 0 ? (
-            <FrameIntersectionNode className="absolute top-[-3px] right-[-3px]" />
-          ) : null}
-          <FrameIntersectionNode className="absolute right-[-3px] bottom-[-3px]" />
-        </>
-      ) : null}
     </>
   );
   return loading ? (

@@ -106,7 +106,7 @@ export function UniversityIndex() {
             <WorkspaceRow key={university?.id ?? `university-loading-${index}`}>
               <Link
                 aria-disabled={loading || !university}
-                className="flex min-h-[84px] items-center justify-between gap-4 bg-transparent px-[1.1rem] py-4 text-inherit transition-colors hover:bg-brand-faint"
+                className="flex min-h-[64px] items-center justify-between gap-4 bg-transparent py-[.72rem] text-inherit transition-colors hover:bg-surface-subtle"
                 href={
                   university ? `/workspace/universities/${university.id}` : "#"
                 }
@@ -115,7 +115,7 @@ export function UniversityIndex() {
                 <div>
                   <strong
                     className={cn(
-                      "text-[.98rem] leading-[1.35]",
+                      "text-[.84rem] font-medium leading-[1.35]",
                       loadingPlaceholder(loading, "text", "long"),
                     )}
                     data-placeholder="text"
@@ -135,7 +135,7 @@ export function UniversityIndex() {
                     ) : (
                       <small
                         className={cn(
-                          "font-mono text-[.7rem] text-ink-muted",
+                          "font-mono text-[.6rem] text-ink-muted",
                           loadingPlaceholder(loading, "label", "medium"),
                         )}
                         data-placeholder="label"

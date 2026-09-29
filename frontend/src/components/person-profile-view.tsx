@@ -6,8 +6,8 @@ import { PersonResearchOutputs } from "@/components/person-research-outputs";
 import { ProfileRecords } from "@/components/profile-records";
 import { Badge } from "@/components/ui/badge";
 import {
-  FrameNodes,
-  FrameRuleNodes,
+  FrameBays,
+  FrameRule,
   PublicShell,
 } from "@/components/ui/public-shell";
 import { cn } from "@/lib/cn";
@@ -39,25 +39,14 @@ export function PersonProfileView({
     <>
       <header
         aria-busy={loading || undefined}
-        className={cn(
-          "relative bg-canvas",
-          (hasResearchOutputs || hasProfileRecords) &&
-            "border-b border-line-strong",
-        )}
+        className="relative bg-canvas"
         data-loading={loading || undefined}
       >
+        <FrameBays pattern="plus" />
         {hasResearchOutputs || hasProfileRecords ? (
-          <FrameRuleNodes
-            className="bottom-0 z-10"
-            nodeSurfaceClassName="bg-canvas"
-          />
+          <FrameRule edge="bottom" />
         ) : null}
-        <PublicShell className="relative grid grid-cols-[minmax(280px,420px)_minmax(0,1fr)] items-start gap-[clamp(3rem,7vw,7rem)] border-x border-line-strong pt-[clamp(2.3rem,4.5vw,4.2rem)] pb-[clamp(3rem,6vw,5rem)] lg:border-x-0 max-[960px]:max-w-[760px] max-[960px]:grid-cols-1 max-[640px]:gap-8 max-[640px]:border-x-0 max-[640px]:pt-8 max-[640px]:pb-12">
-          <FrameNodes
-            className="z-10 lg:hidden"
-            edge="bottom"
-            nodeSurfaceClassName="bg-canvas"
-          />
+        <PublicShell className="relative grid grid-cols-[minmax(280px,420px)_minmax(0,1fr)] items-start gap-[clamp(3rem,7vw,7rem)] pt-[clamp(2.3rem,4.5vw,4.2rem)] pb-[clamp(3rem,6vw,5rem)] max-[960px]:max-w-[760px] max-[960px]:grid-cols-1 max-[640px]:gap-8 max-[640px]:pt-8 max-[640px]:pb-12">
           <div className="relative z-[1] grid gap-4">
             <Link
               className="inline-flex w-fit items-center gap-1.5 text-[.78rem] text-ink-muted hover:text-brand"
@@ -93,7 +82,7 @@ export function PersonProfileView({
             </div>
             <h1
               className={cn(
-                "m-0 font-sans text-[clamp(2.6rem,4.2vw,3.8rem)] leading-[.98] font-medium tracking-[-.045em] max-[640px]:text-[clamp(2.25rem,10vw,3.25rem)]",
+                "m-0 font-sans text-[clamp(2.6rem,4.2vw,3.8rem)] leading-[.98] font-medium tracking-[-.045em] max-[640px]:text-[clamp(2rem,9vw,2.7rem)]",
                 loading && loadingPlaceholder(true, "text"),
               )}
               aria-hidden={loading || undefined}
@@ -124,7 +113,6 @@ export function PersonProfileView({
             person?.phone ||
             person?.links?.length ? (
               <div className="relative mt-7 flex max-w-[760px] flex-wrap gap-x-6 gap-y-3 border-y border-line-strong py-3">
-                <FrameNodes className="z-10" nodeSurfaceClassName="bg-canvas" />
                 {loading ? (
                   <>
                     <span

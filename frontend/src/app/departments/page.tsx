@@ -22,6 +22,7 @@ export default async function DepartmentsPage() {
   return (
     <div className="pb-[clamp(4rem,7vw,6rem)]">
       <PageIntro
+        scene="department"
         eyebrow="Research units"
         meta={
           <>
@@ -41,9 +42,11 @@ export default async function DepartmentsPage() {
         and publications to involve members from multiple departments.
       </PageIntro>
 
-      <PublicSection contentClassName="pt-8 pb-10">
+      <PublicSection
+        contentClassName={departments.length ? "pb-10" : "pt-8 pb-10"}
+      >
         {departments.length ? (
-          <FramedCollection className="grid" topRule>
+          <FramedCollection className="grid">
             {departments.map((department) => {
               const memberCount =
                 department._count?.people ?? department.people.length;

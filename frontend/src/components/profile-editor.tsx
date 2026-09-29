@@ -18,7 +18,6 @@ import { useAuth } from "@/components/auth-provider";
 import { ConfirmDialog } from "@/components/confirm-dialog";
 import { useNotifications } from "@/components/notification-provider";
 import { StatePanel } from "@/components/state-panel";
-import { WorkspaceFrameNodes } from "@/components/ui/workspace-surface";
 import { API_URL } from "@/lib/api";
 import { apiRequest } from "@/lib/client-api";
 import type {
@@ -426,7 +425,6 @@ export function ProfileEditor({ userId }: ProfileEditorProps) {
       onSubmit={submit}
     >
       <header className="sticky top-[52px] z-10 col-span-full -mx-[var(--workspace-gutter)] flex items-center justify-between gap-4 border-y border-line-strong bg-[color-mix(in_srgb,var(--surface)_94%,transparent)] px-[var(--workspace-gutter)] py-[.7rem] backdrop-blur-[12px] max-[820px]:top-[65px] max-[640px]:mx-0 max-[640px]:flex-col max-[640px]:items-stretch max-[640px]:px-4">
-        <WorkspaceFrameNodes />
         <p className="m-0 flex items-center gap-[.55rem] text-[.76rem] text-ink-muted">
           <span className="h-[7px] w-[7px] rounded-full bg-brand" />
           {userId || user?.role === "ADMIN"
@@ -448,7 +446,6 @@ export function ProfileEditor({ userId }: ProfileEditorProps) {
       </header>
       {!moderatorProfile ? (
         <section className="relative col-span-full -mx-[var(--workspace-gutter)] flex items-center gap-[1.6rem] border-y border-line-strong bg-transparent px-[var(--workspace-gutter)] py-[1.6rem] max-[640px]:mx-0 max-[640px]:flex-col max-[640px]:items-start max-[640px]:px-4">
-          <WorkspaceFrameNodes />
           <div
             className={cn(
               "relative flex h-28 w-28 flex-[0_0_112px] items-center justify-center rounded-full border border-dashed border-[color-mix(in_srgb,var(--brand)_36%,transparent)]",
@@ -539,7 +536,6 @@ export function ProfileEditor({ userId }: ProfileEditorProps) {
             : "col-start-1 -ml-[var(--workspace-gutter)] pl-[var(--workspace-gutter)] pr-[1.55rem] max-[980px]:col-start-1 max-[640px]:ml-0 max-[640px]:px-4",
         )}
       >
-        <WorkspaceFrameNodes />
         <div className="mb-0 flex items-end justify-between gap-8 border-b border-line pb-[.95rem]">
           <div>
             <p className="m-0 mb-4 font-[var(--font-sans)] text-[.75rem] font-extrabold uppercase tracking-[.12em] text-brand">
@@ -702,7 +698,6 @@ export function ProfileEditor({ userId }: ProfileEditorProps) {
 
       {researchProfile ? (
         <section className="relative col-start-1 -ml-[var(--workspace-gutter)] grid gap-[1.2rem] border-y border-line-strong bg-transparent py-[1.55rem] pr-[1.55rem] pl-[var(--workspace-gutter)] max-[980px]:col-start-1 max-[640px]:ml-0 max-[640px]:px-4">
-          <WorkspaceFrameNodes />
           <div className="mb-0 flex items-end justify-between gap-8 border-b border-line pb-[.95rem]">
             <div>
               <p className="m-0 mb-4 font-[var(--font-sans)] text-[.75rem] font-extrabold uppercase tracking-[.12em] text-brand">
@@ -803,7 +798,6 @@ export function ProfileEditor({ userId }: ProfileEditorProps) {
 
       {researchProfile ? (
         <section className="relative col-start-1 -ml-[var(--workspace-gutter)] grid gap-[1.2rem] border-y border-line-strong bg-transparent py-[1.55rem] pr-[1.55rem] pl-[var(--workspace-gutter)] max-[980px]:col-start-1 max-[640px]:ml-0 max-[640px]:px-4">
-          <WorkspaceFrameNodes />
           <div className="mb-0 flex items-end justify-between gap-8 border-b border-line pb-[.95rem]">
             <div>
               <p className="m-0 mb-4 font-[var(--font-sans)] text-[.75rem] font-extrabold uppercase tracking-[.12em] text-brand">

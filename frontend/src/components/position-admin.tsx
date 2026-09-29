@@ -166,14 +166,14 @@ export function PositionAdminList() {
               : undefined;
             return (
               <WorkspaceRow
-                className="relative grid grid-cols-[minmax(0,1fr)_130px_auto] items-center gap-4 bg-transparent px-4 py-4 pr-9 max-[760px]:grid-cols-1"
+                className="relative grid grid-cols-[minmax(0,1fr)_130px_auto] items-center gap-4 bg-transparent py-[.75rem] max-[760px]:grid-cols-1 max-[760px]:gap-2.5"
                 key={position?.id ?? `position-loading-${index}`}
               >
                 {position ? <ReviewIssueStamp issue={issue} /> : null}
                 <div>
                   <strong
                     className={cn(
-                      "block leading-[1.35]",
+                      "block text-[.84rem] font-medium leading-[1.35]",
                       loadingPlaceholder(loading, "text", "long"),
                     )}
                     data-placeholder="text"
@@ -428,7 +428,7 @@ export function PositionAdminEditor({ id }: { id?: string }) {
         data-loading={editorLoading || undefined}
         onSubmit={submit}
       >
-        <header className="workspace-rail-section flex items-end justify-between gap-4 py-[1.1rem] max-[760px]:flex-col max-[760px]:items-stretch">
+        <header className="frame-rail-section flex items-end justify-between gap-4 py-[1.1rem] max-[760px]:flex-col max-[760px]:items-stretch">
           <div>
             <p className="m-0 mb-4 font-[var(--font-sans)] text-[.75rem] font-extrabold uppercase tracking-[.12em] text-brand">
               Job posts
@@ -500,7 +500,7 @@ export function PositionAdminEditor({ id }: { id?: string }) {
             {submitError}
           </p>
         ) : null}
-        <section className="workspace-rail-section grid gap-6 py-[clamp(1.25rem,3vw,2rem)]">
+        <section className="frame-rail-section grid gap-6 py-[clamp(1.25rem,3vw,2rem)]">
           <div className="grid gap-1 border-b border-line pb-[1.15rem]">
             <h3 className="m-0 text-[clamp(1.35rem,2.5vw,1.8rem)]">
               Role basics
@@ -585,7 +585,7 @@ export function PositionAdminEditor({ id }: { id?: string }) {
             </Field>
           </div>
         </section>
-        <section className="workspace-rail-section grid gap-6 py-[clamp(1.25rem,3vw,2rem)]">
+        <section className="frame-rail-section grid gap-6 py-[clamp(1.25rem,3vw,2rem)]">
           <div className="grid gap-1 border-b border-line pb-[1.15rem]">
             <h3 className="m-0 text-[clamp(1.35rem,2.5vw,1.8rem)]">Timing</h3>
             <p className="m-0 text-[.78rem] leading-[1.5] text-ink-muted">
@@ -694,7 +694,7 @@ export function PositionAdminEditor({ id }: { id?: string }) {
             ) : null}
           </div>
         </section>
-        <section className="workspace-rail-section grid gap-6 py-[clamp(1.25rem,3vw,2rem)]">
+        <section className="frame-rail-section grid gap-6 py-[clamp(1.25rem,3vw,2rem)]">
           <div className="grid gap-1 border-b border-line pb-[1.15rem]">
             <h3 className="m-0 text-[clamp(1.35rem,2.5vw,1.8rem)]">
               Public content

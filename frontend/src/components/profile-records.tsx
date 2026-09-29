@@ -3,7 +3,7 @@
 import { ArrowDown, ArrowUp, Search } from "lucide-react";
 import { useMemo, useState } from "react";
 import { InputControl } from "@/components/ui/form-controls";
-import { FrameNodes, PublicShell } from "@/components/ui/public-shell";
+import { PublicShell } from "@/components/ui/public-shell";
 import { cn } from "@/lib/cn";
 import { loadingPlaceholder } from "@/lib/loading-style";
 import type {
@@ -66,7 +66,6 @@ export function ProfileRecords({
         aria-label="Profile sections"
         className="sticky top-[62px] z-20 flex overflow-x-auto border-b border-line-strong bg-canvas px-0 [scrollbar-width:none] max-[640px]:px-0"
       >
-        <FrameNodes edge="bottom" />
         {visible.map((record) => (
           <a
             aria-disabled={loading || undefined}
@@ -136,10 +135,9 @@ function ProfileRecord({
 
   return (
     <section
-      className="relative mx-[calc(var(--public-gutter)*-1)] grid scroll-mt-[130px] grid-cols-[minmax(230px,.38fr)_minmax(0,1fr)] gap-[clamp(2rem,6vw,6rem)] border-x border-b border-line-strong px-[var(--public-gutter)] py-16 max-[960px]:grid-cols-1 max-[960px]:gap-8 max-[640px]:border-x-0 max-[640px]:py-14 last:border-b-0"
+      className="relative mx-[calc(var(--public-gutter)*-1)] grid scroll-mt-[130px] grid-cols-[minmax(230px,.38fr)_minmax(0,1fr)] gap-[clamp(2rem,6vw,6rem)] border-b border-line-strong px-[var(--public-gutter)] py-16 max-[960px]:grid-cols-1 max-[960px]:gap-8 max-[640px]:py-14 last:border-b-0"
       id={loading ? undefined : `profile-section-${record.id}`}
     >
-      <FrameNodes edge="bottom" />
       <header className="sticky top-[150px] self-start max-[960px]:static">
         <div>
           <p

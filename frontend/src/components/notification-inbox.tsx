@@ -12,6 +12,10 @@ import { Badge } from "@/components/ui/badge";
 import { SelectControl } from "@/components/ui/select-control";
 import { FormField } from "@/components/ui/form-field";
 import { ButtonControl } from "@/components/ui/button-control";
+import {
+  RowActionMenu,
+  RowActionMenuItem,
+} from "@/components/ui/row-action-menu";
 import { ApiRequestError, apiRequest } from "@/lib/client-api";
 import type { NotificationRecord, PaginatedResponse } from "@/lib/types";
 import { StatePanel } from "@/components/state-panel";
@@ -224,7 +228,7 @@ export function NotificationInbox() {
 
   return (
     <div className="grid min-w-0 gap-4">
-      <WorkspaceRuleBand contentClassName="grid min-w-0 grid-cols-[minmax(180px,.8fr)_minmax(220px,1fr)_auto] items-end gap-[.8rem] px-[calc(var(--workspace-gutter)+1rem)] py-4 max-[960px]:grid-cols-2 max-[640px]:grid-cols-1 max-[640px]:px-4">
+      <WorkspaceRuleBand contentClassName="grid min-w-0 grid-cols-[minmax(180px,.8fr)_minmax(220px,1fr)_auto] items-end gap-[.8rem] px-[var(--workspace-gutter)] py-3.5 max-[960px]:grid-cols-2 max-[640px]:grid-cols-1 max-[640px]:px-4">
         <FormField htmlFor="notification-status" label="Status">
           <SelectControl
             id="notification-status"
@@ -292,7 +296,7 @@ export function NotificationInbox() {
               : (result?.items ?? [])
             ).map((notification, index) => (
               <WorkspaceRow
-                className={`relative grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-6 bg-transparent p-4 pr-10 [overflow-wrap:anywhere] max-[640px]:grid-cols-1 ${notification?.readAt ? "" : "before:absolute before:inset-y-0 before:left-0 before:w-[3px] before:bg-brand before:content-['']"}`}
+                className={`relative grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-5 bg-transparent py-[.82rem] [overflow-wrap:anywhere] max-[640px]:grid-cols-[minmax(0,1fr)_auto] max-[640px]:gap-3 ${notification?.readAt ? "" : "before:absolute before:inset-y-0 before:left-[calc(var(--workspace-gutter)*-1)] before:w-[2px] before:bg-brand before:content-[''] max-[640px]:before:left-0"}`}
                 key={notification?.id ?? `notification-loading-${index}`}
               >
                 {notification ? (
@@ -318,7 +322,7 @@ export function NotificationInbox() {
                   </div>
                   <h2
                     className={cn(
-                      "mt-[.45rem] text-[1.15rem]",
+                      "mt-[.35rem] text-[.96rem] font-medium leading-[1.35]",
                       loadingPlaceholder(loading, "text", "long"),
                     )}
                     data-placeholder="text"
@@ -328,7 +332,7 @@ export function NotificationInbox() {
                   </h2>
                   <p
                     className={cn(
-                      "mt-[.45rem] leading-[1.55] text-ink-muted",
+                      "mt-[.3rem] text-[.76rem] leading-[1.5] text-ink-muted",
                       loadingPlaceholder(loading, "text", "full"),
                     )}
                     data-placeholder="text"
@@ -347,40 +351,44 @@ export function NotificationInbox() {
                     </SemanticStatus>
                   ) : null}
                 </div>
-                <div className="flex items-center gap-2 max-[640px]:items-stretch">
-                  <ButtonControl
-                    disabled={
-                      !notification || markingIds.has(notification?.id ?? "")
-                    }
-                    onClick={() =>
-                      notification &&
-                      void (notification.readAt
-                        ? markUnread(notification)
-                        : markRead(notification))
-                    }
-                    variant="secondary"
-                  >
-                    {notification?.readAt ? (
-                      <>
-                        <RotateCcw aria-hidden="true" size={16} /> Mark unread
-                      </>
-                    ) : (
-                      <>
-                        <Check aria-hidden="true" size={16} /> Mark read
-                      </>
-                    )}
-                  </ButtonControl>
+                <div className="flex items-center justify-end gap-1.5 self-center">
                   {loading || notification?.actionUrl ? (
-                    <ButtonControl
+                    <button
+                      className="inline-flex h-8 cursor-pointer items-center gap-1.5 border-0 bg-transparent px-2 text-[.72rem] font-medium text-brand transition-colors hover:text-brand-hover disabled:cursor-not-allowed disabled:opacity-45"
                       disabled={!notification}
                       onClick={() =>
                         notification && void openNotification(notification)
                       }
-                      variant="primary"
+                      type="button"
                     >
-                      Open <ArrowUpRight aria-hidden="true" size={16} />
-                    </ButtonControl>
+                      Open <ArrowUpRight aria-hidden="true" size={14} />
+                    </button>
                   ) : null}
+                  <RowActionMenu
+                    disabled={
+                      !notification || markingIds.has(notification?.id ?? "")
+                    }
+                    label="Notification actions"
+                  >
+                    <RowActionMenuItem
+                      onSelect={() =>
+                        notification &&
+                        void (notification.readAt
+                          ? markUnread(notification)
+                          : markRead(notification))
+                      }
+                    >
+                      {notification?.readAt ? (
+                        <>
+                          <RotateCcw aria-hidden="true" size={15} /> Mark unread
+                        </>
+                      ) : (
+                        <>
+                          <Check aria-hidden="true" size={15} /> Mark read
+                        </>
+                      )}
+                    </RowActionMenuItem>
+                  </RowActionMenu>
                 </div>
               </WorkspaceRow>
             ))}
@@ -391,9 +399,9 @@ export function NotificationInbox() {
               beginReload();
               setPage(nextPage);
             }}
-            page={result?.page ?? page}
+            page={page}
             pageSize={result?.pageSize ?? 20}
-            total={result?.total ?? 0}
+            total={result?.total}
             totalPages={result?.totalPages ?? 1}
           />
         </>

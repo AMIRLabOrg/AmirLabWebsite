@@ -261,7 +261,7 @@ export function AdminSettings() {
           />
         ) : (
           <>
-            <section className="workspace-rail-section grid gap-[1.1rem] py-5">
+            <section className="frame-rail-section grid gap-[1.1rem] py-5">
               <header className="grid grid-cols-[42px_minmax(0,1fr)] items-start gap-[1.2rem] border-b border-line pb-4 max-[640px]:grid-cols-1">
                 <span className="pt-[.35rem] font-mono text-[.62rem] text-ink-faint">
                   01
@@ -327,7 +327,7 @@ export function AdminSettings() {
               </div>
             </section>
 
-            <section className="workspace-rail-section grid gap-[1.1rem] py-5">
+            <section className="frame-rail-section grid gap-[1.1rem] py-5">
               <header className="grid grid-cols-[42px_minmax(0,1fr)] items-start gap-[1.2rem] border-b border-line pb-4 max-[640px]:grid-cols-1">
                 <span className="pt-[.35rem] font-mono text-[.62rem] text-ink-faint">
                   02
@@ -443,7 +443,7 @@ export function AdminSettings() {
               </div>
             </section>
 
-            <section className="workspace-rail-section grid gap-[1.1rem] py-5">
+            <section className="frame-rail-section grid gap-[1.1rem] py-5">
               <header className="grid grid-cols-[42px_minmax(0,1fr)] items-start gap-[1.2rem] border-b border-line pb-4 max-[640px]:grid-cols-1">
                 <span className="pt-[.35rem] font-mono text-[.62rem] text-ink-faint">
                   03
@@ -523,7 +523,7 @@ export function AdminSettings() {
               </div>
             </section>
 
-            <footer className="workspace-rail-section flex items-center justify-between gap-4 py-5 max-[640px]:flex-col max-[640px]:items-stretch">
+            <footer className="frame-rail-section flex items-center justify-between gap-4 py-5 max-[640px]:flex-col max-[640px]:items-stretch">
               <p className="m-0 text-[.72rem] leading-[1.5] text-ink-muted">
                 Scholar profiles sync daily with gradual scheduling, backoff,
                 and last-known citation totals.

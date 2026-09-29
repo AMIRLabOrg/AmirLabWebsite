@@ -20,6 +20,7 @@ export function PapersPageView({
   return (
     <div>
       <PageIntro
+        scene="paper"
         loading={loading}
         eyebrow="Publications"
         meta={

@@ -4,7 +4,6 @@ import { cn } from "@/lib/cn";
 import { loadingPlaceholder } from "@/lib/loading-style";
 import Image from "next/image";
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
 import { API_URL } from "@/lib/api";
 import { ApiRequestError, apiRequest } from "@/lib/client-api";
 import type { ProfileEditPayload, ProfileEditRequest } from "@/lib/types";
@@ -30,8 +29,17 @@ const EMPTY_PROFILE_PAYLOAD: ProfileEditPayload = {
   removeAvatar: false,
 };
 
-export function ProfileReviewDetail({ id }: { id: string }) {
-  const router = useRouter();
+/**
+ * The open profile change request inside the review split. `id` is undefined
+ * while the queue's first load is pending (renders the loading structure).
+ */
+export function ProfileReviewDetail({
+  id,
+  onDecided,
+}: {
+  id: string | undefined;
+  onDecided: () => void;
+}) {
   const { refreshUnreadCount } = useNotifications();
   const [request, setRequest] = useState<ProfileEditRequest>();
   const [message, setMessage] = useState<string>();
@@ -39,6 +47,7 @@ export function ProfileReviewDetail({ id }: { id: string }) {
   const [reload, setReload] = useState(0);
 
   useEffect(() => {
+    if (!id) return;
     let active = true;
     void apiRequest<ProfileEditRequest>(`/profile-reviews/${id}`, {
       method: "GET",
@@ -94,8 +103,7 @@ export function ProfileReviewDetail({ id }: { id: string }) {
       method: "POST",
     });
     void refreshUnreadCount().catch(() => undefined);
-    router.push("/workspace/profile-reviews");
-    router.refresh();
+    onDecided();
   }
 
   if (!request && message)
@@ -153,7 +161,7 @@ export function ProfileReviewDetail({ id }: { id: string }) {
 
   return (
     <div className="grid gap-4" data-loading={loading || undefined}>
-      <section className="relative border-y border-line-strong bg-transparent p-5">
+      <section className="relative border-b border-line pb-5">
         <ReviewIssueStamp issue={reviewIssues[0]} />
         <div>
           <p className="m-0 mb-4 font-[var(--font-sans)] text-[.75rem] font-extrabold uppercase tracking-[.12em] text-brand">
@@ -219,7 +227,7 @@ export function ProfileReviewDetail({ id }: { id: string }) {
       />
 
       {loading || request?.status === "NEEDS_REVIEW" ? (
-        <section className="grid gap-4 border-y border-line-strong bg-transparent p-5">
+        <section className="grid gap-4 border-t border-line pt-5">
           <ReviewActions
             loading={loading}
             actions={[
@@ -327,11 +335,8 @@ function ProfileDiff({
   const imageChanged = !loading && currentAvatar !== proposedAvatar;
 
   return (
-    <section
-      className="grid gap-4 border-y border-line-strong bg-transparent p-5"
-      data-loading={loading || undefined}
-    >
-      <div className="flex items-end justify-between gap-4 border-b border-line pb-4 max-[640px]:flex-col max-[640px]:items-start">
+    <section className="grid gap-4" data-loading={loading || undefined}>
+      <div className="flex items-end justify-between gap-4 border-b border-line pb-4 @max-[520px]:flex-col @max-[520px]:items-start">
         <div>
           <p className="m-0 mb-4 font-[var(--font-sans)] text-[.75rem] font-extrabold uppercase tracking-[.12em] text-brand">
             Requested changes
@@ -353,11 +358,11 @@ function ProfileDiff({
         </span>
       </div>
       {imageChanged ? (
-        <article className="grid grid-cols-[140px_minmax(0,1fr)] gap-4 border-b border-line py-4 max-[640px]:grid-cols-1">
+        <article className="grid grid-cols-[140px_minmax(0,1fr)] gap-4 border-b border-line py-4 @max-[520px]:grid-cols-1">
           <h3 className="m-0 font-mono text-[.7rem] font-semibold uppercase tracking-[.06em] text-ink-muted">
             Profile image
           </h3>
-          <div className="grid grid-cols-2 gap-4 max-[520px]:grid-cols-1">
+          <div className="grid grid-cols-2 gap-4 @max-[420px]:grid-cols-1">
             <div className="grid grid-cols-[20px_minmax(0,1fr)] gap-2 rounded-small bg-danger-soft p-3 text-danger">
               <ReviewPortrait label="Current" assetId={currentAvatar} />
             </div>
@@ -369,7 +374,7 @@ function ProfileDiff({
       ) : null}
       {changes.map(({ key, label }) => (
         <article
-          className="grid grid-cols-[140px_minmax(0,1fr)_minmax(0,1fr)] gap-4 border-b border-line py-4 last:border-b-0 max-[760px]:grid-cols-1"
+          className="grid grid-cols-[140px_minmax(0,1fr)_minmax(0,1fr)] gap-4 border-b border-line py-4 last:border-b-0 @max-[620px]:grid-cols-1"
           key={key}
         >
           <h3 className="m-0 font-mono text-[.7rem] font-semibold uppercase tracking-[.06em] text-ink-muted">

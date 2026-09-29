@@ -42,6 +42,7 @@ export function PeoplePageView({
   return (
     <>
       <PageIntro
+        scene="people"
         loading={loading}
         eyebrow="People"
         meta={

@@ -296,9 +296,9 @@ function PublicationExplorerInner({
               setPage(next);
               window.scrollTo({ behavior: "smooth", top: 180 });
             }}
-            page={result?.page ?? 1}
+            page={page}
             pageSize={result?.pageSize ?? 12}
-            total={result?.total ?? 0}
+            total={result?.total}
             totalPages={result?.totalPages ?? 1}
           />
         ) : null}

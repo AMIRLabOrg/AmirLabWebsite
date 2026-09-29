@@ -174,7 +174,7 @@ export function DocumentsWorkspace() {
   return (
     <AdminOnly>
       <div className="grid gap-6" data-loading={loading || undefined}>
-        <header className="workspace-rail-section grid grid-cols-[42px_minmax(0,1fr)] items-start gap-5 py-5 max-[640px]:grid-cols-1">
+        <header className="frame-rail-section grid grid-cols-[42px_minmax(0,1fr)] items-start gap-5 py-5 max-[640px]:grid-cols-1">
           <FileText aria-hidden="true" className="mt-1 text-brand" size={26} />
           <div className="flex items-end justify-between gap-5 max-[720px]:items-start max-[720px]:flex-col">
             <div>
@@ -357,7 +357,7 @@ function IssueDocumentPanel({
 
   return (
     <form className="grid gap-0" onSubmit={issue}>
-      <section className="workspace-rail-section grid gap-5 py-[clamp(1rem,3vw,1.7rem)]">
+      <section className="frame-rail-section grid gap-5 py-[clamp(1rem,3vw,1.7rem)]">
         <div className="grid grid-cols-3 gap-4 max-[820px]:grid-cols-1">
           <FormField label="Document type">
             <SelectControl
@@ -718,7 +718,7 @@ function TemplatesPanel({
           ?.variables ?? []);
 
   return (
-    <div className="workspace-rail-section grid grid-cols-[290px_minmax(0,1fr)] !px-0 max-[900px]:grid-cols-1">
+    <div className="frame-rail-section grid grid-cols-[290px_minmax(0,1fr)] !px-0 max-[900px]:grid-cols-1">
       <aside className="grid content-start border-r border-line-strong p-4 max-[900px]:border-r-0 max-[900px]:border-b">
         <ButtonControl
           className="mb-2 justify-start"
@@ -1067,7 +1067,7 @@ function ApprovalPanel({
 
   return (
     <form className="grid gap-5" onSubmit={save}>
-      <section className="workspace-rail-section grid gap-5 py-[clamp(1rem,3vw,1.7rem)]">
+      <section className="frame-rail-section grid gap-5 py-[clamp(1rem,3vw,1.7rem)]">
         <header className="flex items-start gap-3 border-b border-line pb-4">
           <UserCheck
             aria-hidden="true"
@@ -1120,7 +1120,7 @@ function ApprovalPanel({
         ) : null}
       </section>
 
-      <section className="workspace-rail-section grid gap-4 py-[clamp(1rem,3vw,1.7rem)]">
+      <section className="frame-rail-section grid gap-4 py-[clamp(1rem,3vw,1.7rem)]">
         <div>
           <strong>Approval signature</strong>
           <p className="mt-1 text-[.76rem] leading-[1.55] text-ink-muted">
@@ -1179,7 +1179,7 @@ function ApprovalPanel({
         ) : null}
       </section>
 
-      <section className="workspace-rail-section grid gap-4 py-[clamp(1rem,3vw,1.7rem)]">
+      <section className="frame-rail-section grid gap-4 py-[clamp(1rem,3vw,1.7rem)]">
         <div>
           <strong>Document watermark</strong>
           <p className="mt-1 text-[.76rem] leading-[1.55] text-ink-muted">

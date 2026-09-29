@@ -2,7 +2,7 @@
 
 import { cn } from "@/lib/cn";
 import { loadingPlaceholder } from "@/lib/loading-style";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { CheckCircle2, RotateCcw } from "lucide-react";
 import { StatePanel } from "@/components/state-panel";
 import { Badge } from "@/components/ui/badge";
@@ -29,6 +29,7 @@ import {
 } from "@/lib/weekly-reports";
 import { statusTone } from "./weekly-reports";
 import { useReviewIssues } from "@/lib/use-review-issues";
+import { useReviewSelection } from "@/lib/use-review-selection";
 import {
   ReviewIssueStamp,
   SemanticStatus,
@@ -44,13 +45,25 @@ const filters = [
 export function WeeklyReportReview() {
   const { refreshUnreadCount, showToast } = useNotifications();
   const [reports, setReports] = useState<WeeklyReport[]>();
-  const [filter, setFilter] = useState<WeeklyReportStatus>("SUBMITTED");
-  const [selectedId, setSelectedId] = useState<string>();
+  // Unset until the reviewer picks a tab: a linked report opens on its tab.
+  const [filterChoice, setFilter] = useState<WeeklyReportStatus>();
   const [note, setNote] = useState("");
   const [error, setError] = useState("");
   const [working, setWorking] = useState(false);
   const [reload, setReload] = useState(0);
   const reviewIssues = useReviewIssues();
+  // With no report open, the chosen tab (default: awaiting review) supplies
+  // the first record; a linked report instead picks its own tab below.
+  const { selectedId, select } = useReviewSelection(
+    "/workspace/weekly-reports/review",
+    {
+      firstId: reports?.find(
+        ({ status }) => status === (filterChoice ?? "SUBMITTED"),
+      )?.id,
+      ready: Boolean(reports),
+      viewKey: filterChoice ?? "",
+    },
+  );
 
   useEffect(() => {
     let active = true;
@@ -60,10 +73,6 @@ export function WeeklyReportReview() {
       .then((result) => {
         if (!active) return;
         setReports(result);
-        setSelectedId(
-          (current) =>
-            current ?? result.find(({ status }) => status === "SUBMITTED")?.id,
-        );
         setError("");
       })
       .catch((caught: unknown) => {
@@ -79,11 +88,11 @@ export function WeeklyReportReview() {
     };
   }, [reload]);
 
-  const visible = useMemo(
-    () => reports?.filter(({ status }) => status === filter) ?? [],
-    [filter, reports],
-  );
   const selected = reports?.find(({ id }) => id === selectedId);
+  const filter = filterChoice ?? selected?.status ?? "SUBMITTED";
+  const visible = reports?.filter(({ status }) => status === filter) ?? [];
+  const missing = Boolean(reports && selectedId && !selected);
+
   const bulk = useBulkSelection(visible.map(({ id }) => id));
   const selectedReports = visible.filter(({ id }) => bulk.isSelected(id));
   const selectedAttentionCount = selectedReports.filter(
@@ -141,7 +150,7 @@ export function WeeklyReportReview() {
         method: "POST",
       });
       bulk.clear();
-      setSelectedId(undefined);
+      select(undefined);
       setReload((current) => current + 1);
       void refreshUnreadCount().catch(() => undefined);
     } finally {
@@ -156,6 +165,8 @@ export function WeeklyReportReview() {
       return;
     }
     setWorking(true);
+    const index = visible.findIndex(({ id }) => id === selected.id);
+    const next = visible[index + 1] ?? visible[index - 1];
     try {
       const updated = await apiRequest<WeeklyReport>(
         `/weekly-reports/${selected.id}/review`,
@@ -168,8 +179,9 @@ export function WeeklyReportReview() {
       setReports((current) =>
         current?.map((report) => (report.id === updated.id ? updated : report)),
       );
-      setFilter(status);
-      setNote("");
+      setFilter(filter);
+      select(next?.id);
+      setNote(next?.reviewNote ?? "");
       setError("");
       reviewIssues.clearOne(selected.id);
       void refreshUnreadCount().catch(() => undefined);
@@ -231,9 +243,7 @@ export function WeeklyReportReview() {
         onValueChange={(value) => {
           const status = value as WeeklyReportStatus;
           setFilter(status);
-          setSelectedId(
-            reports?.find((report) => report.status === status)?.id,
-          );
+          select(reports?.find((report) => report.status === status)?.id);
           setNote("");
         }}
         options={options}
@@ -306,12 +316,12 @@ export function WeeklyReportReview() {
                   </div>
                   <ButtonControl
                     aria-pressed={Boolean(report && selectedId === report.id)}
-                    className="min-h-[74px] w-full justify-between rounded-none border-0 px-5 py-4 pr-10 text-left hover:bg-brand-faint aria-pressed:bg-brand-faint aria-pressed:text-ink"
+                    className="min-h-[74px] w-full justify-between rounded-none border-0 px-5 py-4 pr-10 text-left hover:bg-surface-subtle aria-pressed:bg-surface-subtle aria-pressed:text-ink"
                     loading={!report}
                     onClick={
                       report
                         ? () => {
-                            setSelectedId(report.id);
+                            select(report.id);
                             setNote(report.reviewNote ?? "");
                           }
                         : undefined
@@ -503,7 +513,11 @@ export function WeeklyReportReview() {
                 ) : null}
               </div>
             ) : (
-              <WorkspaceEmpty>Select a report from the queue.</WorkspaceEmpty>
+              <WorkspaceEmpty>
+                {missing
+                  ? "This weekly report is no longer available. Choose another report from the queue."
+                  : "Select a report from the queue."}
+              </WorkspaceEmpty>
             )}
           </WorkspacePanel>
         </div>

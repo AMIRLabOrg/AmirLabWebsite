@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
+import { MotionScene } from "@/components/motion-scene";
 import { PaperCard } from "@/components/paper-card";
 import { ResearchCard } from "@/components/research-card";
 import { ResearchStats } from "@/components/research-stats";
@@ -7,10 +8,9 @@ import { StatePanel } from "@/components/state-panel";
 import { UniversitiesMarquee } from "@/components/universities-marquee";
 import { ButtonLink } from "@/components/ui/button-control";
 import {
-  FrameNodes,
-  FrameRails,
+  FrameBays,
   FrameRule,
-  FrameRuleNodes,
+  publicShellClass,
 } from "@/components/ui/public-shell";
 import { cn } from "@/lib/cn";
 import { loadingPlaceholder } from "@/lib/loading-style";
@@ -30,8 +30,6 @@ const EMPTY_STATS: PublicStats = {
   projects: 0,
   openPositions: 0,
 };
-const shell =
-  "mx-auto w-full max-w-[var(--public-wide)] px-[var(--public-gutter)]";
 const eyebrow =
   "font-mono text-[.66rem] font-semibold tracking-[.105em] text-brand uppercase";
 
@@ -57,22 +55,22 @@ export function HomePageView({
     <div>
       <section
         aria-busy={loading || undefined}
-        className={cn("relative border-b border-line-strong lg:border-b-0")}
+        className="relative"
         data-loading={loading || undefined}
       >
-        <FrameNodes className="z-[3] lg:hidden" edge="bottom" />
+        <FrameBays pattern="plus" />
         <FrameRule edge="bottom" />
         <div
           className={cn(
-            shell,
-            "grid min-h-[390px] content-center py-[clamp(3rem,6vw,5rem)] max-[900px]:min-h-0 max-[640px]:py-[2.6rem]",
+            publicShellClass,
+            "grid min-h-[390px] grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)] items-center gap-[clamp(1.5rem,3vw,3rem)] py-4 max-[1024px]:grid-cols-1 max-[900px]:min-h-0",
           )}
         >
           <div className="relative z-[2] grid content-center">
             <p className="mb-[.65rem] font-mono text-[.62rem] font-semibold tracking-[.105em] text-brand uppercase">
               {content.establishment}
             </p>
-            <h1 className="m-0 max-w-[980px] font-sans text-[clamp(2.7rem,5.2vw,4.125rem)] leading-[1] font-medium tracking-[-.05em] max-[640px]:text-[clamp(2.5rem,12vw,3.25rem)]">
+            <h1 className="m-0 max-w-[980px] font-sans text-[clamp(2.7rem,5.2vw,4.125rem)] leading-[1] font-medium tracking-[-.05em] max-[640px]:text-[clamp(2.25rem,10.5vw,3rem)]">
               {content.heroTitle}
             </h1>
             <p
@@ -93,24 +91,39 @@ export function HomePageView({
               </ButtonLink>
             </div>
           </div>
+          <MotionScene
+            className="w-full max-w-[720px] justify-self-end max-[1024px]:max-w-[600px] max-[1024px]:justify-self-center"
+            variant="home"
+          />
         </div>
       </section>
 
-      <ResearchStats loading={loading} stats={stats} />
-
-      {!loading && universities.length > 0 ? (
-        <section className="pt-16">
-          <div className={shell}>
-            <p className="mb-4 text-left font-mono text-[.58rem] font-medium tracking-[.1em] text-ink-faint uppercase">
-              Academic Partners
-            </p>
-            <UniversitiesMarquee universities={universities} />
-          </div>
+      {loading || universities.length > 0 ? (
+        <section aria-label="Academic partners" className="relative pb-10">
+          <FrameBays pattern="dot" />
+          <FrameRule edge="bottom" />
+          <p
+            className={cn(
+              publicShellClass,
+              "mb-0 pt-10 pb-4 font-mono text-[.58rem] font-medium tracking-[.1em] text-ink-faint uppercase",
+            )}
+          >
+            Academic partners
+          </p>
+          <UniversitiesMarquee loading={loading} universities={universities} />
+          <ResearchStats boundary="none" loading={loading} stats={stats} />
+          <UniversitiesMarquee
+            direction="right"
+            loading={loading}
+            universities={universities}
+          />
         </section>
-      ) : null}
+      ) : (
+        <ResearchStats stats={stats} />
+      )}
 
       <section
-        className={cn(shell, "py-[clamp(3.25rem,6vw,5.5rem)]")}
+        className={cn(publicShellClass, "py-[clamp(3.25rem,6vw,5.5rem)]")}
         data-loading={loading || undefined}
       >
         <div className="mb-[1.4rem] flex items-end justify-between gap-5 max-[640px]:flex-col max-[640px]:items-start">
@@ -154,52 +167,16 @@ export function HomePageView({
         )}
       </section>
 
-      <section className="relative isolate border-t border-line-strong bg-surface">
-        <FrameRails />
-        <div className="pointer-events-none absolute inset-y-0 left-1/2 z-[1] hidden w-full max-w-[var(--public-wide)] -translate-x-1/2 lg:block">
-          <svg
-            aria-hidden="true"
-            className="absolute inset-y-0 right-0 h-full w-[min(26%,300px)]"
-            preserveAspectRatio="none"
-            viewBox="0 0 360 240"
-            width="360"
-            height="240"
-          >
-            <defs>
-              <pattern
-                height="18"
-                id="recruitment-diagonal-pattern"
-                patternTransform="rotate(45)"
-                patternUnits="userSpaceOnUse"
-                width="18"
-              >
-                <rect
-                  fill="var(--line-strong)"
-                  fillOpacity=".65"
-                  height="18"
-                  width="2"
-                />
-              </pattern>
-            </defs>
-            <rect
-              fill="url(#recruitment-diagonal-pattern)"
-              height="100%"
-              width="100%"
-            />
-          </svg>
-          <div className="absolute inset-y-0 right-0 w-[min(31%,360px)] bg-gradient-to-r from-surface via-surface/65 to-transparent" />
-        </div>
-        <FrameRuleNodes
-          className="top-0 z-10"
-          nodeSurfaceClassName="bg-surface"
-        />
+      <section className="relative">
+        <FrameBays pattern="diagonal" />
+        <FrameRule edge="top" />
         <div
           className={cn(
-            shell,
-            "relative z-[2] grid grid-cols-[minmax(0,1fr)_auto] items-end gap-8 py-[3.8rem] max-[900px]:grid-cols-1",
+            publicShellClass,
+            "grid grid-cols-[minmax(0,1fr)_auto] items-end gap-8 bg-surface py-[3.8rem] max-[900px]:grid-cols-1",
           )}
         >
-          <div className="relative z-[2]">
+          <div>
             <p className="mb-[.65rem] font-mono text-[.66rem] font-semibold tracking-[.105em] text-brand uppercase">
               {content.recruitmentEyebrow}
             </p>

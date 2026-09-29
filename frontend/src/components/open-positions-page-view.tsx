@@ -16,6 +16,7 @@ export function OpenPositionsPageView({
   return (
     <>
       <PageIntro
+        scene="position"
         loading={loading}
         eyebrow="Careers & opportunities"
         meta={

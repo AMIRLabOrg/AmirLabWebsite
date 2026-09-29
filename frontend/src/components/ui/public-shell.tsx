@@ -1,6 +1,13 @@
 import type { ComponentPropsWithoutRef, ElementType, ReactNode } from "react";
 import { cn } from "@/lib/cn";
 
+/**
+ * The public content box. Its edges are the inner frame rails at every width
+ * (see --frame-inner), so content, rules, and rails always meet exactly.
+ */
+export const publicShellClass =
+  "mx-auto w-full max-w-[min(var(--public-wide),calc(100%_-_2*var(--frame-mobile-inner)))] px-[var(--public-gutter)]";
+
 export function PublicShell({
   as: Component = "div",
   className,
@@ -11,87 +18,80 @@ export function PublicShell({
   "children"
 >) {
   return (
-    <Component
-      className={cn(
-        "mx-auto w-full max-w-[var(--public-wide)] px-[var(--public-gutter)]",
-        className,
-      )}
-      {...props}
-    >
+    <Component className={cn(publicShellClass, className)} {...props}>
       {children}
     </Component>
   );
 }
 
+export type FramePatternVariant =
+  "grid" | "plus" | "dot" | "diagonal" | "cross";
+
+const patternClass: Record<FramePatternVariant, string> = {
+  grid: "frame-grid-hatch",
+  plus: "frame-plus-hatch",
+  dot: "frame-dot-hatch",
+  diagonal: "frame-diagonal-hatch",
+  cross: "frame-cross-hatch",
+};
+
+type FrameStroke = "solid" | "dashed" | "dotted" | "mixed";
+
+const strokeClass: Record<FrameStroke, string> = {
+  solid: "frame-stroke-solid-x",
+  dashed: "frame-stroke-dashed-x",
+  dotted: "frame-stroke-dotted-x",
+  mixed: "frame-stroke-mixed-x",
+};
+
+type NodeSurface = "canvas" | "surface";
+
+const nodeSurfaceClass: Record<NodeSurface, string> = {
+  canvas: "[--frame-node-surface:var(--canvas)]",
+  surface: "[--frame-node-surface:var(--surface)]",
+};
+
 type FrameBoundary = "none" | "top" | "bottom" | "both";
 
-export function FrameIntersectionNode({
-  className,
-  nodeSurfaceClassName = "bg-canvas",
-  ...props
-}: ComponentPropsWithoutRef<"span"> & {
-  nodeSurfaceClassName?: string;
-}) {
-  return (
-    <span
-      aria-hidden="true"
-      className={cn(
-        "z-20 h-1.5 w-1.5 border border-line-strong shadow-[0_0_0_1px_var(--canvas)]",
-        nodeSurfaceClassName,
-        className,
-      )}
-      {...props}
-    />
-  );
-}
-
 /**
- * The shared outer frame for a public page section. It owns viewport rules and
- * the centered content gutter so pages never draw those lines themselves.
+ * The shared outer frame for a public page section. Boundaries are drawn by
+ * FrameRule and the side bays by FrameBays, so pages never draw frame lines.
  */
 export function PublicSection({
   as: Component = "section",
+  bay,
   boundary = "none",
   children,
   className,
   contentClassName,
-  nodeSurfaceClassName = "bg-canvas",
+  nodeSurface = "canvas",
   ...props
 }: {
   as?: "div" | "header" | "section";
+  bay?: FramePatternVariant;
   boundary?: FrameBoundary;
   children: ReactNode;
   className?: string;
   contentClassName?: string;
-  nodeSurfaceClassName?: string;
+  nodeSurface?: NodeSurface;
 } & Omit<ComponentPropsWithoutRef<"section">, "children" | "className">) {
-  const top = boundary === "top" || boundary === "both";
-  const bottom = boundary === "bottom" || boundary === "both";
-
   return (
-    <Component
-      className={cn(
-        "relative",
-        top && "border-t border-line-strong lg:border-t-0",
-        bottom && "border-b border-line-strong lg:border-b-0",
-        className,
-      )}
-      {...props}
-    >
-      {top ? (
-        <FrameRule edge="top" nodeSurfaceClassName={nodeSurfaceClassName} />
+    <Component className={cn("relative", className)} {...props}>
+      {bay ? <FrameBays pattern={bay} /> : null}
+      {boundary === "top" || boundary === "both" ? (
+        <FrameRule edge="top" nodeSurface={nodeSurface} />
       ) : null}
       <PublicShell className={cn("relative", contentClassName)}>
         {children}
       </PublicShell>
-      {bottom ? (
-        <FrameRule edge="bottom" nodeSurfaceClassName={nodeSurfaceClassName} />
+      {boundary === "bottom" || boundary === "both" ? (
+        <FrameRule edge="bottom" nodeSurface={nodeSurface} />
       ) : null}
     </Component>
   );
 }
 
-/** Extends a child collection from the padded content area to both rails. */
+/** Extends a child collection from the padded content box to both rails. */
 export function FramedCollection({
   children,
   className,
@@ -104,12 +104,11 @@ export function FramedCollection({
   return (
     <div
       className={cn(
-        "relative mx-[calc(var(--public-gutter)*-1)]",
+        "relative -mx-[var(--public-gutter)]",
         topRule && "border-t border-line-strong",
         className,
       )}
     >
-      {topRule ? <FrameNodes edge="top" /> : null}
       {children}
     </div>
   );
@@ -135,181 +134,163 @@ export function FramedRow({
       className={cn(
         "relative",
         rule && "border-b border-line-strong",
-        bleed && "mx-[calc(var(--public-gutter)*-1)]",
+        bleed && "-mx-[var(--public-gutter)]",
         className,
       )}
       {...props}
     >
-      {rule ? <FrameNodes className="z-10" edge="bottom" /> : null}
       {children}
     </Component>
   );
 }
 
+/**
+ * Page-level rails at the content box edges. `page` (public site): dashed
+ * outer pair plus solid inner pair. `quiet` (workspace): faint dashed inner
+ * pair only. Render once per full-width frame region.
+ */
 export function FrameRails({
   className,
-  mode = "page",
+  tone = "page",
 }: {
   className?: string;
-  mode?: "page" | "content";
+  tone?: "page" | "quiet";
 }) {
-  if (mode === "content") {
-    return (
-      <div
-        aria-hidden="true"
-        className={cn(
-          "pointer-events-none absolute inset-y-0 left-1/2 z-0 hidden w-full max-w-[var(--public-wide)] -translate-x-1/2 border-x border-line-strong min-[641px]:block",
-          className,
-        )}
-      />
-    );
-  }
-
+  const inner =
+    tone === "page" ? "frame-stroke-solid-y" : "frame-stroke-dashed-y";
   return (
     <div
       aria-hidden="true"
       className={cn(
-        "pointer-events-none absolute inset-0 hidden overflow-hidden lg:block",
+        "pointer-events-none absolute inset-0 z-[5]",
+        tone === "quiet" && "[--frame-line:var(--line)]",
         className,
       )}
     >
-      <i className="absolute inset-y-0 left-[4.25%] border-l border-dashed border-line-strong/45" />
-      <div className="absolute inset-x-0 inset-y-0 mx-auto w-full max-w-[var(--public-wide)] border-x border-line-strong/60" />
-      <i className="absolute inset-y-0 right-[5.4%] border-l border-dashed border-line-strong/45" />
-    </div>
-  );
-}
-
-export function FrameRuleNodes({
-  className,
-  scope = "viewport",
-  nodeSurfaceClassName = "bg-canvas",
-}: {
-  className?: string;
-  scope?: "viewport" | "contained";
-  nodeSurfaceClassName?: string;
-}) {
-  return (
-    <div
-      aria-hidden="true"
-      className={cn(
-        "pointer-events-none absolute inset-x-0 hidden lg:block",
-        className,
-      )}
-    >
-      {scope === "viewport" ? (
+      {tone === "page" ? (
         <>
-          <FrameIntersectionNode
-            className="absolute left-[4.25%] top-0 -translate-x-1/2 -translate-y-1/2"
-            nodeSurfaceClassName={nodeSurfaceClassName}
-          />
-          <FrameIntersectionNode
-            className="absolute top-0 right-[5.4%] translate-x-1/2 -translate-y-1/2"
-            nodeSurfaceClassName={nodeSurfaceClassName}
-          />
+          <span className="frame-stroke-dashed-y absolute inset-y-0 left-[var(--frame-outer)] w-px" />
+          <span className="frame-stroke-dashed-y absolute inset-y-0 right-[var(--frame-outer)] w-px" />
         </>
       ) : null}
-      <div
+      <span
         className={cn(
-          "absolute inset-x-0 top-0 mx-auto h-0 w-full",
-          scope === "viewport" && "max-w-[var(--public-wide)]",
+          inner,
+          "absolute inset-y-0 left-[var(--frame-inner)] w-px",
         )}
-      >
-        <FrameIntersectionNode
-          className="absolute top-0 left-0 -translate-x-1/2 -translate-y-1/2"
-          nodeSurfaceClassName={nodeSurfaceClassName}
-        />
-        <FrameIntersectionNode
-          className="absolute top-0 right-0 translate-x-1/2 -translate-y-1/2"
-          nodeSurfaceClassName={nodeSurfaceClassName}
-        />
-      </div>
+      />
+      <span
+        className={cn(
+          inner,
+          "absolute inset-y-0 right-[var(--frame-inner)] w-px",
+        )}
+      />
     </div>
   );
 }
 
+/** Fills both side bays (outer rail to inner rail) for the parent's height. */
+export function FrameBays({
+  className,
+  pattern,
+}: {
+  className?: string;
+  pattern: FramePatternVariant;
+}) {
+  const bay = cn(
+    "absolute inset-y-0 w-[calc(var(--frame-inner)_-_var(--frame-outer))]",
+    patternClass[pattern],
+  );
+  return (
+    <div
+      aria-hidden="true"
+      className={cn("pointer-events-none absolute inset-0", className)}
+    >
+      <span className={cn(bay, "left-[var(--frame-outer)]")} />
+      <span className={cn(bay, "right-[var(--frame-outer)]")} />
+    </div>
+  );
+}
+
+export function FramePattern({
+  className,
+  variant = "grid",
+}: {
+  className?: string;
+  variant?: FramePatternVariant;
+}) {
+  return (
+    <span
+      aria-hidden="true"
+      className={cn(
+        "pointer-events-none block",
+        patternClass[variant],
+        className,
+      )}
+    />
+  );
+}
+
+function FrameNode({ className }: { className: string }) {
+  return <span className={cn("frame-node absolute", className)} />;
+}
+
+/**
+ * A full-width section rule with square nodes where it crosses the inner
+ * rails. `viewport` bleeds from inside the content box to the page edges;
+ * `parent` spans its (already full-width) positioned parent.
+ */
 export function FrameRule({
   className,
   edge = "bottom",
+  nodes = true,
+  nodeSurface = "canvas",
   scope = "viewport",
-  nodeSurfaceClassName = "bg-canvas",
+  stroke = "solid",
 }: {
   className?: string;
   edge?: "top" | "bottom";
-  scope?: "viewport" | "contained";
-  nodeSurfaceClassName?: string;
+  nodes?: boolean;
+  nodeSurface?: NodeSurface;
+  scope?: "viewport" | "parent";
+  stroke?: FrameStroke;
 }) {
-  const nodePosition = edge === "top" ? "top-0" : "bottom-0";
+  const y =
+    edge === "top"
+      ? "top-[var(--frame-node-offset)]"
+      : "bottom-[var(--frame-node-offset)]";
   return (
     <div
       aria-hidden="true"
       className={cn(
-        "pointer-events-none absolute inset-x-0 z-10 hidden h-0 lg:block",
+        "pointer-events-none absolute inset-x-0 z-30 h-0",
         edge === "top" ? "top-0" : "bottom-0",
+        scope === "viewport" &&
+          "left-[calc((100%_-_100cqw)/2)] right-[calc((100%_-_100cqw)/2)]",
+        nodeSurfaceClass[nodeSurface],
         className,
       )}
-      style={
-        scope === "viewport"
-          ? {
-              left: "calc((100% - 100cqw) / 2)",
-              right: "calc((100% - 100cqw) / 2)",
-            }
-          : undefined
-      }
     >
       <span
         className={cn(
-          "absolute inset-x-0 border-t border-line-strong",
-          nodePosition,
+          strokeClass[stroke],
+          "absolute inset-x-0 h-px",
+          edge === "top" ? "top-0" : "bottom-0",
         )}
       />
-      <FrameRuleNodes
-        className={nodePosition}
-        scope={scope}
-        nodeSurfaceClassName={nodeSurfaceClassName}
-      />
-    </div>
-  );
-}
-
-export function FrameNodes({
-  className,
-  edge = "both",
-  nodeSurfaceClassName = "bg-canvas",
-}: {
-  className?: string;
-  edge?: "top" | "bottom" | "both";
-  nodeSurfaceClassName?: string;
-}) {
-  return (
-    <div
-      aria-hidden="true"
-      className={cn(
-        "pointer-events-none absolute inset-0 hidden min-[641px]:block",
-        className,
-      )}
-    >
-      {edge !== "bottom" ? (
+      {nodes ? (
         <>
-          <FrameIntersectionNode
-            className="absolute top-[-.5px] left-0 -translate-x-1/2 -translate-y-1/2"
-            nodeSurfaceClassName={nodeSurfaceClassName}
+          <FrameNode
+            className={cn(
+              y,
+              "left-[calc(var(--frame-inner)_+_var(--frame-node-offset))]",
+            )}
           />
-          <FrameIntersectionNode
-            className="absolute top-[-.5px] right-0 translate-x-1/2 -translate-y-1/2"
-            nodeSurfaceClassName={nodeSurfaceClassName}
-          />
-        </>
-      ) : null}
-      {edge !== "top" ? (
-        <>
-          <FrameIntersectionNode
-            className="absolute bottom-[-.5px] left-0 -translate-x-1/2 translate-y-1/2"
-            nodeSurfaceClassName={nodeSurfaceClassName}
-          />
-          <FrameIntersectionNode
-            className="absolute right-0 bottom-[-.5px] translate-x-1/2 translate-y-1/2"
-            nodeSurfaceClassName={nodeSurfaceClassName}
+          <FrameNode
+            className={cn(
+              y,
+              "right-[calc(var(--frame-inner)_+_var(--frame-node-offset))]",
+            )}
           />
         </>
       ) : null}

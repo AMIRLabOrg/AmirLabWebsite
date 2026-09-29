@@ -43,7 +43,7 @@ export function BulkReviewBar<Status extends string>({
   return (
     <WorkspaceRuleBand
       aria-label="Bulk review actions"
-      contentClassName="grid min-w-0 grid-cols-[minmax(160px,auto)_minmax(0,1fr)] items-center gap-4 px-[calc(var(--workspace-gutter)+1rem)] py-3 max-[720px]:grid-cols-1 max-[640px]:px-4"
+      contentClassName="grid min-w-0 grid-cols-[minmax(160px,auto)_minmax(0,1fr)] items-center gap-4 px-[var(--workspace-gutter)] py-3 max-[720px]:grid-cols-1 max-[640px]:px-4"
     >
       <div className="flex min-w-0 flex-wrap items-center gap-3">
         <CheckboxControl

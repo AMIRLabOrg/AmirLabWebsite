@@ -133,7 +133,7 @@ export function SiteContentEditor({ page }: { page: SiteContentPage }) {
           data-loading={loading || undefined}
           onSubmit={submit}
         >
-          <header className="workspace-rail-section flex items-center justify-between gap-8 py-[clamp(1.25rem,2.5vw,1.75rem)] max-[760px]:flex-col max-[760px]:items-start max-[760px]:gap-[.7rem]">
+          <header className="frame-rail-section flex items-center justify-between gap-8 py-[clamp(1.25rem,2.5vw,1.75rem)] max-[760px]:flex-col max-[760px]:items-start max-[760px]:gap-[.7rem]">
             <div>
               <p className="m-0 mb-4 font-[var(--font-sans)] text-[.75rem] font-extrabold uppercase tracking-[.12em] text-brand">
                 Public content
@@ -563,7 +563,7 @@ function EditorSection({
   title: string;
 }) {
   return (
-    <section className="workspace-rail-section grid gap-5 py-[clamp(1.25rem,2.5vw,1.75rem)]">
+    <section className="frame-rail-section grid gap-5 py-[clamp(1.25rem,2.5vw,1.75rem)]">
       <header className="border-b border-line pb-4">
         <p className="m-0 mb-4 font-[var(--font-sans)] text-[.75rem] font-extrabold uppercase tracking-[.12em] text-brand">
           {eyebrow}

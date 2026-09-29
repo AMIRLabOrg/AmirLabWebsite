@@ -56,7 +56,7 @@ function actionClassName({
   return cn(
     "inline-flex h-[var(--control-height)] min-h-[var(--control-height)] cursor-pointer items-center justify-center gap-2 rounded-[var(--radius-control)] border px-3.5 py-0 text-xs font-medium transition-[border-color,background,color,box-shadow] duration-[140ms] focus-visible:outline-none focus-visible:shadow-[var(--focus-ring)] disabled:cursor-not-allowed disabled:opacity-55 motion-reduce:transition-none",
     variantClass[variant],
-    compact && "h-9 min-h-9 px-[.7rem] text-xs",
+    compact && "h-8 min-h-8 px-[.65rem] text-[.7rem]",
     loading && loadingPlaceholder(true, "control"),
     className,
   );

@@ -2,15 +2,15 @@ import { AnimatedCounter } from "./animated-counter";
 import type { PublicStats } from "@/lib/types";
 import { cn } from "@/lib/cn";
 import { loadingPlaceholder } from "@/lib/loading-style";
-import {
-  FrameIntersectionNode,
-  PublicSection,
-} from "@/components/ui/public-shell";
+import { PublicSection } from "@/components/ui/public-shell";
 
 export function ResearchStats({
+  boundary = "bottom",
   stats,
   loading = false,
 }: {
+  /** "none" when embedded in a band that already frames the row. */
+  boundary?: "bottom" | "none";
   stats?: PublicStats;
   loading?: boolean;
 }) {
@@ -29,15 +29,17 @@ export function ResearchStats({
     [value.datasets + value.projects, "Datasets & projects"],
     [value.openPositions, "Open positions"],
   ] as const;
+  // Optional counts only appear when non-zero, so the loading row reserves the
+  // two counts that always render.
   const values = loading
-    ? [...required, ...optional]
+    ? required
     : [...required, ...optional.filter(([count]) => count > 0)];
 
   return (
     <PublicSection
       aria-busy={loading || undefined}
       aria-label="AmirLab in numbers"
-      boundary="bottom"
+      boundary={boundary}
       contentClassName={cn(
         "grid max-[640px]:grid-cols-2",
         values.length === 2 ? "grid-cols-2" : "grid-cols-4",
@@ -55,7 +57,7 @@ export function ResearchStats({
         >
           <strong
             className={cn(
-              "font-sans text-[2rem] leading-none font-medium tabular-nums text-ink",
+              "justify-self-start font-sans text-[2rem] leading-none font-medium tabular-nums text-ink",
               loading && loadingPlaceholder(true, "value"),
             )}
             data-placeholder={loading ? "value" : undefined}
@@ -73,12 +75,6 @@ export function ResearchStats({
           >
             {loading ? null : label}
           </span>
-          {index < values.length - 1 ? (
-            <>
-              <FrameIntersectionNode className="absolute top-[-3px] right-[-3px] hidden lg:block" />
-              <FrameIntersectionNode className="absolute right-[-3px] bottom-[-3px] hidden lg:block" />
-            </>
-          ) : null}
         </article>
       ))}
     </PublicSection>

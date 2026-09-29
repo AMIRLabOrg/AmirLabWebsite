@@ -1,21 +1,14 @@
 import type { ReactNode } from "react";
-import { FrameNodes } from "@/components/ui/public-shell";
+import { PublicSection } from "@/components/ui/public-shell";
 
-export function AuthPageFrame({
-  children,
-}: {
-  children: ReactNode;
-}) {
+export function AuthPageFrame({ children }: { children: ReactNode }) {
   return (
-    <section className="grid min-h-svh content-center px-[var(--public-gutter)] py-10">
-      <div className="relative mx-auto w-full max-w-[var(--public-wide)]">
-        <div className="relative border-y border-line-strong">
-          <FrameNodes />
-          <div className="mx-auto grid w-full max-w-[520px] gap-0 py-[clamp(2rem,6vh,3.5rem)] max-[560px]:px-4">
-            {children}
-          </div>
+    <section className="grid min-h-svh content-center py-10">
+      <PublicSection as="div" bay="plus" boundary="both">
+        <div className="mx-auto grid w-full max-w-[520px] gap-0 py-[clamp(2rem,6vh,3.5rem)]">
+          {children}
         </div>
-      </div>
+      </PublicSection>
     </section>
   );
 }

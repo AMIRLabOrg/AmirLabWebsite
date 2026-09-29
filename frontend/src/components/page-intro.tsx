@@ -2,17 +2,20 @@ import type { ReactNode } from "react";
 import { cn } from "@/lib/cn";
 import { PublicSection } from "@/components/ui/public-shell";
 import { loadingPlaceholder } from "@/lib/loading-style";
+import { MotionScene, type SceneVariant } from "@/components/motion-scene";
 
 export function PageIntro({
   children,
   eyebrow,
   meta,
+  scene,
   title,
   loading = false,
 }: {
   children: ReactNode;
   eyebrow: string;
   meta?: ReactNode;
+  scene: SceneVariant;
   title: string;
   loading?: boolean;
 }) {
@@ -21,7 +24,8 @@ export function PageIntro({
       as="header"
       aria-busy={loading || undefined}
       boundary="bottom"
-      contentClassName="grid min-h-[220px] grid-cols-[minmax(0,1fr)] items-stretch pt-[clamp(2.3rem,4.5vw,4.2rem)] pb-[2.2rem] max-[640px]:min-h-0 max-[640px]:pt-8 max-[640px]:pb-6"
+      bay="plus"
+      contentClassName="grid min-h-[220px] grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)] items-center gap-[clamp(1.5rem,3vw,3rem)] py-4 max-[1024px]:grid-cols-1 max-[640px]:min-h-0"
       data-loading={loading || undefined}
     >
       <div className="self-center min-w-0">
@@ -38,7 +42,7 @@ export function PageIntro({
         <h1
           aria-hidden={loading || undefined}
           className={cn(
-            "m-0 max-w-[850px] text-[clamp(2.8rem,5vw,4.7rem)] leading-[.92] font-medium tracking-[-.055em] max-[640px]:text-[clamp(2.45rem,13vw,3.45rem)]",
+            "m-0 max-w-[850px] text-[clamp(2.8rem,5vw,4.7rem)] leading-[.92] font-medium tracking-[-.055em] max-[640px]:text-[clamp(2.15rem,10vw,2.8rem)]",
             "font-sans",
             loading && loadingPlaceholder(true, "text", "medium"),
           )}
@@ -73,6 +77,10 @@ export function PageIntro({
           </div>
         ) : null}
       </div>
+      <MotionScene
+        className="w-full max-w-[560px] justify-self-end max-[1024px]:max-w-[520px] max-[1024px]:justify-self-center"
+        variant={scene}
+      />
     </PublicSection>
   );
 }

@@ -37,6 +37,7 @@ export function ResearchListingView({
   return (
     <>
       <PageIntro
+        scene={isDataset ? "dataset" : "project"}
         loading={loading}
         eyebrow={eyebrow}
         meta={

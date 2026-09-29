@@ -16,9 +16,12 @@ import { ConfirmDialog } from "@/components/confirm-dialog";
 import { useNotifications } from "@/components/notification-provider";
 import { ProfileAvatar } from "@/components/profile-avatar";
 import {
-  WorkspaceFrameRails,
-  WorkspaceRailRuleNodes,
-} from "@/components/ui/workspace-surface";
+  FrameBays,
+  FramePattern,
+  FrameRails,
+  FrameRule,
+} from "@/components/ui/public-shell";
+import { workspaceShellClass } from "@/components/ui/workspace-surface";
 import { cn } from "@/lib/cn";
 import {
   isWorkspaceNavigationActive,
@@ -37,8 +40,14 @@ export function WorkspaceShell({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     try {
+      if (window.matchMedia("(max-width: 820px)").matches) {
+        // Mobile navigation must always keep its labels visible, regardless of
+        // the desktop sidebar preference saved on this device.
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setSidebarOpen(true);
+        return;
+      }
       const stored = localStorage.getItem("amirlab:sidebar-open");
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       if (stored !== null) setSidebarOpen(stored === "true");
     } catch {}
   }, []);
@@ -63,33 +72,39 @@ export function WorkspaceShell({ children }: { children: ReactNode }) {
     workspaceNavigationItem(pathname, navigationGroups)?.label ?? "Workspace";
 
   return (
-    <div
-      className="workspace-site"
-      data-loading={loading || !user || undefined}
-    >
+    <div data-site="workspace" data-loading={loading || !user || undefined}>
       <div
         className={cn(
           "grid min-h-screen w-full items-stretch bg-canvas transition-[grid-template-columns] duration-300 ease-in-out max-[820px]:block",
           sidebarOpen
-            ? "grid-cols-[260px_minmax(0,1fr)]"
-            : "grid-cols-[64px_minmax(0,1fr)]",
+            ? "grid-cols-[264px_minmax(0,1fr)]"
+            : "grid-cols-[58px_minmax(0,1fr)]",
         )}
       >
-        <aside className="sticky top-0 flex h-screen min-w-0 flex-col overflow-y-auto overflow-x-hidden border-r border-line-strong bg-surface pb-4 max-[820px]:static max-[820px]:h-auto max-[820px]:w-full max-[820px]:overflow-visible max-[820px]:border-r-0 max-[820px]:border-b max-[820px]:pt-[.65rem] max-[820px]:pb-0">
+        <aside className="sticky top-0 flex h-screen min-w-0 flex-col overflow-x-hidden overflow-y-auto [scrollbar-gutter:stable] [scrollbar-width:thin] border-r border-line-strong bg-surface pb-4 max-[820px]:relative max-[820px]:h-auto max-[820px]:w-full max-[820px]:overflow-visible max-[820px]:border-r-0 max-[820px]:border-b max-[820px]:pt-[.65rem] max-[820px]:pb-0">
+          <FrameBays className="hidden max-[820px]:block" pattern="grid" />
+          <FrameRails className="hidden max-[820px]:block" tone="quiet" />
           <div
             className={cn(
-              "flex h-[52px] items-center gap-2 border-b border-line-strong max-[820px]:h-auto max-[820px]:border-b-0 max-[820px]:pb-[.55rem]",
+              "relative z-[6] flex h-[64px] shrink-0 items-center gap-2 border-b border-line-strong max-[820px]:h-[56px] max-[820px]:border-b max-[820px]:px-[var(--workspace-gutter)] max-[820px]:pb-0",
               sidebarOpen
                 ? "justify-between px-[.85rem]"
                 : "justify-center px-0",
             )}
           >
             {sidebarOpen ? (
-              <strong className="text-[.9rem]">Workspace</strong>
+              <div className="grid min-w-0 gap-[2px]">
+                <strong className="truncate text-[.8rem] font-semibold">
+                  Workspace
+                </strong>
+                <span className="truncate text-[.6rem] text-ink-muted">
+                  {loading || !user ? "Research workspace" : user.email}
+                </span>
+              </div>
             ) : null}
             <button
               aria-label={sidebarOpen ? "Close sidebar" : "Open sidebar"}
-              className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-control text-ink-muted transition-colors hover:bg-brand-faint hover:text-brand max-[820px]:hidden"
+              className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-control text-ink-muted transition-colors hover:bg-surface-subtle hover:text-ink max-[820px]:hidden"
               onClick={toggleSidebar}
               type="button"
             >
@@ -103,7 +118,7 @@ export function WorkspaceShell({ children }: { children: ReactNode }) {
           <nav
             aria-label="Workspace navigation"
             className={cn(
-              "mt-[.6rem] grid gap-[.35rem] max-[820px]:-mx-4 max-[820px]:mt-0 max-[820px]:flex max-[820px]:gap-0 max-[820px]:overflow-x-auto max-[820px]:px-4 max-[820px]:[scrollbar-width:none]",
+              "relative z-[6] mt-[.6rem] grid gap-[.35rem] max-[820px]:mx-[var(--workspace-gutter)] max-[820px]:mt-0 max-[820px]:flex max-[820px]:gap-0 max-[820px]:overflow-x-auto max-[820px]:px-0 max-[820px]:[scrollbar-width:none]",
               sidebarOpen ? "px-[.85rem]" : "px-[.4rem]",
             )}
           >
@@ -113,7 +128,7 @@ export function WorkspaceShell({ children }: { children: ReactNode }) {
                 key={group.label}
               >
                 {sidebarOpen ? (
-                  <span className="px-[.45rem] pt-[.28rem] pb-[.38rem] font-mono text-[.5rem] tracking-[.1em] text-ink-faint uppercase max-[820px]:hidden">
+                  <span className="px-[.45rem] pt-[.28rem] pb-[.38rem] font-mono text-[.55rem] tracking-[.105em] text-ink-faint uppercase max-[820px]:hidden">
                     {group.label}
                   </span>
                 ) : (
@@ -135,21 +150,26 @@ export function WorkspaceShell({ children }: { children: ReactNode }) {
                   return (
                     <Link
                       className={cn(
-                        "flex min-h-[35px] items-center gap-2 border-l-2 border-transparent py-[.42rem] text-[.69rem] font-semibold text-ink-muted transition-colors hover:bg-brand-faint hover:text-brand max-[820px]:min-h-[38px] max-[820px]:shrink-0 max-[820px]:border-b-2 max-[820px]:border-l-0",
+                        "flex min-h-[34px] items-center gap-2 border-l-2 border-transparent py-[.42rem] text-[.73rem] font-medium text-ink-muted transition-colors hover:bg-surface-subtle hover:text-ink max-[820px]:min-h-[38px] max-[820px]:shrink-0 max-[820px]:border-b-2 max-[820px]:border-l-0",
                         sidebarOpen
                           ? "px-[.48rem]"
                           : "justify-center px-0 relative",
                         active &&
-                          "border-l-brand bg-brand-faint font-semibold text-brand max-[820px]:border-b-brand max-[820px]:border-l-transparent",
+                          "border-l-brand bg-surface-subtle font-medium text-ink max-[820px]:border-b-brand max-[820px]:border-l-transparent",
                       )}
                       href={href}
                       key={href}
                       title={!sidebarOpen ? label : undefined}
                     >
                       <Icon aria-hidden="true" size={17} className="shrink-0" />
-                      {sidebarOpen && (
-                        <span className="whitespace-nowrap">{label}</span>
-                      )}
+                      <span
+                        className={cn(
+                          "whitespace-nowrap",
+                          !sidebarOpen && "min-[821px]:hidden",
+                        )}
+                      >
+                        {label}
+                      </span>
                       {sidebarOpen && indicatorCount > 0 ? (
                         <strong className="ml-auto inline-flex h-[1.1rem] min-w-[1.1rem] items-center justify-center rounded-[10px] border border-current bg-transparent px-[.25rem] font-mono text-[.52rem] font-bold text-inherit">
                           {indicatorCount > 99 ? "99+" : indicatorCount}
@@ -205,59 +225,61 @@ export function WorkspaceShell({ children }: { children: ReactNode }) {
               </Link>
             )}
           </div>
+          <FramePattern
+            className="mt-3 h-[58px] shrink-0 border-t border-line-strong max-[820px]:hidden"
+            variant="grid"
+          />
         </aside>
-        <div className="relative grid min-w-0 grid-rows-[52px_minmax(0,1fr)] max-[820px]:grid-rows-[65px_minmax(0,1fr)]">
-          <WorkspaceFrameRails />
-          <header className="sticky top-0 z-30 flex min-h-[52px] items-center justify-between border-b border-line-strong bg-[color-mix(in_srgb,var(--surface)_94%,transparent)] px-[clamp(1rem,2vw,1.8rem)] py-[.45rem] backdrop-blur-[12px]">
-            <WorkspaceRailRuleNodes />
-            <div className="flex items-center gap-[clamp(.5rem,2vw,1rem)]">
-              <div className="grid gap-[.12rem]">
-                <span
+        <div className="relative grid min-w-0 grid-rows-[64px_minmax(0,1fr)] max-[820px]:min-h-[calc(100svh-104px)] max-[820px]:grid-rows-[56px_minmax(0,1fr)]">
+          <FrameRails tone="quiet" />
+          <header className="sticky top-0 z-30 min-h-[64px] bg-surface/95 backdrop-blur-[12px] max-[820px]:min-h-[56px]">
+            <FrameBays pattern="grid" />
+            <FrameRails tone="quiet" />
+            <FrameRule edge="bottom" nodeSurface="surface" scope="parent" />
+            <div
+              className={cn(
+                workspaceShellClass,
+                "relative z-[6] flex min-h-[64px] items-center justify-between bg-surface py-[.45rem] max-[820px]:min-h-[56px]",
+              )}
+            >
+              <div className="flex min-w-0 items-center gap-[clamp(.5rem,2vw,1rem)]">
+                <h1
                   className={cn(
-                    "font-mono text-[.5rem] tracking-[.07em] text-ink-muted uppercase",
-                    loadingPlaceholder(loading || !user, "text"),
-                  )}
-                  data-placeholder={loading || !user ? "text" : undefined}
-                >
-                  Lab operating system
-                </span>
-                <strong
-                  className={cn(
-                    "text-[.76rem]",
+                    "m-0 truncate font-serif text-[1.65rem] leading-none font-medium tracking-[-.025em] max-[820px]:font-sans max-[820px]:text-[1rem] max-[820px]:tracking-[-.01em]",
                     loadingPlaceholder(loading || !user, "text"),
                   )}
                   data-placeholder={loading || !user ? "text" : undefined}
                 >
                   {loading || !user ? "Workspace" : currentLabel}
-                </strong>
+                </h1>
               </div>
-            </div>
-            <div className="flex items-center gap-[.55rem]">
-              <Link
-                aria-label={`${unreadCount} unread notification${unreadCount === 1 ? "" : "s"}`}
-                className="relative inline-flex h-9 w-9 items-center justify-center rounded-control text-ink-muted transition-colors hover:bg-brand-faint hover:text-brand"
-                href="/workspace/notifications"
-              >
-                <Bell aria-hidden="true" size={20} />
-                {unreadCount > 0 ? (
-                  <span className="absolute -top-1 -right-1 inline-flex min-h-4 min-w-4 items-center justify-center rounded-[8px] bg-brand px-1 font-mono text-[.48rem] text-on-accent">
-                    {unreadCount > 99 ? "99+" : unreadCount}
-                  </span>
-                ) : null}
-              </Link>
-              <Link
-                className="inline-flex"
-                href="/workspace/profile"
-                title={accountName}
-              >
-                <ProfileAvatar
-                  avatarId={user?.person?.avatar?.id}
-                  loading={loading || !user}
-                  name={accountName}
-                  shape="round"
-                  size="md"
-                />
-              </Link>
+              <div className="flex items-center gap-[.55rem]">
+                <Link
+                  aria-label={`${unreadCount} unread notification${unreadCount === 1 ? "" : "s"}`}
+                  className="relative inline-flex h-9 w-9 items-center justify-center rounded-control text-ink-muted transition-colors hover:bg-surface-subtle hover:text-ink"
+                  href="/workspace/notifications"
+                >
+                  <Bell aria-hidden="true" size={20} />
+                  {unreadCount > 0 ? (
+                    <span className="absolute -top-1 -right-1 inline-flex min-h-4 min-w-4 items-center justify-center rounded-[8px] bg-brand px-1 font-mono text-[.48rem] text-on-accent">
+                      {unreadCount > 99 ? "99+" : unreadCount}
+                    </span>
+                  ) : null}
+                </Link>
+                <Link
+                  className="inline-flex"
+                  href="/workspace/profile"
+                  title={accountName}
+                >
+                  <ProfileAvatar
+                    avatarId={user?.person?.avatar?.id}
+                    loading={loading || !user}
+                    name={accountName}
+                    shape="round"
+                    size="md"
+                  />
+                </Link>
+              </div>
             </div>
           </header>
           <div
@@ -265,7 +287,7 @@ export function WorkspaceShell({ children }: { children: ReactNode }) {
               "relative z-[1] min-w-0",
               pathname === "/workspace/chat"
                 ? "min-h-0 overflow-hidden p-0"
-                : "p-0 max-[820px]:px-4",
+                : "p-0",
             )}
           >
             {loading || !user ? null : children}

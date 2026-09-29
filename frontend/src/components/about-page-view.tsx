@@ -2,16 +2,15 @@ import { ArrowRight } from "lucide-react";
 import { MotionScene } from "@/components/motion-scene";
 import { ButtonLink } from "@/components/ui/button-control";
 import {
-  FrameIntersectionNode,
+  FrameBays,
   FrameRule,
+  publicShellClass,
 } from "@/components/ui/public-shell";
 import { cn } from "@/lib/cn";
 import { loadingPlaceholder } from "@/lib/loading-style";
 import { DEFAULT_ABOUT_CONTENT } from "@/lib/site-content";
 import type { AboutContent } from "@/lib/types";
 
-const shell =
-  "mx-auto w-full max-w-[var(--public-wide)] px-[var(--public-gutter)]";
 const eyebrow =
   "m-0 font-mono text-[.66rem] font-semibold tracking-[.105em] text-brand uppercase";
 const sectionTitle =
@@ -22,7 +21,7 @@ function LoadingAction({ width }: { width: string }) {
     <span
       aria-hidden="true"
       className={cn(
-        "inline-flex h-[var(--control-height)] rounded-control",
+        "inline-flex h-(--control-height) rounded-control",
         width,
         loadingPlaceholder(true, "control"),
       )}
@@ -41,14 +40,15 @@ export function AboutPageView({
     <div>
       <section
         aria-busy={loading || undefined}
-        className="relative border-b border-line-strong lg:border-b-0"
+        className="relative"
         data-loading={loading || undefined}
       >
+        <FrameBays pattern="plus" />
         <FrameRule edge="bottom" />
         <div
           className={cn(
-            shell,
-            "relative grid min-h-[390px] grid-cols-[minmax(0,2.8fr)_minmax(200px,1fr)] items-center gap-[clamp(1.5rem,3vw,3rem)] py-[clamp(3rem,6vw,5rem)] max-[820px]:min-h-0 max-[820px]:grid-cols-1 max-[640px]:py-[2.6rem]",
+            publicShellClass,
+            "relative grid min-h-[390px] grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)] items-center gap-[clamp(1.5rem,3vw,3rem)] py-4 max-[820px]:min-h-0 max-[820px]:grid-cols-1",
           )}
         >
           <div className="relative z-[2] max-w-[820px]">
@@ -65,7 +65,7 @@ export function AboutPageView({
             <h1
               aria-hidden={loading || undefined}
               className={cn(
-                "m-0 font-sans text-[clamp(2.7rem,5.2vw,4.125rem)] leading-[1] font-medium tracking-[-.05em] max-[640px]:text-[clamp(2.5rem,12vw,3.25rem)]",
+                "m-0 font-sans text-[clamp(2.7rem,5.2vw,4.125rem)] leading-[1] font-medium tracking-[-.05em] max-[640px]:text-[clamp(2.25rem,10.5vw,3rem)]",
                 loadingPlaceholder(loading, "text", "long"),
               )}
               data-placeholder={loading ? "text" : undefined}
@@ -84,7 +84,7 @@ export function AboutPageView({
             </p>
           </div>
           <MotionScene
-            className="relative z-[1] w-full max-w-[420px] justify-self-end opacity-55 max-[820px]:mt-5 max-[820px]:max-w-[520px]"
+            className="relative z-[1] w-full max-w-[600px] justify-self-end max-[820px]:mt-5 max-[820px]:max-w-[520px] max-[820px]:justify-self-center"
             variant="about"
           />
         </div>
@@ -93,13 +93,13 @@ export function AboutPageView({
       <section
         aria-busy={loading || undefined}
         aria-label="AmirLab facts"
-        className="relative border-b border-line-strong lg:border-b-0"
+        className="relative"
         data-loading={loading || undefined}
       >
         <FrameRule edge="bottom" />
         <div
           className={cn(
-            shell,
+            publicShellClass,
             "grid grid-cols-[repeat(auto-fit,minmax(180px,1fr))] max-[640px]:grid-cols-1",
           )}
         >
@@ -110,12 +110,6 @@ export function AboutPageView({
               )}
               key={`${fact.label}-${index}`}
             >
-              {index < content.facts.length - 1 ? (
-                <>
-                  <FrameIntersectionNode className="absolute top-[-3px] right-[-3px] hidden lg:block" />
-                  <FrameIntersectionNode className="absolute right-[-3px] bottom-[-3px] hidden lg:block" />
-                </>
-              ) : null}
               <span
                 aria-hidden={loading || undefined}
                 className={cn(
@@ -144,7 +138,7 @@ export function AboutPageView({
       <section
         aria-busy={loading || undefined}
         className={cn(
-          shell,
+          publicShellClass,
           "grid grid-cols-[minmax(150px,.28fr)_minmax(0,1fr)] gap-[clamp(2rem,5vw,5rem)] py-[clamp(3rem,6vw,5rem)] max-[820px]:grid-cols-1",
         )}
         data-loading={loading || undefined}
@@ -177,12 +171,17 @@ export function AboutPageView({
 
       <section
         aria-busy={loading || undefined}
-        className="relative border-y border-line-strong bg-surface lg:border-y-0"
+        className="relative"
         data-loading={loading || undefined}
       >
-        <FrameRule edge="top" nodeSurfaceClassName="bg-surface" />
-        <FrameRule edge="bottom" nodeSurfaceClassName="bg-surface" />
-        <div className={cn(shell, "py-[clamp(3rem,6vw,5rem)]")}>
+        <FrameRule edge="top" />
+        <FrameRule edge="bottom" />
+        <div
+          className={cn(
+            publicShellClass,
+            "bg-surface py-[clamp(3rem,6vw,5rem)]",
+          )}
+        >
           <header className="mb-[1.6rem] grid grid-cols-[minmax(150px,.28fr)_minmax(0,1fr)] items-end gap-8 max-[820px]:grid-cols-1">
             <p className={eyebrow}>Research focus</p>
             <h2
@@ -196,24 +195,12 @@ export function AboutPageView({
               {content.focusTitle}
             </h2>
           </header>
-          <ul className="m-0 grid list-none grid-cols-2 border-t border-line-strong p-0 max-[640px]:grid-cols-1">
+          <ul className="-mx-[var(--public-gutter)] -mb-[clamp(3rem,6vw,5rem)] grid list-none grid-cols-2 p-0 max-[640px]:grid-cols-1">
             {content.focusAreas.map((area, index) => (
               <li
-                className="relative grid min-h-16 items-center border-r border-b border-line px-[1.1rem] py-[.7rem] odd:pl-0 even:border-r-0 max-[640px]:border-r-0 max-[640px]:pl-0"
+                className="grid min-h-16 items-center border-t border-r border-line px-[var(--public-gutter)] py-[.7rem] even:border-r-0 max-[640px]:border-r-0"
                 key={`${area}-${index}`}
               >
-                {index % 2 === 0 ? (
-                  <>
-                    <FrameIntersectionNode
-                      className="absolute top-[-3px] right-[-3px] hidden lg:block"
-                      nodeSurfaceClassName="bg-surface"
-                    />
-                    <FrameIntersectionNode
-                      className="absolute right-[-3px] bottom-[-3px] hidden lg:block"
-                      nodeSurfaceClassName="bg-surface"
-                    />
-                  </>
-                ) : null}
                 <strong
                   aria-hidden={loading || undefined}
                   className={cn(
@@ -233,7 +220,7 @@ export function AboutPageView({
       <section
         aria-busy={loading || undefined}
         className={cn(
-          shell,
+          publicShellClass,
           "grid grid-cols-[minmax(150px,.28fr)_minmax(0,1fr)] gap-[clamp(2rem,5vw,5rem)] py-[clamp(3rem,6vw,5rem)] max-[820px]:grid-cols-1",
         )}
         data-loading={loading || undefined}
@@ -276,14 +263,15 @@ export function AboutPageView({
 
       <section
         aria-busy={loading || undefined}
-        className="relative border-t border-line-strong bg-surface lg:border-t-0"
+        className="relative"
         data-loading={loading || undefined}
       >
-        <FrameRule edge="top" nodeSurfaceClassName="bg-surface" />
+        <FrameBays pattern="diagonal" />
+        <FrameRule edge="top" />
         <div
           className={cn(
-            shell,
-            "relative grid grid-cols-[minmax(0,1fr)_auto] items-end gap-8 py-[clamp(3rem,6vw,4.5rem)] max-[820px]:grid-cols-1 max-[820px]:items-start",
+            publicShellClass,
+            "relative grid grid-cols-[minmax(0,1fr)_auto] bg-surface items-end gap-8 py-[clamp(3rem,6vw,4.5rem)] max-[820px]:grid-cols-1 max-[820px]:items-start",
           )}
         >
           <div className="relative z-[2]">

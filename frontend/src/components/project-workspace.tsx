@@ -159,12 +159,12 @@ export function ProjectIndex() {
               : projects
             ).map((project, index) => (
               <WorkspaceRow
-                className="hover:bg-brand-faint"
+                className="hover:bg-surface-subtle"
                 key={project.researchItemId || `project-loading-${index}`}
               >
                 <Link
                   aria-disabled={loading}
-                  className="grid grid-cols-[minmax(0,1fr)_220px_auto] items-center gap-8 px-4 py-[1.6rem] max-[640px]:grid-cols-1"
+                  className="grid grid-cols-[minmax(0,1fr)_190px_auto] items-center gap-6 py-[.95rem] max-[700px]:grid-cols-1 max-[700px]:gap-3"
                   data-loading={loading || undefined}
                   href={
                     loading
@@ -188,7 +188,7 @@ export function ProjectIndex() {
                     </span>
                     <h2
                       className={cn(
-                        "my-1 font-sans text-[1.7rem] font-normal",
+                        "my-[.22rem] font-sans text-[1.03rem] font-medium leading-[1.3]",
                         loadingPlaceholder(loading, "text", "long"),
                       )}
                       data-placeholder={loading ? "text" : undefined}
@@ -198,7 +198,7 @@ export function ProjectIndex() {
                     </h2>
                     <p
                       className={cn(
-                        "m-0 text-[.76rem] text-ink-muted",
+                        "m-0 max-w-[680px] text-[.72rem] leading-[1.45] text-ink-muted",
                         loadingPlaceholder(loading, "text", "full"),
                       )}
                       data-placeholder={loading ? "text" : undefined}
@@ -212,7 +212,7 @@ export function ProjectIndex() {
                   <div className="grid gap-[.45rem]">
                     <strong
                       className={cn(
-                        "font-sans text-[1.8rem] font-normal",
+                        "font-mono text-[1.18rem] font-medium",
                         loadingPlaceholder(loading, "value"),
                       )}
                       data-placeholder={loading ? "value" : undefined}
@@ -441,7 +441,7 @@ export function ProjectManager({ id }: { id: string }) {
         </Link>
         {currentProject.publicPageEnabled ? (
           <Link
-            className="inline-flex min-h-[var(--control-height)] items-center justify-center gap-[.55rem] rounded-control border border-line-strong bg-transparent px-[.9rem] py-[.62rem] text-[.78rem] font-semibold hover:bg-brand-faint"
+            className="inline-flex min-h-[var(--control-height)] items-center justify-center gap-[.55rem] rounded-control border border-line-strong bg-transparent px-[.9rem] py-[.62rem] text-[.78rem] font-semibold hover:bg-surface-subtle"
             href={`/projects/${currentProject.researchItem.slug}`}
           >
             Preview public page <ArrowUpRight size={15} />
@@ -547,7 +547,7 @@ export function ProjectManager({ id }: { id: string }) {
         </div>
         <button
           className={cn(
-            "flex cursor-pointer items-center gap-[.35rem] border-0 bg-transparent px-[.8rem] py-[.65rem] text-[.67rem] font-semibold whitespace-nowrap text-brand hover:bg-brand-faint max-[900px]:col-span-full max-[900px]:border-t max-[900px]:border-line max-[640px]:col-auto",
+            "flex cursor-pointer items-center gap-[.35rem] border-0 bg-transparent px-[.8rem] py-[.65rem] text-[.67rem] font-semibold whitespace-nowrap text-brand hover:bg-surface-subtle max-[900px]:col-span-full max-[900px]:border-t max-[900px]:border-line max-[640px]:col-auto",
             loadingPlaceholder(loadingProject, "control"),
           )}
           data-placeholder={loadingProject ? "control" : undefined}

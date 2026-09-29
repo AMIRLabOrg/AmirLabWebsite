@@ -32,7 +32,7 @@ export function DataTable({
   return (
     <table
       className={cn(
-        "w-full min-w-[850px] border-collapse text-[.82rem]",
+        "w-full min-w-[760px] border-collapse text-[.77rem]",
         className,
       )}
       {...props}
@@ -47,7 +47,7 @@ export function DataTableHeadCell({
   return (
     <th
       className={cn(
-        "border-b border-table-line px-[.9rem] py-3 text-left font-mono text-[.64rem] font-medium uppercase tracking-[.06em] text-ink-muted first:pl-[var(--workspace-gutter)] last:pr-[var(--workspace-gutter)]",
+        "border-b border-table-line px-[.85rem] py-[.65rem] text-left font-mono text-[.64rem] font-medium uppercase tracking-[.06em] text-ink-muted first:pl-[var(--workspace-gutter)] last:pr-[var(--workspace-gutter)]",
         className,
       )}
       {...props}
@@ -62,7 +62,7 @@ export function DataTableCell({
   return (
     <td
       className={cn(
-        "border-b border-line px-[.9rem] py-[.85rem] align-middle first:pl-[var(--workspace-gutter)] last:pr-[var(--workspace-gutter)]",
+        "border-b border-line px-[.85rem] py-[.7rem] align-middle first:pl-[var(--workspace-gutter)] last:pr-[var(--workspace-gutter)]",
         className,
       )}
       {...props}
