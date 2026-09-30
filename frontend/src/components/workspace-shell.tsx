@@ -270,7 +270,9 @@ export function WorkspaceShell({ children }: { children: ReactNode }) {
                 type="button"
               >
                 <Menu aria-hidden="true" />
-                {unreadCount ? <UnreadDot /> : null}
+                {unreadCount ? (
+                  <UnreadDot inside />
+                ) : null}
               </button>
               <div className="flex items-center gap-[.55rem] max-[820px]:hidden">
                 <Link

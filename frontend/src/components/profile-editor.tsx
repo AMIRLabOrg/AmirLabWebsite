@@ -12,7 +12,7 @@ import {
   InputControl,
   TextareaControl,
 } from "@/components/ui/form-controls";
-import { FormField, FormMessage } from "@/components/ui/form-field";
+import { FormField } from "@/components/ui/form-field";
 import { ProfileAvatar } from "@/components/profile-avatar";
 import { useAuth } from "@/components/auth-provider";
 import { ConfirmDialog } from "@/components/confirm-dialog";
@@ -126,10 +126,7 @@ export function ProfileEditor({ userId }: ProfileEditorProps) {
   const [loadError, setLoadError] = useState<string>();
   const [editRole, setEditRole] = useState("MEMBER");
   const [editRank, setEditRank] = useState("NONE");
-  const [editFullName, setEditFullName] = useState("");
   const [editEmail, setEditEmail] = useState("");
-  const [, setSavingAccount] = useState(false);
-  const [accountError, setAccountError] = useState<string>();
   const avatarPreview = useMemo(
     () => (avatar ? URL.createObjectURL(avatar) : null),
     [avatar],
@@ -211,53 +208,16 @@ export function ProfileEditor({ userId }: ProfileEditorProps) {
         setEditRole(account.role);
         setEditEmail(account.email ?? "");
         setEditRank(account.person?.rank ?? "NONE");
-        setEditFullName(account.person?.fullName ?? "");
       })
       .catch(() => {});
   }, [userId]);
-
-  async function saveAccount(role: string, rank: string) {
-    setSavingAccount(true);
-    setAccountError(undefined);
-    try {
-      await apiRequest(`/users/${userId}`, {
-        body: JSON.stringify({
-          email: editEmail,
-          fullName: editFullName,
-          rank: rank === "NONE" ? null : rank,
-          role,
-        }),
-        headers: { "content-type": "application/json" },
-        method: "PATCH",
-      });
-      showToast({
-        body: "Permission role and research rank updated.",
-        title: "Account updated",
-      });
-    } catch (caught) {
-      const message =
-        caught instanceof Error
-          ? caught.message
-          : "Unable to update account role.";
-      setAccountError(message);
-      showToast({
-        body: message,
-        title: "Account was not updated",
-        tone: "error",
-      });
-    } finally {
-      setSavingAccount(false);
-    }
-  }
 
   async function submit(event: SyntheticEvent<HTMLFormElement, SubmitEvent>) {
     event.preventDefault();
     setSaving(true);
     setMessage(undefined);
     const body = new FormData();
-    const accountRole = userId
-      ? (record?.accountRole ?? "MEMBER")
-      : (user?.role ?? "MEMBER");
+    const accountRole = userId ? editRole : (user?.role ?? "MEMBER");
     const moderatorProfile = accountRole === "MODERATOR";
     const adminProfile = accountRole === "ADMIN";
     body.set(
@@ -385,9 +345,7 @@ export function ProfileEditor({ userId }: ProfileEditorProps) {
   }
 
   const pendingAvatarId = record?.draft?.avatarAsset?.id;
-  const accountRole = userId
-    ? (record?.accountRole ?? "MEMBER")
-    : (user?.role ?? "MEMBER");
+  const accountRole = userId ? editRole : (user?.role ?? "MEMBER");
   const moderatorProfile = accountRole === "MODERATOR";
   const adminProfile = accountRole === "ADMIN";
   const researchProfile = accountRole === "MEMBER";
@@ -424,7 +382,7 @@ export function ProfileEditor({ userId }: ProfileEditorProps) {
       data-loading={editorLoading || undefined}
       onSubmit={submit}
     >
-      <header className="sticky top-[52px] z-10 col-span-full -mx-[var(--workspace-gutter)] flex items-center justify-between gap-4 border-y border-line-strong bg-[color-mix(in_srgb,var(--surface)_94%,transparent)] px-[var(--workspace-gutter)] py-[.7rem] backdrop-blur-[12px] max-[820px]:top-[65px] max-[640px]:mx-0 max-[640px]:flex-col max-[640px]:items-stretch max-[640px]:px-4">
+      <header className="sticky top-[64px] z-10 col-span-full -mx-[var(--workspace-gutter)] flex items-center justify-between gap-4 border-y border-line-strong bg-[color-mix(in_srgb,var(--surface)_94%,transparent)] px-[var(--workspace-gutter)] py-[.7rem] backdrop-blur-[12px] max-[820px]:top-[55px] max-[640px]:mx-0 max-[640px]:flex-col max-[640px]:items-stretch max-[640px]:px-4">
         <p className="m-0 flex items-center gap-[.55rem] text-[.76rem] text-ink-muted">
           <span className="h-[7px] w-[7px] rounded-full bg-brand" />
           {userId || user?.role === "ADMIN"
@@ -557,10 +515,9 @@ export function ProfileEditor({ userId }: ProfileEditorProps) {
                 loading={editorLoading}
                 id="profile-name"
                 maxLength={120}
-                onChange={(event) => {
-                  setProfile({ ...profile, fullName: event.target.value });
-                  if (userId) setEditFullName(event.target.value);
-                }}
+                onChange={(event) =>
+                  setProfile({ ...profile, fullName: event.target.value })
+                }
                 required
                 value={profile.fullName}
               />
@@ -1114,9 +1071,7 @@ export function ProfileEditor({ userId }: ProfileEditorProps) {
                       id="account-role"
                       onValueChange={(value) => {
                         setEditRole(value);
-                        const newRank = value === "ADMIN" ? "NONE" : editRank;
                         if (value === "ADMIN") setEditRank("NONE");
-                        saveAccount(value, newRank);
                       }}
                       options={ROLES.map((item) => ({
                         label: readable(item),
@@ -1129,10 +1084,7 @@ export function ProfileEditor({ userId }: ProfileEditorProps) {
                     <SelectControl
                       loading={editorLoading}
                       id="account-rank"
-                      onValueChange={(value) => {
-                        setEditRank(value);
-                        saveAccount(editRole, value);
-                      }}
+                      onValueChange={setEditRank}
                       options={[
                         { label: "No research rank", value: "NONE" },
                         ...RANKS.map((item) => ({
@@ -1145,7 +1097,6 @@ export function ProfileEditor({ userId }: ProfileEditorProps) {
                   </FormField>
                 </div>
               </div>
-              {accountError ? <FormMessage>{accountError}</FormMessage> : null}
             </section>
           ) : null}
           {researchProfile ? (

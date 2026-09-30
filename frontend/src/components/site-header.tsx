@@ -118,7 +118,7 @@ export function SiteHeader() {
             type="button"
           >
             <Menu aria-hidden="true" />
-            {unread ? <UnreadDot /> : null}
+            {unread ? <UnreadDot inside /> : null}
           </button>
         </div>
       </div>

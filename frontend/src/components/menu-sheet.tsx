@@ -97,11 +97,14 @@ export function MenuSheetDivider() {
 }
 
 /** Visual unread marker on a menu or avatar trigger; pair with unreadLabel. */
-export function UnreadDot() {
+export function UnreadDot({ inside = false }: { inside?: boolean }) {
   return (
     <span
       aria-hidden="true"
-      className="absolute -top-1 -right-1 size-2.5 rounded-full border-2 border-surface bg-brand"
+      className={cn(
+        "absolute size-2.5 rounded-full border-2 border-surface bg-brand",
+        inside ? "top-1 right-1" : "-top-1 -right-1",
+      )}
     />
   );
 }

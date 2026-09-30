@@ -221,7 +221,7 @@ export function UniversityEditor({ id }: { id?: string }) {
     if (logoFile) body.set("logo", logoFile);
     if (removeLogo) body.set("removeLogo", "true");
     try {
-      const saved = await apiRequest<University>(
+      await apiRequest<University>(
         id ? `/admin/universities/${id}` : "/admin/universities",
         { body, method: id ? "PATCH" : "POST" },
       );
@@ -231,13 +231,7 @@ export function UniversityEditor({ id }: { id?: string }) {
           : "The university record was created.",
         title: id ? "University updated" : "University created",
       });
-      if (!id) router.replace(`/workspace/universities/${saved.id}`);
-      else {
-        setUniversity(saved);
-        setLogoFile(undefined);
-        setRemoveLogo(false);
-        router.refresh();
-      }
+      router.replace("/workspace/universities");
     } catch (value) {
       const message =
         value instanceof Error ? value.message : "Unable to save university.";
