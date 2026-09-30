@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
-import { MotionScene } from "@/components/motion-scene";
+import { PageIntro } from "@/components/page-intro";
 import { PaperCard } from "@/components/paper-card";
 import { ResearchCard } from "@/components/research-card";
 import { ResearchStats } from "@/components/research-stats";
@@ -13,7 +13,6 @@ import {
   publicShellClass,
 } from "@/components/ui/public-shell";
 import { cn } from "@/lib/cn";
-import { loadingPlaceholder } from "@/lib/loading-style";
 import { DEFAULT_HOME_CONTENT } from "@/lib/site-content";
 import type {
   HomeContent,
@@ -53,50 +52,25 @@ export function HomePageView({
     : research.slice(0, 3);
   return (
     <div>
-      <section
-        aria-busy={loading || undefined}
-        className="relative"
-        data-loading={loading || undefined}
+      <PageIntro
+        actions={
+          <>
+            <ButtonLink href="/papers" variant="primary">
+              {content.primaryCtaLabel}{" "}
+              <ArrowRight aria-hidden="true" size={18} />
+            </ButtonLink>
+            <ButtonLink href="/people" variant="secondary">
+              {content.secondaryCtaLabel}
+            </ButtonLink>
+          </>
+        }
+        eyebrow={content.establishment}
+        loading={loading}
+        scene="home"
+        title={content.heroTitle}
       >
-        <FrameBays pattern="plus" />
-        <FrameRule edge="bottom" />
-        <div
-          className={cn(
-            publicShellClass,
-            "grid min-h-[390px] grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)] items-center gap-[clamp(1.5rem,3vw,3rem)] py-4 max-[1024px]:grid-cols-1 max-[900px]:min-h-0",
-          )}
-        >
-          <div className="relative z-[2] grid content-center">
-            <p className="mb-[.65rem] font-mono text-[.62rem] font-semibold tracking-[.105em] text-brand uppercase">
-              {content.establishment}
-            </p>
-            <h1 className="m-0 max-w-[980px] font-sans text-[clamp(2.7rem,5.2vw,4.125rem)] leading-[1] font-medium tracking-[-.05em] max-[640px]:text-[clamp(2.25rem,10.5vw,3rem)]">
-              {content.heroTitle}
-            </h1>
-            <p
-              className={cn(
-                "mt-[1.35rem] mb-0 max-w-[720px] text-[.92rem] leading-[1.65] text-ink-muted",
-                loading && loadingPlaceholder(true, "text"),
-              )}
-            >
-              {content.heroIntroduction}
-            </p>
-            <div className="mt-[1.4rem] flex flex-wrap gap-3">
-              <ButtonLink href="/papers" variant="primary">
-                {content.primaryCtaLabel}{" "}
-                <ArrowRight aria-hidden="true" size={18} />
-              </ButtonLink>
-              <ButtonLink href="/people" variant="secondary">
-                {content.secondaryCtaLabel}
-              </ButtonLink>
-            </div>
-          </div>
-          <MotionScene
-            className="w-full max-w-[720px] justify-self-end max-[1024px]:max-w-[600px] max-[1024px]:justify-self-center"
-            variant="home"
-          />
-        </div>
-      </section>
+        {content.heroIntroduction}
+      </PageIntro>
 
       {loading || universities.length > 0 ? (
         <section aria-label="Academic partners" className="relative pb-10">

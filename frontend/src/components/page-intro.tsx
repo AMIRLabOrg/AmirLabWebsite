@@ -4,7 +4,13 @@ import { PublicSection } from "@/components/ui/public-shell";
 import { loadingPlaceholder } from "@/lib/loading-style";
 import { MotionScene, type SceneVariant } from "@/components/motion-scene";
 
+/**
+ * The top section of every public page: eyebrow, title, introduction,
+ * optional meta line and actions, and the page's animated scene. Owns the
+ * frame, spacing, scene size, and loading structure for all of them.
+ */
 export function PageIntro({
+  actions,
   children,
   eyebrow,
   meta,
@@ -12,6 +18,7 @@ export function PageIntro({
   title,
   loading = false,
 }: {
+  actions?: ReactNode;
   children: ReactNode;
   eyebrow: string;
   meta?: ReactNode;
@@ -25,7 +32,7 @@ export function PageIntro({
       aria-busy={loading || undefined}
       boundary="bottom"
       bay="plus"
-      contentClassName="grid min-h-[220px] grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)] items-center gap-[clamp(1.5rem,3vw,3rem)] py-4 max-[1024px]:grid-cols-1 max-[640px]:min-h-0"
+      contentClassName="grid min-h-[220px] grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)] items-center gap-[clamp(1.5rem,3vw,3rem)] py-16 max-[1024px]:grid-cols-1 max-[640px]:min-h-0"
       data-loading={loading || undefined}
     >
       <div className="self-center min-w-0">
@@ -76,9 +83,12 @@ export function PageIntro({
             )}
           </div>
         ) : null}
+        {actions ? (
+          <div className="mt-[1.4rem] flex flex-wrap gap-3">{actions}</div>
+        ) : null}
       </div>
       <MotionScene
-        className="w-full max-w-[560px] justify-self-end max-[1024px]:max-w-[520px] max-[1024px]:justify-self-center"
+        className="w-full max-w-[640px] justify-self-end max-[1024px]:max-w-[520px] max-[1024px]:justify-self-center"
         variant={scene}
       />
     </PublicSection>

@@ -91,7 +91,7 @@ function Founder({
         )}
       >
         <PeopleHeading title="Founder & Research Director" />
-        <article className="grid grid-cols-[minmax(220px,320px)_minmax(0,1fr)] items-stretch gap-[clamp(1.8rem,4vw,4rem)] max-[720px]:grid-cols-[120px_minmax(0,1fr)] max-[480px]:grid-cols-[96px_minmax(0,1fr)] max-[480px]:items-center max-[480px]:gap-4">
+        <article className="grid grid-cols-[minmax(180px,240px)_minmax(0,1fr)] items-center gap-[clamp(1.8rem,4vw,4rem)] max-[720px]:grid-cols-[120px_minmax(0,1fr)] max-[480px]:grid-cols-[96px_minmax(0,1fr)] max-[480px]:items-center max-[480px]:gap-4">
           {loading ? (
             <div aria-hidden="true" className="min-w-0">
               <PersonPortrait

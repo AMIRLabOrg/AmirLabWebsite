@@ -1,5 +1,5 @@
 import { ArrowRight } from "lucide-react";
-import { MotionScene } from "@/components/motion-scene";
+import { PageIntro } from "@/components/page-intro";
 import { ButtonLink } from "@/components/ui/button-control";
 import {
   FrameBays,
@@ -38,57 +38,14 @@ export function AboutPageView({
 }) {
   return (
     <div>
-      <section
-        aria-busy={loading || undefined}
-        className="relative"
-        data-loading={loading || undefined}
+      <PageIntro
+        eyebrow={content.eyebrow}
+        loading={loading}
+        scene="about"
+        title={content.title}
       >
-        <FrameBays pattern="plus" />
-        <FrameRule edge="bottom" />
-        <div
-          className={cn(
-            publicShellClass,
-            "relative grid min-h-[390px] grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)] items-center gap-[clamp(1.5rem,3vw,3rem)] py-4 max-[820px]:min-h-0 max-[820px]:grid-cols-1",
-          )}
-        >
-          <div className="relative z-[2] max-w-[820px]">
-            <p
-              aria-hidden={loading || undefined}
-              className={cn(
-                eyebrow,
-                "mb-[.65rem]",
-                loading && loadingPlaceholder(true, "label", "medium"),
-              )}
-            >
-              {content.eyebrow}
-            </p>
-            <h1
-              aria-hidden={loading || undefined}
-              className={cn(
-                "m-0 font-sans text-[clamp(2.7rem,5.2vw,4.125rem)] leading-[1] font-medium tracking-[-.05em] max-[640px]:text-[clamp(2.25rem,10.5vw,3rem)]",
-                loadingPlaceholder(loading, "text", "long"),
-              )}
-              data-placeholder={loading ? "text" : undefined}
-            >
-              {content.title}
-            </h1>
-            <p
-              aria-hidden={loading || undefined}
-              className={cn(
-                "mt-[1.35rem] mb-0 max-w-[720px] text-[.92rem] leading-[1.65] text-ink-muted",
-                loadingPlaceholder(loading, "text", "long"),
-              )}
-              data-placeholder={loading ? "text" : undefined}
-            >
-              {content.introduction}
-            </p>
-          </div>
-          <MotionScene
-            className="relative z-[1] w-full max-w-[600px] justify-self-end max-[820px]:mt-5 max-[820px]:max-w-[520px] max-[820px]:justify-self-center"
-            variant="about"
-          />
-        </div>
-      </section>
+        {content.introduction}
+      </PageIntro>
 
       <section
         aria-busy={loading || undefined}
