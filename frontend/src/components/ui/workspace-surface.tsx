@@ -2,12 +2,10 @@ import type { ComponentPropsWithoutRef, ReactNode } from "react";
 import { cn } from "@/lib/cn";
 import { loadingPlaceholder } from "@/lib/loading-style";
 
-// Wide and reading pages use the full workspace content box.
-const measureClass = {
-  wide: "",
-  reading: "",
-  form: "max-w-[min(var(--workspace-form),calc(100%_-_2*var(--frame-mobile-inner)))]",
-} as const;
+// Form pages use a narrower content box. Each measure is a complete class so
+// no two max-width utilities are ever combined (`cn` does not merge them).
+const formShellClass =
+  "mx-auto w-full max-w-[min(var(--workspace-form),calc(100%_-_2*var(--frame-mobile-inner)))] px-[var(--workspace-gutter)]";
 
 /**
  * The workspace content box. Its edges are the workspace rails at every width
@@ -21,14 +19,13 @@ export function WorkspaceSurface({
   measure = "reading",
 }: {
   children: ReactNode;
-  measure?: keyof typeof measureClass;
+  measure?: "form" | "reading" | "wide";
 }) {
   return (
     <main
       className={cn(
-        workspaceShellClass,
+        measure === "form" ? formShellClass : workspaceShellClass,
         "relative grid min-h-[calc(100svh-64px)] gap-[1.5rem] pt-[1.75rem] pb-12 max-[820px]:min-h-0 max-[640px]:gap-[.9rem] max-[640px]:pt-4 max-[640px]:pb-10",
-        measureClass[measure],
       )}
     >
       {children}

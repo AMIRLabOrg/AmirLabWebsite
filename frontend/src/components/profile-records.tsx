@@ -3,7 +3,10 @@
 import { ArrowDown, ArrowUp, Search } from "lucide-react";
 import { useMemo, useState } from "react";
 import { InputControl } from "@/components/ui/form-controls";
-import { PublicShell } from "@/components/ui/public-shell";
+import {
+  PublicShell,
+  publicShellWidthClass,
+} from "@/components/ui/public-shell";
 import { cn } from "@/lib/cn";
 import { loadingPlaceholder } from "@/lib/loading-style";
 import type {
@@ -61,10 +64,12 @@ export function ProfileRecords({
       aria-hidden={loading || undefined}
       data-loading={loading || undefined}
     >
-      <PublicShell
-        as="nav"
+      <nav
         aria-label="Profile sections"
-        className="sticky top-[62px] z-20 flex overflow-x-auto border-b border-line-strong bg-canvas px-0 [scrollbar-width:none] max-[640px]:px-0"
+        className={cn(
+          publicShellWidthClass,
+          "sticky top-[62px] z-20 flex overflow-x-auto border-b border-line-strong bg-canvas [scrollbar-width:none]",
+        )}
       >
         {visible.map((record) => (
           <a
@@ -94,7 +99,7 @@ export function ProfileRecords({
             </small>
           </a>
         ))}
-      </PublicShell>
+      </nav>
       <PublicShell
         as="div"
         aria-hidden={loading || undefined}

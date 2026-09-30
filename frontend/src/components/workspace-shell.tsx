@@ -8,13 +8,24 @@ import {
   ArrowUpRight,
   Bell,
   LogOut,
+  Menu,
   PanelLeftClose,
   PanelLeftOpen,
 } from "lucide-react";
 import { useAuth } from "@/components/auth-provider";
 import { ConfirmDialog } from "@/components/confirm-dialog";
+import {
+  AccountIdentity,
+  MenuSheet,
+  MenuSheetDivider,
+  MenuSheetLink,
+  UnreadDot,
+  menuSheetRowClass,
+  unreadLabel,
+} from "@/components/menu-sheet";
 import { useNotifications } from "@/components/notification-provider";
 import { ProfileAvatar } from "@/components/profile-avatar";
+import { CountPill } from "@/components/ui/count-pill";
 import {
   FrameBays,
   FramePattern,
@@ -37,17 +48,14 @@ export function WorkspaceShell({ children }: { children: ReactNode }) {
   const [confirmLogout, setConfirmLogout] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [menuOpen, setMenuOpen] = useState(false);
 
   useEffect(() => {
+    // The collapsed/expanded preference only applies to the desktop sidebar;
+    // small screens use the workspace menu sheet instead.
     try {
-      if (window.matchMedia("(max-width: 820px)").matches) {
-        // Mobile navigation must always keep its labels visible, regardless of
-        // the desktop sidebar preference saved on this device.
-        // eslint-disable-next-line react-hooks/set-state-in-effect
-        setSidebarOpen(true);
-        return;
-      }
       const stored = localStorage.getItem("amirlab:sidebar-open");
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       if (stored !== null) setSidebarOpen(stored === "true");
     } catch {}
   }, []);
@@ -81,12 +89,10 @@ export function WorkspaceShell({ children }: { children: ReactNode }) {
             : "grid-cols-[58px_minmax(0,1fr)]",
         )}
       >
-        <aside className="sticky top-0 flex h-screen min-w-0 flex-col overflow-x-hidden overflow-y-auto [scrollbar-gutter:stable] [scrollbar-width:thin] border-r border-line-strong bg-surface pb-4 max-[820px]:relative max-[820px]:h-auto max-[820px]:w-full max-[820px]:overflow-visible max-[820px]:border-r-0 max-[820px]:border-b max-[820px]:pt-[.65rem] max-[820px]:pb-0">
-          <FrameBays className="hidden max-[820px]:block" pattern="grid" />
-          <FrameRails className="hidden max-[820px]:block" tone="quiet" />
+        <aside className="sticky top-0 flex h-screen min-w-0 flex-col overflow-x-hidden overflow-y-auto [scrollbar-gutter:stable] [scrollbar-width:thin] border-r border-line-strong bg-surface pb-4 max-[820px]:hidden">
           <div
             className={cn(
-              "relative z-[6] flex h-[64px] shrink-0 items-center gap-2 border-b border-line-strong max-[820px]:h-[56px] max-[820px]:border-b max-[820px]:px-[var(--workspace-gutter)] max-[820px]:pb-0",
+              "relative z-[6] flex h-[64px] shrink-0 items-center gap-2 border-b border-line-strong",
               sidebarOpen
                 ? "justify-between px-[.85rem]"
                 : "justify-center px-0",
@@ -104,7 +110,7 @@ export function WorkspaceShell({ children }: { children: ReactNode }) {
             ) : null}
             <button
               aria-label={sidebarOpen ? "Close sidebar" : "Open sidebar"}
-              className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-control text-ink-muted transition-colors hover:bg-surface-subtle hover:text-ink max-[820px]:hidden"
+              className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-control text-ink-muted transition-colors hover:bg-surface-subtle hover:text-ink"
               onClick={toggleSidebar}
               type="button"
             >
@@ -118,21 +124,21 @@ export function WorkspaceShell({ children }: { children: ReactNode }) {
           <nav
             aria-label="Workspace navigation"
             className={cn(
-              "relative z-[6] mt-[.6rem] grid gap-[.35rem] max-[820px]:mx-[var(--workspace-gutter)] max-[820px]:mt-0 max-[820px]:flex max-[820px]:gap-0 max-[820px]:overflow-x-auto max-[820px]:px-0 max-[820px]:[scrollbar-width:none]",
+              "relative z-[6] mt-[.6rem] grid gap-[.35rem]",
               sidebarOpen ? "px-[.85rem]" : "px-[.4rem]",
             )}
           >
             {navigationGroups.map((group) => (
               <div
-                className="grid gap-0 border-b border-line pb-[.4rem] max-[820px]:contents"
+                className="grid gap-0 border-b border-line pb-[.4rem]"
                 key={group.label}
               >
                 {sidebarOpen ? (
-                  <span className="px-[.45rem] pt-[.28rem] pb-[.38rem] font-mono text-[.55rem] tracking-[.105em] text-ink-faint uppercase max-[820px]:hidden">
+                  <span className="px-[.45rem] pt-[.28rem] pb-[.38rem] font-mono text-[.55rem] tracking-[.105em] text-ink-faint uppercase">
                     {group.label}
                   </span>
                 ) : (
-                  <div className="h-[12px] max-[820px]:hidden" />
+                  <div className="h-[12px]" />
                 )}
                 {group.items.map((item) => {
                   const { href, icon: Icon, indicator, label } = item;
@@ -150,12 +156,13 @@ export function WorkspaceShell({ children }: { children: ReactNode }) {
                   return (
                     <Link
                       className={cn(
-                        "flex min-h-[34px] items-center gap-2 border-l-2 border-transparent py-[.42rem] text-[.73rem] font-medium text-ink-muted transition-colors hover:bg-surface-subtle hover:text-ink max-[820px]:min-h-[38px] max-[820px]:shrink-0 max-[820px]:border-b-2 max-[820px]:border-l-0",
+                        "flex min-h-[34px] items-center gap-2 border-l-2 py-[.42rem] text-[.73rem] font-medium transition-colors hover:bg-surface-subtle hover:text-ink",
                         sidebarOpen
                           ? "px-[.48rem]"
                           : "justify-center px-0 relative",
-                        active &&
-                          "border-l-brand bg-surface-subtle font-medium text-ink max-[820px]:border-b-brand max-[820px]:border-l-transparent",
+                        active
+                          ? "border-l-brand bg-surface-subtle text-ink"
+                          : "border-l-transparent text-ink-muted",
                       )}
                       href={href}
                       key={href}
@@ -165,17 +172,15 @@ export function WorkspaceShell({ children }: { children: ReactNode }) {
                       <span
                         className={cn(
                           "whitespace-nowrap",
-                          !sidebarOpen && "min-[821px]:hidden",
+                          !sidebarOpen && "hidden",
                         )}
                       >
                         {label}
                       </span>
                       {sidebarOpen && indicatorCount > 0 ? (
-                        <strong className="ml-auto inline-flex h-[1.1rem] min-w-[1.1rem] items-center justify-center rounded-[10px] border border-current bg-transparent px-[.25rem] font-mono text-[.52rem] font-bold text-inherit">
-                          {indicatorCount > 99 ? "99+" : indicatorCount}
-                        </strong>
+                        <CountPill className="ml-auto" count={indicatorCount} />
                       ) : !sidebarOpen && indicatorCount > 0 ? (
-                        <div className="absolute top-1 right-[.35rem] h-[6px] w-[6px] rounded-full bg-brand max-[820px]:hidden" />
+                        <div className="absolute top-1 right-[.35rem] h-[6px] w-[6px] rounded-full bg-brand" />
                       ) : null}
                     </Link>
                   );
@@ -185,7 +190,7 @@ export function WorkspaceShell({ children }: { children: ReactNode }) {
           </nav>
           <div
             className={cn(
-              "mt-auto grid gap-[.15rem] pt-[.8rem] max-[820px]:hidden",
+              "mt-auto grid gap-[.15rem] pt-[.8rem]",
               sidebarOpen ? "px-[.85rem]" : "px-[.4rem]",
             )}
           >
@@ -226,20 +231,23 @@ export function WorkspaceShell({ children }: { children: ReactNode }) {
             )}
           </div>
           <FramePattern
-            className="mt-3 h-[58px] shrink-0 border-t border-line-strong max-[820px]:hidden"
+            className="mt-3 h-[58px] shrink-0 border-t border-line-strong"
             variant="grid"
           />
         </aside>
-        <div className="relative grid min-w-0 grid-rows-[64px_minmax(0,1fr)] max-[820px]:min-h-[calc(100svh-104px)] max-[820px]:grid-rows-[56px_minmax(0,1fr)]">
+        <div className="relative grid min-w-0 grid-rows-[64px_minmax(0,1fr)] max-[820px]:min-h-svh max-[820px]:grid-rows-[55px_minmax(0,1fr)]">
           <FrameRails tone="quiet" />
-          <header className="sticky top-0 z-30 min-h-[64px] bg-surface/95 backdrop-blur-[12px] max-[820px]:min-h-[56px]">
+          <header className="sticky top-0 z-30 min-h-[64px] bg-surface/95 backdrop-blur-[12px] max-[820px]:min-h-[55px]">
             <FrameBays pattern="grid" />
             <FrameRails tone="quiet" />
             <FrameRule edge="bottom" nodeSurface="surface" scope="parent" />
+            {/* Small screens: page title + menu button only. The button sits
+                7px from the header top, the bottom rule (pb-px), and the rail,
+                matching the public site header. */}
             <div
               className={cn(
                 workspaceShellClass,
-                "relative z-[6] flex min-h-[64px] items-center justify-between bg-surface py-[.45rem] max-[820px]:min-h-[56px]",
+                "relative z-[6] flex min-h-[64px] items-center justify-between bg-surface py-[.45rem] max-[820px]:min-h-[55px] max-[820px]:pt-0 max-[820px]:pb-px",
               )}
             >
               <div className="flex min-w-0 items-center gap-[clamp(.5rem,2vw,1rem)]">
@@ -253,7 +261,18 @@ export function WorkspaceShell({ children }: { children: ReactNode }) {
                   {loading || !user ? "Workspace" : currentLabel}
                 </h1>
               </div>
-              <div className="flex items-center gap-[.55rem]">
+              <button
+                aria-expanded={menuOpen}
+                aria-haspopup="dialog"
+                aria-label={`Open workspace menu${unreadLabel(unreadCount)}`}
+                className="relative -mr-[calc(var(--workspace-gutter)_-_8px)] hidden h-10 w-10 items-center justify-center rounded-control border border-line-strong bg-transparent p-0 max-[820px]:inline-flex"
+                onClick={() => setMenuOpen(true)}
+                type="button"
+              >
+                <Menu aria-hidden="true" />
+                {unreadCount ? <UnreadDot /> : null}
+              </button>
+              <div className="flex items-center gap-[.55rem] max-[820px]:hidden">
                 <Link
                   aria-label={`${unreadCount} unread notification${unreadCount === 1 ? "" : "s"}`}
                   className="relative inline-flex h-9 w-9 items-center justify-center rounded-control text-ink-muted transition-colors hover:bg-surface-subtle hover:text-ink"
@@ -294,6 +313,73 @@ export function WorkspaceShell({ children }: { children: ReactNode }) {
           </div>
         </div>
       </div>
+      <MenuSheet
+        label="Workspace menu"
+        onClose={() => setMenuOpen(false)}
+        open={menuOpen}
+      >
+        {user ? <AccountIdentity user={user} /> : null}
+        <nav aria-label="Workspace navigation" className="grid">
+          {navigationGroups.map((group) => (
+            <div className="grid" key={group.label}>
+              <MenuSheetDivider />
+              <p className="m-0 px-3 pt-2 pb-1 font-mono text-[.55rem] tracking-[.105em] text-ink-faint uppercase">
+                {group.label}
+              </p>
+              {group.items.map((item) => {
+                const { href, icon: Icon, indicator, label } = item;
+                const indicatorCount =
+                  indicator === "notifications"
+                    ? unreadCount
+                    : indicator
+                      ? queueCounts[indicator]
+                      : 0;
+                return (
+                  <MenuSheetLink
+                    active={isWorkspaceNavigationActive(
+                      pathname,
+                      href,
+                      item.match,
+                    )}
+                    href={href}
+                    key={href}
+                    onClose={() => setMenuOpen(false)}
+                  >
+                    <Icon aria-hidden="true" className="shrink-0" size={17} />
+                    {label}
+                    {indicatorCount > 0 ? (
+                      <CountPill
+                        className="ml-auto text-brand"
+                        count={indicatorCount}
+                      />
+                    ) : null}
+                  </MenuSheetLink>
+                );
+              })}
+            </div>
+          ))}
+        </nav>
+        <MenuSheetDivider />
+        <MenuSheetLink external href="/" onClose={() => setMenuOpen(false)}>
+          Public website
+          <ArrowUpRight aria-hidden="true" className="ml-auto" size={15} />
+        </MenuSheetLink>
+        <button
+          className={cn(
+            menuSheetRowClass,
+            "cursor-pointer border-0 bg-transparent font-semibold text-danger disabled:cursor-not-allowed disabled:opacity-55",
+          )}
+          disabled={loading || !user}
+          onClick={() => {
+            setMenuOpen(false);
+            setConfirmLogout(true);
+          }}
+          type="button"
+        >
+          <LogOut aria-hidden="true" className="shrink-0" size={17} />
+          Log out
+        </button>
+      </MenuSheet>
       <ConfirmDialog
         busy={loggingOut}
         confirmLabel="Log out"

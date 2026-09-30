@@ -5,8 +5,13 @@ import { cn } from "@/lib/cn";
  * The public content box. Its edges are the inner frame rails at every width
  * (see --frame-inner), so content, rules, and rails always meet exactly.
  */
-export const publicShellClass =
-  "mx-auto w-full max-w-[min(var(--public-wide),calc(100%_-_2*var(--frame-mobile-inner)))] px-[var(--public-gutter)]";
+export const publicShellWidthClass =
+  "mx-auto w-full max-w-[min(var(--public-wide),calc(100%_-_2*var(--frame-mobile-inner)))]";
+
+/** The content box plus its gutter. `cn` does not merge conflicting
+ * utilities, so rail-to-rail content uses publicShellWidthClass instead of
+ * overriding this padding. */
+export const publicShellClass = `${publicShellWidthClass} px-[var(--public-gutter)]`;
 
 export function PublicShell({
   as: Component = "div",
@@ -263,10 +268,11 @@ export function FrameRule({
     <div
       aria-hidden="true"
       className={cn(
-        "pointer-events-none absolute inset-x-0 z-30 h-0",
+        "pointer-events-none absolute z-30 h-0",
         edge === "top" ? "top-0" : "bottom-0",
-        scope === "viewport" &&
-          "left-[calc((100%_-_100cqw)/2)] right-[calc((100%_-_100cqw)/2)]",
+        scope === "viewport"
+          ? "right-[calc((100%_-_100cqw)/2)] left-[calc((100%_-_100cqw)/2)]"
+          : "inset-x-0",
         nodeSurfaceClass[nodeSurface],
         className,
       )}

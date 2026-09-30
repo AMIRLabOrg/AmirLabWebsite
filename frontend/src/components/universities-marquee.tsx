@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { publicShellClass } from "@/components/ui/public-shell";
+import { publicShellWidthClass } from "@/components/ui/public-shell";
 import { API_URL } from "@/lib/api";
 import { cn } from "@/lib/cn";
 import { loadingPlaceholder } from "@/lib/loading-style";
@@ -115,8 +115,8 @@ export function UniversitiesMarquee({
     <div
       aria-hidden={duplicate || undefined}
       className={cn(
-        publicShellClass,
-        "group/marquee overflow-hidden border-y border-line px-0 [mask-image:linear-gradient(to_right,transparent,#000_6%,#000_94%,transparent)]",
+        publicShellWidthClass,
+        "group/marquee overflow-hidden border-y border-line [mask-image:linear-gradient(to_right,transparent,#000_6%,#000_94%,transparent)]",
       )}
       data-loading={loading || undefined}
     >
