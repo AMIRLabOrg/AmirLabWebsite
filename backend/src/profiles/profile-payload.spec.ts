@@ -3,7 +3,7 @@ import {
   PersonLinkType,
   PersonSectionType,
 } from '../../generated/prisma/enums';
-import { parseProfilePayload } from './profile-payload';
+import { parseProfilePayload, profilePayloadToJson } from './profile-payload';
 
 const profile = {
   fullName: 'Jane Researcher',
@@ -170,6 +170,48 @@ describe('parseProfilePayload', () => {
       ),
     ).toThrow('profile.expertise cannot be edited');
   });
+
+  describe.each(['ADMIN', 'MODERATOR'] as const)(
+    '%s stored staff drafts',
+    (scope) => {
+      it('round-trips normalized fields and avatar intent for approval', () => {
+        const payload = parseProfilePayload(
+          JSON.stringify({ fullName: 'Staff Member', roleTitle: 'Operations' }),
+          true,
+          { scope },
+        );
+        expect(
+          parseProfilePayload(profilePayloadToJson(payload), false, { scope }),
+        ).toEqual(payload);
+      });
+
+      it.each([
+        ['biography', null, 'Research biography'],
+        ['headline', null, 'Research headline'],
+        ['expertise', [], ['Research']],
+        ['links', [], [{}]],
+        ['sections', [], [{}]],
+      ])(
+        'rejects submitted and nonempty stored %s',
+        (key, empty, populated) => {
+          expect(() =>
+            parseProfilePayload(
+              JSON.stringify({ fullName: 'Staff Member', [key]: empty }),
+              false,
+              { scope },
+            ),
+          ).toThrow(BadRequestException);
+          expect(() =>
+            parseProfilePayload(
+              { fullName: 'Staff Member', [key]: populated },
+              false,
+              { scope },
+            ),
+          ).toThrow(BadRequestException);
+        },
+      );
+    },
+  );
 
   it('rejects executable or non-web profile links', () => {
     expect(() =>

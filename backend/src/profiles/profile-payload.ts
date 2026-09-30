@@ -57,9 +57,23 @@ export function parseProfilePayload(
       : opts?.adminFields
         ? ADMIN_PROFILE_FIELDS
         : PROFILE_FIELDS;
-  const unsupported = Object.keys(source).find(
-    (key) => !editableFields.has(key),
-  );
+  const unsupported = Object.keys(source).find((key) => {
+    if (editableFields.has(key)) return false;
+    // Stored drafts include empty research fields from profilePayloadToJson.
+    // Accept only that normalized shape, never research fields in submissions.
+    if (
+      typeof raw !== 'string' &&
+      (scope === 'MODERATOR' || scope === 'ADMIN')
+    ) {
+      if (key === 'biography' || key === 'headline')
+        return source[key] !== null;
+      if (key === 'expertise' || key === 'links' || key === 'sections') {
+        const value = source[key];
+        return !Array.isArray(value) || value.length !== 0;
+      }
+    }
+    return true;
+  });
   if (unsupported) {
     throw new BadRequestException(`profile.${unsupported} cannot be edited`);
   }
