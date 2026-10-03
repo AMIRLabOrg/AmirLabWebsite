@@ -339,6 +339,98 @@ async function runDiscovery({
 }
 
 describe('research source discovery queue', () => {
+  it.each([false, true])(
+    'retries transient failures unless a manual decision supersedes the lease (override=%s)',
+    async (overridden) => {
+      let state: ResearchAutomationState = ResearchAutomationState.QUEUED;
+      let owner: string | null = null;
+      let version = 1;
+      let handler: ((payload: unknown) => Promise<void>) | undefined;
+      const fetch = jest
+        .fn()
+        .mockRejectedValue(new Error('Temporary upstream failure'));
+      const prisma = {
+        researchItem: {
+          updateMany: jest.fn().mockImplementation(
+            ({
+              where,
+              data,
+            }: {
+              where: {
+                OR?: Array<{
+                  automationState:
+                    ResearchAutomationState | { in: ResearchAutomationState[] };
+                }>;
+                automationState?: ResearchAutomationState;
+                automationOwner?: string;
+              };
+              data: {
+                automationState: ResearchAutomationState;
+                automationOwner: string | null;
+                automationVersion?: { increment: number };
+              };
+            }) => {
+              if (
+                where.OR &&
+                !where.OR.some((condition) =>
+                  typeof condition.automationState === 'string'
+                    ? condition.automationState === state
+                    : condition.automationState.in.includes(state),
+                )
+              )
+                return Promise.resolve({ count: 0 });
+              if (where.automationOwner && where.automationOwner !== owner)
+                return Promise.resolve({ count: 0 });
+              state = data.automationState;
+              owner = data.automationOwner;
+              version += data.automationVersion?.increment ?? 0;
+              return Promise.resolve({ count: 1 });
+            },
+          ),
+          findUnique: jest
+            .fn()
+            .mockImplementation(({ select }: { select?: unknown }) =>
+              Promise.resolve(
+                select
+                  ? { automationOwner: owner, automationVersion: version }
+                  : {
+                      id: 'retry-item',
+                      canonicalUrl: 'https://example.org/paper',
+                      paper: null,
+                    },
+              ),
+            ),
+        },
+        researchSourceSnapshot: { update: jest.fn().mockResolvedValue({}) },
+      };
+      const service = await createDiscoveryService({
+        fetcher: { fetch },
+        jobs: {
+          register: (_type: string, callback: typeof handler) => {
+            handler = callback;
+          },
+        },
+        prisma,
+      });
+      service.onModuleInit();
+      if (!handler) throw new Error('Discovery handler missing');
+      await expect(handler({ researchItemId: 'retry-item' })).rejects.toThrow(
+        'Temporary upstream failure',
+      );
+      expect(state).toBe(ResearchAutomationState.FAILED);
+      if (overridden) {
+        state = ResearchAutomationState.IDLE;
+        version++;
+        await handler({ researchItemId: 'retry-item' });
+      } else {
+        await expect(handler({ researchItemId: 'retry-item' })).rejects.toThrow(
+          'Temporary upstream failure',
+        );
+      }
+      expect(fetch).toHaveBeenCalledTimes(overridden ? 1 : 2);
+    },
+  );
+
   it('rejects stale edit, single-review and bulk-review client revisions before writing', async () => {
     const item = {
       id: 'research-item',

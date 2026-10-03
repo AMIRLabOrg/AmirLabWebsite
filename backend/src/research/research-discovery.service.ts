@@ -580,7 +580,12 @@ export class ResearchDiscoveryService implements OnModuleInit {
         OR: [
           {
             automationOwner: null,
-            automationState: ResearchAutomationState.QUEUED,
+            automationState: {
+              in: [
+                ResearchAutomationState.QUEUED,
+                ResearchAutomationState.FAILED,
+              ],
+            },
           },
           {
             automationState: ResearchAutomationState.RUNNING,

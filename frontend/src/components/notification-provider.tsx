@@ -22,6 +22,7 @@ import {
 
 interface NotificationState {
   loading: boolean;
+  researchRefreshVersion: number;
   queueCounts: WorkspaceQueueCounts;
   unreadCount: number;
   markOneRead: () => void;
@@ -67,6 +68,7 @@ function fetchWorkspaceCounts() {
 export function NotificationProvider({ children }: { children: ReactNode }) {
   const router = useRouter();
   const { loading: authLoading, user } = useAuth();
+  const [researchRefreshVersion, setResearchRefreshVersion] = useState(0);
   const [unreadCount, setUnreadCount] = useState(0);
   const [queueCounts, setQueueCounts] = useState(EMPTY_QUEUE_COUNTS);
   const [loadedUserId, setLoadedUserId] = useState<string>();
@@ -218,13 +220,17 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
     const reconcile = () => {
       if (document.visibilityState === "visible") {
         void refreshUnreadCount().catch(() => undefined);
+        setResearchRefreshVersion((current) => current + 1);
       }
     };
+    // SSE has no replay; reconcile server state after every connection.
+    events.onopen = reconcile;
     window.addEventListener("focus", reconcile);
     document.addEventListener("visibilitychange", reconcile);
     return () => {
       active = false;
       events.removeEventListener("research", researchEventListener);
+      events.onopen = null;
       events.close();
       window.removeEventListener("focus", reconcile);
       document.removeEventListener("visibilitychange", reconcile);
@@ -235,6 +241,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
     <NotificationContext.Provider
       value={{
         loading: authLoading || Boolean(user && loadedUserId !== user.id),
+        researchRefreshVersion,
         markOneRead: () =>
           setUnreadCount((current) => Math.max(0, current - 1)),
         queueCounts: user ? queueCounts : EMPTY_QUEUE_COUNTS,

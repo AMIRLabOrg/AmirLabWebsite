@@ -3,7 +3,10 @@ import { useEffect, useState } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { useAuth } from "@/components/auth-provider";
 import { apiRequest } from "@/lib/client-api";
-import { NotificationProvider, useNotifications } from "./notification-provider";
+import {
+  NotificationProvider,
+  useNotifications,
+} from "./notification-provider";
 
 vi.mock("@/components/auth-provider", () => ({
   useAuth: vi.fn(),
@@ -24,6 +27,7 @@ const request = vi.mocked(apiRequest);
 class TestEventSource {
   static latest: TestEventSource | undefined;
   private readonly listeners = new Set<EventListener>();
+  onopen: (() => void) | null = null;
   onmessage: ((event: MessageEvent<string>) => void) | null = null;
 
   constructor(
@@ -62,7 +66,8 @@ class TestEventSource {
 }
 
 function EventProbe() {
-  const { subscribeResearchEvents } = useNotifications();
+  const { subscribeResearchEvents, researchRefreshVersion } =
+    useNotifications();
   const [event, setEvent] = useState("waiting");
 
   useEffect(
@@ -73,7 +78,12 @@ function EventProbe() {
     [subscribeResearchEvents],
   );
 
-  return <p>{event}</p>;
+  return (
+    <>
+      <p>{event}</p>
+      <output data-testid="refresh-version">{researchRefreshVersion}</output>
+    </>
+  );
 }
 
 describe("NotificationProvider research events", () => {
@@ -105,6 +115,31 @@ describe("NotificationProvider research events", () => {
     cleanup();
     vi.unstubAllGlobals();
     request.mockReset();
+  });
+
+  it("reconciles on SSE reconnect and visible tab focus, with cleanup", async () => {
+    const view = render(
+      <NotificationProvider>
+        <EventProbe />
+      </NotificationProvider>,
+    );
+    await act(async () => Promise.resolve());
+    const source = TestEventSource.latest;
+    if (!source) throw new Error("EventSource missing");
+    expect(screen.getByTestId("refresh-version").textContent).toBe("0");
+    act(() => source.onopen?.());
+    expect(screen.getByTestId("refresh-version").textContent).toBe("1");
+    act(() => source.onopen?.());
+    expect(screen.getByTestId("refresh-version").textContent).toBe("2");
+    act(() => window.dispatchEvent(new Event("focus")));
+    expect(screen.getByTestId("refresh-version").textContent).toBe("3");
+    vi.spyOn(document, "visibilityState", "get").mockReturnValue("hidden");
+    act(() => document.dispatchEvent(new Event("visibilitychange")));
+    expect(screen.getByTestId("refresh-version").textContent).toBe("3");
+    vi.restoreAllMocks();
+    await act(async () => Promise.resolve());
+    view.unmount();
+    expect(source.onopen).toBeNull();
   });
 
   it("delivers named research SSE events to subscribers", async () => {

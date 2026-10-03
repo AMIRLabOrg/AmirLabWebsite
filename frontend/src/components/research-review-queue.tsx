@@ -157,6 +157,7 @@ function loadingResearchItem(index = 0): ReviewResearch {
 export function ResearchReviewQueue() {
   const {
     refreshUnreadCount,
+    researchRefreshVersion,
     showToast,
     subscribeResearchEvents,
   } = useNotifications();
@@ -266,7 +267,7 @@ export function ResearchReviewQueue() {
       active = false;
       window.clearTimeout(timeout);
     };
-  }, [page, reload, search, sort, status, type]);
+  }, [page, reload, researchRefreshVersion, search, sort, status, type]);
 
   // A linked record outside the current queue view opens in the detail pane
   // only; it is never merged into the paginated list.
@@ -340,6 +341,12 @@ export function ResearchReviewQueue() {
       }
     });
   }, [refreshResearchItem, selected, subscribeResearchEvents]);
+
+  useEffect(() => {
+    if (!researchRefreshVersion || !selected) return;
+    const timeout = window.setTimeout(() => void refreshResearchItem(selected), 0);
+    return () => window.clearTimeout(timeout);
+  }, [researchRefreshVersion, selected, refreshResearchItem]);
 
   function captureItemError(itemId: string, error: ApiRequestError) {
     if (error.issues.length) actionIssues.capture(error);
@@ -1007,6 +1014,8 @@ export function ResearchReviewQueue() {
                         onClick={() => {
                           if (editing && editDirty) { setDiscardEditor(true); return; }
                           setEditDirty(false);
+                          // Keep an open draft mounted if live refresh removes its queue row.
+                          setFocusedItem(item);
                           setEditSnapshot(item);
                           setEditingId((current) =>
                             current === item.id ? undefined : item.id,
