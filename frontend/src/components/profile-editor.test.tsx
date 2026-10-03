@@ -73,6 +73,7 @@ describe("ProfileEditor staff profiles", () => {
       },
       refreshUnreadCount: vi.fn(async () => {}),
       showToast: vi.fn(),
+      subscribeResearchEvents: vi.fn(() => () => {}),
       unreadCount: 0,
     });
     request.mockReset();

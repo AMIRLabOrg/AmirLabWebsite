@@ -5,6 +5,7 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useRef,
   useState,
   type ReactNode,
 } from "react";
@@ -14,6 +15,10 @@ import { useAuth } from "@/components/auth-provider";
 import { API_URL } from "@/lib/api";
 import { apiRequest } from "@/lib/client-api";
 import type { NotificationRecord } from "@/lib/types";
+import {
+  parseResearchLiveEvent,
+  type ResearchLiveEvent,
+} from "@/lib/research-live-events";
 
 interface NotificationState {
   loading: boolean;
@@ -26,6 +31,9 @@ interface NotificationState {
     title: string;
     tone?: "error" | "success";
   }) => void;
+  subscribeResearchEvents: (
+    listener: (event: ResearchLiveEvent) => void,
+  ) => () => void;
 }
 
 export interface WorkspaceQueueCounts {
@@ -63,6 +71,17 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
   const [queueCounts, setQueueCounts] = useState(EMPTY_QUEUE_COUNTS);
   const [loadedUserId, setLoadedUserId] = useState<string>();
   const [toasts, setToasts] = useState<NotificationRecord[]>([]);
+  const researchEventListeners = useRef(
+    new Set<(event: ResearchLiveEvent) => void>(),
+  );
+
+  const subscribeResearchEvents = useCallback(
+    (listener: (event: ResearchLiveEvent) => void) => {
+      researchEventListeners.current.add(listener);
+      return () => researchEventListeners.current.delete(listener);
+    },
+    [],
+  );
 
   const showToast = useCallback(
     ({
@@ -161,6 +180,20 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
     const events = new EventSource(`${API_URL}/notifications/events`, {
       withCredentials: true,
     });
+    const researchEventListener = (event: Event) => {
+      if (!("data" in event) || typeof event.data !== "string") return;
+      let researchEvent: ResearchLiveEvent | null;
+      try {
+        researchEvent = parseResearchLiveEvent(JSON.parse(event.data));
+      } catch {
+        return;
+      }
+      if (!researchEvent) return;
+      for (const listener of researchEventListeners.current) {
+        listener(researchEvent);
+      }
+    };
+    events.addEventListener("research", researchEventListener);
     events.onmessage = (event) => {
       if (!active) return;
       try {
@@ -191,6 +224,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
     document.addEventListener("visibilitychange", reconcile);
     return () => {
       active = false;
+      events.removeEventListener("research", researchEventListener);
       events.close();
       window.removeEventListener("focus", reconcile);
       document.removeEventListener("visibilitychange", reconcile);
@@ -206,6 +240,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
         queueCounts: user ? queueCounts : EMPTY_QUEUE_COUNTS,
         refreshUnreadCount,
         showToast,
+        subscribeResearchEvents,
         unreadCount: user ? unreadCount : 0,
       }}
     >
