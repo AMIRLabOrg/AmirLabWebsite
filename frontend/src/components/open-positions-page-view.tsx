@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { ApplicationForm } from "@/components/application-form";
 import { ApplicationProcess } from "@/components/application-process";
 import { PageIntro } from "@/components/page-intro";
@@ -8,11 +9,12 @@ import type { Position } from "@/lib/types";
 export function OpenPositionsPageView({
   positions,
   loading = false,
+  positionsContent,
 }: {
   positions?: Position[];
   loading?: boolean;
+  positionsContent?: ReactNode;
 }) {
-  const list = positions ?? [];
   return (
     <>
       <PageIntro
@@ -30,6 +32,23 @@ export function OpenPositionsPageView({
         Current AMIR Lab research roles and internships. Applications are
         reviewed by the lab team.
       </PageIntro>
+      {positionsContent ?? (
+        <OpenPositionsContent loading={loading} positions={positions} />
+      )}
+    </>
+  );
+}
+
+export function OpenPositionsContent({
+  positions,
+  loading = false,
+}: {
+  positions?: Position[];
+  loading?: boolean;
+}) {
+  const list = positions ?? [];
+  return (
+    <>
       <PositionList loading={loading} positions={list} />
       <PublicSection
         contentClassName="grid grid-cols-[minmax(0,1fr)_minmax(280px,360px)] items-start gap-[clamp(1.5rem,3vw,3rem)] pt-8 pb-16 max-[900px]:grid-cols-1"

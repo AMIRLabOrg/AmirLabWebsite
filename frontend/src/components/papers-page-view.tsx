@@ -1,12 +1,14 @@
 import { PageIntro } from "@/components/page-intro";
 import { PublicationExplorer } from "@/components/publication-explorer";
-import type { ResearchItem } from "@/lib/types";
+import type { ResearchItem, PublicationResponse } from "@/lib/types";
 
 export function PapersPageView({
   papers,
+  publications,
   loading = false,
 }: {
   papers?: ResearchItem[];
+  publications?: PublicationResponse;
   loading?: boolean;
 }) {
   const list = papers ?? [];
@@ -36,7 +38,7 @@ export function PapersPageView({
         Papers, conference proceedings, and book chapters published by AMIR Lab
         researchers and collaborators.
       </PageIntro>
-      <PublicationExplorer staticLoading={loading} />
+      <PublicationExplorer initialData={publications} staticLoading={loading} />
     </div>
   );
 }

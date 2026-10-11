@@ -1,5 +1,6 @@
 import type {
   Person,
+  PublicationResponse,
   Position,
   PublicStats,
   AboutContent,
@@ -14,15 +15,11 @@ import { DEFAULT_ABOUT_CONTENT, DEFAULT_HOME_CONTENT } from "./site-content";
 
 import "server-only";
 import { connection } from "next/server";
-import { publicFetch } from "./public-cache";
+import { publicJson, PublicApiError } from "./public-cache";
 
 async function getCollection<T>(path: string, live = false): Promise<T[]> {
   try {
-    const response = await publicFetch(path, live);
-    if (!response.ok) {
-      throw new Error(`API returned ${response.status} for ${path}`);
-    }
-    return (await response.json()) as T[];
+    return await publicJson<T[]>(path, live);
   } catch (error) {
     await connection();
     console.error(`Unable to load ${path}`, error);
@@ -36,13 +33,9 @@ export function getPeople(): Promise<Person[]> {
 
 export async function getPerson(slug: string): Promise<Person | null> {
   try {
-    const response = await publicFetch(`/people/${encodeURIComponent(slug)}`);
-    if (response.status === 404) return null;
-    if (!response.ok) {
-      throw new Error(`API returned ${response.status} for person ${slug}`);
-    }
-    return (await response.json()) as Person;
+    return await publicJson<Person>(`/people/${encodeURIComponent(slug)}`);
   } catch (error) {
+    if (error instanceof PublicApiError && error.status === 404) return null;
     await connection();
     console.error(`Unable to load person ${slug}`, error);
     return null;
@@ -58,6 +51,20 @@ export function getResearch(type?: ResearchItemType): Promise<ResearchItem[]> {
   return getCollection<ResearchItem>(`/research${query}`);
 }
 
+export async function getPublications(): Promise<
+  PublicationResponse | undefined
+> {
+  try {
+    return await publicJson<PublicationResponse>(
+      "/publications?page=1&pageSize=12&sort=NEWEST",
+    );
+  } catch (error) {
+    await connection();
+    console.error("Unable to load publications", error);
+    return undefined;
+  }
+}
+
 export function getDepartments(): Promise<Department[]> {
   return getCollection<Department>("/departments");
 }
@@ -68,13 +75,11 @@ export function getUniversities(): Promise<University[]> {
 
 export async function getDepartment(slug: string): Promise<Department | null> {
   try {
-    const response = await publicFetch(
+    return await publicJson<Department>(
       `/departments/${encodeURIComponent(slug)}`,
     );
-    if (response.status === 404) return null;
-    if (!response.ok) throw new Error(`API returned ${response.status}`);
-    return (await response.json()) as Department;
   } catch (error) {
+    if (error instanceof PublicApiError && error.status === 404) return null;
     await connection();
     console.error(`Unable to load department ${slug}`, error);
     return null;
@@ -85,11 +90,11 @@ export async function getResearchItem(
   slug: string,
 ): Promise<ResearchItem | null> {
   try {
-    const response = await publicFetch(`/research/${encodeURIComponent(slug)}`);
-    if (response.status === 404) return null;
-    if (!response.ok) throw new Error(`API returned ${response.status}`);
-    return (await response.json()) as ResearchItem;
+    return await publicJson<ResearchItem>(
+      `/research/${encodeURIComponent(slug)}`,
+    );
   } catch (error) {
+    if (error instanceof PublicApiError && error.status === 404) return null;
     await connection();
     console.error(`Unable to load research item ${slug}`, error);
     return null;
@@ -98,9 +103,7 @@ export async function getResearchItem(
 
 export async function getPublicStats(): Promise<PublicStats> {
   try {
-    const response = await publicFetch("/stats", false, 60);
-    if (!response.ok) throw new Error(`API returned ${response.status}`);
-    return (await response.json()) as PublicStats;
+    return await publicJson<PublicStats>("/stats", false, 60);
   } catch (error) {
     await connection();
     console.error("Unable to load public statistics", error);
@@ -110,9 +113,10 @@ export async function getPublicStats(): Promise<PublicStats> {
 
 async function getSiteContent<T>(path: string, fallback: T): Promise<T> {
   try {
-    const response = await publicFetch(`/site-content/${path}`);
-    if (!response.ok) throw new Error(`API returned ${response.status}`);
-    return ((await response.json()) as SiteContentResponse<T>).content;
+    const response = await publicJson<SiteContentResponse<T>>(
+      `/site-content/${path}`,
+    );
+    return response.content;
   } catch (error) {
     await connection();
     console.error(`Unable to load ${path} site content`, error);

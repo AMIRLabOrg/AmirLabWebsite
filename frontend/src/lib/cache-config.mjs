@@ -1,5 +1,5 @@
 export function getPublicCacheConfig() {
-  const enabled = process.env.PUBLIC_CACHE_ENABLED?.trim() || "false";
+  const enabled = process.env.PUBLIC_CACHE_ENABLED?.trim() || "true";
   const ttlSeconds = Number(
     process.env.PUBLIC_CACHE_TTL_SECONDS?.trim() || "3600",
   );

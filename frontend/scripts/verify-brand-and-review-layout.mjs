@@ -15,7 +15,7 @@ const review = read("src/components/research-review-queue.tsx");
 const surface = read("src/components/ui/workspace-surface.tsx");
 const login = read("src/components/login-form.tsx");
 const changePassword = read("src/components/change-password-panel.tsx");
-const forgotPasswordPage = read("src/app/forgot-password/page.tsx");
+const forgotPasswordPage = read("src/app/(auth)/forgot-password/page.tsx");
 const reset = read("src/components/reset-password-form.tsx");
 const layout = read("src/app/layout.tsx");
 
@@ -126,11 +126,11 @@ expect(
   "Password reset must not render raw exception messages.",
 );
 expect(
-  fs.existsSync(path.join(root, "src/app/forgot-password/page.tsx")),
+  fs.existsSync(path.join(root, "src/app/(auth)/forgot-password/page.tsx")),
   "Forgot-password page is missing.",
 );
 expect(
-  fs.existsSync(path.join(root, "src/app/reset-password/page.tsx")),
+  fs.existsSync(path.join(root, "src/app/(auth)/reset-password/page.tsx")),
   "Reset-password page is missing.",
 );
 

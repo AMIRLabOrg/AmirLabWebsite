@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
+import { getPublicCacheConfig } from "@/lib/cache-config.mjs";
 import { AboutPageView } from "@/components/about-page-view";
 import { getAboutContent } from "@/lib/api";
 
@@ -11,7 +12,17 @@ export const metadata: Metadata = {
 
 export default function AboutPage() {
   return (
-    <Suspense fallback={<AboutPageView loading />}>
+    <Suspense
+      fallback={
+        getPublicCacheConfig().enabled ? (
+          <Suspense fallback={<AboutPageView loading />}>
+            <AboutContent />
+          </Suspense>
+        ) : (
+          <AboutPageView loading />
+        )
+      }
+    >
       <AboutContent />
     </Suspense>
   );

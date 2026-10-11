@@ -19,6 +19,7 @@ const PUBLIC_WRITERS = new Set([
   'ProfilesController',
   'ResearchController',
   'ProjectsController',
+  'ProjectChangeReviewsController',
   'AdminDepartmentsController',
   'AdminUniversitiesController',
   'UsersController',

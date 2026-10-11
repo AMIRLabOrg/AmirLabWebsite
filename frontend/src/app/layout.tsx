@@ -1,10 +1,8 @@
-import { connection } from "next/server";
 import { PwaProvider } from "@/components/pwa-provider";
 import type { Metadata } from "next";
 import { AuthProvider } from "@/components/auth-provider";
 import { FormValidation } from "@/components/form-validation";
 import { NotificationProvider } from "@/components/notification-provider";
-import { SiteLayout } from "@/components/site-layout";
 import { NavigationProgress } from "@/components/ui/navigation-progress";
 import "./globals.css";
 
@@ -22,15 +20,14 @@ export const metadata: Metadata = {
     "Advanced Machine Intelligence Research Lab people, publications, datasets, projects, and opportunities.",
 };
 
-export default async function RootLayout({
+// Private and live sections remain request-bound inside their loading boundaries.
+export const instant = false;
+
+export default function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  // Public data is cached separately. Request rendering avoids persisting
-  // outage fallbacks or resurrecting previously invalidated HTML after restart.
-  await connection();
-
   return (
     <html data-scroll-behavior="smooth" lang="en">
       <body>
@@ -45,7 +42,7 @@ export default async function RootLayout({
           <AuthProvider>
             <NotificationProvider>
               <FormValidation />
-              <SiteLayout>{children}</SiteLayout>
+              {children}
             </NotificationProvider>
           </AuthProvider>
         </PwaProvider>

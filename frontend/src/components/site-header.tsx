@@ -43,6 +43,10 @@ const NAVIGATION = [
 
 export function SiteHeader() {
   const pathname = usePathname();
+  return <SiteHeaderView pathname={pathname} />;
+}
+
+export function SiteHeaderView({ pathname = "" }: { pathname?: string }) {
   const [open, setOpen] = useState(false);
   const { loading, logout, user } = useAuth();
   const { loading: notificationsLoading, unreadCount } = useNotifications();

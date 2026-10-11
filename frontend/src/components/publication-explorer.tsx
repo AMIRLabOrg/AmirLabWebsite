@@ -15,14 +15,7 @@ import { ToolbarSearchField } from "@/components/ui/toolbar-search-field";
 import { ButtonControl } from "@/components/ui/button-control";
 import { PublicSection } from "@/components/ui/public-shell";
 import { apiRequest } from "@/lib/client-api";
-import type { PaginatedResponse, ResearchItem } from "@/lib/types";
-
-interface PublicationResponse extends PaginatedResponse<ResearchItem> {
-  facets: {
-    categories: Array<{ count: number; label: string; value: string }>;
-    years: Array<{ count: number; value: number }>;
-  };
-}
+import type { PublicationResponse, ResearchItem } from "@/lib/types";
 
 const SORT_OPTIONS = [
   { label: "Newest first", value: "NEWEST" },
@@ -32,27 +25,46 @@ const SORT_OPTIONS = [
 
 export function PublicationExplorer({
   staticLoading = false,
-}: { staticLoading?: boolean } = {}) {
+  initialData,
+}: { staticLoading?: boolean; initialData?: PublicationResponse } = {}) {
   if (staticLoading) {
     return <PublicationExplorerInner staticLoading={true} />;
   }
   return (
-    <Suspense fallback={<PublicationExplorerInner staticLoading={true} />}>
-      <PublicationExplorerWrapper />
+    <Suspense
+      fallback={
+        <PublicationExplorerInner
+          initialData={initialData}
+          staticLoading={!initialData}
+        />
+      }
+    >
+      <PublicationExplorerWrapper initialData={initialData} />
     </Suspense>
   );
 }
 
-function PublicationExplorerWrapper() {
+function PublicationExplorerWrapper({
+  initialData,
+}: {
+  initialData?: PublicationResponse;
+}) {
   const searchParams = useSearchParams();
-  return <PublicationExplorerInner searchParams={searchParams} />;
+  return (
+    <PublicationExplorerInner
+      initialData={initialData}
+      searchParams={searchParams}
+    />
+  );
 }
 
 function PublicationExplorerInner({
   staticLoading = false,
   searchParams,
+  initialData,
 }: {
   staticLoading?: boolean;
+  initialData?: PublicationResponse;
   searchParams?: ReturnType<typeof useSearchParams>;
 }) {
   const router = useRouter();
@@ -63,10 +75,17 @@ function PublicationExplorerInner({
   const [year, setYear] = useState(searchParams?.get("year") ?? "ALL");
   const [sort, setSort] = useState(searchParams?.get("sort") ?? "NEWEST");
   const [page, setPage] = useState(Number(searchParams?.get("page")) || 1);
-  const [result, setResult] = useState<PublicationResponse>();
-  const [loading, setLoading] = useState(true);
+  const [filteredResult, setResult] = useState<PublicationResponse>();
+  const defaultQuery =
+    !query &&
+    category === "ALL" &&
+    year === "ALL" &&
+    sort === "NEWEST" &&
+    page === 1;
+  const [loading, setLoading] = useState(!initialData || !defaultQuery);
   const [error, setError] = useState<string>();
-  const busy = staticLoading || loading;
+  const result = initialData && defaultQuery ? initialData : filteredResult;
+  const busy = staticLoading || (!(initialData && defaultQuery) && loading);
 
   useEffect(() => {
     if (staticLoading) return;
@@ -81,6 +100,7 @@ function PublicationExplorerInner({
       if (category !== "ALL") params.set("category", category);
       if (year !== "ALL") params.set("year", year);
       router.replace(`/papers?${params}`, { scroll: false });
+      if (initialData && defaultQuery) return;
       void apiRequest<PublicationResponse>(`/publications?${params}`, {
         method: "GET",
       })
@@ -105,7 +125,17 @@ function PublicationExplorerInner({
       active = false;
       window.clearTimeout(timeout);
     };
-  }, [category, page, query, router, sort, staticLoading, year]);
+  }, [
+    category,
+    defaultQuery,
+    initialData,
+    page,
+    query,
+    router,
+    sort,
+    staticLoading,
+    year,
+  ]);
 
   function changeFilter(setter: (value: string) => void, value: string) {
     setLoading(true);
