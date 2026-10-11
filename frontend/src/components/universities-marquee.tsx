@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { publicShellWidthClass } from "@/components/ui/public-shell";
-import { API_URL } from "@/lib/api-url";
+import { ASSET_URL } from "@/lib/api-url";
 import { cn } from "@/lib/cn";
 import { loadingPlaceholder } from "@/lib/loading-style";
 import type { University } from "@/lib/types";
@@ -35,7 +35,7 @@ function UniversityChip({
             alt=""
             className="size-6 object-contain grayscale transition-[filter] duration-300 group-hover:grayscale-0"
             height={24}
-            src={`${API_URL}/assets/${university.logoAssetId}`}
+            src={`${ASSET_URL}/${university.logoAssetId}`}
             unoptimized
             width={24}
           />

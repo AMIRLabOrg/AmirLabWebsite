@@ -18,7 +18,7 @@ import { useAuth } from "@/components/auth-provider";
 import { ConfirmDialog } from "@/components/confirm-dialog";
 import { useNotifications } from "@/components/notification-provider";
 import { StatePanel } from "@/components/state-panel";
-import { API_URL } from "@/lib/api-url";
+import { ASSET_URL } from "@/lib/api-url";
 import { apiRequest } from "@/lib/client-api";
 import type {
   MyProfile,
@@ -423,7 +423,7 @@ export function ProfileEditor({ userId }: ProfileEditorProps) {
                   alt="Current profile"
                   className="h-full w-full object-cover"
                   height={360}
-                  src={`${API_URL}/assets/${visibleAvatarId}`}
+                  src={`${ASSET_URL}/${visibleAvatarId}`}
                   width={360}
                 />
               ) : (

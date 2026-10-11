@@ -19,6 +19,12 @@ describe("Next.js image configuration", () => {
     const { default: config } = await import("../next.config");
 
     expect(config.env?.API_URL).toBe("https://api.example.test:8443/v1/api/");
+    expect(await config.rewrites?.()).toEqual([
+      {
+        source: "/api/assets/:id",
+        destination: "https://api.example.test:8443/v1/api/assets/:id",
+      },
+    ]);
     expect(config.images?.remotePatterns).toEqual([
       {
         protocol: "https",

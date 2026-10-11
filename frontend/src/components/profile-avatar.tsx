@@ -1,5 +1,5 @@
 import Image from "next/image";
-import { API_URL } from "@/lib/api-url";
+import { ASSET_URL } from "@/lib/api-url";
 import { cn } from "@/lib/cn";
 import { loadingPlaceholder } from "@/lib/loading-style";
 
@@ -55,7 +55,7 @@ export function ProfileAvatar({
                   : "20px"
           }
           className="object-cover"
-          src={src || `${API_URL}/assets/${avatarId}`}
+          src={src || `${ASSET_URL}/${avatarId}`}
         />
       ) : (
         <span>{initial}</span>

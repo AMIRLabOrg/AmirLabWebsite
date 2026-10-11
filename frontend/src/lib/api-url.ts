@@ -8,3 +8,4 @@ if (
 }
 
 export const API_URL = configuredApiUrl ?? "http://localhost:3001/api";
+export const ASSET_URL = "/api/assets";

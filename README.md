@@ -147,6 +147,13 @@ the frontend separately to Vercel with Root Directory `frontend` and
 using object storage. Do not put credentials in `fly.toml`, an env file
 committed to the repository, or a Docker build argument. The API volume is
 required because seeded and uploaded documents are stored under `UPLOAD_ROOT`.
+On Fly, use the mounted path from `fly.toml`; remove any `UPLOAD_ROOT` secret
+that overrides it with a local development path such as `./storage`.
+
+Public images use `/api/assets/<id>` on the frontend. Next.js forwards that path
+to the backend configured by `API_URL`, so the same image URLs and optimization
+work in local development, on Vercel, and on a VPS. Rebuild the frontend after
+changing `API_URL`.
 
 ## Browser push notifications
 

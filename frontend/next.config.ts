@@ -11,6 +11,14 @@ const nextConfig: NextConfig = {
   cacheComponents: true,
   cacheHandler: require.resolve("./cache-handlers/route.mjs"),
   cacheHandlers: { default: require.resolve("./cache-handlers/native.mjs") },
+  async rewrites() {
+    return [
+      {
+        source: "/api/assets/:id",
+        destination: `${apiUrl.origin}${apiPath}/assets/:id`,
+      },
+    ];
+  },
   async headers() {
     // Requests must reach the revision check rather than an independent HTML CDN.
     return [

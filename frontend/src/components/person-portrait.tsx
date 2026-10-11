@@ -1,5 +1,5 @@
 import Image from "next/image";
-import { API_URL } from "@/lib/api-url";
+import { ASSET_URL } from "@/lib/api-url";
 import { cn } from "@/lib/cn";
 import { loadingPlaceholder } from "@/lib/loading-style";
 import type { Person } from "@/lib/types";
@@ -59,7 +59,7 @@ export function PersonPortrait({
                 ? "(max-width: 760px) 100vw, 390px"
                 : "(max-width: 640px) 44vw, (max-width: 1100px) 30vw, 220px"
           }
-          src={`${API_URL}/assets/${person.avatar.id}`}
+          src={`${ASSET_URL}/${person.avatar.id}`}
         />
       ) : (
         <span>{loading ? "AM" : initials}</span>

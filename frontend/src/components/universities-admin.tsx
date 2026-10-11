@@ -20,7 +20,7 @@ import {
 } from "@/components/workspace-record";
 import { apiRequest } from "@/lib/client-api";
 import { SemanticStatus } from "@/components/ui/semantic-status";
-import { API_URL } from "@/lib/api-url";
+import { ASSET_URL } from "@/lib/api-url";
 import { CheckboxControl } from "@/components/ui/checkbox-control";
 import { FileInputControl, InputControl } from "@/components/ui/form-controls";
 import type { University } from "@/lib/types";
@@ -367,7 +367,7 @@ export function UniversityEditor({ id }: { id?: string }) {
                   alt={university.name}
                   className="h-auto max-h-20 w-auto object-contain"
                   height={60}
-                  src={`${API_URL}/assets/${university.logoAssetId}`}
+                  src={`${ASSET_URL}/${university.logoAssetId}`}
                   width={200}
                 />
               ) : (

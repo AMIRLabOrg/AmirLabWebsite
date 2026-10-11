@@ -4,7 +4,7 @@ import { cn } from "@/lib/cn";
 import { loadingPlaceholder } from "@/lib/loading-style";
 import Image from "next/image";
 import { useEffect, useState } from "react";
-import { API_URL } from "@/lib/api-url";
+import { ASSET_URL } from "@/lib/api-url";
 import { ApiRequestError, apiRequest } from "@/lib/client-api";
 import type { ProfileEditPayload, ProfileEditRequest } from "@/lib/types";
 import { ReviewActions } from "@/components/review-actions";
@@ -293,7 +293,7 @@ function ReviewPortrait({
           alt={label}
           className="aspect-square w-full max-w-[220px] rounded-[3px] object-cover"
           height={220}
-          src={`${API_URL}/assets/${assetId}`}
+          src={`${ASSET_URL}/${assetId}`}
           width={220}
         />
       ) : (
