@@ -23,8 +23,8 @@ const publicFiles = [
   "src/components/profile-records.tsx",
   "src/components/research-listing.tsx",
   "src/components/position-list.tsx",
-  "src/app/departments/page.tsx",
-  "src/app/projects/[slug]/page.tsx",
+  "src/app/(public)/departments/page.tsx",
+  "src/app/(public)/projects/[slug]/page.tsx",
 ];
 const publicSource = publicFiles.map(read).join("\n");
 for (const token of [

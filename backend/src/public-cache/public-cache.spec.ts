@@ -20,7 +20,10 @@ async function service(configured = true) {
     get: jest.fn((key: string) =>
       configured
         ? {
-            publicCacheRevalidationUrl: 'http://127.0.0.1:3000/api/revalidate',
+            frontendOrigins: [
+              'http://127.0.0.1:3000',
+              'https://other.example.test',
+            ],
             publicCacheRevalidationSecret: secret,
           }[key]
         : undefined,
@@ -31,15 +34,22 @@ async function service(configured = true) {
     onSettled: jest.fn<void, [(type: string) => Promise<void>]>(),
     enqueue: jest.fn().mockResolvedValue('retry'),
   };
+  const prisma = {
+    siteSetting: {
+      upsert: jest.fn().mockResolvedValue({}),
+      findUnique: jest.fn().mockResolvedValue(null),
+    },
+  };
   const cache = await resolveService(PublicCacheService, [
     { provide: ConfigService, useValue: config },
     { provide: JobsService, useValue: jobs },
+    { provide: PrismaService, useValue: prisma },
   ]);
   cache.onModuleInit();
-  return { cache, jobs };
+  return { cache, jobs, prisma };
 }
 
-it('delivers immediately to the configured VPS endpoint, without queueing or redirects', async () => {
+it('delivers immediately to the existing first frontend origin, without queueing or redirects', async () => {
   global.fetch = jest.fn().mockResolvedValue({ ok: true });
   const { cache, jobs } = await service();
   await cache.invalidate();
@@ -80,12 +90,20 @@ it('invalidates after public background work, including failed work, but not unr
   expect(global.fetch).toHaveBeenCalledTimes(3);
 });
 
-it('does nothing when VPS revalidation is not configured', async () => {
+it('records a shared revision even when webhook delivery is not configured', async () => {
   global.fetch = jest.fn();
-  const { cache, jobs } = await service(false);
+  const { cache, jobs, prisma } = await service(false);
   await cache.invalidate();
   expect(global.fetch).not.toHaveBeenCalled();
   expect(jobs.enqueue).not.toHaveBeenCalled();
+  expect(prisma.siteSetting.upsert).toHaveBeenCalledTimes(1);
+});
+
+it('reads a shared revision without exposing other settings', async () => {
+  const { cache, prisma } = await service(false);
+  expect(await cache.revision()).toEqual({ revision: 'initial' });
+  prisma.siteSetting.findUnique.mockResolvedValue({ value: 'revision-two' });
+  expect(await cache.revision()).toEqual({ revision: 'revision-two' });
 });
 
 function context(
@@ -99,6 +117,33 @@ function context(
     switchToHttp: () => ({ getRequest: () => ({ method }) }),
   } as unknown as ExecutionContext;
 }
+
+it.each(['review', 'bulkReview'])(
+  'advances the shared revision after project %s approval',
+  async (handler) => {
+    const { cache, prisma } = await service(false);
+    const interceptor = await resolveService(PublicCacheInterceptor, [
+      { provide: PublicCacheService, useValue: cache },
+    ]);
+    prisma.siteSetting.upsert.mockImplementation(
+      (input: { update: { value: string } }) => {
+        prisma.siteSetting.findUnique.mockResolvedValue({
+          value: input.update.value,
+        });
+        return Promise.resolve({});
+      },
+    );
+    expect(await cache.revision()).toEqual({ revision: 'initial' });
+    const result = await lastValueFrom(
+      interceptor.intercept(
+        context('ProjectChangeReviewsController', 'POST', handler),
+        { handle: () => of('approved') },
+      ),
+    );
+    expect(result).toBe('approved');
+    expect((await cache.revision()).revision).not.toBe('initial');
+  },
+);
 
 it('expires public writes and partial failures while preserving values and errors', async () => {
   const cache = { invalidate: jest.fn().mockResolvedValue(undefined) };
@@ -146,23 +191,21 @@ it('expires public writes and partial failures while preserving values and error
   expect(cache.invalidate).toHaveBeenCalledTimes(10);
 });
 
-it('validates paired VPS settings and rejects malformed or short-secret targets', () => {
+it('validates an optional revalidation secret and the existing frontend origin', () => {
   const base = {
     DATABASE_URL: 'postgresql://localhost/test',
     FRONTEND_ORIGINS: 'http://localhost:3000',
   };
-  expect(validateEnvironment(base).publicCacheRevalidationUrl).toBeUndefined();
+  expect(
+    validateEnvironment(base).publicCacheRevalidationSecret,
+  ).toBeUndefined();
   const settings = {
     ...base,
-    PUBLIC_CACHE_REVALIDATION_URL: 'http://127.0.0.1:3000/api/revalidate',
     PUBLIC_CACHE_REVALIDATION_SECRET: secret,
   };
-  expect(validateEnvironment(settings).publicCacheRevalidationUrl).toBe(
-    settings.PUBLIC_CACHE_REVALIDATION_URL,
+  expect(validateEnvironment(settings).publicCacheRevalidationSecret).toBe(
+    secret,
   );
-  expect(() =>
-    validateEnvironment({ ...base, PUBLIC_CACHE_REVALIDATION_SECRET: secret }),
-  ).toThrow('configured together');
   expect(() =>
     validateEnvironment({
       ...settings,
@@ -172,10 +215,9 @@ it('validates paired VPS settings and rejects malformed or short-secret targets'
   expect(() =>
     validateEnvironment({
       ...settings,
-      PUBLIC_CACHE_REVALIDATION_URL:
-        'https://user:password@example.test/api/revalidate',
+      FRONTEND_ORIGINS: 'https://user:password@example.test',
     }),
-  ).toThrow('without credentials');
+  ).toThrow('FRONTEND_ORIGINS');
 });
 
 it('worker notifies settled listeners after a partially failed background handler', async () => {

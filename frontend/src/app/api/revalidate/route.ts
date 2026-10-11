@@ -1,6 +1,6 @@
 import { timingSafeEqual } from "node:crypto";
-import { revalidateTag } from "next/cache";
-import { getPublicCacheConfig } from "@/lib/public-cache";
+import { revalidatePath, revalidateTag } from "next/cache";
+import { getPublicCacheConfig } from "@/lib/cache-config.mjs";
 
 export async function POST(request: Request) {
   const secret = process.env.PUBLIC_CACHE_REVALIDATION_SECRET?.trim();
@@ -11,7 +11,10 @@ export async function POST(request: Request) {
     return new Response(null, { status: 401 });
   }
   const config = getPublicCacheConfig();
-  if (config.enabled) revalidateTag(config.tag, { expire: 0 });
+  if (config.enabled) {
+    revalidateTag(config.tag, { expire: 0 });
+    revalidatePath("/", "layout");
+  }
   return Response.json(
     { revalidated: config.enabled },
     { headers: { "Cache-Control": "no-store" } },

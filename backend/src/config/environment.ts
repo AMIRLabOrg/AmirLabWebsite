@@ -1,5 +1,4 @@
 export interface Environment {
-  publicCacheRevalidationUrl?: string;
   publicCacheRevalidationSecret?: string;
   databaseUrl: string;
   frontendOrigins: string[];
@@ -34,42 +33,16 @@ export interface Environment {
 export function validateEnvironment(
   source: Record<string, unknown>,
 ): Environment {
-  const publicCacheRevalidationUrl = optionalValue(
-    source.PUBLIC_CACHE_REVALIDATION_URL,
-  );
   const publicCacheRevalidationSecret = optionalValue(
     source.PUBLIC_CACHE_REVALIDATION_SECRET,
   );
   if (
-    Boolean(publicCacheRevalidationUrl) !==
-    Boolean(publicCacheRevalidationSecret)
+    publicCacheRevalidationSecret &&
+    publicCacheRevalidationSecret.length < 32
   ) {
     throw new Error(
-      'PUBLIC_CACHE_REVALIDATION_URL and PUBLIC_CACHE_REVALIDATION_SECRET must be configured together',
+      'PUBLIC_CACHE_REVALIDATION_SECRET must contain at least 32 characters',
     );
-  }
-  if (publicCacheRevalidationUrl) {
-    const url = new URL(publicCacheRevalidationUrl);
-    if (
-      !['http:', 'https:'].includes(url.protocol) ||
-      url.username ||
-      url.password ||
-      url.search ||
-      url.hash ||
-      url.pathname !== '/api/revalidate'
-    ) {
-      throw new Error(
-        'PUBLIC_CACHE_REVALIDATION_URL must be an HTTP(S) /api/revalidate endpoint without credentials, query or fragment',
-      );
-    }
-    if (
-      !publicCacheRevalidationSecret ||
-      publicCacheRevalidationSecret.length < 32
-    ) {
-      throw new Error(
-        'PUBLIC_CACHE_REVALIDATION_SECRET must contain at least 32 characters',
-      );
-    }
   }
   const databaseUrl = requiredString(source, 'DATABASE_URL');
   const frontendOrigins = requiredString(source, 'FRONTEND_ORIGINS')
@@ -105,6 +78,21 @@ export function validateEnvironment(
 
   if (frontendOrigins.length === 0) {
     throw new Error('FRONTEND_ORIGINS must include at least one origin');
+  }
+  if (publicCacheRevalidationSecret) {
+    const url = new URL(frontendOrigins[0]);
+    if (
+      !['http:', 'https:'].includes(url.protocol) ||
+      url.username ||
+      url.password ||
+      url.search ||
+      url.hash ||
+      url.pathname !== '/'
+    ) {
+      throw new Error(
+        'FRONTEND_ORIGINS must start with an HTTP(S) origin without credentials, path, query or fragment for cache revalidation',
+      );
+    }
   }
   if (smtpConfigured && (!smtpHost || !smtpUser || !smtpPassword)) {
     throw new Error(
@@ -164,7 +152,6 @@ export function validateEnvironment(
   }
 
   return {
-    publicCacheRevalidationUrl,
     publicCacheRevalidationSecret,
     databaseUrl,
     frontendOrigins,

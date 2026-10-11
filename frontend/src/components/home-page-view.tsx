@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { PageIntro } from "@/components/page-intro";
@@ -39,6 +40,7 @@ export function HomePageView({
   stats = EMPTY_STATS,
   universities = [],
   loading = false,
+  opportunities,
 }: {
   content?: HomeContent;
   research?: ResearchItem[];
@@ -46,6 +48,7 @@ export function HomePageView({
   stats?: PublicStats;
   universities?: University[];
   loading?: boolean;
+  opportunities?: ReactNode;
 }) {
   const researchRows: Array<ResearchItem | undefined> = loading
     ? Array.from({ length: 3 }, () => undefined)
@@ -161,20 +164,34 @@ export function HomePageView({
               {content.recruitmentBody}
             </p>
           </div>
-          <ButtonLink
-            className="m-0 max-[900px]:justify-self-start"
-            href="/open-positions"
-            variant="primary"
-          >
-            {loading
-              ? "Explore opportunities"
-              : positions.length
-                ? `View ${positions.length} open ${positions.length === 1 ? "role" : "roles"}`
-                : "Explore opportunities"}
-            <ArrowRight aria-hidden="true" size={18} />
-          </ButtonLink>
+          {opportunities ?? (
+            <HomeOpportunitiesLink loading={loading} positions={positions} />
+          )}
         </div>
       </section>
     </div>
+  );
+}
+
+export function HomeOpportunitiesLink({
+  loading = false,
+  positions = [],
+}: {
+  loading?: boolean;
+  positions?: Position[];
+}) {
+  return (
+    <ButtonLink
+      className="m-0 max-[900px]:justify-self-start"
+      href="/open-positions"
+      variant="primary"
+    >
+      {loading
+        ? "Explore opportunities"
+        : positions.length
+          ? `View ${positions.length} open ${positions.length === 1 ? "role" : "roles"}`
+          : "Explore opportunities"}
+      <ArrowRight aria-hidden="true" size={18} />
+    </ButtonLink>
   );
 }

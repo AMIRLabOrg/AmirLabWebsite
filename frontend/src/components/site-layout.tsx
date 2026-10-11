@@ -1,9 +1,8 @@
-"use client";
-
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { Suspense } from "react";
+import { cacheLife } from "next/cache";
 import type { ReactNode } from "react";
-import { SiteHeader } from "./site-header";
+import { SiteHeader, SiteHeaderView } from "./site-header";
 import { BrandLockup } from "./brand-mark";
 import {
   FrameBays,
@@ -17,17 +16,22 @@ const footerLink = "text-[.72rem] text-ink-muted hover:text-ink";
 const footerColumn = "grid justify-items-start gap-[.58rem] pt-[.62rem]";
 const siteEmail = process.env.NEXT_PUBLIC_SITE_EMAIL ?? "admin@example.test";
 
-export function SiteLayout({ children }: { children: ReactNode }) {
-  const pathname = usePathname();
-  const workspace = pathname.startsWith("/workspace");
-  const auth =
-    pathname.startsWith("/auth/") ||
-    ["/login", "/forgot-password", "/reset-password", "/revert-email"].includes(
-      pathname,
-    );
+export function SiteLayout({
+  children,
+  variant = "public",
+}: {
+  children: ReactNode;
+  variant?: "public" | "auth" | "workspace";
+}) {
+  const workspace = variant === "workspace";
+  const auth = variant === "auth";
   return (
     <div data-site={workspace ? undefined : "public"}>
-      {workspace || auth ? null : <SiteHeader />}
+      {workspace || auth ? null : (
+        <Suspense fallback={<SiteHeaderView />}>
+          <SiteHeader />
+        </Suspense>
+      )}
       {workspace ? (
         <main id="content">{children}</main>
       ) : (
@@ -43,7 +47,10 @@ export function SiteLayout({ children }: { children: ReactNode }) {
   );
 }
 
-function SiteFooter() {
+async function SiteFooter() {
+  "use cache";
+  cacheLife("hours");
+  const year = new Date().getFullYear();
   return (
     <footer className="relative">
       <FrameBays pattern="grid" />
@@ -126,8 +133,7 @@ function SiteFooter() {
           )}
         >
           <span>
-            © {new Date().getFullYear()} AmirLab · Non-profit academic research
-            consortium
+            © {year} AmirLab · Non-profit academic research consortium
           </span>
         </div>
       </div>

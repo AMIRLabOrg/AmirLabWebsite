@@ -9,6 +9,13 @@ export interface PaginatedResponse<T> {
   totalPages: number;
 }
 
+export interface PublicationResponse extends PaginatedResponse<ResearchItem> {
+  facets: {
+    categories: Array<{ count: number; label: string; value: string }>;
+    years: Array<{ count: number; value: number }>;
+  };
+}
+
 export interface NotificationRecord {
   id: string;
   type?: string;
