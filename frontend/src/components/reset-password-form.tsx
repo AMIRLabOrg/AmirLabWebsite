@@ -125,23 +125,6 @@ export function ResetPasswordForm() {
     );
   }
 
-  if (!token) {
-    return (
-      <div className="mt-8 grid gap-4">
-        <FormMessage>
-          This reset link is invalid or has expired. Request a new one.
-        </FormMessage>
-        <ButtonLink
-          className="justify-self-start"
-          href="/forgot-password"
-          variant="secondary"
-        >
-          Request a new link
-        </ButtonLink>
-      </div>
-    );
-  }
-
   if (complete) {
     return (
       <div className="mt-8 grid gap-4">
@@ -155,6 +138,23 @@ export function ResetPasswordForm() {
           variant="primary"
         >
           Log in
+        </ButtonLink>
+      </div>
+    );
+  }
+
+  if (!token) {
+    return (
+      <div className="mt-8 grid gap-4">
+        <FormMessage>
+          This reset link is invalid or has expired. Request a new one.
+        </FormMessage>
+        <ButtonLink
+          className="justify-self-start"
+          href="/forgot-password"
+          variant="secondary"
+        >
+          Request a new link
         </ButtonLink>
       </div>
     );
