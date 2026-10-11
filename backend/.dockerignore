@@ -4,6 +4,7 @@ node_modules
 dist
 coverage
 storage
+.postgres
 .env
 .env.*
 !.env.example
