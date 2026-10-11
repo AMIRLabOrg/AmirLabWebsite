@@ -75,8 +75,7 @@ jobs:
       run:
         working-directory: frontend
     env:
-      NEXT_PUBLIC_API_URL: https://api.example.test/api
-      NEXT_PUBLIC_SITE_URL: https://example.test
+      API_URL: https://api.example.test/api
       NEXT_PUBLIC_SITE_EMAIL: ci@example.test
     steps:
       - uses: actions/checkout@v4

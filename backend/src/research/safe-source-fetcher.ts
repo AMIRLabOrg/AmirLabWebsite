@@ -29,10 +29,9 @@ export class SafeSourceFetcher {
       const response = await fetch(url, {
         headers: {
           accept,
-          'user-agent': `AmirLab-Research-Linker/1.0 (+${this.config.get(
-            'publicSiteUrl',
-            { infer: true },
-          )})`,
+          'user-agent': `AmirLab-Research-Linker/1.0 (+${
+            this.config.get('frontendOrigins', { infer: true })[0]
+          })`,
         },
         redirect: 'manual',
         signal: AbortSignal.timeout(12_000),

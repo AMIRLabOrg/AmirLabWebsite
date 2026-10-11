@@ -5,6 +5,8 @@ import {
   NotFoundException,
   OnModuleInit,
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import type { Environment } from '../config/environment';
 import { createHash, randomUUID } from 'node:crypto';
 import {
   DocumentKind,
@@ -39,7 +41,9 @@ export const DEFAULT_APPROVER: Omit<ApproverSnapshot, 'signatureAssetId'> = {
 };
 
 export const DEFAULT_DOCUMENT_SITE: DocumentSiteSnapshot = {
-  url: process.env.PUBLIC_SITE_URL ?? 'http://localhost:3000',
+  url:
+    process.env.FRONTEND_ORIGINS?.split(',')[0]?.trim() ??
+    'http://localhost:3000',
   email: process.env.PUBLIC_SITE_EMAIL ?? 'admin@example.test',
   location: '',
 };
@@ -157,6 +161,7 @@ export class DocumentsService implements OnModuleInit {
     private readonly jobs: JobsService,
     private readonly mail: MailService,
     private readonly prisma: PrismaService,
+    private readonly config: ConfigService<Environment, true>,
   ) {}
 
   async onModuleInit(): Promise<void> {
@@ -821,7 +826,10 @@ export class DocumentsService implements OnModuleInit {
           value.siteLocation,
           DEFAULT_DOCUMENT_SITE.location,
         ),
-        siteUrl: stringValue(value.siteUrl, DEFAULT_DOCUMENT_SITE.url),
+        siteUrl: stringValue(
+          value.siteUrl,
+          this.config.get('frontendOrigins', { infer: true })[0],
+        ),
       },
       update: {},
     });

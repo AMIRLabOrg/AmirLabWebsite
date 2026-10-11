@@ -6,6 +6,25 @@ const baseEnvironment = {
 };
 
 describe('validateEnvironment', () => {
+  it('accepts production configuration without a separate public site URL', () => {
+    const config = validateEnvironment({
+      ...baseEnvironment,
+      FRONTEND_ORIGINS: 'https://amirlab.org,https://amirlab.vercel.app',
+      NODE_ENV: 'production',
+      UPLOAD_ROOT: '/var/lib/amirlab/uploads',
+      PUBLIC_SITE_EMAIL: 'info@amirlab.org',
+      SMTP_FROM: 'AMIR Lab <info@amirlab.org>',
+      SMTP_HOST: 'mail.smtp2go.com',
+      SMTP_PASSWORD: 'real-password',
+      SMTP_USER: 'real-user',
+    });
+    expect(config.frontendOrigins).toEqual([
+      'https://amirlab.org',
+      'https://amirlab.vercel.app',
+    ]);
+    expect(config).not.toHaveProperty('publicSiteUrl');
+  });
+
   it('keeps SMTP credentials as separate typed settings', () => {
     expect(
       validateEnvironment({
@@ -43,7 +62,6 @@ describe('validateEnvironment', () => {
       validateEnvironment({
         ...baseEnvironment,
         NODE_ENV: 'production',
-        PUBLIC_SITE_URL: 'https://example.org',
         PUBLIC_SITE_EMAIL: 'admin@example.org',
         SMTP_FROM: 'AMIR Lab <noreply@example.org>',
         SMTP_HOST: 'mail.smtp2go.com',
@@ -59,7 +77,6 @@ describe('validateEnvironment', () => {
         ...baseEnvironment,
         NODE_ENV: 'production',
         UPLOAD_ROOT: '/var/lib/amirlab/uploads',
-        PUBLIC_SITE_URL: 'https://example.org',
         PUBLIC_SITE_EMAIL: 'admin@example.org',
         SMTP_FROM: 'AMIR Lab <noreply@example.org>',
         SMTP_HOST: 'mail.smtp2go.com',
@@ -75,7 +92,6 @@ describe('validateEnvironment', () => {
         ...baseEnvironment,
         NODE_ENV: 'production',
         UPLOAD_ROOT: '/var/lib/amirlab/uploads',
-        PUBLIC_SITE_URL: 'https://example.org',
         PUBLIC_SITE_EMAIL: 'admin@example.org',
         SMTP_HOST: 'smtp.example.net',
         SMTP_PASSWORD: 'real-password',

@@ -1,11 +1,13 @@
 import type { NextConfig } from "next";
 
-const apiUrl = new URL(
-  process.env.NEXT_PUBLIC_API_URL?.trim() || "http://localhost:3001/api",
-);
+const configuredApiUrl =
+  process.env.API_URL?.trim() || "http://localhost:3001/api";
+const apiUrl = new URL(configuredApiUrl);
 const apiPath = apiUrl.pathname.replace(/\/+$/, "");
 
 const nextConfig: NextConfig = {
+  // The API address is public and must also be embedded in browser code.
+  env: { API_URL: configuredApiUrl },
   cacheComponents: true,
   cacheHandler: require.resolve("./cache-handlers/route.mjs"),
   cacheHandlers: { default: require.resolve("./cache-handlers/native.mjs") },

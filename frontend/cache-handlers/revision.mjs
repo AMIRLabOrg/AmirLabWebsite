@@ -19,9 +19,8 @@ export function refreshRevision() {
     return Promise.resolve(true);
   if (pending) return pending;
   pending = (async () => {
-    const api = process.env.NEXT_PUBLIC_API_URL?.replace(/\/+$/, "");
-    if (!api)
-      throw new Error("NEXT_PUBLIC_API_URL is required for cache freshness");
+    const api = process.env.API_URL?.replace(/\/+$/, "");
+    if (!api) throw new Error("API_URL is required for cache freshness");
     // Cache infrastructure must bypass Next's instrumented application fetch:
     // entering that fetch from a cache lookup can recursively wait on itself.
     const url = new URL(`${api}/public-cache/revision`);

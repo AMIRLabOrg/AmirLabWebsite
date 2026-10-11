@@ -101,7 +101,8 @@ or invitation tokens; those are generated only by the corresponding live flow.
 
 ## 4. Build
 
-`NEXT_PUBLIC_API_URL` is embedded into the browser bundle at build time. Build
+`API_URL` is explicitly embedded into the browser bundle at build time through
+Next.js configuration. It is a public address, despite having no `NEXT_PUBLIC_` prefix. Build
 and start the API first, then build the web app. This ordering also prevents
 machines with limited memory from compiling both applications at once.
 
@@ -112,7 +113,7 @@ sudo install -o root -g root -m 0644 backend/deploy/amirl-api.service /etc/syste
 sudo systemctl daemon-reload
 sudo systemctl enable --now amirl-api.service
 curl --fail http://127.0.0.1:3001/api/health
-sudo -u amirl env NEXT_PUBLIC_API_URL=https://api.amirl.org/api pnpm --dir /opt/amirl/frontend run build
+sudo -u amirl env API_URL=https://api.amirl.org/api pnpm --dir /opt/amirl/frontend run build
 ```
 
 ## 5. Enable systemd and Caddy
@@ -152,7 +153,7 @@ sudo -u amirl --preserve-env=DATABASE_URL,UPLOAD_ROOT pnpm --dir /opt/amirl/back
 sudo -u amirl pnpm --dir /opt/amirl/backend run build
 sudo systemctl restart amirl-api
 curl --fail http://127.0.0.1:3001/api/health
-sudo -u amirl env NEXT_PUBLIC_API_URL=https://api.amirl.org/api pnpm --dir /opt/amirl/frontend run build
+sudo -u amirl env API_URL=https://api.amirl.org/api pnpm --dir /opt/amirl/frontend run build
 sudo systemctl restart amirl-web
 ```
 

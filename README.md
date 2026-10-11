@@ -141,8 +141,8 @@ The Fly release command applies the Prisma schema and seeds an empty database
 from the supplied `ADMIN_*` and SMTP environment values. The machine entrypoint
 starts the API after release succeeds. Do not create a Fly Postgres app. Deploy
 the frontend separately to Vercel with Root Directory `frontend` and
-`NEXT_PUBLIC_API_URL=https://<your-fly-app>.fly.dev/api`. Set `DATABASE_URL`, `FRONTEND_ORIGINS`,
-`PUBLIC_SITE_URL`, `PUBLIC_SITE_EMAIL`, the `SMTP_*` values, and `ADMIN_EMAIL`,
+`API_URL=https://<your-fly-app>.fly.dev/api`. Set `DATABASE_URL`, `FRONTEND_ORIGINS`,
+`PUBLIC_SITE_EMAIL`, the `SMTP_*` values, and `ADMIN_EMAIL`,
 `ADMIN_NAME`, and `ADMIN_PASSWORD` as Fly secrets; add `STORAGE_*` secrets when
 using object storage. Do not put credentials in `fly.toml`, an env file
 committed to the repository, or a Docker build argument. The API volume is

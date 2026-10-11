@@ -13,7 +13,7 @@ existing skeletons, styles, animations, schema, auth and editor UX are preserved
 | `PUBLIC_CACHE_NAMESPACE` | `amirlab-public-v1` | Cache isolation/version, validated 1–100 character identifier. |
 
 Keep build/start settings consistent; rebuild/restart when changing them. Existing
-`NEXT_PUBLIC_API_URL` must point to the deployment's API. No new service or cache
+`API_URL` (embedded into the browser bundle by Next.js configuration) must point to the deployment's API. No new service or cache
 credentials are needed for revision checks. Optional webhook delivery uses the
 first existing `FRONTEND_ORIGINS` entry plus the fixed `/api/revalidate` path;
 no separate revalidation URL is configured:

@@ -2,7 +2,6 @@ export interface Environment {
   publicCacheRevalidationSecret?: string;
   databaseUrl: string;
   frontendOrigins: string[];
-  publicSiteUrl: string;
   publicSiteEmail: string;
   storageProvider: 'local' | 's3';
   storageBucket?: string;
@@ -63,10 +62,6 @@ export function validateEnvironment(
   const storageSecretAccessKey = optionalValue(
     source.STORAGE_SECRET_ACCESS_KEY,
   );
-  const publicSiteUrl = optionalString(
-    source.PUBLIC_SITE_URL,
-    'http://localhost:3000',
-  );
   const publicSiteEmail = optionalString(
     source.PUBLIC_SITE_EMAIL,
     'admin@example.test',
@@ -119,9 +114,6 @@ export function validateEnvironment(
       'STORAGE_BUCKET, STORAGE_ACCESS_KEY_ID, and STORAGE_SECRET_ACCESS_KEY are required for s3 storage',
     );
   }
-  if (nodeEnv === 'production' && !source.PUBLIC_SITE_URL) {
-    throw new Error('PUBLIC_SITE_URL is required in production');
-  }
   if (nodeEnv === 'production' && !source.PUBLIC_SITE_EMAIL) {
     throw new Error('PUBLIC_SITE_EMAIL is required in production');
   }
@@ -146,16 +138,13 @@ export function validateEnvironment(
         storageSecretAccessKey,
         'STORAGE_SECRET_ACCESS_KEY',
       );
-    rejectProductionPlaceholder(publicSiteUrl, 'PUBLIC_SITE_URL');
     rejectProductionPlaceholder(publicSiteEmail, 'PUBLIC_SITE_EMAIL');
-    validatePublicSiteUrl(publicSiteUrl);
   }
 
   return {
     publicCacheRevalidationSecret,
     databaseUrl,
     frontendOrigins,
-    publicSiteUrl,
     publicSiteEmail,
     storageProvider: storageProvider as Environment['storageProvider'],
     storageBucket,
@@ -197,23 +186,6 @@ export function validateEnvironment(
     vapidPrivateKey: optionalValue(source.VAPID_PRIVATE_KEY),
     vapidSubject: optionalValue(source.VAPID_SUBJECT),
   };
-}
-
-function validatePublicSiteUrl(value: string): void {
-  let url: URL;
-  try {
-    url = new URL(value);
-  } catch {
-    throw new Error('PUBLIC_SITE_URL must be a valid URL');
-  }
-  if (url.protocol !== 'https:') {
-    throw new Error('PUBLIC_SITE_URL must use HTTPS in production');
-  }
-  if (url.username || url.password || url.search || url.hash) {
-    throw new Error(
-      'PUBLIC_SITE_URL cannot contain credentials, a query, or a fragment',
-    );
-  }
 }
 
 function requiredString(source: Record<string, unknown>, key: string): string {

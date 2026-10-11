@@ -106,7 +106,9 @@ We look forward to your contribution to AmirLab's research activities and to the
   signerTitle: 'Founder & Research Director',
   signerEmail: 'firoz.mridha@aiub.edu',
   signerPhone: '+8801674791594',
-  siteUrl: process.env.PUBLIC_SITE_URL ?? 'http://localhost:3000',
+  siteUrl:
+    process.env.FRONTEND_ORIGINS?.split(',')[0]?.trim() ??
+    'http://localhost:3000',
   siteEmail: process.env.PUBLIC_SITE_EMAIL ?? 'admin@example.test',
   siteLocation: '',
 };
@@ -250,7 +252,7 @@ export class SettingsService {
   private defaultTemplate(): AppointmentLetterTemplate {
     return {
       ...DEFAULT_APPOINTMENT_LETTER_TEMPLATE,
-      siteUrl: this.config.get('publicSiteUrl', { infer: true }),
+      siteUrl: this.config.get('frontendOrigins', { infer: true })[0],
       siteEmail: this.config.get('publicSiteEmail', { infer: true }),
     };
   }

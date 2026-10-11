@@ -71,7 +71,7 @@ const secret = "fixture-only-".repeat(4);
 const env = {
   ...process.env,
   NEXT_TELEMETRY_DISABLED: "1",
-  NEXT_PUBLIC_API_URL: api,
+  API_URL: api,
   PUBLIC_CACHE_ENABLED: "true",
   PUBLIC_CACHE_TTL_SECONDS: "17",
   PUBLIC_CACHE_NAMESPACE: "fixture-v1",
