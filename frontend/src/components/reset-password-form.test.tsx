@@ -39,9 +39,7 @@ it("shows success after clearing the consumed reset token", async () => {
   fireEvent.change(screen.getByLabelText("Confirm password"), {
     target: { value: "new-test-password" },
   });
-  fireEvent.submit(
-    screen.getByRole("button", { name: "Reset password" }).closest("form")!,
-  );
+  fireEvent.click(screen.getByRole("button", { name: "Reset password" }));
 
   expect(
     await screen.findByText(/Your password has been changed/),
