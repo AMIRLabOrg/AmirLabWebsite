@@ -12,6 +12,10 @@ vi.mock("@/lib/client-api", async (importOriginal) => {
   return { ...original, apiRequest: vi.fn() };
 });
 
+const pwa = vi.hoisted(() => ({
+  registration: null as ServiceWorkerRegistration | null,
+}));
+vi.mock("./pwa-provider", () => ({ usePwa: () => pwa }));
 const request = vi.mocked(apiRequest);
 
 function AuthState() {
@@ -28,6 +32,8 @@ describe("AuthProvider", () => {
 
   afterEach(() => {
     cleanup();
+    pwa.registration = null;
+    vi.unstubAllGlobals();
     vi.useRealTimers();
   });
 
@@ -115,5 +121,100 @@ describe("AuthProvider", () => {
     await act(async () => Promise.resolve());
     expect(screen.getByText("guest")).toBeTruthy();
     expect(request).toHaveBeenCalledTimes(1);
+  });
+  it("relinks an opted-in browser subscription when a new session loads", async () => {
+    const subscription = {
+      options: {},
+      toJSON: () => ({
+        endpoint: "https://fcm.googleapis.com/fcm/send/test",
+        keys: { p256dh: "key", auth: "auth" },
+      }),
+    };
+    const worker = {
+      pushManager: { getSubscription: async () => subscription },
+    };
+    pwa.registration = worker as unknown as ServiceWorkerRegistration;
+    vi.stubGlobal("PushManager", class {});
+    vi.stubGlobal("Notification", {
+      permission: "granted",
+      requestPermission: () => {
+        throw new Error("Must not prompt during session loading");
+      },
+    });
+    Object.defineProperty(navigator, "serviceWorker", {
+      configurable: true,
+      value: {
+        getRegistration: async () => worker,
+        ready: Promise.resolve(worker),
+      },
+    });
+    request.mockImplementation(async (path) => {
+      if (path === "/auth/me")
+        return {
+          csrfToken: "new-csrf",
+          user: { id: "user-1", email: "member@amirlab.org" },
+        };
+      if (path === "/collaboration/push/public-key") return { publicKey: "YQ" };
+      return {};
+    });
+    render(
+      <AuthProvider>
+        <AuthState />
+      </AuthProvider>,
+    );
+    await act(async () => Promise.resolve());
+    expect(request).toHaveBeenCalledWith(
+      "/collaboration/push/subscription",
+      expect.objectContaining({
+        method: "POST",
+        body: JSON.stringify(subscription.toJSON()),
+      }),
+    );
+  });
+  it("relinks an opted-in browser when focus discovers a new session for the same account", async () => {
+    const subscription = {
+      options: {},
+      toJSON: () => ({
+        endpoint: "https://fcm.googleapis.com/fcm/send/test",
+        keys: { p256dh: "key", auth: "auth" },
+      }),
+    };
+    const worker = {
+      pushManager: { getSubscription: async () => subscription },
+    };
+    pwa.registration = worker as unknown as ServiceWorkerRegistration;
+    vi.stubGlobal("PushManager", class {});
+    vi.stubGlobal("Notification", { permission: "granted" });
+    Object.defineProperty(navigator, "serviceWorker", {
+      configurable: true,
+      value: {
+        getRegistration: async () => worker,
+        ready: Promise.resolve(worker),
+      },
+    });
+    let csrfToken = "first-session";
+    request.mockImplementation(async (path) =>
+      path === "/auth/me"
+        ? {
+            csrfToken,
+            user: { id: "same-account", email: "member@amirlab.org" },
+          }
+        : path === "/collaboration/push/public-key"
+          ? { publicKey: "YQ" }
+          : {},
+    );
+    render(
+      <AuthProvider>
+        <AuthState />
+      </AuthProvider>,
+    );
+    await act(async () => Promise.resolve());
+    request.mockClear();
+    csrfToken = "second-session";
+    await act(async () => window.dispatchEvent(new Event("focus")));
+    expect(request).toHaveBeenCalledWith(
+      "/collaboration/push/subscription",
+      expect.objectContaining({ method: "POST" }),
+    );
   });
 });

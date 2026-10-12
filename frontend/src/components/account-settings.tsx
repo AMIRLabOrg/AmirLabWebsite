@@ -184,9 +184,17 @@ export function AccountSettings() {
       setPushBusy(false);
     }
   }
-  const rows: (AccountSession | undefined)[] = loading
+  const groups: AccountSession[][] = [];
+  for (const session of sessions) {
+    const group = session.userAgent
+      ? groups.find(([first]) => first.userAgent === session.userAgent)
+      : undefined;
+    if (group) group.push(session);
+    else groups.push([session]);
+  }
+  const rows: (AccountSession[] | undefined)[] = loading
     ? [undefined, undefined]
-    : sessions;
+    : groups;
   return (
     <WorkspaceSurface measure="form">
       <WorkspaceHero
@@ -196,9 +204,10 @@ export function AccountSettings() {
       />
       <WorkspacePanel
         title="Signed-in devices"
-        description="Browser and device names are approximate. Signing out a device removes its workspace access."
+        description="Matching reported browsers and devices are grouped across domains and networks. Groups are approximate and may include different profiles or devices. Expand a group to manage each login."
         action={
           <ButtonControl
+            className="whitespace-nowrap"
             variant="danger"
             disabled={
               loading ||
@@ -233,58 +242,97 @@ export function AccountSettings() {
           </div>
         ) : null}
         <div aria-busy={loading}>
-          {rows.map((session, index) => (
-            <div
-              key={session?.id ?? index}
-              className="grid gap-3 border-b border-line p-4 last:border-b-0 sm:grid-cols-[minmax(0,1fr)_auto]"
-            >
-              <div className="grid min-w-0 gap-2">
-                <div className="flex flex-wrap items-center gap-2">
-                  <h3
-                    className={`text-sm font-medium ${loadingPlaceholder(!session, "label", "long")}`}
+          {rows.map((group, index) => {
+            const session = group?.find((item) => item.current) ?? group?.[0];
+            const similar =
+              group?.filter((item) => item.id !== session?.id) ?? [];
+            return (
+              <div
+                key={session?.id ?? index}
+                className="grid gap-3 border-b border-line p-4 last:border-b-0 sm:grid-cols-[minmax(0,1fr)_auto]"
+              >
+                <div className="grid min-w-0 gap-2">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <h3
+                      className={`text-sm font-medium ${loadingPlaceholder(!session, "label", "long")}`}
+                    >
+                      {session ? deviceLabel(session.userAgent) : "Device name"}
+                    </h3>
+                    {session?.current ? (
+                      <SemanticStatus tone="info">This session</SemanticStatus>
+                    ) : null}
+                  </div>
+                  <p
+                    className={`text-xs text-ink-muted ${loadingPlaceholder(!session, "label", "long")}`}
                   >
-                    {session ? deviceLabel(session.userAgent) : "Device name"}
-                  </h3>
-                  {session?.current ? (
-                    <SemanticStatus tone="info">This session</SemanticStatus>
+                    {session
+                      ? `Last active ${date(session.lastSeenAt)}`
+                      : "Last active date"}
+                  </p>
+                  <p
+                    className={`break-words text-xs text-ink-muted ${loadingPlaceholder(!session, "label", "long")}`}
+                  >
+                    {session
+                      ? `Signed in ${date(session.createdAt)} · Expires ${date(session.expiresAt)}${session.ipAddress ? ` · IP ${session.ipAddress}` : ""}`
+                      : "Session details"}
+                  </p>
+                  {similar.length ? (
+                    <details className="text-xs">
+                      <summary className="cursor-pointer text-ink-muted">
+                        {group!.length} similar sessions
+                      </summary>
+                      <p className="my-2 text-ink-muted">
+                        Same reported browser and device; these may be different
+                        profiles, devices, or domains.
+                      </p>
+                      {similar.map((item) => (
+                        <div
+                          key={item.id}
+                          className="grid gap-2 border-t border-line py-2 sm:grid-cols-[minmax(0,1fr)_auto]"
+                        >
+                          <p>
+                            Signed in {date(item.createdAt)} · Last active{" "}
+                            {date(item.lastSeenAt)}
+                            {item.ipAddress ? ` · IP ${item.ipAddress}` : ""}
+                          </p>
+                          <ButtonControl
+                            variant="danger-ghost"
+                            disabled={busy !== null}
+                            loading={busy === item.id}
+                            onClick={() => void revoke(item)}
+                          >
+                            Sign out
+                          </ButtonControl>
+                          {errors[item.id] ? (
+                            <span role="alert">{errors[item.id]}</span>
+                          ) : null}
+                        </div>
+                      ))}
+                    </details>
+                  ) : null}
+                  {session && errors[session.id] ? (
+                    <span role="alert">
+                      <SemanticStatus tone="error">
+                        {errors[session.id]}
+                      </SemanticStatus>
+                    </span>
                   ) : null}
                 </div>
-                <p
-                  className={`text-xs text-ink-muted ${loadingPlaceholder(!session, "label", "long")}`}
-                >
-                  {session
-                    ? `Last active ${date(session.lastSeenAt)}`
-                    : "Last active date"}
-                </p>
-                <p
-                  className={`break-words text-xs text-ink-muted ${loadingPlaceholder(!session, "label", "long")}`}
-                >
-                  {session
-                    ? `Signed in ${date(session.createdAt)} · Expires ${date(session.expiresAt)}${session.ipAddress ? ` · IP ${session.ipAddress}` : ""}`
-                    : "Session details"}
-                </p>
-                {session && errors[session.id] ? (
-                  <span role="alert">
-                    <SemanticStatus tone="error">
-                      {errors[session.id]}
-                    </SemanticStatus>
-                  </span>
+                {!session || !session.current ? (
+                  <ButtonControl
+                    variant="danger-ghost"
+                    loading={!session || busy === session.id}
+                    disabled={busy !== null}
+                    onClick={() => {
+                      if (session) void revoke(session);
+                    }}
+                  >
+                    Sign out
+                  </ButtonControl>
                 ) : null}
               </div>
-              {!session || !session.current ? (
-                <ButtonControl
-                  variant="danger-ghost"
-                  loading={!session || busy === session.id}
-                  disabled={busy !== null}
-                  onClick={() => {
-                    if (session) void revoke(session);
-                  }}
-                >
-                  Sign out
-                </ButtonControl>
-              ) : null}
-            </div>
-          ))}
+            );
+          })}
         </div>
         {!loading && !loadError && sessions.length === 0 ? (
           <p className="p-4 text-sm text-ink-muted">

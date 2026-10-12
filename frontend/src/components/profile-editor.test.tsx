@@ -1,4 +1,11 @@
-import { cleanup, render, screen, waitFor } from "@testing-library/react";
+import {
+  act,
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { ProfileEditor } from "./profile-editor";
 import { useAuth } from "@/components/auth-provider";
@@ -111,9 +118,9 @@ describe("ProfileEditor staff profiles", () => {
     render(<ProfileEditor userId="user-1" />);
 
     await waitFor(() =>
-      expect(
-        (screen.getByLabelText("Email") as HTMLInputElement).value,
-      ).toBe("moderator@amirlab.org"),
+      expect((screen.getByLabelText("Email") as HTMLInputElement).value).toBe(
+        "moderator@amirlab.org",
+      ),
     );
     expect(screen.getByLabelText("Permission role")).toBeTruthy();
   });
@@ -145,9 +152,9 @@ describe("ProfileEditor staff profiles", () => {
       expect(
         (screen.getByLabelText("Staff title") as HTMLInputElement).value,
       ).toBe("Operations Lead");
-      expect(
-        (screen.getByLabelText("Phone") as HTMLInputElement).value,
-      ).toBe("+250 700 000 000");
+      expect((screen.getByLabelText("Phone") as HTMLInputElement).value).toBe(
+        "+250 700 000 000",
+      );
       expect(
         (screen.getByLabelText("Contact address") as HTMLTextAreaElement).value,
       ).toBe("AMIRLab, Kigali");
@@ -160,6 +167,53 @@ describe("ProfileEditor staff profiles", () => {
       expect(screen.queryByText("Research rank")).toBeNull();
       expect(screen.queryByText("Live preview")).toBeNull();
       expect(screen.queryByText("Completeness")).toBeNull();
+    },
+  );
+});
+
+describe("ProfileEditor auth reconciliation", () => {
+  afterEach(cleanup);
+
+  it.each([false, true])(
+    "preserves an unsaved section after the same account refreshes (filled=%s)",
+    async (filled) => {
+      const user = {
+        email: "member@amirlab.org",
+        id: "member-1",
+        person: null,
+        role: "MEMBER" as const,
+        status: "ACTIVE" as const,
+      };
+      const state = {
+        loading: false,
+        logout: vi.fn(async () => {}),
+        refreshUser: vi.fn(async () => null),
+        user,
+      };
+      auth.mockReturnValue(state);
+      notifications.mockReturnValue({ ...notifications(), showToast: vi.fn() });
+      request.mockReset();
+      request.mockResolvedValue(profile("MEMBER"));
+      const view = render(<ProfileEditor />);
+      await waitFor(() =>
+        expect(
+          (screen.getByLabelText("Full name") as HTMLInputElement).value,
+        ).toBe("Staff Member"),
+      );
+      fireEvent.click(screen.getByRole("button", { name: "Add section" }));
+      if (filled)
+        fireEvent.change(
+          screen
+            .getByText("Section title")
+            .parentElement!.querySelector("input")!,
+          { target: { value: "My research" } },
+        );
+      auth.mockReturnValue({ ...state, user: { ...user } });
+      await act(async () => view.rerender(<ProfileEditor />));
+      expect(
+        screen.getByRole("button", { name: "Remove section 1" }),
+      ).toBeTruthy();
+      if (filled) expect(screen.getByDisplayValue("My research")).toBeTruthy();
     },
   );
 });

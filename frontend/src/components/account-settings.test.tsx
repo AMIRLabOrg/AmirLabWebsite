@@ -1,6 +1,7 @@
 import {
   cleanup,
   fireEvent,
+  within,
   render,
   screen,
   waitFor,
@@ -114,4 +115,34 @@ it("explains how to link an unbound browser subscription when no test is queued"
   await screen.findByText(
     "No notification was sent. Enable notifications to link this browser to your current session, then try again.",
   );
+});
+
+it("groups matching browser sessions across different IPs and keeps each login revocable", async () => {
+  vi.mocked(apiRequest).mockResolvedValueOnce([
+    sessions[0],
+    {
+      ...sessions[0],
+      id: "duplicate",
+      current: false,
+      ipAddress: "203.0.113.10",
+    },
+    sessions[1],
+  ]);
+  render(<AccountSettings />);
+  await screen.findByText("This session");
+  expect(
+    screen.getAllByRole("heading", { name: "Chrome · Unknown device" }),
+  ).toHaveLength(1);
+  const summary = screen.getByText("2 similar sessions");
+  fireEvent.click(summary);
+  const details = summary.closest("details")!;
+  vi.mocked(apiRequest).mockResolvedValueOnce({ revoked: true });
+  fireEvent.click(within(details).getByRole("button", { name: "Sign out" }));
+  await waitFor(() =>
+    expect(screen.queryByText("2 similar sessions")).toBeNull(),
+  );
+  expect(apiRequest).toHaveBeenCalledWith("/auth/sessions/duplicate", {
+    method: "DELETE",
+  });
+  expect(screen.getByText("This session")).toBeTruthy();
 });

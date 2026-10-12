@@ -91,7 +91,7 @@ export function WorkspacePanel({
   return (
     <section className="relative min-w-0 border border-line-strong bg-surface">
       <header className="flex items-start justify-between gap-[1.2rem] border-b border-line px-4 py-[.9rem] max-[640px]:flex-col max-[640px]:p-[.8rem]">
-        <div>
+        <div className="min-w-0 flex-1">
           {eyebrow ? (
             <p className="mb-[.42rem] font-mono text-[.61rem] font-semibold tracking-[.11em] text-brand uppercase">
               {eyebrow}
@@ -106,7 +106,7 @@ export function WorkspacePanel({
             </p>
           ) : null}
         </div>
-        {action ? <div>{action}</div> : null}
+        {action ? <div className="max-w-full shrink-0">{action}</div> : null}
       </header>
       {children}
     </section>

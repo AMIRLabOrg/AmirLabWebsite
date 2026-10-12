@@ -9,6 +9,8 @@ import {
   type ReactNode,
 } from "react";
 import { ApiRequestError, apiRequest } from "@/lib/client-api";
+import { usePwa } from "./pwa-provider";
+import { enableBrowserPush } from "@/lib/browser-push";
 import { setSessionEnded } from "@/lib/session-notice";
 import type { AuthenticatedUser } from "@/lib/types";
 
@@ -50,13 +52,23 @@ function isUnauthorized(error: unknown): boolean {
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
+  const { registration } = usePwa();
   const [user, setUser] = useState<AuthenticatedUser | null>(null);
   const [loading, setLoading] = useState(true);
+  const [sessionVersion, setSessionVersion] = useState<string>();
+
+  const userId = user?.id;
+  useEffect(() => {
+    if (!userId || !registration) return;
+    // Rebind an existing opt-in after login without asking for permission again.
+    void enableBrowserPush(true).catch(() => {});
+  }, [registration, userId, sessionVersion]);
 
   const refreshUser = useCallback(async () => {
     try {
       const session = await fetchAuthSession();
       rememberCsrfToken(session);
+      setSessionVersion(session.csrfToken);
       setUser(session.user);
       return session.user;
     } catch (caught) {
@@ -91,6 +103,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         .then((session) => {
           if (!active) return;
           rememberCsrfToken(session);
+          setSessionVersion(session.csrfToken);
           setUser(session.user);
           setLoading(false);
         })

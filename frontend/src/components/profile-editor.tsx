@@ -127,6 +127,7 @@ export function ProfileEditor({ userId }: ProfileEditorProps) {
   const [editRole, setEditRole] = useState("MEMBER");
   const [editRank, setEditRank] = useState("NONE");
   const [editEmail, setEditEmail] = useState("");
+  const signedInUserId = user?.id;
   const accountRole = userId ? editRole : (user?.role ?? "MEMBER");
   const moderatorProfile = accountRole === "MODERATOR";
   const adminProfile = accountRole === "ADMIN";
@@ -147,10 +148,12 @@ export function ProfileEditor({ userId }: ProfileEditorProps) {
   );
 
   useEffect(() => {
-    if (!userId && (authLoading || !user)) return;
+    if (!userId && (authLoading || !signedInUserId)) return;
+    let active = true;
     const endpoint = userId ? `/users/${userId}/profile` : "/profile/me";
     void apiRequest<MyProfile>(endpoint, { method: "GET" })
       .then((result) => {
+        if (!active) return;
         const current = result.profile;
         const latest =
           !userId &&
@@ -199,13 +202,19 @@ export function ProfileEditor({ userId }: ProfileEditorProps) {
         setRemoveAvatar(latest.removeAvatar);
         setLoadError(undefined);
       })
-      .catch((error: unknown) =>
-        setLoadError(
-          error instanceof Error ? error.message : "Unable to load profile.",
-        ),
-      )
-      .finally(() => setLoading(false));
-  }, [authLoading, user, userId]);
+      .catch((error: unknown) => {
+        if (active)
+          setLoadError(
+            error instanceof Error ? error.message : "Unable to load profile.",
+          );
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, [authLoading, signedInUserId, userId]);
 
   useEffect(() => {
     if (!userId) return;

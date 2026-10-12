@@ -7,13 +7,22 @@ export function pushSupported() {
     "Notification" in window
   );
 }
-export async function enableBrowserPush() {
+export async function enableBrowserPush(existingOnly = false) {
+  if (
+    existingOnly &&
+    (!pushSupported() || Notification.permission !== "granted")
+  )
+    return null;
   if (!pushSupported())
     throw new Error(
       "This browser does not support push. On iPhone or iPad, add AmirLab to your Home Screen first.",
     );
+  if (existingOnly) {
+    const worker = await navigator.serviceWorker.getRegistration("/");
+    if (!worker || !(await worker.pushManager.getSubscription())) return null;
+  }
   // Ask during the user's click, before network requests can lose user activation.
-  if ((await Notification.requestPermission()) !== "granted")
+  if (!existingOnly && (await Notification.requestPermission()) !== "granted")
     throw new Error(
       "Notifications are blocked. Allow them in your browser settings and try again.",
     );
@@ -31,13 +40,34 @@ export async function enableBrowserPush() {
   const registration = await navigator.serviceWorker.ready;
   const binary = atob(publicKey.replace(/-/g, "+").replace(/_/g, "/"));
   const key = Uint8Array.from(binary, (character) => character.charCodeAt(0));
-  const existing = await registration.pushManager.getSubscription();
+  let existing = await registration.pushManager.getSubscription();
+  const existingKey = existing?.options?.applicationServerKey;
+  if (
+    existing &&
+    existingKey &&
+    (existingKey.byteLength !== key.byteLength ||
+      new Uint8Array(existingKey).some((byte, index) => byte !== key[index]))
+  ) {
+    if (!(await existing.unsubscribe()))
+      throw new Error(
+        "Could not replace the old notification subscription. Try again.",
+      );
+    existing = null;
+  }
   const subscription =
     existing ??
-    (await registration.pushManager.subscribe({
-      userVisibleOnly: true,
-      applicationServerKey: key,
-    }));
+    (await registration.pushManager
+      .subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: key,
+      })
+      .catch((error: unknown) => {
+        if (error instanceof DOMException && error.name === "AbortError")
+          throw new Error(
+            "The browser could not connect to its push service. In Brave, check Use Google services for push messaging in Settings → Privacy and security, then try again.",
+          );
+        throw error;
+      }));
   try {
     await apiRequest("/collaboration/push/subscription", {
       method: "POST",

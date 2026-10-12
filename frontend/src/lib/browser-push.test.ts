@@ -109,14 +109,12 @@ it("explains how to replace a subscription retained from another account", async
   });
   const worker = {
     pushManager: {
-      getSubscription: vi
-        .fn()
-        .mockResolvedValue({
-          toJSON: () => ({
-            endpoint: "https://push.test",
-            keys: { auth: "auth", p256dh: "key" },
-          }),
+      getSubscription: vi.fn().mockResolvedValue({
+        toJSON: () => ({
+          endpoint: "https://push.test",
+          keys: { auth: "auth", p256dh: "key" },
         }),
+      }),
     },
   };
   Object.defineProperty(navigator, "serviceWorker", {
@@ -132,4 +130,45 @@ it("explains how to replace a subscription retained from another account", async
   await expect(enableBrowserPush()).rejects.toThrow(
     "This browser is linked to another account. Disable notifications, then enable them again for this account.",
   );
+});
+
+it("replaces a subscription created with a rotated VAPID key", async () => {
+  vi.stubGlobal("PushManager", class {});
+  vi.stubGlobal("Notification", {
+    requestPermission: vi.fn().mockResolvedValue("granted"),
+  });
+  let removed = false;
+  const stale = {
+    options: { applicationServerKey: Uint8Array.of(98).buffer },
+    unsubscribe: async () => {
+      removed = true;
+      return true;
+    },
+  };
+  const fresh = {
+    toJSON: () => ({
+      endpoint: "https://push.test/new",
+      keys: { auth: "auth", p256dh: "key" },
+    }),
+  };
+  const worker = {
+    pushManager: {
+      getSubscription: async () => stale,
+      subscribe: async () => {
+        if (!removed) throw new Error("Old subscription still exists");
+        return fresh;
+      },
+    },
+  };
+  Object.defineProperty(navigator, "serviceWorker", {
+    configurable: true,
+    value: {
+      ready: Promise.resolve(worker),
+      getRegistration: async () => worker,
+    },
+  });
+  vi.mocked(apiRequest)
+    .mockResolvedValueOnce({ publicKey: "YQ" })
+    .mockResolvedValueOnce({});
+  await expect(enableBrowserPush()).resolves.toBe(fresh);
 });

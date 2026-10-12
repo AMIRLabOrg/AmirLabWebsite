@@ -119,6 +119,57 @@ Two additional commands are available only in the backend package:
 | `pnpm --dir backend run db:seed:if-empty` | Skips seeding if any users exist; otherwise runs the same guarded import as `db:seed`. Requires the administrator environment values even when the import is skipped. Used for deployment bootstrap. |
 | `pnpm --dir backend run db:migrate:profile-entry-labels` | Converts legacy profile subsection entries into separate entry records. Already included in `db:push`; normally does not need to be run separately. |
 
+## Local backup and recovery testing
+
+The admin **Settings → Backup & restore** panel saves a local backup directory,
+interval in minutes, and schedule toggle without a redeploy. It also creates
+manual backups and restores a selected backup after typing `RESTORE`. The API
+must be running for scheduled backups; it checks the schedule every minute.
+
+This implementation deliberately supports **loopback PostgreSQL, local uploads,
+and development/test environments only**. Remote databases and production are
+refused. Destinations support local directories, S3-compatible storage and SFTP;
+remote delivery and restore still need a live test with actual credentials.
+
+Archives contain a PostgreSQL custom-format dump, uploads, and SHA-256 file
+checksums. The list checks archive integrity before offering restore; an
+integrity check does not prove recovery. Backups are kept until you remove them
+manually. Stop other database/upload writes during a local recovery test.
+`pg_dump`, `pg_restore`, and PostgreSQL must be installed and compatible.
+
+Safety snapshots are labeled separately and excluded from the default regular backup selection.
+A restore replaces local data and creates a safety backup first. If the process
+is interrupted, the API refuses to start while `<upload-directory>.restore-pending.json`
+exists. That file names the safety backup and backup directory. Complete recovery
+with the command below before restarting; do not simply delete the marker.
+
+If the database is cleared, its accounts and settings disappear too. Recover
+without signing in using an explicit local URL, backup directory, backup ID,
+and upload directory. This command **never loads `.env`**:
+
+```bash
+DATABASE_URL=postgresql://USER:PASSWORD@127.0.0.1:5433/DATABASE \
+  pnpm --dir backend backup:restore:local \
+  /absolute/backup/directory BACKUP_UUID /absolute/upload/directory \
+  --replace-local-data
+```
+
+The archive must name the same database as the target URL. To run the destructive
+verification script, first initialize a dedicated local database named
+`amirl_backup_verification` with `prisma db push`, then run:
+
+```bash
+DATABASE_URL=postgresql://USER:PASSWORD@127.0.0.1:5433/amirl_backup_verification \
+  pnpm --dir backend exec tsx scripts/verify-local-backups.ts
+```
+
+The script refuses other database names and hosts, captures real backups, tests
+the schedule and corruption handling, clears that database's schema, proves an
+application query fails, restores through the recovery command, and compares
+records and upload bytes. Test archives and the verification report remain in
+its printed temporary directory. It does not clear the normal development or
+hosted databases.
+
 ## Deploy to a VPS
 
 For Hostinger VPS deployment on Ubuntu, follow the production runbook in
@@ -200,3 +251,25 @@ pnpm run verify:production
 ```
 
 Engineering and repository rules are in [`RULES.md`](RULES.md).
+
+### Backup destination presets
+
+The admin backup panel offers **Same server / local directory**, **S3-compatible storage**, and **SFTP server**. Changing a preset changes its fields and disables the schedule until you save it. Settings are stored in the database and take effect without a redeploy. Sources remain restricted to local PostgreSQL and local uploads in development/test; selecting a remote destination does not enable production database backup.
+
+For S3, supply bucket, region, access key ID and secret access key. Leave the endpoint empty for AWS, or supply an HTTPS endpoint and the path-style setting required by your S3-compatible service. A prefix is optional. The account needs bucket listing and object read/write permissions for that prefix. For SFTP, supply host, port, username, an absolute remote directory and a **verified SSH public host key** from the server administrator. Authentication accepts a dedicated unencrypted private key or a password. OpenSSH `sftp` must be installed. Host-key verification remains strict; plain FTP is unsupported. See the [OpenSSH SFTP manual](https://man.openbsd.org/sftp.1) for transport requirements.
+
+Saved remote credentials are encrypted with AES-256-GCM. The random mode-0600 encryption key is `${UPLOAD_ROOT}.backup-key`, beside uploads and excluded from backup snapshots. Retain this file securely when moving the API; if it is lost, re-enter all remote credentials. Status responses never return credentials. Blank credential inputs preserve saved values only for the same provider and authentication method. Use a manual backup before enabling a remote schedule.
+
+Remote listings show **Integrity unchecked** because listing downloads manifests rather than complete archives. Restore downloads and checks every declared file and PostgreSQL archive before replacing local data. A manifest is published last; incomplete transfers are not recovery points. Failed transfers may leave unindexed files at the destination, which the operator can remove. Backup retention and remote lifecycle deletion are not automatic.
+
+When local database settings/authentication tables are missing, remote recovery accepts an operator-owned private configuration file (mode 0600):
+
+```sh
+DATABASE_URL='postgresql://user:password@127.0.0.1:5433/local_test' \
+  pnpm --dir backend backup:restore:local --storage-config /private/storage.json \
+  <backup-id> /absolute/uploads --replace-local-data
+```
+
+The JSON uses the admin settings names, plus credentials. For example an S3 file contains `provider`, `bucket`, `region`, optional `endpoint`, `prefix`, `forcePathStyle`, `accessKeyId`, `secretAccessKey`, `enabled: false`, and `intervalMinutes: 60`. An SFTP file contains `provider`, `host`, `port`, `username`, `remoteDirectory`, `hostKey`, `authentication`, the matching `privateKey` or `password`, and the same schedule fields. Never commit this file. Stop the API and other writers before recovery. The old local-directory command still works, and the CLI never loads `.env` or permits production/remote database targets.
+
+Provider contract tests cover streaming, pagination, publication order, path validation, SSH command quoting and credential cleanup. Live S3 and SFTP delivery/restore require actual credentials and an endpoint and must be verified before relying on them.

@@ -1,29 +1,39 @@
-import { Controller, Get } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  ParseUUIDPipe,
+  Post,
+  Put,
+} from '@nestjs/common';
 import { PlatformRole } from '../../generated/prisma/client';
 import { RequireRole } from '../auth/auth.decorators';
-
-/** Provider-independent contract; capture and restore stay unavailable until storage is selected. */
-export interface BackupStatus {
-  configured: boolean;
-  provider: string | null;
-  canBackup: boolean;
-  canRestore: boolean;
-  lastBackup: { id: string; createdAt: string; verified: boolean } | null;
-  reason: 'STORAGE_NOT_CONFIGURED' | null;
-}
+import { BackupSettingsDto } from './backups.dto';
+import { BackupsService } from './backups.service';
 
 @Controller('backups')
 @RequireRole(PlatformRole.ADMIN)
 export class BackupsController {
+  constructor(private readonly backups: BackupsService) {}
+
   @Get('status')
-  status(): BackupStatus {
-    return {
-      configured: false,
-      provider: null,
-      canBackup: false,
-      canRestore: false,
-      lastBackup: null,
-      reason: 'STORAGE_NOT_CONFIGURED',
-    };
+  status() {
+    return this.backups.status();
+  }
+
+  @Put('settings')
+  configure(@Body() body: BackupSettingsDto) {
+    return this.backups.configure(body);
+  }
+
+  @Post()
+  capture() {
+    return this.backups.capture();
+  }
+
+  @Post(':id/restore')
+  restore(@Param('id', new ParseUUIDPipe({ version: '4' })) id: string) {
+    return this.backups.restore(id);
   }
 }

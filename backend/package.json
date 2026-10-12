@@ -41,7 +41,8 @@
     "typecheck": "prisma generate && tsc --noEmit -p tsconfig.json",
     "verify:production": "pnpm run typecheck && pnpm run lint && pnpm run verify:safety && pnpm run test --runInBand && pnpm run verify:api-boundary && pnpm run verify:recovery-research && pnpm run build",
     "verify:safety": "tsx scripts/verify-production-safety.ts",
-    "test:migrations": "node --test test/research-system-accounts.migration.test.mjs"
+    "test:migrations": "node --test test/research-system-accounts.migration.test.mjs",
+    "backup:restore:local": "tsx scripts/restore-local-backup.ts"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1140.0",
