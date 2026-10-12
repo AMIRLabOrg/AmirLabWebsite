@@ -9,6 +9,8 @@ import {
   validateSnapshot,
   type BackupStorage,
   type BackupSettings,
+  type SftpBackupSettings,
+  validateSettings,
   type BackupSecrets,
   type Snapshot,
 } from './backup-storage';
@@ -53,18 +55,27 @@ async function executeSftp(
   });
 }
 export class SftpBackupStorage implements BackupStorage {
+  private readonly settings: SftpBackupSettings;
   constructor(
-    private readonly settings: BackupSettings,
+    settings: BackupSettings,
     private readonly secrets: BackupSecrets,
     private readonly execute = executeSftp,
-  ) {}
+  ) {
+    const validated = validateSettings({
+      ...settings,
+      provider: settings.provider ?? 'sftp',
+    });
+    if (validated.provider !== 'sftp')
+      throw new BadRequestException('SFTP backup settings required.');
+    this.settings = validated;
+  }
   private path(id: string, file = '') {
-    return posix.join(this.settings.remoteDirectory!, id, file);
+    return posix.join(this.settings.remoteDirectory, id, file);
   }
   private async run(script: string) {
     const folder = await mkdtemp(join(tmpdir(), 'amirlab-sftp-'));
     try {
-      const host = this.settings.host!;
+      const host = this.settings.host;
       const port = this.settings.port ?? 22;
       const pin = port === 22 ? host : `[${host}]:${port}`;
       const known = join(folder, 'known_hosts');
@@ -106,7 +117,10 @@ export class SftpBackupStorage implements BackupStorage {
         );
       } else {
         const key = join(folder, 'identity');
-        await writeFile(key, this.secrets.privateKey!, { mode: 0o600 });
+        const privateKey = this.secrets.privateKey;
+        if (!privateKey)
+          throw new BadRequestException('SFTP private key required.');
+        await writeFile(key, privateKey, { mode: 0o600 });
         args.push('-i', key);
         options.push(
           'BatchMode=yes',
@@ -130,14 +144,14 @@ export class SftpBackupStorage implements BackupStorage {
   async list() {
     const parents: string[] = [];
     let current = '';
-    for (const part of this.settings
-      .remoteDirectory!.split('/')
+    for (const part of this.settings.remoteDirectory
+      .split('/')
       .filter(Boolean)) {
       current += `/${part}`;
       parents.push(`@-mkdir ${quoteSftp(current)}`);
     }
     const output = await this.run(
-      [...parents, `@ls -1 ${quoteSftp(this.settings.remoteDirectory!)}`].join(
+      [...parents, `@ls -1 ${quoteSftp(this.settings.remoteDirectory)}`].join(
         '\n',
       ) + '\n',
     );

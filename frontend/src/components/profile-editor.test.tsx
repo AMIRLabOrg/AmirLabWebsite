@@ -201,13 +201,13 @@ describe("ProfileEditor auth reconciliation", () => {
         ).toBe("Staff Member"),
       );
       fireEvent.click(screen.getByRole("button", { name: "Add section" }));
-      if (filled)
-        fireEvent.change(
-          screen
-            .getByText("Section title")
-            .parentElement!.querySelector("input")!,
-          { target: { value: "My research" } },
-        );
+      if (filled) {
+        const titleInput = screen
+          .getByText("Section title")
+          .parentElement?.querySelector("input");
+        if (!titleInput) throw new Error("Section title input missing");
+        fireEvent.change(titleInput, { target: { value: "My research" } });
+      }
       auth.mockReturnValue({ ...state, user: { ...user } });
       await act(async () => view.rerender(<ProfileEditor />));
       expect(

@@ -174,7 +174,10 @@ describe('Remote backup settings', () => {
       storageProvider: 'local',
       uploadRoot: join(root, 'uploads'),
     });
-    const backup = new BackupsService(config as never, prisma as never);
+    const backup = await resolveService(BackupsService, [
+      { provide: ConfigService, useValue: config },
+      { provide: PrismaService, useValue: prisma },
+    ]);
     try {
       const input = {
         provider: 's3' as const,
@@ -209,6 +212,11 @@ describe('Remote backup settings', () => {
       expect(capture).not.toHaveBeenCalled();
       await backup.runScheduled(new Date('2026-10-12T01:00:00Z'));
       expect(capture).toHaveBeenCalledWith('scheduled');
+      value = { ...status.settings, credentials: null };
+      expect((await backup.status()).reason).toBe('STORAGE_UNAVAILABLE');
+      await expect(backup.configure(input)).resolves.toMatchObject({
+        configured: true,
+      });
       list.mockRejectedValue(new Error('private error'));
       expect((await backup.status()).reason).toBe('STORAGE_UNAVAILABLE');
     } finally {
@@ -229,7 +237,10 @@ it('preserves a truncated marker when the first upload rename fails', async () =
     storageProvider: 'local',
     uploadRoot: uploads,
   });
-  const backup = new BackupsService(config as never, {} as PrismaService);
+  const backup = await resolveService(BackupsService, [
+    { provide: ConfigService, useValue: config },
+    { provide: PrismaService, useValue: {} },
+  ]);
   // A vanished live upload directory reproduces the first-rename failure without touching a database.
   const internals = backup as unknown as {
     verifySnapshot: () => Promise<void>;

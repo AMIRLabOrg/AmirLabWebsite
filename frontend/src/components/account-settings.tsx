@@ -279,7 +279,7 @@ export function AccountSettings() {
                   {similar.length ? (
                     <details className="text-xs">
                       <summary className="cursor-pointer text-ink-muted">
-                        {group!.length} similar sessions
+                        {similar.length + 1} similar sessions
                       </summary>
                       <p className="my-2 text-ink-muted">
                         Same reported browser and device; these may be different

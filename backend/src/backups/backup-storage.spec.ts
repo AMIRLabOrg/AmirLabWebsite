@@ -41,7 +41,7 @@ describe('Backup trust boundaries', () => {
     ).toThrow('verification');
     expect(() =>
       validateSettings({
-        provider: 'ftp' as never,
+        provider: 'ftp',
         enabled: false,
         intervalMinutes: 60,
       }),
@@ -79,3 +79,9 @@ it('rejects non-string manifest dates before status sorting', () => {
     'verification',
   );
 });
+it.each([null, [], 'not settings'])(
+  'rejects malformed stored settings at the boundary: %p',
+  (value) => {
+    expect(() => validateSettings(value)).toThrow('Invalid backup settings');
+  },
+);

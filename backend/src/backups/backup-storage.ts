@@ -18,6 +18,29 @@ export interface BackupSettings {
   hostKey?: string;
   authentication?: 'privateKey' | 'password';
 }
+export type LocalBackupSettings = BackupSettings & {
+  provider: 'local';
+  directory: string;
+};
+export type S3BackupSettings = BackupSettings & {
+  provider: 's3';
+  bucket: string;
+  region: string;
+  endpoint: string;
+  prefix: string;
+  forcePathStyle: boolean;
+};
+export type SftpBackupSettings = BackupSettings & {
+  provider: 'sftp';
+  host: string;
+  port: number;
+  username: string;
+  remoteDirectory: string;
+  hostKey: string;
+  authentication: 'privateKey' | 'password';
+};
+export type ValidatedBackupSettings =
+  LocalBackupSettings | S3BackupSettings | SftpBackupSettings;
 export interface BackupSecrets {
   accessKeyId?: string;
   secretAccessKey?: string;
@@ -77,7 +100,10 @@ export function validateSnapshot(value: unknown, id: string): Snapshot {
     );
   return s;
 }
-export function validateSettings(input: BackupSettings): BackupSettings {
+export function validateSettings(value: unknown): ValidatedBackupSettings {
+  if (!value || typeof value !== 'object' || Array.isArray(value))
+    throw new BadRequestException('Invalid backup settings.');
+  const input = value as BackupSettings;
   const provider = input.provider ?? 'local';
   if (
     !['local', 's3', 'sftp'].includes(provider) ||
@@ -103,7 +129,11 @@ export function validateSettings(input: BackupSettings): BackupSettings {
     return value;
   };
   if (provider === 'local')
-    return { ...shared, directory: text(input.directory, 'directory') };
+    return {
+      ...shared,
+      provider: 'local',
+      directory: text(input.directory, 'directory'),
+    };
   if (provider === 's3') {
     const endpoint = input.endpoint || '';
     if (endpoint) {
@@ -144,6 +174,7 @@ export function validateSettings(input: BackupSettings): BackupSettings {
       throw new BadRequestException('Invalid S3 bucket.');
     return {
       ...shared,
+      provider: 's3',
       bucket,
       region: text(input.region || 'us-east-1', 'region'),
       endpoint,
@@ -151,6 +182,9 @@ export function validateSettings(input: BackupSettings): BackupSettings {
       forcePathStyle: input.forcePathStyle ?? false,
     };
   }
+  const authentication = input.authentication;
+  if (authentication !== 'password' && authentication !== 'privateKey')
+    throw new BadRequestException('Invalid SFTP authentication.');
   const host = text(input.host, 'host');
   const username = text(input.username, 'username');
   const remoteDirectory = text(input.remoteDirectory, 'remote directory');
@@ -175,11 +209,12 @@ export function validateSettings(input: BackupSettings): BackupSettings {
     );
   return {
     ...shared,
+    provider: 'sftp',
     host,
     username,
     remoteDirectory: remoteDirectory.replace(/\/+$/, ''),
     hostKey,
     port: input.port ?? 22,
-    authentication: input.authentication,
+    authentication,
   };
 }
