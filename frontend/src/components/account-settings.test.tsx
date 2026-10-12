@@ -135,7 +135,8 @@ it("groups matching browser sessions across different IPs and keeps each login r
   ).toHaveLength(1);
   const summary = screen.getByText("2 similar sessions");
   fireEvent.click(summary);
-  const details = summary.closest("details")!;
+  const details = summary.closest("details");
+  if (!details) throw new Error("Session group disclosure missing");
   vi.mocked(apiRequest).mockResolvedValueOnce({ revoked: true });
   fireEvent.click(within(details).getByRole("button", { name: "Sign out" }));
   await waitFor(() =>

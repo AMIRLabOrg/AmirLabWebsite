@@ -13,7 +13,7 @@ vi.mock("@/lib/client-api", async (importOriginal) => {
 });
 
 const pwa = vi.hoisted(() => ({
-  registration: null as ServiceWorkerRegistration | null,
+  registration: null as object | null,
 }));
 vi.mock("./pwa-provider", () => ({ usePwa: () => pwa }));
 const request = vi.mocked(apiRequest);
@@ -133,7 +133,7 @@ describe("AuthProvider", () => {
     const worker = {
       pushManager: { getSubscription: async () => subscription },
     };
-    pwa.registration = worker as unknown as ServiceWorkerRegistration;
+    pwa.registration = worker;
     vi.stubGlobal("PushManager", class {});
     vi.stubGlobal("Notification", {
       permission: "granted",
@@ -182,7 +182,7 @@ describe("AuthProvider", () => {
     const worker = {
       pushManager: { getSubscription: async () => subscription },
     };
-    pwa.registration = worker as unknown as ServiceWorkerRegistration;
+    pwa.registration = worker;
     vi.stubGlobal("PushManager", class {});
     vi.stubGlobal("Notification", { permission: "granted" });
     Object.defineProperty(navigator, "serviceWorker", {

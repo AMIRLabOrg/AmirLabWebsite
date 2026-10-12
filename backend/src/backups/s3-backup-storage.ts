@@ -15,31 +15,45 @@ import {
   validateSnapshot,
   type BackupStorage,
   type BackupSettings,
+  type S3BackupSettings,
+  validateSettings,
   type BackupSecrets,
   type Snapshot,
 } from './backup-storage';
 export class S3BackupStorage implements BackupStorage {
   private readonly client: S3Client;
+  private readonly settings: S3BackupSettings;
   constructor(
-    private readonly settings: BackupSettings,
+    settings: BackupSettings,
     clientOrSecrets: S3Client | BackupSecrets,
   ) {
-    this.client =
-      'send' in clientOrSecrets
-        ? clientOrSecrets
-        : new S3Client({
-            region: settings.region,
-            endpoint: settings.endpoint || undefined,
-            forcePathStyle: settings.forcePathStyle,
-            credentials: {
-              accessKeyId: clientOrSecrets.accessKeyId!,
-              secretAccessKey: clientOrSecrets.secretAccessKey!,
-            },
-            requestHandler: {
-              requestTimeout: 300_000,
-              connectionTimeout: 15_000,
-            },
-          });
+    const validated = validateSettings({
+      ...settings,
+      provider: settings.provider ?? 's3',
+    });
+    if (validated.provider !== 's3')
+      throw new BadRequestException('S3 backup settings required.');
+    this.settings = validated;
+    if ('send' in clientOrSecrets) {
+      this.client = clientOrSecrets;
+      return;
+    }
+    const { accessKeyId, secretAccessKey } = clientOrSecrets;
+    if (!accessKeyId || !secretAccessKey)
+      throw new BadRequestException('S3 backup credentials required.');
+    this.client = new S3Client({
+      region: this.settings.region,
+      endpoint: this.settings.endpoint || undefined,
+      forcePathStyle: this.settings.forcePathStyle,
+      credentials: {
+        accessKeyId: accessKeyId,
+        secretAccessKey: secretAccessKey,
+      },
+      requestHandler: {
+        requestTimeout: 300_000,
+        connectionTimeout: 15_000,
+      },
+    });
   }
   close() {
     this.client.destroy?.();

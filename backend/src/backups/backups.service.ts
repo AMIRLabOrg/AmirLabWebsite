@@ -31,6 +31,7 @@ import {
   BACKUP_UUID as UUID,
   validateSettings,
   type BackupSettings,
+  type ValidatedBackupSettings,
   type BackupStorage,
   type BackupSecrets,
   type Snapshot,
@@ -43,9 +44,9 @@ import {
 import { LocalBackupStorage } from './local-backup-storage';
 import { S3BackupStorage } from './s3-backup-storage';
 import { SftpBackupStorage } from './sftp-backup-storage';
-interface StoredSettings extends BackupSettings {
+type StoredSettings = ValidatedBackupSettings & {
   credentials?: EncryptedSecrets;
-}
+};
 
 const execute = promisify(execFile);
 const KEY = 'backups.local';
@@ -111,7 +112,35 @@ export class BackupsService implements OnModuleInit, OnModuleDestroy {
     const row = await this.prisma.siteSetting.findUnique({
       where: { key: KEY },
     });
-    return row ? (row.value as unknown as StoredSettings) : null;
+    if (!row) return null;
+    const settings = validateSettings(row.value);
+    if (
+      row.value &&
+      typeof row.value === 'object' &&
+      !Array.isArray(row.value) &&
+      'credentials' in row.value &&
+      row.value.credentials !== undefined
+    ) {
+      const encrypted = row.value.credentials;
+      if (
+        !encrypted ||
+        typeof encrypted !== 'object' ||
+        Array.isArray(encrypted) ||
+        typeof encrypted.iv !== 'string' ||
+        typeof encrypted.tag !== 'string' ||
+        typeof encrypted.ciphertext !== 'string'
+      )
+        return settings; // Missing credentials can be repaired by re-entering them.
+      return {
+        ...settings,
+        credentials: {
+          iv: encrypted.iv,
+          tag: encrypted.tag,
+          ciphertext: encrypted.ciphertext,
+        },
+      };
+    }
+    return settings;
   }
 
   private credentials() {
@@ -124,8 +153,8 @@ export class BackupsService implements OnModuleInit, OnModuleDestroy {
     settings: StoredSettings,
     explicitSecrets?: BackupSecrets,
   ): Promise<BackupStorage> {
-    if (!settings.provider || settings.provider === 'local')
-      return new LocalBackupStorage(settings.directory!);
+    if (settings.provider === 'local')
+      return new LocalBackupStorage(settings.directory);
     const secrets =
       explicitSecrets ??
       (settings.credentials
@@ -158,7 +187,7 @@ export class BackupsService implements OnModuleInit, OnModuleDestroy {
     try {
       const value: StoredSettings = validateSettings(input);
       if (value.provider === 'local')
-        value.directory = await this.storageDirectory(value.directory!);
+        value.directory = await this.storageDirectory(value.directory);
       else {
         await mkdir(resolve(this.config.get('uploadRoot', { infer: true })), {
           recursive: true,
@@ -236,11 +265,11 @@ export class BackupsService implements OnModuleInit, OnModuleDestroy {
         storage = await this.storage(settings);
         for (const snapshot of await storage.list()) {
           let verified: boolean | null = null;
-          if (!settings.provider || settings.provider === 'local') {
+          if (settings.provider === 'local') {
             verified = false;
             try {
               await this.verifySnapshot(
-                join(settings.directory!, snapshot.id),
+                join(settings.directory, snapshot.id),
                 snapshot,
               );
               verified = true;
@@ -261,13 +290,12 @@ export class BackupsService implements OnModuleInit, OnModuleDestroy {
         storage?.close?.();
       }
     }
-    const publicSettings = { ...settings };
-    delete publicSettings.credentials;
+    const publicSettings = settings ? validateSettings(settings) : null;
     backups.sort((a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt));
     return {
       configured: !!settings,
       provider: settings ? (settings.provider ?? 'local') : null,
-      settings: settings ? (publicSettings as BackupSettings) : null,
+      settings: publicSettings,
       canBackup: supported && !!settings && !unavailable && !this.busy,
       canRestore:
         supported &&
@@ -425,6 +453,7 @@ export class BackupsService implements OnModuleInit, OnModuleDestroy {
       ? validateSettings(remote)
       : directory
         ? {
+            provider: 'local',
             directory: await this.storageDirectory(directory),
             enabled: false,
             intervalMinutes: 60,

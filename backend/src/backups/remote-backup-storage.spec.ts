@@ -1,3 +1,4 @@
+import { S3Client } from '@aws-sdk/client-s3';
 import { mkdtemp, mkdir, writeFile, readFile, rm } from 'node:fs/promises';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
@@ -5,6 +6,13 @@ import { Readable } from 'node:stream';
 import { S3BackupStorage } from './s3-backup-storage';
 import { SftpBackupStorage, quoteSftp } from './sftp-backup-storage';
 import { LocalBackupStorage } from './local-backup-storage';
+function mockedClient(send: unknown) {
+  if (typeof send !== 'function')
+    throw new Error('Expected a mocked SDK send function.');
+  const client = new S3Client({ region: 'us-east-1' });
+  Object.defineProperty(client, 'send', { value: send });
+  return client;
+}
 const id = 'aaaaaaaa-aaaa-4aaa-aaaa-aaaaaaaaaaaa';
 const snapshot = {
   version: 1 as const,
@@ -61,7 +69,7 @@ describe('Backup storage publication and downloads', () => {
         bucket: 'bucket',
         prefix: 'prefix',
       },
-      { send } as never,
+      mockedClient(send),
     );
     expect(await storage.list()).toEqual([snapshot]);
     const calls = send.mock.calls as unknown as [
@@ -83,9 +91,7 @@ describe('Backup storage publication and downloads', () => {
     );
     const storage = new S3BackupStorage(
       { enabled: false, intervalMinutes: 60, bucket: 'bucket' },
-      {
-        send,
-      } as never,
+      mockedClient(send),
     );
     await storage.save(snapshot, join(root, 'source'));
     expect(keys).toEqual([
@@ -101,7 +107,7 @@ describe('Backup storage publication and downloads', () => {
     await expect(
       new S3BackupStorage(
         { enabled: false, intervalMinutes: 60, bucket: 'bucket' },
-        { send } as never,
+        mockedClient(send),
       ).save(snapshot, join(root, 'source')),
     ).rejects.toThrow('S3');
     expect(send).toHaveBeenCalledTimes(1);
@@ -118,7 +124,7 @@ describe('Backup storage publication and downloads', () => {
     await expect(
       new S3BackupStorage(
         { enabled: false, intervalMinutes: 60, bucket: 'bucket' },
-        { send } as never,
+        mockedClient(send),
       ).load(id, join(root, 'loaded')),
     ).rejects.toThrow('verification');
     expect(send).toHaveBeenCalledTimes(1);
