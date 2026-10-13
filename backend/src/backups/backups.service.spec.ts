@@ -174,6 +174,7 @@ describe('Remote backup settings', () => {
       nodeEnv: 'test',
       storageProvider: 'local',
       uploadRoot: join(root, 'uploads'),
+      encryptionKey: 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=',
     });
     const backup = await resolveService(BackupsService, [
       { provide: ConfigService, useValue: config },
