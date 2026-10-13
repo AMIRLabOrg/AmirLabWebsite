@@ -1,16 +1,10 @@
-import { createHash } from 'node:crypto';
-import { mkdir, readFile, rm, writeFile } from 'node:fs/promises';
-import { basename, dirname, resolve } from 'node:path';
-import sharp from 'sharp';
+import { mkdir, rm } from 'node:fs/promises';
 import {
   AcademicRank,
   AccountStatus,
-  AssetAccess,
-  AssetKind,
   ContributorMatchSource,
   ContributorMatchStatus,
   DepartmentRole,
-  DocumentKind,
   EngagementType,
   PlatformRole,
   ProfileReviewStatus,
@@ -20,44 +14,31 @@ import {
   ProjectStatus,
   ResearchItemType,
   ReviewStatus,
-  Prisma,
 } from '../generated/prisma/client';
 import { hashPassword } from '../src/auth/password';
-import {
-  DEFAULT_DOCUMENT_SITE,
-  DEFAULT_DOCUMENT_TEMPLATES,
-} from '../src/documents/documents.service';
 import { createCliPrisma } from './prisma';
-import { seedAdminCredentials } from './seed-credentials';
 import {
-  type AmirSeedData,
-  type SeedPaper,
-  type SeedUniversity,
+  createAvatarAsset,
+  createUniversityLogoAsset,
+  ensureOpenAlexArtifacts,
+  enumValue,
+  getAdminCredentials,
+  openAlexLinkFor,
+  paperSlug,
+  peopleStorageRoot,
+  required,
+  seedDocuments,
+  seedSiteSettings,
+  signatureStorageRoot,
+  stableSlug,
+  watermarkStorageRoot,
+} from './seed-writers';
+import {
   firstKnownContributorSourceIdForSeed,
   missingSeedAvatarFiles,
   missingSeedUniversityLogoFiles,
   readSeedData,
-  seedAssetRoot,
-  universitySeedAssetRoot,
 } from './seed-data';
-
-const uploadRoot = resolve(process.env.UPLOAD_ROOT ?? './storage');
-const peopleStorageRoot = resolve(uploadRoot, 'peoples');
-const signatureStorageRoot = resolve(uploadRoot, 'document-signatures');
-const watermarkStorageRoot = resolve(uploadRoot, 'document-watermarks');
-const signatureSeedPath = resolve(
-  process.cwd(),
-  'src/applications/brand/signature.svg',
-);
-const watermarkSeedPath = resolve(
-  process.cwd(),
-  'src/applications/brand/Logo-high-res.png',
-);
-const {
-  email: adminEmail,
-  fullName: adminName,
-  password: adminPassword,
-} = seedAdminCredentials();
 
 export async function rebuildDatabase() {
   const data = await readSeedData();
@@ -86,6 +67,12 @@ export async function rebuildDatabase() {
         'Database is not empty. Use `pnpm run db:rebuild` for a destructive rebuild, or reset the schema before running `pnpm run db:seed`.',
       );
     }
+
+    const {
+      email: adminEmail,
+      fullName: adminName,
+      password: adminPassword,
+    } = getAdminCredentials();
 
     await rm(peopleStorageRoot, { recursive: true, force: true });
     await rm(signatureStorageRoot, { recursive: true, force: true });
@@ -182,34 +169,9 @@ export async function rebuildDatabase() {
         },
       });
 
-      const openAlexLink = person.openAlexAuthorId
-        ? {
-            label: 'OpenAlex',
-            sortOrder:
-              Math.max(-1, ...person.links.map((link) => link.sortOrder)) + 1,
-            type: 'OPENALEX' as const,
-            url: `https://openalex.org/authors/${person.openAlexAuthorId}`,
-          }
-        : null;
-      if (person.openAlexAuthorId && openAlexLink) {
-        await prisma.personLink.create({
-          data: {
-            label: openAlexLink.label,
-            personId: created.id,
-            sortOrder: openAlexLink.sortOrder,
-            type: openAlexLink.type,
-            url: openAlexLink.url,
-          },
-        });
-        await prisma.openAlexProfile.create({
-          data: {
-            authorId: person.openAlexAuthorId,
-            bindingVersion: 1,
-            nextAttemptAt: new Date(),
-            personId: created.id,
-            status: 'QUEUED',
-          },
-        });
+      const openAlexLink = openAlexLinkFor(person);
+      if (openAlexLink) {
+        await ensureOpenAlexArtifacts(prisma, created.id, person);
       }
 
       await prisma.profileEditRequest.create({
@@ -467,285 +429,11 @@ export async function rebuildDatabase() {
   }
 }
 
-async function createUniversityLogoAsset(
-  prisma: ReturnType<typeof createCliPrisma>,
-  university: SeedUniversity,
-  createdById: string,
-): Promise<string> {
-  const sourcePath = resolve(
-    universitySeedAssetRoot,
-    university.logoSourceFile,
-  );
-  const source = await readFile(sourcePath);
-  const image = await sharp(source)
-    .rotate()
-    .resize({ height: 80, withoutEnlargement: true })
-    .png({ quality: 90 })
-    .toBuffer({ resolveWithObject: true });
-  const checksum = createHash('sha256').update(image.data).digest('hex');
-  const storageKey = `university-logos/${university.slug}-${checksum.slice(0, 12)}.png`;
-  const target = resolve(uploadRoot, storageKey);
-  await mkdir(dirname(target), { recursive: true });
-  await writeFile(target, image.data, { flag: 'wx' });
-  const asset = await prisma.asset.create({
-    data: {
-      access: AssetAccess.PUBLIC,
-      byteSize: image.data.length,
-      checksum,
-      createdById,
-      height: image.info.height,
-      kind: AssetKind.UNIVERSITY_LOGO,
-      mimeType: 'image/png',
-      originalName: basename(university.logoSourceFile),
-      storageKey,
-      width: image.info.width,
-    },
-  });
-  return asset.id;
-}
-
-async function seedDocuments(
-  prisma: ReturnType<typeof createCliPrisma>,
-  createdById: string,
-  approverPersonId: string | null,
-): Promise<void> {
-  const signatureAssetId = await createApprovalSignatureAsset(
-    prisma,
-    createdById,
-  );
-  const watermarkAssetId = await createDocumentWatermarkAsset(
-    prisma,
-    createdById,
-  );
-  const templates = [];
-  for (const template of DEFAULT_DOCUMENT_TEMPLATES) {
-    templates.push(
-      await prisma.documentTemplate.create({
-        data: {
-          ...template,
-          createdById,
-          updatedById: createdById,
-        },
-      }),
-    );
-  }
-  await prisma.documentSettings.create({
-    data: {
-      id: 'documents',
-      approverPersonId,
-      defaultOfferTemplateId:
-        templates.find((template) => template.kind === DocumentKind.OFFER)
-          ?.id ?? null,
-      siteEmail: DEFAULT_DOCUMENT_SITE.email,
-      siteLocation: DEFAULT_DOCUMENT_SITE.location,
-      siteUrl: DEFAULT_DOCUMENT_SITE.url,
-      signatureAssetId,
-      watermarkAssetId,
-    },
-  });
-}
-
-async function createDocumentWatermarkAsset(
-  prisma: ReturnType<typeof createCliPrisma>,
-  createdById: string,
-): Promise<string | null> {
-  let source: Buffer;
-  try {
-    source = await readFile(watermarkSeedPath);
-  } catch {
-    console.warn(
-      '[db] Document watermark source is unavailable; continuing without it.',
-    );
-    return null;
-  }
-  let image: { data: Buffer; info: sharp.OutputInfo };
-  try {
-    image = await sharp(source, {
-      animated: false,
-      limitInputPixels: 40_000_000,
-    })
-      .resize(2_000, 2_000, { fit: 'inside', withoutEnlargement: true })
-      .png({ compressionLevel: 9 })
-      .toBuffer({ resolveWithObject: true });
-  } catch {
-    console.warn(
-      '[db] Document watermark source is invalid; continuing without it.',
-    );
-    return null;
-  }
-  const checksum = createHash('sha256').update(image.data).digest('hex');
-  const storageKey = `document-watermarks/head-${checksum.slice(0, 12)}.png`;
-  const target = resolve(uploadRoot, storageKey);
-  await mkdir(dirname(target), { recursive: true });
-  await writeFile(target, image.data, { flag: 'wx' });
-  const asset = await prisma.asset.create({
-    data: {
-      access: AssetAccess.PRIVATE,
-      byteSize: image.data.length,
-      checksum,
-      createdById,
-      height: image.info.height,
-      kind: AssetKind.DOCUMENT_WATERMARK,
-      mimeType: 'image/png',
-      originalName: basename(watermarkSeedPath),
-      storageKey,
-      width: image.info.width,
-    },
-  });
-  return asset.id;
-}
-
-async function createApprovalSignatureAsset(
-  prisma: ReturnType<typeof createCliPrisma>,
-  createdById: string,
-): Promise<string | null> {
-  let source: Buffer;
-  try {
-    source = await readFile(signatureSeedPath);
-  } catch {
-    console.warn(
-      '[db] Approval signature source is unavailable; continuing without it.',
-    );
-    return null;
-  }
-  let image: { data: Buffer; info: sharp.OutputInfo };
-  try {
-    image = await sharp(source, {
-      animated: false,
-      limitInputPixels: 40_000_000,
-    })
-      .resize(1_600, 800, { fit: 'inside', withoutEnlargement: true })
-      .png({ compressionLevel: 9 })
-      .toBuffer({ resolveWithObject: true });
-  } catch {
-    console.warn(
-      '[db] Approval signature source is invalid; continuing without it.',
-    );
-    return null;
-  }
-  const checksum = createHash('sha256').update(image.data).digest('hex');
-  const storageKey = `document-signatures/approval-${checksum.slice(0, 12)}.png`;
-  const target = resolve(uploadRoot, storageKey);
-  await mkdir(dirname(target), { recursive: true });
-  await writeFile(target, image.data, { flag: 'wx' });
-  const asset = await prisma.asset.create({
-    data: {
-      access: AssetAccess.PRIVATE,
-      byteSize: image.data.length,
-      checksum,
-      createdById,
-      height: image.info.height,
-      kind: AssetKind.DOCUMENT_SIGNATURE,
-      mimeType: 'image/png',
-      originalName: basename(signatureSeedPath),
-      storageKey,
-      width: image.info.width,
-    },
-  });
-  return asset.id;
-}
-
-async function seedSiteSettings(
-  prisma: ReturnType<typeof createCliPrisma>,
-  data: AmirSeedData,
-) {
-  const values: Record<string, unknown> = {
-    'page.home': data.site.home,
-    'page.about': data.site.about,
-    'site.vision': data.site.vision,
-    'site.mission': data.site.mission,
-    'site.why-amirlab': data.site.whyAmirLab,
-    'site.contact': data.site.contact,
-    'site.ethics-committee': data.site.ethicsCommittee,
-    'site.administrative-units': data.site.administrativeUnits,
-    'site.application-policy': data.site.applicationPolicy,
-    'site.training-programs': data.site.trainingPrograms,
-    'site.achievement': data.site.achievement,
-    'seed.provenance': data.source,
-  };
-  for (const [key, value] of Object.entries(values)) {
-    if (value === undefined) continue;
-    await prisma.siteSetting.create({
-      data: { key, value: toInputJsonValue(value) },
-    });
-  }
-}
-
-async function createAvatarAsset(
-  prisma: ReturnType<typeof createCliPrisma>,
-  slug: string,
-  sourceFile: string,
-  createdById?: string,
-): Promise<string> {
-  const sourcePath = resolve(seedAssetRoot, sourceFile);
-  const source = await readFile(sourcePath);
-  const image = await sharp(source)
-    .rotate()
-    .resize(1_200, 1_200, { fit: 'inside', withoutEnlargement: true })
-    .webp({ quality: 86 })
-    .toBuffer({ resolveWithObject: true });
-  const checksum = createHash('sha256').update(image.data).digest('hex');
-  const storageKey = `peoples/${slug}-${checksum.slice(0, 12)}.webp`;
-  const target = resolve(uploadRoot, storageKey);
-  await mkdir(dirname(target), { recursive: true });
-  await writeFile(target, image.data, { flag: 'wx' });
-  const asset = await prisma.asset.create({
-    data: {
-      access: AssetAccess.PUBLIC,
-      byteSize: image.data.length,
-      checksum,
-      createdById,
-      height: image.info.height,
-      kind: AssetKind.AVATAR,
-      mimeType: 'image/webp',
-      originalName: basename(sourceFile),
-      storageKey,
-      width: image.info.width,
-    },
-  });
-  return asset.id;
-}
-
-function paperSlug(paper: SeedPaper): string {
-  return stableSlug(
-    paper.title ?? paper.doi ?? `publication-${paper.year ?? 'undated'}`,
-    paper.sourceId,
-  );
-}
-
-function stableSlug(label: string, stableKey: string): string {
-  const readable = label
-    .normalize('NFKD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/(^-|-$)/g, '')
-    .slice(0, 72);
-  const suffix = createHash('sha1')
-    .update(stableKey)
-    .digest('hex')
-    .slice(0, 10);
-  return `${readable || 'research-record'}-${suffix}`;
-}
-
-function enumValue<T extends Record<string, string>>(
-  values: T,
-  candidate: string | null | undefined,
-): T[keyof T] | null {
-  if (!candidate) return null;
-  return Object.prototype.hasOwnProperty.call(values, candidate)
-    ? (values[candidate] as T[keyof T])
-    : null;
-}
-
-function required<T>(value: T | undefined, message: string): T {
-  if (value === undefined) throw new Error(message);
-  return value;
-}
-
 if (
   process.argv[1] &&
-  ['rebuild-db.ts', 'rebuild-db.js'].includes(basename(process.argv[1]))
+  ['rebuild-db.ts', 'rebuild-db.js'].includes(
+    process.argv[1].split('/').pop() ?? '',
+  )
 ) {
   void rebuildDatabase().catch((error) => {
     console.error(
@@ -753,33 +441,4 @@ if (
     );
     process.exitCode = 1;
   });
-}
-
-function toInputJsonValue(value: unknown): Prisma.InputJsonValue {
-  if (typeof value === 'string' || typeof value === 'boolean') return value;
-  if (typeof value === 'number') {
-    if (!Number.isFinite(value)) {
-      throw new Error('Seed JSON cannot contain non-finite numbers');
-    }
-    return value;
-  }
-  if (Array.isArray(value)) {
-    return value.map((entry) =>
-      entry === null ? null : toInputJsonValue(entry),
-    );
-  }
-  if (isJsonRecord(value)) {
-    return Object.fromEntries(
-      Object.entries(value).flatMap(([key, entry]) =>
-        entry === undefined
-          ? []
-          : [[key, entry === null ? null : toInputJsonValue(entry)]],
-      ),
-    );
-  }
-  throw new Error('Seed setting is not valid JSON');
-}
-
-function isJsonRecord(value: unknown): value is Record<string, unknown> {
-  return !!value && !Array.isArray(value) && typeof value === 'object';
 }

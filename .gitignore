@@ -12,3 +12,7 @@
 /verification/browser-artifacts/
 /.local-verification/
 .vercel
+
+# Local agent tooling artifacts (not referenced by application code)
+/.commandcode/
+/__agent__/

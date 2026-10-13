@@ -29,16 +29,16 @@ pnpm run db:verify
 ```
 
 - `seed:validate` checks the JSON structure, references, and avatar source files without accessing the database.
-- `db:rebuild` **deletes existing application database data**, imports the canonical seed, and runs `db:verify` automatically. It also starts the private local PostgreSQL server.
+- `db:rebuild` **deletes existing application database data**, imports the canonical seed, and runs `db:verify` automatically. It targets whatever `DATABASE_URL` points at — local or hosted — after a confirmation prompt.
 - `db:verify` can be run separately to check the fresh import, including pending reviews, draft positions, contributor provenance, and stored avatars. It can fail after normal edits or approvals because it expects the original seed state.
 
-To import into an already prepared empty database, use `db:seed` instead of
-`db:rebuild`. It does not reset the schema and refuses if the checked
-application tables contain records. It replaces the people, document-signature,
-and document-watermark storage folders before importing assets.
+To apply the canonical dataset to a database without discarding anything, use
+`db:seed` instead of `db:rebuild`. It applies the schema and inserts only the
+seed records that are missing, so it is safe to run repeatedly against a
+populated database. It never deletes existing people, papers, or uploads.
 
 See the [database command reference](../../README.md#database-commands) for
-schema updates, cluster management, and the Docker workflow.
+schema updates, verification, and the full command list.
 
 ## Credentials and tokens
 

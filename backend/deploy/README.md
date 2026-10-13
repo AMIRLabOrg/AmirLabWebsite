@@ -71,22 +71,18 @@ The Prisma commands need the service environment loaded in the shell:
 ```bash
 cd /opt/amirl
 set -a; . /etc/amirl/api.env; set +a
-sudo -u amirl --preserve-env=DATABASE_URL,UPLOAD_ROOT pnpm --dir /opt/amirl/backend run db:push
+sudo -u amirl --preserve-env=DATABASE_URL,UPLOAD_ROOT pnpm --dir /opt/amirl/backend run db:seed
 ```
 
-On an empty first install only, seed the database and create the administrator.
+On first install, seed the database and create the administrator.
 Never run `db:rebuild` on production data because it resets the database:
 
-`db:push` updates the schema and runs the compatibility migrations; it does not
-seed records. `db:seed` imports the canonical dataset into an empty application
-database and refuses if the checked application tables contain records. It also
-replaces the people, document-signature, and document-watermark folders under
-`UPLOAD_ROOT`. `db:verify` checks the fresh seed state and is not a production
-health check after users have edited or approved records.
-
-The local `db:start`, `db:stop`, `db:status`, and `db:cluster:reset` commands
-manage `backend/.postgres`; they do not manage the production PostgreSQL
-system service. See the [database command reference](../../README.md#database-commands)
+`db:seed` applies the schema (running the compatibility migrations and
+`prisma db push`) and inserts only the seed records that are missing, without
+deleting or overwriting existing data. It is safe to re-run against a populated
+database, for example on every deploy. `db:verify` checks the fresh seed state
+and is not a production health check after users have edited or approved
+records. See the [database command reference](../../README.md#database-commands)
 for the complete list.
 
 ```bash
@@ -149,7 +145,7 @@ sudo -u amirl git pull --ff-only
 sudo -u amirl pnpm --dir /opt/amirl/backend install --frozen-lockfile
 sudo -u amirl pnpm --dir /opt/amirl/frontend install --frozen-lockfile
 set -a; . /etc/amirl/api.env; set +a
-sudo -u amirl --preserve-env=DATABASE_URL,UPLOAD_ROOT pnpm --dir /opt/amirl/backend run db:push
+sudo -u amirl --preserve-env=DATABASE_URL,UPLOAD_ROOT pnpm --dir /opt/amirl/backend run db:seed
 sudo -u amirl pnpm --dir /opt/amirl/backend run build
 sudo systemctl restart amirl-api
 curl --fail http://127.0.0.1:3001/api/health

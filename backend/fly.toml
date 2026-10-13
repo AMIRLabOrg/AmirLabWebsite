@@ -5,7 +5,7 @@ primary_region = "sin"
   dockerfile = "Dockerfile"
 
 [deploy]
-  release_command = "pnpm run db:push && pnpm run db:seed:if-empty"
+  release_command = "pnpm run db:seed"
   release_command_timeout = "10m"
 
 [env]

@@ -14,12 +14,12 @@ if (
   );
 }
 
-test('db:push includes the data backfill after applying the schema', async () => {
+test('db:seed includes the data backfill after applying the schema', async () => {
   const pkg = JSON.parse(
     await readFile(new URL('../package.json', import.meta.url), 'utf8'),
   );
   assert.match(
-    pkg.scripts['db:push'],
+    pkg.scripts['db:seed'],
     /prisma db push.*&& node scripts\/migrate-research-system-accounts\.mjs/,
   );
 });

@@ -41,40 +41,25 @@ pnpm run dev:frontend
 ## Database commands
 
 Run the commands below from the repository root with `pnpm run <command>`.
-The root scripts forward to the backend, except for the Docker commands.
-Database schema, seed, and verification commands use `DATABASE_URL` from the
-environment or `backend/.env`. Seeding requires `ADMIN_EMAIL`, `ADMIN_NAME`,
-and `ADMIN_PASSWORD` (at least 12 characters, with no placeholder value).
-
-### Local PostgreSQL
-
-These commands manage a private PostgreSQL cluster in `backend/.postgres`,
-using installed PostgreSQL binaries rather than Docker or a system service.
-They only accept a local host in `DATABASE_URL`.
-
-| Command | Behavior |
-| --- | --- |
-| `db:start` | Initializes the cluster if needed, starts PostgreSQL, and creates the configured database and login role if missing. Existing data is retained. |
-| `db:stop` | Stops the private server and retains its data. |
-| `db:status` | Reports whether the private server is running. Returns a nonzero exit code if it is stopped or uninitialized. |
-| `db:cluster:reset` | **Deletes the entire private cluster**, including its databases and roles, then initializes and starts a new one. Does not apply the application schema or seed data. |
-
-### Schema and seed data
+Every command uses `DATABASE_URL` from the environment or `backend/.env`, and
+behaves the same whether it points at a local PostgreSQL server or a hosted one
+such as Supabase. Creating the administrator requires `ADMIN_EMAIL`,
+`ADMIN_NAME`, and `ADMIN_PASSWORD` (at least 12 characters, with no placeholder
+value).
 
 | Command | Behavior |
 | --- | --- |
 | `db:generate` | Generates the Prisma client and types from `backend/prisma/schema.prisma`. Does not modify the database. Installation and backend builds also generate the client automatically. |
-| `db:push` | Migrates legacy profile entries and account emails, synchronizes the database with the Prisma schema, marks the research administrator as a system account, and regenerates the client. Does not intentionally reset the database; Prisma can reject schema changes that would lose data. |
-| `seed:validate` | Validates `backend/seed/amirl-site.json` and checks referenced avatar source files. Prints dataset counts without connecting to PostgreSQL. |
-| `db:seed` | Imports the canonical dataset and creates the administrator. Refuses if the checked application tables contain records. Replaces the people, document-signature, and document-watermark folders under `UPLOAD_ROOT` (default: `backend/storage`). Imported profiles, papers, and projects await review; positions start as drafts. |
+| `db:seed` | Applies the schema (running the legacy profile-entry, single-email, and system-account migrations, then `prisma db push`) and additively inserts any seed records that are missing. Never deletes or overwrites existing data, so it is safe to re-run against a populated database. New imported profiles, papers, and projects await review; positions start as drafts. |
+| `db:rebuild` | **Force-resets the application database schema, deletes all of its data**, regenerates the client, seeds it, then verifies the import. Works against any host, but prompts for confirmation first; pass `-- --yes` (or `DB_REBUILD_CONFIRM=yes`) to skip the prompt. Use only when existing data can be discarded. |
 | `db:verify` | Checks the expected fresh seed state, including record counts, review statuses, contributor provenance, site settings, and avatar files. This is a seed verification command, not a general health check: later edits or approvals can make it fail. |
-| `db:rebuild` | Starts private local PostgreSQL, generates the client, **force-resets the application database schema and deletes its data**, seeds it, then verifies the import. Use only when existing development data can be discarded. |
+| `seed:validate` | Validates `backend/seed/amirl-site.json` and checks referenced avatar and university-logo source files. Prints dataset counts without connecting to PostgreSQL. |
 
-`db:rebuild` is the single command for a complete local rebuild. The former
-`db:reset` and `db:setup` aliases were removed because they performed the same
-destructive operation.
+Expect a PostgreSQL server to already be running at `DATABASE_URL`; the Docker
+Compose service (`docker compose up -d postgres`) and any system PostgreSQL both
+work.
 
-For first-time local setup or an intentional fresh start:
+For first-time setup or an intentional fresh start:
 
 ```bash
 pnpm run seed:validate
@@ -84,40 +69,13 @@ pnpm run db:rebuild
 For normal development with existing data:
 
 ```bash
-pnpm run db:start
 pnpm run dev
 ```
 
-After changing the Prisma schema, use `pnpm run db:push` to update the database
-and regenerate the client. Use `db:generate` alone when only the generated
-client needs refreshing.
+After changing the Prisma schema, run `pnpm run db:seed` to apply it and insert
+any new seed records without discarding data. Run `pnpm run db:generate` first
+if you only need to refresh the generated client.
 
-### Docker alternative
-
-| Command | Behavior |
-| --- | --- |
-| `db:start:docker` | Starts the Compose PostgreSQL service in the background, creating it if needed. Data persists in the `amirl_postgres` volume. |
-| `db:stop:docker` | Stops the Compose PostgreSQL service without deleting its volume. |
-| `db:logs:docker` | Follows PostgreSQL container logs until interrupted. |
-
-Docker exposes PostgreSQL on port `5433`; the private local server also uses
-`5433` by default. Choose one server for that port and set `DATABASE_URL` to
-match its credentials and database. `db:rebuild` starts the private server,
-so it is not the setup command for Docker. To prepare an empty Docker database:
-
-```bash
-pnpm run db:start:docker
-pnpm run db:push
-pnpm run db:seed
-pnpm run db:verify
-```
-
-Two additional commands are available only in the backend package:
-
-| Command from the repository root | Behavior |
-| --- | --- |
-| `pnpm --dir backend run db:seed:if-empty` | Skips seeding if any users exist; otherwise runs the same guarded import as `db:seed`. Requires the administrator environment values even when the import is skipped. Used for deployment bootstrap. |
-| `pnpm --dir backend run db:migrate:profile-entry-labels` | Converts legacy profile subsection entries into separate entry records. Already included in `db:push`; normally does not need to be run separately. |
 
 ## Local backup and recovery testing
 
@@ -284,7 +242,7 @@ Setting, changing or removing this link replaces that person's previous paper an
 
 The server uses the existing jobs worker, with a due check every hour and a successful sync interval of 24 hours. Keep the backend running for scheduled sync. Administrators can set, replace or remove the API key under **Settings → Verification → OpenAlex** without restarting or deploying. New keys are checked with OpenAlex before saving; rejected keys or failed validation requests leave the previous setting intact. Keys are encrypted in the database and never returned to the browser or included in audit details. Existing `${UPLOAD_ROOT}/.openalex-key` ciphertext can still be read during migration; all new credentials use `ENCRYPTION_KEY`. Optional backend `OPENALEX_API_KEY` is a fallback until an administrator saves a setting; removing the key explicitly selects anonymous access. Rate limits and partial fetch failures back off without applying partial results. Articles, reviews, conference papers, book chapters and datasets are supported. Retractions go to review. Unsupported types or conflicting identifiers are recorded in the source's skipped summary; use the existing manual path for exceptions. Local corrections and contributor decisions survive refreshes of an unchanged author ID. Missing upstream works are recorded in the summary and retained until the link changes or is removed.
 
-The schema is additive (`backend/prisma/migrations/20261012000000_openalex_author_sync/migration.sql`). Normal `db:push` also applies it. Schema deployment does **not** clear existing papers. The destructive reset is a separate, local-only test command that never loads `.env`:
+The schema is additive (`backend/prisma/migrations/20261012000000_openalex_author_sync/migration.sql`). Normal `db:seed` also applies it. Schema deployment does **not** clear existing papers. The destructive reset is a separate, local-only test command that never loads `.env`:
 
 ```bash
 DATABASE_URL='postgresql://<local-user>:<local-password>@127.0.0.1:5433/amirl' \
