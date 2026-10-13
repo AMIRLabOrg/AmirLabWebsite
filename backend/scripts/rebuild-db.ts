@@ -182,6 +182,36 @@ export async function rebuildDatabase() {
         },
       });
 
+      const openAlexLink = person.openAlexAuthorId
+        ? {
+            label: 'OpenAlex',
+            sortOrder:
+              Math.max(-1, ...person.links.map((link) => link.sortOrder)) + 1,
+            type: 'OPENALEX' as const,
+            url: `https://openalex.org/authors/${person.openAlexAuthorId}`,
+          }
+        : null;
+      if (person.openAlexAuthorId && openAlexLink) {
+        await prisma.personLink.create({
+          data: {
+            label: openAlexLink.label,
+            personId: created.id,
+            sortOrder: openAlexLink.sortOrder,
+            type: openAlexLink.type,
+            url: openAlexLink.url,
+          },
+        });
+        await prisma.openAlexProfile.create({
+          data: {
+            authorId: person.openAlexAuthorId,
+            bindingVersion: 1,
+            nextAttemptAt: new Date(),
+            personId: created.id,
+            status: 'QUEUED',
+          },
+        });
+      }
+
       await prisma.profileEditRequest.create({
         data: {
           avatarAssetId,
@@ -194,11 +224,10 @@ export async function rebuildDatabase() {
             phone: person.phone,
             contactAddress: person.contactAddress,
             expertise: person.expertise,
-            links: person.links.map(({ label, type, url }) => ({
-              label,
-              type,
-              url,
-            })),
+            links: [
+              ...person.links,
+              ...(openAlexLink ? [openAlexLink] : []),
+            ].map(({ label, type, url }) => ({ label, type, url })),
             sections: person.profileSections.map((section) => ({
               type: section.type,
               title: section.title,

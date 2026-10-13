@@ -632,12 +632,6 @@
           "label": "LinkedIn",
           "url": "https://www.linkedin.com/in/aditishraq/",
           "sortOrder": 4
-        },
-        {
-          "type": "OPENALEX",
-          "label": "OpenAlex",
-          "url": "https://openalex.org/authors/A5072847609",
-          "sortOrder": 5
         }
       ],
       "profileSections": [
@@ -748,7 +742,8 @@
             }
           ]
         }
-      ]
+      ],
+      "openAlexAuthorId": "A5072847609"
     },
     {
       "sourceId": "peopleDetailsView/Afsana-Akter",
@@ -767,7 +762,8 @@
       "isPublished": true,
       "avatarSourceFile": "afsana-akter-a1144cc0a8dd.png",
       "links": [],
-      "profileSections": []
+      "profileSections": [],
+      "openAlexAuthorId": null
     },
     {
       "sourceId": "peopleDetailsView/aftabrakinsad",
@@ -827,12 +823,6 @@
           "label": "Kaggle",
           "url": "https://www.kaggle.com/aftabrakinsad",
           "sortOrder": 5
-        },
-        {
-          "type": "OPENALEX",
-          "label": "OpenAlex",
-          "url": "https://openalex.org/authors/A5094293165",
-          "sortOrder": 6
         }
       ],
       "profileSections": [
@@ -997,7 +987,8 @@
             }
           ]
         }
-      ]
+      ],
+      "openAlexAuthorId": "A5094293165"
     },
     {
       "sourceId": "peopleDetailsView/Akash-Howlader",
@@ -1117,7 +1108,8 @@
             }
           ]
         }
-      ]
+      ],
+      "openAlexAuthorId": null
     },
     {
       "sourceId": "peopleDetailsView/akbiswas",
@@ -1141,12 +1133,6 @@
           "label": "Google Scholar",
           "url": "https://scholar.google.com/citations?user=s1bXKVEAAAAJ&hl=en",
           "sortOrder": 0
-        },
-        {
-          "type": "OPENALEX",
-          "label": "OpenAlex",
-          "url": "https://openalex.org/authors/A5059036373",
-          "sortOrder": 1
         }
       ],
       "profileSections": [
@@ -1214,7 +1200,8 @@
             }
           ]
         }
-      ]
+      ],
+      "openAlexAuthorId": "A5059036373"
     },
     {
       "sourceId": "peopleDetailsView/Akibur-Rahman-Prodeep",
@@ -1238,15 +1225,10 @@
           "label": "Google Scholar",
           "url": "https://scholar.google.com/citations?user=uHlVqzkAAAAJ&hl=en",
           "sortOrder": 0
-        },
-        {
-          "type": "OPENALEX",
-          "label": "OpenAlex",
-          "url": "https://openalex.org/authors/A5052575792",
-          "sortOrder": 1
         }
       ],
-      "profileSections": []
+      "profileSections": [],
+      "openAlexAuthorId": "A5052575792"
     },
     {
       "sourceId": "peopleDetailsView/aklimalima",
@@ -1287,12 +1269,6 @@
           "label": "LinkedIn",
           "url": "https://www.linkedin.com/in/aklima-akter-lima-a41915195/",
           "sortOrder": 2
-        },
-        {
-          "type": "OPENALEX",
-          "label": "OpenAlex",
-          "url": "https://openalex.org/authors/A5057406925",
-          "sortOrder": 3
         }
       ],
       "profileSections": [
@@ -1478,7 +1454,8 @@
             }
           ]
         }
-      ]
+      ],
+      "openAlexAuthorId": "A5057406925"
     },
     {
       "sourceId": "peopleDetailsView/anik",
@@ -1564,7 +1541,8 @@
             }
           ]
         }
-      ]
+      ],
+      "openAlexAuthorId": null
     },
     {
       "sourceId": "peopleDetailsView/anisur",
@@ -1586,14 +1564,7 @@
       "isAlumni": false,
       "isPublished": true,
       "avatarSourceFile": "anisur-5e909baec5ae.jpeg",
-      "links": [
-        {
-          "type": "OPENALEX",
-          "label": "OpenAlex",
-          "url": "https://openalex.org/authors/A5110742108",
-          "sortOrder": 0
-        }
-      ],
+      "links": [],
       "profileSections": [
         {
           "type": "ACADEMIC_BACKGROUND",
@@ -1633,7 +1604,8 @@
             }
           ]
         }
-      ]
+      ],
+      "openAlexAuthorId": "A5110742108"
     },
     {
       "sourceId": "peopleDetailsView/annesha",
@@ -1681,7 +1653,8 @@
             }
           ]
         }
-      ]
+      ],
+      "openAlexAuthorId": null
     },
     {
       "sourceId": "peopleDetailsView/aponriaz",
@@ -1758,7 +1731,8 @@
             }
           ]
         }
-      ]
+      ],
+      "openAlexAuthorId": null
     },
     {
       "sourceId": "peopleDetailsView/arifa-eva",
@@ -1865,7 +1839,8 @@
             }
           ]
         }
-      ]
+      ],
+      "openAlexAuthorId": null
     },
     {
       "sourceId": "peopleDetailsView/arifur-rahman",
@@ -1888,14 +1863,7 @@
       "isAlumni": false,
       "isPublished": true,
       "avatarSourceFile": "arifur-rahman-b8208797c11c.jpg",
-      "links": [
-        {
-          "type": "OPENALEX",
-          "label": "OpenAlex",
-          "url": "https://openalex.org/authors/A5102342553",
-          "sortOrder": 0
-        }
-      ],
+      "links": [],
       "profileSections": [
         {
           "type": "ACADEMIC_BACKGROUND",
@@ -1939,7 +1907,8 @@
             }
           ]
         }
-      ]
+      ],
+      "openAlexAuthorId": "A5102342553"
     },
     {
       "sourceId": "peopleDetailsView/Aritra-Das",
@@ -1981,12 +1950,6 @@
           "label": "LinkedIn",
           "url": "https://www.linkedin.com/in/aritra-das-87b0601b8/",
           "sortOrder": 3
-        },
-        {
-          "type": "OPENALEX",
-          "label": "OpenAlex",
-          "url": "https://openalex.org/authors/A5013924717",
-          "sortOrder": 4
         }
       ],
       "profileSections": [
@@ -2021,7 +1984,8 @@
             }
           ]
         }
-      ]
+      ],
+      "openAlexAuthorId": "A5013924717"
     },
     {
       "sourceId": "peopleDetailsView/Arjun-Kumar-Bose-Arnob",
@@ -2068,12 +2032,6 @@
           "label": "LinkedIn",
           "url": "https://www.linkedin.com/in/arjunkumarbose/",
           "sortOrder": 3
-        },
-        {
-          "type": "OPENALEX",
-          "label": "OpenAlex",
-          "url": "https://openalex.org/authors/A5093631345",
-          "sortOrder": 4
         }
       ],
       "profileSections": [
@@ -2171,7 +2129,8 @@
             }
           ]
         }
-      ]
+      ],
+      "openAlexAuthorId": "A5093631345"
     },
     {
       "sourceId": "peopleDetailsView/Arnisha-Ahmed-Nourin",
@@ -2231,7 +2190,8 @@
             }
           ]
         }
-      ]
+      ],
+      "openAlexAuthorId": null
     },
     {
       "sourceId": "peopleDetailsView/Chakrabarty-Antu",
@@ -2274,7 +2234,8 @@
             }
           ]
         }
-      ]
+      ],
+      "openAlexAuthorId": null
     },
     {
       "sourceId": "peopleDetailsView/Dip-Kumar-Saha",
@@ -2293,7 +2254,8 @@
       "isPublished": true,
       "avatarSourceFile": "dip-kumar-saha-79219beb46cb.png",
       "links": [],
-      "profileSections": []
+      "profileSections": [],
+      "openAlexAuthorId": null
     },
     {
       "sourceId": "peopleDetailsView/Dr-Md-Rashedul-Islam",
@@ -2329,12 +2291,6 @@
           "label": "Web Page",
           "url": "https://www.rashedul.info/",
           "sortOrder": 2
-        },
-        {
-          "type": "OPENALEX",
-          "label": "OpenAlex",
-          "url": "https://openalex.org/authors/A5100755654",
-          "sortOrder": 3
         }
       ],
       "profileSections": [
@@ -2821,7 +2777,8 @@
             }
           ]
         }
-      ]
+      ],
+      "openAlexAuthorId": "A5100755654"
     },
     {
       "sourceId": "peopleDetailsView/Dr-Mohammad-Firoz-Mridha",
@@ -2863,12 +2820,6 @@
           "label": "LinkedIn",
           "url": "https://www.linkedin.com/in/dr-m-f-mridha-2a73b143/?originalSubdomain=bd",
           "sortOrder": 2
-        },
-        {
-          "type": "OPENALEX",
-          "label": "OpenAlex",
-          "url": "https://openalex.org/authors/A5071208302",
-          "sortOrder": 3
         }
       ],
       "profileSections": [
@@ -3754,7 +3705,8 @@
             }
           ]
         }
-      ]
+      ],
+      "openAlexAuthorId": "A5071208302"
     },
     {
       "sourceId": "peopleDetailsView/dsujoy",
@@ -3796,12 +3748,6 @@
           "label": "LinkedIn",
           "url": "https://www.linkedin.com/in/dsujoy/",
           "sortOrder": 3
-        },
-        {
-          "type": "OPENALEX",
-          "label": "OpenAlex",
-          "url": "https://openalex.org/authors/A5038497159",
-          "sortOrder": 4
         }
       ],
       "profileSections": [
@@ -3859,7 +3805,8 @@
             }
           ]
         }
-      ]
+      ],
+      "openAlexAuthorId": "A5038497159"
     },
     {
       "sourceId": "peopleDetailsView/Durjoy-Mistry",
@@ -3878,7 +3825,8 @@
       "isPublished": true,
       "avatarSourceFile": "durjoy-mistry-e9076cce9e2a.jpeg",
       "links": [],
-      "profileSections": []
+      "profileSections": [],
+      "openAlexAuthorId": null
     },
     {
       "sourceId": "peopleDetailsView/Ekramul-Hasib",
@@ -3944,7 +3892,8 @@
             }
           ]
         }
-      ]
+      ],
+      "openAlexAuthorId": null
     },
     {
       "sourceId": "peopleDetailsView/Esrat-Jahan",
@@ -3962,14 +3911,7 @@
       "isAlumni": true,
       "isPublished": true,
       "avatarSourceFile": "esrat-jahan-9b9eb32ccfe5.jpg",
-      "links": [
-        {
-          "type": "OPENALEX",
-          "label": "OpenAlex",
-          "url": "https://openalex.org/authors/A5087112365",
-          "sortOrder": 0
-        }
-      ],
+      "links": [],
       "profileSections": [
         {
           "type": "ACADEMIC_BACKGROUND",
@@ -4005,7 +3947,8 @@
             }
           ]
         }
-      ]
+      ],
+      "openAlexAuthorId": "A5087112365"
     },
     {
       "sourceId": "peopleDetailsView/Fahad-Pathan",
@@ -4029,15 +3972,10 @@
           "label": "LinkedIn",
           "url": "https://www.linkedin.com/in/fahadpathan/",
           "sortOrder": 0
-        },
-        {
-          "type": "OPENALEX",
-          "label": "OpenAlex",
-          "url": "https://openalex.org/authors/A5116224374",
-          "sortOrder": 1
         }
       ],
-      "profileSections": []
+      "profileSections": [],
+      "openAlexAuthorId": "A5116224374"
     },
     {
       "sourceId": "peopleDetailsView/Farisa-Benta-Safir",
@@ -4073,15 +4011,10 @@
           "label": "LinkedIn",
           "url": "https://www.linkedin.com/in/farisabentasafir/?originalSubdomain=bd",
           "sortOrder": 2
-        },
-        {
-          "type": "OPENALEX",
-          "label": "OpenAlex",
-          "url": "https://openalex.org/authors/A5036429772",
-          "sortOrder": 3
         }
       ],
-      "profileSections": []
+      "profileSections": [],
+      "openAlexAuthorId": "A5036429772"
     },
     {
       "sourceId": "peopleDetailsView/Farnaz-Faria",
@@ -4131,7 +4064,8 @@
             }
           ]
         }
-      ]
+      ],
+      "openAlexAuthorId": null
     },
     {
       "sourceId": "peopleDetailsView/Habibor-Rahman-Rabby",
@@ -4161,12 +4095,6 @@
           "label": "Google Scholar",
           "url": "https://scholar.google.com/citations?user=Yt3pVoIAAAAJ&hl=en",
           "sortOrder": 0
-        },
-        {
-          "type": "OPENALEX",
-          "label": "OpenAlex",
-          "url": "https://openalex.org/authors/A5116372782",
-          "sortOrder": 1
         }
       ],
       "profileSections": [
@@ -4235,7 +4163,8 @@
             }
           ]
         }
-      ]
+      ],
+      "openAlexAuthorId": "A5116372782"
     },
     {
       "sourceId": "peopleDetailsView/hafiz",
@@ -4287,12 +4216,6 @@
           "label": "LinkedIn",
           "url": "https://www.linkedin.com/in/sadman-hafiz-848416200/",
           "sortOrder": 4
-        },
-        {
-          "type": "OPENALEX",
-          "label": "OpenAlex",
-          "url": "https://openalex.org/authors/A5095820646",
-          "sortOrder": 5
         }
       ],
       "profileSections": [
@@ -4353,7 +4276,8 @@
             }
           ]
         }
-      ]
+      ],
+      "openAlexAuthorId": "A5095820646"
     },
     {
       "sourceId": "peopleDetailsView/Iftekhar-Anam",
@@ -4401,7 +4325,8 @@
             }
           ]
         }
-      ]
+      ],
+      "openAlexAuthorId": null
     },
     {
       "sourceId": "peopleDetailsView/imam",
@@ -4420,7 +4345,8 @@
       "isPublished": true,
       "avatarSourceFile": "imam-9c5ccfff493c.jpg",
       "links": [],
-      "profileSections": []
+      "profileSections": [],
+      "openAlexAuthorId": null
     },
     {
       "sourceId": "peopleDetailsView/iqbalhabib",
@@ -4515,7 +4441,8 @@
             }
           ]
         }
-      ]
+      ],
+      "openAlexAuthorId": null
     },
     {
       "sourceId": "peopleDetailsView/irteeja",
@@ -4609,7 +4536,8 @@
             }
           ]
         }
-      ]
+      ],
+      "openAlexAuthorId": null
     },
     {
       "sourceId": "peopleDetailsView/Ishmam-Newaz",
@@ -4641,7 +4569,8 @@
           "sortOrder": 1
         }
       ],
-      "profileSections": []
+      "profileSections": [],
+      "openAlexAuthorId": null
     },
     {
       "sourceId": "peopleDetailsView/israt-jahan",
@@ -4688,12 +4617,6 @@
           "label": "LinkedIn",
           "url": "https://www.linkedin.com/in/israt-jahan-a493281a0",
           "sortOrder": 3
-        },
-        {
-          "type": "OPENALEX",
-          "label": "OpenAlex",
-          "url": "https://openalex.org/authors/A5039480309",
-          "sortOrder": 4
         }
       ],
       "profileSections": [
@@ -4791,7 +4714,8 @@
             }
           ]
         }
-      ]
+      ],
+      "openAlexAuthorId": "A5039480309"
     },
     {
       "sourceId": "peopleDetailsView/istiak",
@@ -4851,7 +4775,8 @@
             }
           ]
         }
-      ]
+      ],
+      "openAlexAuthorId": null
     },
     {
       "sourceId": "peopleDetailsView/Jakir",
@@ -4893,12 +4818,6 @@
           "label": "LinkedIn",
           "url": "https://www.linkedin.com/in/dr-md-jakir-hossen-67016239/",
           "sortOrder": 2
-        },
-        {
-          "type": "OPENALEX",
-          "label": "OpenAlex",
-          "url": "https://openalex.org/authors/A5041704835",
-          "sortOrder": 3
         }
       ],
       "profileSections": [
@@ -5014,7 +4933,8 @@
             }
           ]
         }
-      ]
+      ],
+      "openAlexAuthorId": "A5041704835"
     },
     {
       "sourceId": "peopleDetailsView/JAMIN-RAHMAN-JIM",
@@ -5068,12 +4988,6 @@
           "label": "Kaggle",
           "url": "https://www.kaggle.com/jaminjim",
           "sortOrder": 4
-        },
-        {
-          "type": "OPENALEX",
-          "label": "OpenAlex",
-          "url": "https://openalex.org/authors/A5092162515",
-          "sortOrder": 5
         }
       ],
       "profileSections": [
@@ -5185,7 +5099,8 @@
             }
           ]
         }
-      ]
+      ],
+      "openAlexAuthorId": "A5092162515"
     },
     {
       "sourceId": "peopleDetailsView/keya",
@@ -5221,15 +5136,10 @@
           "label": "LinkedIn",
           "url": "https://www.linkedin.com/in/ashfia-jannat-28021998/",
           "sortOrder": 2
-        },
-        {
-          "type": "OPENALEX",
-          "label": "OpenAlex",
-          "url": "https://openalex.org/authors/A5080599946",
-          "sortOrder": 3
         }
       ],
-      "profileSections": []
+      "profileSections": [],
+      "openAlexAuthorId": "A5080599946"
     },
     {
       "sourceId": "peopleDetailsView/Khan-Md-Hasib",
@@ -5271,15 +5181,10 @@
           "label": "LinkedIn",
           "url": "https://www.linkedin.com/in/khan-md-hasib-a83236128/",
           "sortOrder": 3
-        },
-        {
-          "type": "OPENALEX",
-          "label": "OpenAlex",
-          "url": "https://openalex.org/authors/A5005839288",
-          "sortOrder": 4
         }
       ],
-      "profileSections": []
+      "profileSections": [],
+      "openAlexAuthorId": "A5005839288"
     },
     {
       "sourceId": "peopleDetailsView/Maharin-Afroj",
@@ -5305,7 +5210,8 @@
           "sortOrder": 0
         }
       ],
-      "profileSections": []
+      "profileSections": [],
+      "openAlexAuthorId": null
     },
     {
       "sourceId": "peopleDetailsView/Maliha-Mehjabin",
@@ -5331,7 +5237,8 @@
           "sortOrder": 0
         }
       ],
-      "profileSections": []
+      "profileSections": [],
+      "openAlexAuthorId": null
     },
     {
       "sourceId": "peopleDetailsView/Md-Abrar-Jahin",
@@ -5384,12 +5291,6 @@
           "label": "LinkedIn",
           "url": "https://www.linkedin.com/in/md-abrar-jahin-9a026018b/",
           "sortOrder": 3
-        },
-        {
-          "type": "OPENALEX",
-          "label": "OpenAlex",
-          "url": "https://openalex.org/authors/A5065477478",
-          "sortOrder": 4
         }
       ],
       "profileSections": [
@@ -5524,7 +5425,8 @@
             }
           ]
         }
-      ]
+      ],
+      "openAlexAuthorId": "A5065477478"
     },
     {
       "sourceId": "peopleDetailsView/Md-Aktarujjaman",
@@ -5600,7 +5502,8 @@
             }
           ]
         }
-      ]
+      ],
+      "openAlexAuthorId": null
     },
     {
       "sourceId": "peopleDetailsView/Md-Anwar-Hussen-Wadud",
@@ -5630,15 +5533,10 @@
           "label": "Research Gate",
           "url": "https://www.researchgate.net/profile/Md-Anwar-Wadud-2",
           "sortOrder": 1
-        },
-        {
-          "type": "OPENALEX",
-          "label": "OpenAlex",
-          "url": "https://openalex.org/authors/A5080809190",
-          "sortOrder": 2
         }
       ],
-      "profileSections": []
+      "profileSections": [],
+      "openAlexAuthorId": "A5080809190"
     },
     {
       "sourceId": "peopleDetailsView/Md-Ashfi-Ar-Raihan",
@@ -5662,12 +5560,6 @@
           "label": "Github",
           "url": "https://github.com/ashfi-raihan",
           "sortOrder": 0
-        },
-        {
-          "type": "OPENALEX",
-          "label": "OpenAlex",
-          "url": "https://openalex.org/authors/A5138428005",
-          "sortOrder": 1
         }
       ],
       "profileSections": [
@@ -5694,7 +5586,8 @@
             }
           ]
         }
-      ]
+      ],
+      "openAlexAuthorId": "A5138428005"
     },
     {
       "sourceId": "peopleDetailsView/Md-Farhan-Ishmam",
@@ -5730,12 +5623,6 @@
           "label": "LinkedIn",
           "url": "https://www.linkedin.com/in/farhan-ishmam/",
           "sortOrder": 1
-        },
-        {
-          "type": "OPENALEX",
-          "label": "OpenAlex",
-          "url": "https://openalex.org/authors/A5093806397",
-          "sortOrder": 2
         }
       ],
       "profileSections": [
@@ -5825,7 +5712,8 @@
             }
           ]
         }
-      ]
+      ],
+      "openAlexAuthorId": "A5093806397"
     },
     {
       "sourceId": "peopleDetailsView/Md-Fuad-Hasan",
@@ -5941,7 +5829,8 @@
             }
           ]
         }
-      ]
+      ],
+      "openAlexAuthorId": null
     },
     {
       "sourceId": "peopleDetailsView/Md-Habibul-Arif",
@@ -5971,12 +5860,6 @@
           "label": "Web Page",
           "url": "https://orcid.org/0009-0002-9660-8979",
           "sortOrder": 1
-        },
-        {
-          "type": "OPENALEX",
-          "label": "OpenAlex",
-          "url": "https://openalex.org/authors/A5121076004",
-          "sortOrder": 2
         }
       ],
       "profileSections": [
@@ -6016,7 +5899,8 @@
             }
           ]
         }
-      ]
+      ],
+      "openAlexAuthorId": "A5121076004"
     },
     {
       "sourceId": "peopleDetailsView/MD-HUMAION-KABIR-MEHEDI",
@@ -6035,7 +5919,8 @@
       "isPublished": true,
       "avatarSourceFile": null,
       "links": [],
-      "profileSections": []
+      "profileSections": [],
+      "openAlexAuthorId": null
     },
     {
       "sourceId": "peopleDetailsView/Md-Imran-Nazir",
@@ -6053,15 +5938,9 @@
       "isAlumni": false,
       "isPublished": true,
       "avatarSourceFile": "md-imran-nazir-db8c56214b62.jpg",
-      "links": [
-        {
-          "type": "OPENALEX",
-          "label": "OpenAlex",
-          "url": "https://openalex.org/authors/A5114063309",
-          "sortOrder": 0
-        }
-      ],
-      "profileSections": []
+      "links": [],
+      "profileSections": [],
+      "openAlexAuthorId": "A5114063309"
     },
     {
       "sourceId": "peopleDetailsView/Md-Juniadul-Islam",
@@ -6091,12 +5970,6 @@
           "label": "LinkedIn",
           "url": "https://linkedin.com/in/juniadul",
           "sortOrder": 1
-        },
-        {
-          "type": "OPENALEX",
-          "label": "OpenAlex",
-          "url": "https://openalex.org/authors/A5113429336",
-          "sortOrder": 2
         }
       ],
       "profileSections": [
@@ -6130,7 +6003,8 @@
             }
           ]
         }
-      ]
+      ],
+      "openAlexAuthorId": "A5113429336"
     },
     {
       "sourceId": "peopleDetailsView/MD-KHALED",
@@ -6149,7 +6023,8 @@
       "isPublished": true,
       "avatarSourceFile": "md-khaled-d7c4a1fc68f3.jpeg",
       "links": [],
-      "profileSections": []
+      "profileSections": [],
+      "openAlexAuthorId": null
     },
     {
       "sourceId": "peopleDetailsView/Md-Mithun-Hossain",
@@ -6183,12 +6058,6 @@
           "label": "LinkedIn",
           "url": "https://www.linkedin.com/in/mithun751/",
           "sortOrder": 1
-        },
-        {
-          "type": "OPENALEX",
-          "label": "OpenAlex",
-          "url": "https://openalex.org/authors/A5111285702",
-          "sortOrder": 2
         }
       ],
       "profileSections": [
@@ -6261,7 +6130,8 @@
             }
           ]
         }
-      ]
+      ],
+      "openAlexAuthorId": "A5111285702"
     },
     {
       "sourceId": "peopleDetailsView/Md-Mohsin-Kabir",
@@ -6279,15 +6149,9 @@
       "isAlumni": false,
       "isPublished": true,
       "avatarSourceFile": "md-mohsin-kabir-1011cca3776a.jpeg",
-      "links": [
-        {
-          "type": "OPENALEX",
-          "label": "OpenAlex",
-          "url": "https://openalex.org/authors/A5041757523",
-          "sortOrder": 0
-        }
-      ],
-      "profileSections": []
+      "links": [],
+      "profileSections": [],
+      "openAlexAuthorId": "A5041757523"
     },
     {
       "sourceId": "peopleDetailsView/Md-Nazmul-Hossain-Mir",
@@ -6358,7 +6222,8 @@
             }
           ]
         }
-      ]
+      ],
+      "openAlexAuthorId": null
     },
     {
       "sourceId": "peopleDetailsView/MD-Reazul-Islam",
@@ -6381,14 +6246,7 @@
       "isAlumni": true,
       "isPublished": true,
       "avatarSourceFile": "md-reazul-islam-7bfaf6622838.jpeg",
-      "links": [
-        {
-          "type": "OPENALEX",
-          "label": "OpenAlex",
-          "url": "https://openalex.org/authors/A5104202182",
-          "sortOrder": 0
-        }
-      ],
+      "links": [],
       "profileSections": [
         {
           "type": "ACADEMIC_BACKGROUND",
@@ -6455,7 +6313,8 @@
             }
           ]
         }
-      ]
+      ],
+      "openAlexAuthorId": "A5104202182"
     },
     {
       "sourceId": "peopleDetailsView/Md-Sakib-Hossain-Shovon",
@@ -6487,12 +6346,6 @@
           "label": "LinkedIn",
           "url": "https://www.linkedin.com/in/md-sakib-hossain-shovon-601738178/",
           "sortOrder": 1
-        },
-        {
-          "type": "OPENALEX",
-          "label": "OpenAlex",
-          "url": "https://openalex.org/authors/A5057388374",
-          "sortOrder": 2
         }
       ],
       "profileSections": [
@@ -6561,7 +6414,8 @@
             }
           ]
         }
-      ]
+      ],
+      "openAlexAuthorId": "A5057388374"
     },
     {
       "sourceId": "peopleDetailsView/Md-Shakil-Hossain",
@@ -6597,12 +6451,6 @@
           "label": "LinkedIn",
           "url": "https://www.linkedin.com/in/shakil094/",
           "sortOrder": 1
-        },
-        {
-          "type": "OPENALEX",
-          "label": "OpenAlex",
-          "url": "https://openalex.org/authors/A5083695209",
-          "sortOrder": 2
         }
       ],
       "profileSections": [
@@ -6726,7 +6574,8 @@
             }
           ]
         }
-      ]
+      ],
+      "openAlexAuthorId": "A5083695209"
     },
     {
       "sourceId": "peopleDetailsView/MD-TAFHIMUL-HAQUE-SADI",
@@ -6750,12 +6599,6 @@
           "label": "LinkedIn",
           "url": "https://www.linkedin.com/in/tafhimulhaque",
           "sortOrder": 0
-        },
-        {
-          "type": "OPENALEX",
-          "label": "OpenAlex",
-          "url": "https://openalex.org/authors/A5055346973",
-          "sortOrder": 1
         }
       ],
       "profileSections": [
@@ -6797,7 +6640,8 @@
             }
           ]
         }
-      ]
+      ],
+      "openAlexAuthorId": "A5055346973"
     },
     {
       "sourceId": "peopleDetailsView/Md-Zakir-Hossain-Zamil",
@@ -6827,15 +6671,10 @@
           "label": "LinkedIn",
           "url": "https://www.linkedin.com/in/md-zakir-hossain-zamil-12b253260/?originalSubdomain=bd",
           "sortOrder": 1
-        },
-        {
-          "type": "OPENALEX",
-          "label": "OpenAlex",
-          "url": "https://openalex.org/authors/A5084975255",
-          "sortOrder": 2
         }
       ],
-      "profileSections": []
+      "profileSections": [],
+      "openAlexAuthorId": "A5084975255"
     },
     {
       "sourceId": "peopleDetailsView/MDSHAHRIAR-IMTIAZ",
@@ -6891,7 +6730,8 @@
             }
           ]
         }
-      ]
+      ],
+      "openAlexAuthorId": null
     },
     {
       "sourceId": "peopleDetailsView/mehedi",
@@ -7071,7 +6911,8 @@
             }
           ]
         }
-      ]
+      ],
+      "openAlexAuthorId": null
     },
     {
       "sourceId": "peopleDetailsView/Mejanur-Rahman",
@@ -7090,7 +6931,8 @@
       "isPublished": true,
       "avatarSourceFile": "mejanur-rahman-6139687a3e88.jpg",
       "links": [],
-      "profileSections": []
+      "profileSections": [],
+      "openAlexAuthorId": null
     },
     {
       "sourceId": "peopleDetailsView/Mir-Maruf-Ahmed",
@@ -7151,12 +6993,6 @@
           "label": "Kaggle",
           "url": "https://www.kaggle.com/mirmarufahmed",
           "sortOrder": 5
-        },
-        {
-          "type": "OPENALEX",
-          "label": "OpenAlex",
-          "url": "https://openalex.org/authors/A5113241714",
-          "sortOrder": 6
         }
       ],
       "profileSections": [
@@ -7340,7 +7176,8 @@
             }
           ]
         }
-      ]
+      ],
+      "openAlexAuthorId": "A5113241714"
     },
     {
       "sourceId": "peopleDetailsView/Mohammad-Sadman--Sharar-Sayem",
@@ -7402,7 +7239,8 @@
             }
           ]
         }
-      ]
+      ],
+      "openAlexAuthorId": null
     },
     {
       "sourceId": "peopleDetailsView/Mohammad-Sayem-Chowdhury",
@@ -7431,12 +7269,6 @@
           "label": "Google Scholar",
           "url": "https://scholar.google.com/citations?hl=en&authuser=1&user=wDPGD9MAAAAJ",
           "sortOrder": 0
-        },
-        {
-          "type": "OPENALEX",
-          "label": "OpenAlex",
-          "url": "https://openalex.org/authors/A5006832600",
-          "sortOrder": 1
         }
       ],
       "profileSections": [
@@ -7521,7 +7353,8 @@
             }
           ]
         }
-      ]
+      ],
+      "openAlexAuthorId": "A5006832600"
     },
     {
       "sourceId": "peopleDetailsView/Moshiur-Rahman-Tonmoy",
@@ -7548,12 +7381,6 @@
           "label": "LinkedIn",
           "url": "https://www.linkedin.com/in/moshiurtonmoy",
           "sortOrder": 0
-        },
-        {
-          "type": "OPENALEX",
-          "label": "OpenAlex",
-          "url": "https://openalex.org/authors/A5094198086",
-          "sortOrder": 1
         }
       ],
       "profileSections": [
@@ -7591,7 +7418,8 @@
             }
           ]
         }
-      ]
+      ],
+      "openAlexAuthorId": "A5094198086"
     },
     {
       "sourceId": "peopleDetailsView/Most-Lailun-Nahar-Aurthy",
@@ -7610,7 +7438,8 @@
       "isPublished": true,
       "avatarSourceFile": "most-lailun-nahar-aurthy-91c00e618cb1.jpeg",
       "links": [],
-      "profileSections": []
+      "profileSections": [],
+      "openAlexAuthorId": null
     },
     {
       "sourceId": "peopleDetailsView/nabil",
@@ -7669,12 +7498,6 @@
           "label": "Kaggle",
           "url": "https://www.kaggle.com/hadiurrahmannabil",
           "sortOrder": 5
-        },
-        {
-          "type": "OPENALEX",
-          "label": "OpenAlex",
-          "url": "https://openalex.org/authors/A5102774041",
-          "sortOrder": 6
         }
       ],
       "profileSections": [
@@ -7810,7 +7633,8 @@
             }
           ]
         }
-      ]
+      ],
+      "openAlexAuthorId": "A5102774041"
     },
     {
       "sourceId": "peopleDetailsView/NAFIS-SAAMI-AZAD",
@@ -7838,12 +7662,6 @@
           "label": "LinkedIn",
           "url": "https://www.linkedin.com/in/nafissaami/?originalSubdomain=bd",
           "sortOrder": 0
-        },
-        {
-          "type": "OPENALEX",
-          "label": "OpenAlex",
-          "url": "https://openalex.org/authors/A5092874267",
-          "sortOrder": 1
         }
       ],
       "profileSections": [
@@ -7904,7 +7722,8 @@
             }
           ]
         }
-      ]
+      ],
+      "openAlexAuthorId": "A5092874267"
     },
     {
       "sourceId": "peopleDetailsView/Nafiz-Ahmed",
@@ -7930,7 +7749,8 @@
           "sortOrder": 0
         }
       ],
-      "profileSections": []
+      "profileSections": [],
+      "openAlexAuthorId": null
     },
     {
       "sourceId": "peopleDetailsView/nahid",
@@ -7990,12 +7810,6 @@
           "label": "Kaggle",
           "url": "https://www.kaggle.com/nahidhci",
           "sortOrder": 5
-        },
-        {
-          "type": "OPENALEX",
-          "label": "OpenAlex",
-          "url": "https://openalex.org/authors/A5100607097",
-          "sortOrder": 6
         }
       ],
       "profileSections": [
@@ -8121,7 +7935,8 @@
             }
           ]
         }
-      ]
+      ],
+      "openAlexAuthorId": "A5100607097"
     },
     {
       "sourceId": "peopleDetailsView/Naiem-Arafat",
@@ -8192,7 +8007,8 @@
             }
           ]
         }
-      ]
+      ],
+      "openAlexAuthorId": null
     },
     {
       "sourceId": "peopleDetailsView/Najmus-Saadat",
@@ -8210,14 +8026,7 @@
       "isAlumni": false,
       "isPublished": true,
       "avatarSourceFile": "najmus-saadat-bac53fd5cc8e.jpeg",
-      "links": [
-        {
-          "type": "OPENALEX",
-          "label": "OpenAlex",
-          "url": "https://openalex.org/authors/A5135442703",
-          "sortOrder": 0
-        }
-      ],
+      "links": [],
       "profileSections": [
         {
           "type": "ACADEMIC_BACKGROUND",
@@ -8261,7 +8070,8 @@
             }
           ]
         }
-      ]
+      ],
+      "openAlexAuthorId": "A5135442703"
     },
     {
       "sourceId": "peopleDetailsView/Nasif-Hannan",
@@ -8280,7 +8090,8 @@
       "isPublished": true,
       "avatarSourceFile": "nasif-hannan-7894ac794297.jpg",
       "links": [],
-      "profileSections": []
+      "profileSections": [],
+      "openAlexAuthorId": null
     },
     {
       "sourceId": "peopleDetailsView/naziba",
@@ -8423,7 +8234,8 @@
             }
           ]
         }
-      ]
+      ],
+      "openAlexAuthorId": null
     },
     {
       "sourceId": "peopleDetailsView/niha",
@@ -8458,12 +8270,6 @@
           "label": "LinkedIn",
           "url": "https://www.linkedin.com/in/niha202/",
           "sortOrder": 1
-        },
-        {
-          "type": "OPENALEX",
-          "label": "OpenAlex",
-          "url": "https://openalex.org/authors/A5094010252",
-          "sortOrder": 2
         }
       ],
       "profileSections": [
@@ -8618,7 +8424,8 @@
             }
           ]
         }
-      ]
+      ],
+      "openAlexAuthorId": "A5094010252"
     },
     {
       "sourceId": "peopleDetailsView/Nilanjan-Dey",
@@ -8788,7 +8595,8 @@
             }
           ]
         }
-      ]
+      ],
+      "openAlexAuthorId": null
     },
     {
       "sourceId": "peopleDetailsView/Nusrat-Yasmin-Nadia",
@@ -8806,14 +8614,7 @@
       "isAlumni": false,
       "isPublished": true,
       "avatarSourceFile": "nusrat-yasmin-nadia-de4ebb8cee7f.jpeg",
-      "links": [
-        {
-          "type": "OPENALEX",
-          "label": "OpenAlex",
-          "url": "https://openalex.org/authors/A5130698264",
-          "sortOrder": 0
-        }
-      ],
+      "links": [],
       "profileSections": [
         {
           "type": "PUBLICATIONS",
@@ -8851,7 +8652,8 @@
             }
           ]
         }
-      ]
+      ],
+      "openAlexAuthorId": "A5130698264"
     },
     {
       "sourceId": "peopleDetailsView/oliullah",
@@ -8869,15 +8671,9 @@
       "isAlumni": false,
       "isPublished": true,
       "avatarSourceFile": "oliullah-4ec6851d1ca6.jpeg",
-      "links": [
-        {
-          "type": "OPENALEX",
-          "label": "OpenAlex",
-          "url": "https://openalex.org/authors/A5061831457",
-          "sortOrder": 0
-        }
-      ],
-      "profileSections": []
+      "links": [],
+      "profileSections": [],
+      "openAlexAuthorId": "A5061831457"
     },
     {
       "sourceId": "peopleDetailsView/Osim-Kumar-Pal",
@@ -8908,12 +8704,6 @@
           "label": "Google Scholar",
           "url": "https://scholar.google.com/citations?hl=en&user=sbaRTwIAAAAJ",
           "sortOrder": 0
-        },
-        {
-          "type": "OPENALEX",
-          "label": "OpenAlex",
-          "url": "https://openalex.org/authors/A5038584873",
-          "sortOrder": 1
         }
       ],
       "profileSections": [
@@ -9025,7 +8815,8 @@
             }
           ]
         }
-      ]
+      ],
+      "openAlexAuthorId": "A5038584873"
     },
     {
       "sourceId": "peopleDetailsView/parthamalakar",
@@ -9092,7 +8883,8 @@
             }
           ]
         }
-      ]
+      ],
+      "openAlexAuthorId": null
     },
     {
       "sourceId": "peopleDetailsView/Prof-Dr-Jungpil-Shin",
@@ -9320,7 +9112,8 @@
             }
           ]
         }
-      ]
+      ],
+      "openAlexAuthorId": null
     },
     {
       "sourceId": "peopleDetailsView/Prof-Dr-MD-ABDUL-HAMID",
@@ -9577,7 +9370,8 @@
             }
           ]
         }
-      ]
+      ],
+      "openAlexAuthorId": null
     },
     {
       "sourceId": "peopleDetailsView/Prof-Dr-Muhammad-Mostofa-Monwar",
@@ -9706,7 +9500,8 @@
             }
           ]
         }
-      ]
+      ],
+      "openAlexAuthorId": null
     },
     {
       "sourceId": "peopleDetailsView/Professor-Ts-Dr-Shayla-Islam",
@@ -9732,7 +9527,8 @@
           "sortOrder": 0
         }
       ],
-      "profileSections": []
+      "profileSections": [],
+      "openAlexAuthorId": null
     },
     {
       "sourceId": "peopleDetailsView/quwsar-ohi",
@@ -9762,12 +9558,6 @@
           "label": "Web Page",
           "url": "https://quwsarohi.github.io/",
           "sortOrder": 0
-        },
-        {
-          "type": "OPENALEX",
-          "label": "OpenAlex",
-          "url": "https://openalex.org/authors/A5025023245",
-          "sortOrder": 1
         }
       ],
       "profileSections": [
@@ -9863,7 +9653,8 @@
             }
           ]
         }
-      ]
+      ],
+      "openAlexAuthorId": "A5025023245"
     },
     {
       "sourceId": "peopleDetailsView/raisul",
@@ -9925,7 +9716,8 @@
             }
           ]
         }
-      ]
+      ],
+      "openAlexAuthorId": null
     },
     {
       "sourceId": "peopleDetailsView/rajieb",
@@ -10057,7 +9849,8 @@
             }
           ]
         }
-      ]
+      ],
+      "openAlexAuthorId": null
     },
     {
       "sourceId": "peopleDetailsView/rayed",
@@ -10101,12 +9894,6 @@
           "label": "LinkedIn",
           "url": "https://www.linkedin.com/in/eshmam-rayed-76b536266",
           "sortOrder": 3
-        },
-        {
-          "type": "OPENALEX",
-          "label": "OpenAlex",
-          "url": "https://openalex.org/authors/A5094010250",
-          "sortOrder": 4
         }
       ],
       "profileSections": [
@@ -10182,7 +9969,8 @@
             }
           ]
         }
-      ]
+      ],
+      "openAlexAuthorId": "A5094010250"
     },
     {
       "sourceId": "peopleDetailsView/rl",
@@ -10231,12 +10019,6 @@
           "label": "LinkedIn",
           "url": "https://www.linkedin.com/in/mdsakibmahmood/",
           "sortOrder": 3
-        },
-        {
-          "type": "OPENALEX",
-          "label": "OpenAlex",
-          "url": "https://openalex.org/authors/A5073097845",
-          "sortOrder": 4
         }
       ],
       "profileSections": [
@@ -10391,7 +10173,8 @@
             }
           ]
         }
-      ]
+      ],
+      "openAlexAuthorId": "A5073097845"
     },
     {
       "sourceId": "peopleDetailsView/Rufaida-Mamun",
@@ -10433,12 +10216,6 @@
           "label": "LinkedIn",
           "url": "https://www.linkedin.com/in/rufaida-mamun1/",
           "sortOrder": 2
-        },
-        {
-          "type": "OPENALEX",
-          "label": "OpenAlex",
-          "url": "https://openalex.org/authors/A5107697494",
-          "sortOrder": 3
         }
       ],
       "profileSections": [
@@ -10511,7 +10288,8 @@
             }
           ]
         }
-      ]
+      ],
+      "openAlexAuthorId": "A5107697494"
     },
     {
       "sourceId": "peopleDetailsView/Sabrina-Islam--Tesa",
@@ -10554,7 +10332,8 @@
             }
           ]
         }
-      ]
+      ],
+      "openAlexAuthorId": null
     },
     {
       "sourceId": "peopleDetailsView/saida",
@@ -10673,7 +10452,8 @@
             }
           ]
         }
-      ]
+      ],
+      "openAlexAuthorId": null
     },
     {
       "sourceId": "peopleDetailsView/sajin",
@@ -10794,7 +10574,8 @@
             }
           ]
         }
-      ]
+      ],
+      "openAlexAuthorId": null
     },
     {
       "sourceId": "peopleDetailsView/samia",
@@ -10831,12 +10612,6 @@
           "label": "LinkedIn",
           "url": "https://www.linkedin.com/in/moythry-samia-1614a51aa/",
           "sortOrder": 1
-        },
-        {
-          "type": "OPENALEX",
-          "label": "OpenAlex",
-          "url": "https://openalex.org/authors/A5046805765",
-          "sortOrder": 2
         }
       ],
       "profileSections": [
@@ -10939,7 +10714,8 @@
             }
           ]
         }
-      ]
+      ],
+      "openAlexAuthorId": "A5046805765"
     },
     {
       "sourceId": "peopleDetailsView/sayma",
@@ -10982,12 +10758,6 @@
           "label": "LinkedIn",
           "url": "https://www.linkedin.com/in/maksuda-haider-sayma-2a578b211/",
           "sortOrder": 2
-        },
-        {
-          "type": "OPENALEX",
-          "label": "OpenAlex",
-          "url": "https://openalex.org/authors/A5019541504",
-          "sortOrder": 3
         }
       ],
       "profileSections": [
@@ -11098,7 +10868,8 @@
             }
           ]
         }
-      ]
+      ],
+      "openAlexAuthorId": "A5019541504"
     },
     {
       "sourceId": "peopleDetailsView/shab",
@@ -11212,7 +10983,8 @@
             }
           ]
         }
-      ]
+      ],
+      "openAlexAuthorId": null
     },
     {
       "sourceId": "peopleDetailsView/Shafiul-Ajam-Opee",
@@ -11265,12 +11037,6 @@
           "label": "LinkedIn",
           "url": "https://www.linkedin.com/in/shafiul-opee/",
           "sortOrder": 4
-        },
-        {
-          "type": "OPENALEX",
-          "label": "OpenAlex",
-          "url": "https://openalex.org/authors/A5117235462",
-          "sortOrder": 5
         }
       ],
       "profileSections": [
@@ -11358,7 +11124,8 @@
             }
           ]
         }
-      ]
+      ],
+      "openAlexAuthorId": "A5117235462"
     },
     {
       "sourceId": "peopleDetailsView/Shahriar-Soudeep",
@@ -11384,7 +11151,8 @@
           "sortOrder": 0
         }
       ],
-      "profileSections": []
+      "profileSections": [],
+      "openAlexAuthorId": null
     },
     {
       "sourceId": "peopleDetailsView/Shaila-Sharmin",
@@ -11402,14 +11170,7 @@
       "isAlumni": false,
       "isPublished": true,
       "avatarSourceFile": "shaila-sharmin-e05f80828d28.png",
-      "links": [
-        {
-          "type": "OPENALEX",
-          "label": "OpenAlex",
-          "url": "https://openalex.org/authors/A5113705576",
-          "sortOrder": 0
-        }
-      ],
+      "links": [],
       "profileSections": [
         {
           "type": "ACADEMIC_BACKGROUND",
@@ -11471,7 +11232,8 @@
             }
           ]
         }
-      ]
+      ],
+      "openAlexAuthorId": "A5113705576"
     },
     {
       "sourceId": "peopleDetailsView/shajib",
@@ -11490,7 +11252,8 @@
       "isPublished": true,
       "avatarSourceFile": "shajib-a374fde7b9db.png",
       "links": [],
-      "profileSections": []
+      "profileSections": [],
+      "openAlexAuthorId": null
     },
     {
       "sourceId": "peopleDetailsView/Shihab-Ahmed",
@@ -11601,7 +11364,8 @@
             }
           ]
         }
-      ]
+      ],
+      "openAlexAuthorId": null
     },
     {
       "sourceId": "peopleDetailsView/showrov",
@@ -11633,7 +11397,8 @@
           "sortOrder": 1
         }
       ],
-      "profileSections": []
+      "profileSections": [],
+      "openAlexAuthorId": null
     },
     {
       "sourceId": "peopleDetailsView/Sultanul-Arifeen-Hamim",
@@ -11680,12 +11445,6 @@
           "label": "LinkedIn",
           "url": "https://www.linkedin.com/in/arifeen-hamim-16b255242/",
           "sortOrder": 3
-        },
-        {
-          "type": "OPENALEX",
-          "label": "OpenAlex",
-          "url": "https://openalex.org/authors/A5106152722",
-          "sortOrder": 4
         }
       ],
       "profileSections": [
@@ -11806,7 +11565,8 @@
             }
           ]
         }
-      ]
+      ],
+      "openAlexAuthorId": "A5106152722"
     },
     {
       "sourceId": "peopleDetailsView/Sunipun-Seemanta",
@@ -11829,14 +11589,7 @@
       "isAlumni": false,
       "isPublished": true,
       "avatarSourceFile": "sunipun-seemanta-cfd0aef27b0d.jpg",
-      "links": [
-        {
-          "type": "OPENALEX",
-          "label": "OpenAlex",
-          "url": "https://openalex.org/authors/A5120354549",
-          "sortOrder": 0
-        }
-      ],
+      "links": [],
       "profileSections": [
         {
           "type": "ACADEMIC_BACKGROUND",
@@ -11949,7 +11702,8 @@
             }
           ]
         }
-      ]
+      ],
+      "openAlexAuthorId": "A5120354549"
     },
     {
       "sourceId": "peopleDetailsView/Syeda-Aynul-Karim",
@@ -12030,7 +11784,8 @@
             }
           ]
         }
-      ]
+      ],
+      "openAlexAuthorId": null
     },
     {
       "sourceId": "peopleDetailsView/Tanzim-Ahmed",
@@ -12087,7 +11842,8 @@
             }
           ]
         }
-      ]
+      ],
+      "openAlexAuthorId": null
     },
     {
       "sourceId": "peopleDetailsView/Taufikur-Rahman-Fuad",
@@ -12122,7 +11878,8 @@
             }
           ]
         }
-      ]
+      ],
+      "openAlexAuthorId": null
     },
     {
       "sourceId": "peopleDetailsView/Tawfiqul-Hasan",
@@ -12187,7 +11944,8 @@
             }
           ]
         }
-      ]
+      ],
+      "openAlexAuthorId": null
     },
     {
       "sourceId": "peopleDetailsView/utsho",
@@ -12341,7 +12099,8 @@
             }
           ]
         }
-      ]
+      ],
+      "openAlexAuthorId": null
     },
     {
       "sourceId": "peopleDetailsView/zabir",
@@ -12389,12 +12148,6 @@
           "label": "LinkedIn",
           "url": "https://www.linkedin.com/in/zabir-mohammad",
           "sortOrder": 3
-        },
-        {
-          "type": "OPENALEX",
-          "label": "OpenAlex",
-          "url": "https://openalex.org/authors/A5048179636",
-          "sortOrder": 4
         }
       ],
       "profileSections": [
@@ -12533,7 +12286,8 @@
             }
           ]
         }
-      ]
+      ],
+      "openAlexAuthorId": "A5048179636"
     },
     {
       "sourceId": "peopleDetailsView/Zafrin-Sultana",
@@ -12676,7 +12430,8 @@
             }
           ]
         }
-      ]
+      ],
+      "openAlexAuthorId": null
     }
   ],
   "papers": [
