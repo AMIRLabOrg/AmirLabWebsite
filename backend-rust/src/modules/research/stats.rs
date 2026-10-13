@@ -15,7 +15,7 @@ pub struct PublicStats {
 }
 
 /// Matches the five publicStats() counts in NestJS ResearchService.
-/// Position availability semantics must be compared with publicPositionWhere().
+/// Position availability matches publicPositionWhere() (inclusive closesAt).
 pub async fn public_stats(State(state): State<AppState>) -> Result<Json<PublicStats>, ApiError> {
     let sql = r#"
         SELECT
@@ -30,7 +30,7 @@ pub async fn public_stats(State(state): State<AppState>) -> Result<Json<PublicSt
              AND p."publicPageEnabled" = true) AS projects,
           (SELECT COUNT(*) FROM "Position"
            WHERE status = 'OPEN' AND ("opensAt" IS NULL OR "opensAt" <= NOW())
-             AND ("closesAt" IS NULL OR "closesAt" > NOW())) AS open_positions
+             AND ("closesAt" IS NULL OR "closesAt" >= NOW())) AS open_positions
     "#;
     let row = state.db.query_one(Statement::from_string(DbBackend::Postgres, sql))
         .await.map_err(|err| {
