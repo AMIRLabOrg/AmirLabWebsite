@@ -1,4 +1,6 @@
 mod config;
+#[path = "config/cors.rs"]
+mod cors;
 mod error;
 mod modules;
 mod routes;
@@ -6,10 +8,10 @@ mod state;
 
 use std::net::SocketAddr;
 
-use axum::http::{header, HeaderValue, Method};
+use axum::http::{header, Method};
 use sea_orm::{ConnectOptions, Database};
 use tokio::net::TcpListener;
-use tower_http::{cors::CorsLayer, trace::TraceLayer};
+use tower_http::{cors::{AllowOrigin, CorsLayer}, trace::TraceLayer};
 use tracing_subscriber::EnvFilter;
 
 use crate::{config::Config, state::AppState};
@@ -25,13 +27,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     options.max_connections(5).min_connections(0).sqlx_logging(false);
     let db = Database::connect(options).await?;
 
-    let origins: Vec<HeaderValue> = config
-        .frontend_origins
-        .iter()
-        .map(|origin| origin.parse())
-        .collect::<Result<_, _>>()?;
+    let origins = config.frontend_origins.clone();
     let cors = CorsLayer::new()
-        .allow_origin(origins)
+        .allow_origin(AllowOrigin::predicate(move |origin, _| {
+            origin.to_str().ok().is_some_and(|value| cors::is_allowed_origin(value, &origins))
+        }))
         .allow_credentials(true)
         .allow_methods([Method::GET, Method::POST, Method::PATCH, Method::DELETE, Method::OPTIONS])
         .allow_headers([header::CONTENT_TYPE, header::AUTHORIZATION]);
