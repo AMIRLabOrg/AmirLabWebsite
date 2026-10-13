@@ -1,17 +1,27 @@
-import { missingSeedAvatarFiles, readSeedData } from './seed-data';
+import {
+  missingSeedAvatarFiles,
+  missingSeedUniversityLogoFiles,
+  readSeedData,
+} from './seed-data';
 
 async function main() {
   const data = await readSeedData();
   const missingFiles = await missingSeedAvatarFiles(data);
+  const missingUniversityLogos = await missingSeedUniversityLogoFiles(data);
   const peopleWithoutSourceImage = data.people.filter(
     (person) => !person.avatarSourceFile,
   );
 
-  if (missingFiles.length) {
+  if (missingFiles.length || missingUniversityLogos.length) {
     throw new Error(
-      `Seed references ${missingFiles.length} missing avatar file(s):\n${missingFiles
-        .map((item) => `- ${item.slug}: ${item.file}`)
-        .join('\n')}`,
+      [
+        ...missingFiles.map(
+          (item) => `Missing avatar ${item.slug}: ${item.file}`,
+        ),
+        ...missingUniversityLogos.map(
+          (item) => `Missing university logo ${item.slug}: ${item.file}`,
+        ),
+      ].join('\n'),
     );
   }
 
@@ -19,6 +29,7 @@ async function main() {
   console.log(`[seed] Source captured: ${data.source.capturedAt}`);
   console.log(`[seed] People: ${data.people.length}`);
   console.log(`[seed] Departments: ${data.departments.length}`);
+  console.log(`[seed] Academic partners: ${data.universities.length}`);
   console.log(`[seed] Papers: ${data.papers.length}`);
   console.log(`[seed] Projects: ${data.projects.length}`);
   console.log(`[seed] Positions: ${data.positions.length}`);

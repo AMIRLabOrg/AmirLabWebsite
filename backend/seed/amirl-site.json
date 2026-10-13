@@ -557,6 +557,29 @@
       ]
     }
   ],
+  "universities": [
+    {
+      "slug": "king-abdulaziz-university",
+      "name": "King Abdulaziz University",
+      "websiteUrl": "https://www.kau.edu.sa",
+      "isPublished": true,
+      "logoSourceFile": "king-abdulaziz-university.jpeg"
+    },
+    {
+      "slug": "king-saud-university",
+      "name": "King Saud University",
+      "websiteUrl": "https://ksu.edu.sa",
+      "isPublished": true,
+      "logoSourceFile": "king-saud-university.jpeg"
+    },
+    {
+      "slug": "the-university-of-aizu",
+      "name": "The University of Aizu",
+      "websiteUrl": "https://u-aizu.ac.jp",
+      "isPublished": true,
+      "logoSourceFile": "university-of-aizu.png"
+    }
+  ],
   "people": [
     {
       "sourceId": "peopleDetailsView/adit",

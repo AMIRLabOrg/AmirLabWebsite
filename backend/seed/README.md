@@ -10,6 +10,7 @@ It is intentionally **schema-shaped**, not a dump of the live HTML. AMIRL's curr
 - Detailed profile text, links, profile sections and publication evidence are normalized from the AMIR Lab source material supplied with this project.
 - Each person, department, paper and project retains neutral `sourceId` / `sourceUrl` provenance in this JSON. During import these map to the original backend’s `legacySourceId` / `legacyUrl` Prisma fields so existing API consumers remain compatible.
 - `assets/people/` contains the preserved original people images supplied with the project. These files are source material only.
+- `assets/universities/` contains the three partner logos supplied for the home page. The seed records their names and official websites and stores optimized public logo assets.
 
 ## Runtime images
 
@@ -64,4 +65,4 @@ repository.
 - Source positions are converted into `Position` records with schema rank/type values and `DRAFT` status. Opening a position requires a manual decision after import.
 - The Volunteer Internship Program and the image-only Achievement page are preserved as reviewed `SiteSetting` content (`site.training-programs` and `site.achievement`).
 - The older Founder Message page contains role/publication counts that conflict with the newer founder profile. It is retained in source provenance but is **not** allowed to overwrite the newer person record.
-- The home page currently shows three "Collaborated Universities" as unlabeled images. No `University` records are invented from those images because the live HTML does not provide reliable names or identifiers.
+- The three home-page academic partners are seeded as published `University` records with matching logos: King Abdulaziz University, King Saud University, and The University of Aizu.
