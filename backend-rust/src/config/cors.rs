@@ -28,7 +28,7 @@ mod tests {
     }
     #[test]
     fn preview_origin() {
-        assert!(is_allowed_origin("amirlab-git-feature-itsfuads-projects.vercel.app".strip_prefix("https://").map(|v| format!("https://{v}")).unwrap().as_str(), &[]));
+        assert!(is_allowed_origin("https://amirlab-git-feature-itsfuads-projects.vercel.app", &[]));
         for bad in [
             "https://evil.vercel.app",
             "http://test-itsfuads-projects.vercel.app",
