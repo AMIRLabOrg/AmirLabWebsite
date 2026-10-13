@@ -1,5 +1,6 @@
 mod config;
 mod error;
+mod modules;
 mod routes;
 mod state;
 
