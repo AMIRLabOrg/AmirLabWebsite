@@ -26,6 +26,7 @@ export interface SeedProfileSection {
 
 export interface SeedPerson {
   sourceId: string;
+  openAlexAuthorId: string | null;
   sourceUrl: string;
   slug: string;
   fullName: string;
@@ -160,6 +161,11 @@ export function validateSeedData(data: AmirSeedData): void {
 
   unique(data.people, (item) => item.slug, 'person slug');
   unique(data.people, (item) => item.sourceId, 'person sourceId');
+  uniqueOptional(
+    data.people,
+    (item) => item.openAlexAuthorId,
+    'person OpenAlex author ID',
+  );
   uniqueOptional(data.people, (item) => item.sourceUrl, 'person sourceUrl');
   unique(data.departments, (item) => item.slug, 'department slug');
   unique(data.departments, (item) => item.sourceId, 'department sourceId');
@@ -176,6 +182,17 @@ export function validateSeedData(data: AmirSeedData): void {
   const people = new Set(data.people.map((person) => person.sourceId));
   for (const person of data.people) {
     ensureUrl(person.sourceUrl, `person ${person.slug} sourceUrl`);
+    if (
+      person.openAlexAuthorId !== null &&
+      !/^A[1-9]\d{0,19}$/.test(person.openAlexAuthorId)
+    ) {
+      throw new Error(`Invalid OpenAlex author ID for ${person.slug}`);
+    }
+    if (person.links.some((link) => link.type === 'OPENALEX')) {
+      throw new Error(
+        `Store OpenAlex identity in openAlexAuthorId for ${person.slug}`,
+      );
+    }
     ensureEnum(
       person.appointedRank,
       [
