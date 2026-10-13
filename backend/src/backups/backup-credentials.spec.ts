@@ -1,17 +1,21 @@
-import { mkdtemp, readFile, rm, stat } from 'node:fs/promises';
+import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
+import { createCipheriv, randomBytes } from 'node:crypto';
 import { mergeSecrets } from './backup-credentials';
 import { EncryptedCredentials } from '../common/encrypted-credentials';
 describe('Encrypted backup credentials', () => {
-  it('round trips without plaintext and protects the key file', async () => {
+  it('encrypts with the environment key and reads credentials from the legacy key file', async () => {
     const root = await mkdtemp(join(tmpdir(), 'backup-key-'));
     try {
+      const legacyKey = randomBytes(32);
+      const legacyPath = join(root, 'legacy-key');
+      await writeFile(legacyPath, legacyKey, { mode: 0o600 });
       const store = new EncryptedCredentials<{
         secretAccessKey: string;
         accessKeyId: string;
-      }>(join(root, 'key'));
-      const encrypted = await store.encrypt({
+      }>('AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=', legacyPath);
+      const encrypted = store.encrypt({
         secretAccessKey: 'sample-secret',
         accessKeyId: 'sample-id',
       });
@@ -20,8 +24,29 @@ describe('Encrypted backup credentials', () => {
         secretAccessKey: 'sample-secret',
         accessKeyId: 'sample-id',
       });
-      expect((await readFile(join(root, 'key'))).length).toBe(32);
-      expect((await stat(join(root, 'key'))).mode & 0o777).toBe(0o600);
+      const envOnlyStore = new EncryptedCredentials<{
+        secretAccessKey: string;
+        accessKeyId: string;
+      }>('AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=');
+      expect(await envOnlyStore.decrypt(encrypted)).toEqual({
+        secretAccessKey: 'sample-secret',
+        accessKeyId: 'sample-id',
+      });
+      const iv = randomBytes(12);
+      const cipher = createCipheriv('aes-256-gcm', legacyKey, iv);
+      const ciphertext = Buffer.concat([
+        cipher.update(JSON.stringify({ password: 'legacy-secret' })),
+        cipher.final(),
+      ]);
+      const oldEncrypted = {
+        iv: iv.toString('base64'),
+        tag: cipher.getAuthTag().toString('base64'),
+        ciphertext: ciphertext.toString('base64'),
+      };
+      expect(await store.decrypt(oldEncrypted)).toEqual({
+        password: 'legacy-secret',
+      });
+      expect((await readFile(legacyPath)).length).toBe(32);
       await expect(
         store.decrypt({ ...encrypted, ciphertext: 'bad' }),
       ).rejects.toThrow('credentials');

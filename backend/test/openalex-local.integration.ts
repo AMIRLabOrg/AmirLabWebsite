@@ -31,6 +31,7 @@ const prisma = new PrismaService(
       DATABASE_URL: url,
       NODE_ENV: 'test',
       FRONTEND_ORIGINS: 'http://localhost:3000',
+      ENCRYPTION_KEY: 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=',
       STORAGE_PROVIDER: 'local',
     }),
   ),

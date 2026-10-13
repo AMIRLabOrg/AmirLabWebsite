@@ -147,6 +147,7 @@ export class SettingsService {
 
   private openAlexCredentials() {
     return new EncryptedCredentials<{ apiKey: string }>(
+      this.config.get('encryptionKey', { infer: true }) ?? '',
       `${resolve(this.config.get('uploadRoot', { infer: true }))}/.openalex-key`,
     );
   }
@@ -216,7 +217,7 @@ export class SettingsService {
       throw new BadRequestException('Enter a valid OpenAlex API key.');
     if (apiKey) await this.validateOpenAlexApiKey(apiKey);
     const credentials = apiKey
-      ? await this.openAlexCredentials().encrypt({ apiKey })
+      ? this.openAlexCredentials().encrypt({ apiKey })
       : null;
     const json: Prisma.InputJsonObject = {
       credentials: credentials ? { ...credentials } : null,

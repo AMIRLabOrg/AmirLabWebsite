@@ -145,6 +145,7 @@ export class BackupsService implements OnModuleInit, OnModuleDestroy {
 
   private credentials() {
     return new EncryptedCredentials<BackupSecrets>(
+      this.config.get('encryptionKey', { infer: true }) ?? '',
       `${resolve(this.config.get('uploadRoot', { infer: true }))}.backup-key`,
     );
   }
@@ -208,7 +209,7 @@ export class BackupsService implements OnModuleInit, OnModuleDestroy {
         }
         const secrets = mergeSecrets(previous, value, saved, input);
         this.requireSecrets(value, secrets);
-        value.credentials = await this.credentials().encrypt(secrets);
+        value.credentials = this.credentials().encrypt(secrets);
       }
       const json = JSON.parse(
         JSON.stringify(value),
@@ -494,7 +495,7 @@ export class BackupsService implements OnModuleInit, OnModuleDestroy {
       await this.verifySnapshot(folder, snapshot);
       // Keep a complete recovery point before touching either local resource.
       if (remote && settings.provider !== 'local')
-        settings.credentials = await this.credentials().encrypt(
+        settings.credentials = this.credentials().encrypt(
           mergeSecrets(null, settings, {}, remote),
         );
       const safety = await this.snapshot(settings, 'safety');

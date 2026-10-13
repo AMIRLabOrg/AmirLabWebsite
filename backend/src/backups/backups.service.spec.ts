@@ -38,6 +38,7 @@ describe('Local backup settings and archive validation', () => {
       nodeEnv: 'test',
       storageProvider: 'local',
       uploadRoot: join(root, 'uploads'),
+      encryptionKey: 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=',
     };
     return resolveService(BackupsService, [
       { provide: PrismaService, useValue: prisma },

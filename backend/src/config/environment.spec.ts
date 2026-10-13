@@ -3,6 +3,7 @@ import { validateEnvironment } from './environment';
 const baseEnvironment = {
   DATABASE_URL: 'postgresql://localhost/amirl',
   FRONTEND_ORIGINS: 'http://localhost:3000',
+  ENCRYPTION_KEY: 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=',
 };
 
 describe('validateEnvironment', () => {
