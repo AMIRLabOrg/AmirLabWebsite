@@ -23,6 +23,7 @@ export interface Environment {
   smtpSecure: boolean;
   smtpRequireTls: boolean;
   uploadRoot: string;
+  openalexApiKey?: string;
   redisUrl?: string;
   vapidPublicKey?: string;
   vapidPrivateKey?: string;
@@ -181,6 +182,7 @@ export function validateEnvironment(
       'SMTP_REQUIRE_TLS',
     ),
     uploadRoot: uploadRoot ?? './storage',
+    openalexApiKey: optionalValue(source.OPENALEX_API_KEY),
     redisUrl: optionalValue(source.REDIS_URL),
     vapidPublicKey: optionalValue(source.VAPID_PUBLIC_KEY),
     vapidPrivateKey: optionalValue(source.VAPID_PRIVATE_KEY),

@@ -68,6 +68,7 @@ function PublicationExplorerInner({
   searchParams?: ReturnType<typeof useSearchParams>;
 }) {
   const router = useRouter();
+  const currentQuery = searchParams?.toString() ?? "";
   const [query, setQuery] = useState(searchParams?.get("search") ?? "");
   const [category, setCategory] = useState(
     searchParams?.get("category") ?? "ALL",
@@ -99,7 +100,9 @@ function PublicationExplorerInner({
       if (query.trim()) params.set("search", query.trim());
       if (category !== "ALL") params.set("category", category);
       if (year !== "ALL") params.set("year", year);
-      router.replace(`/papers?${params}`, { scroll: false });
+      if (currentQuery !== params.toString()) {
+        router.replace(`/papers?${params}`, { scroll: false });
+      }
       if (initialData && defaultQuery) return;
       void apiRequest<PublicationResponse>(`/publications?${params}`, {
         method: "GET",
@@ -127,6 +130,7 @@ function PublicationExplorerInner({
     };
   }, [
     category,
+    currentQuery,
     defaultQuery,
     initialData,
     page,

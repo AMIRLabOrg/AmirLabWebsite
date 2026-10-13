@@ -1,0 +1,3323 @@
+{
+  "verifiedAt": "2026-10-13",
+  "summary": {
+    "verified": 58,
+    "unresolved": 36,
+    "ambiguous": 20
+  },
+  "policy": "Only independently verified IDs are seeded. Unresolved does not mean the person has no OpenAlex record. Research was delegated to three GPT-6 Luna agents; author IDs and DOI authorships were independently fetched and checked before assignment.",
+  "people": [
+    {
+      "slug": "adit",
+      "fullName": "Adit Ishraq",
+      "status": "verified",
+      "authorId": "A5072847609",
+      "profileUrl": "https://amirl.org/peopleDetailsView/adit/",
+      "evidence": [
+        {
+          "url": "https://openalex.org/A5072847609",
+          "reason": "Primary OpenAlex author record, confirmed from exact DOI authorship evidence."
+        },
+        {
+          "url": "W4285199432",
+          "reason": "OpenAlex work authorship record for DOI 10.12720/jait.13.3.240-248 lists Adit Ishraq (author A5072847609) with affiliation(s): not supplied; matches AMIR Lab seed paper 'Content-Based Image Retrieval Using AutoEmbedder' (publications/doi/10.12720/jait.13.3.240-248)."
+        },
+        {
+          "url": "https://amirl.org/peopleDetailsView/adit/",
+          "reason": "AMIR Lab public profile provides the independent identity and publication context."
+        },
+        {
+          "url": "https://scholar.google.com/citations?hl=en&view_op=list_works&gmla=AH70aAUnxwAXnoaZ5cJLn9xrUlIebxPfh-IdFgIazmjyw2A9kXB3o2x7obC9u8xygOSCMOlhnMIyDBb7IjfTPiSA7UYkcThytX_J81GeNuzC&user=kAWhQxYAAAAJ",
+          "reason": "Seed-linked Google Scholar profile used as an additional identity cross-check."
+        }
+      ],
+      "notes": "Confirmed by exact OpenAlex DOI authorship. The author display name matches the profile name (or a standard title/initial variant for Dr./Prof. authors); author ID and affiliation are supported by the retrieved OpenAlex work record.",
+      "verifiedAuthorName": "Adit Ishraq",
+      "verifiedWorkUrl": "https://openalex.org/W4285199432",
+      "verifiedDoi": "https://doi.org/10.12720/jait.13.3.240-248"
+    },
+    {
+      "slug": "afsana-akter",
+      "fullName": "Afsana Akter",
+      "status": "unresolved",
+      "authorId": null,
+      "profileUrl": "https://amirl.org/peopleDetailsView/Afsana-Akter/",
+      "evidence": [
+        {
+          "url": "https://amirl.org/peopleDetailsView/Afsana-Akter/",
+          "reason": "AMIR Lab public profile; used to check biography, affiliations, links and publication section."
+        }
+      ],
+      "notes": "Attempted exact-name OpenAlex/public web search using the supplied profile context; no independently attributable OpenAlex author record surfaced. This is not proof the person has no OpenAlex record."
+    },
+    {
+      "slug": "aftabrakinsad",
+      "fullName": "Rakin Sad Aftab",
+      "status": "verified",
+      "authorId": "A5094293165",
+      "profileUrl": "https://amirl.org/peopleDetailsView/aftabrakinsad/",
+      "evidence": [
+        {
+          "url": "https://openalex.org/A5094293165",
+          "reason": "Primary OpenAlex author record, confirmed from exact DOI authorship evidence."
+        },
+        {
+          "url": "W4393364725",
+          "reason": "OpenAlex work authorship record for DOI 10.5815/ijieeb.2024.02.03 lists Rakin Sad Aftab (author A5094293165) with affiliation(s): American International University-Bangladesh; matches AMIR Lab seed paper 'Security Analysis in Online Transaction Systems: A Proposed Framework,' (publications/doi/10.5815/ijieeb.2024.02.03)."
+        },
+        {
+          "url": "W4399390496",
+          "reason": "OpenAlex work authorship record for DOI 10.37385/jaets.v5i2.4937 lists Rakin Sad Aftab (author A5094293165) with affiliation(s): American International University-Bangladesh; matches AMIR Lab seed paper 'Applications of IoT-Enabled Smart Model: A Model For Enhancing Food Service Operation in Developing Countries,' (publications/doi/10.37385/jaets.v5i2.4937)."
+        },
+        {
+          "url": "https://amirl.org/peopleDetailsView/aftabrakinsad/",
+          "reason": "AMIR Lab public profile provides the independent identity and publication context."
+        },
+        {
+          "url": "https://scholar.google.com/citations?user=Gg1Ny1YAAAAJ&hl=en",
+          "reason": "Seed-linked Google Scholar profile used as an additional identity cross-check."
+        }
+      ],
+      "notes": "Confirmed by exact OpenAlex DOI authorship. The author display name matches the profile name (or a standard title/initial variant for Dr./Prof. authors); author ID and affiliation are supported by the retrieved OpenAlex work record.",
+      "verifiedAuthorName": "Rakin Sad Aftab",
+      "verifiedWorkUrl": "https://openalex.org/W4393364725",
+      "verifiedDoi": "https://doi.org/10.5815/ijieeb.2024.02.03"
+    },
+    {
+      "slug": "akash-howlader",
+      "fullName": "Akash Howlader",
+      "status": "unresolved",
+      "authorId": null,
+      "profileUrl": "https://amirl.org/peopleDetailsView/Akash-Howlader/",
+      "evidence": [
+        {
+          "url": "https://amirl.org/peopleDetailsView/Akash-Howlader/",
+          "reason": "AMIR Lab public profile; used to check biography, affiliations, links and publication section."
+        }
+      ],
+      "notes": "Attempted exact-name OpenAlex/public web search using the supplied profile context; no independently attributable OpenAlex author record surfaced. This is not proof the person has no OpenAlex record."
+    },
+    {
+      "slug": "akbiswas",
+      "fullName": "Arindam Kishor Biswas",
+      "status": "verified",
+      "authorId": "A5059036373",
+      "profileUrl": "https://amirl.org/peopleDetailsView/akbiswas/",
+      "evidence": [
+        {
+          "url": "https://openalex.org/A5059036373",
+          "reason": "Primary OpenAlex author record, confirmed from exact DOI authorship evidence."
+        },
+        {
+          "url": "W4408441548",
+          "reason": "OpenAlex work authorship record for DOI 10.1109/ACCESS.2025.3551307 lists Arindam Kishor Biswas (author A5059036373) with affiliation(s): University of the Cumberlands; matches AMIR Lab seed paper 'A Dual Output Temporal Convolutional Network With Attention Architecture for Stock Price Prediction and Risk Assessment' (publications/doi/10.1109/access.2025.3551307)."
+        },
+        {
+          "url": "W4411232076",
+          "reason": "OpenAlex work authorship record for DOI 10.1109/OJCS.2025.3579522 lists Arindam Kishor Biswas (author A5059036373) with affiliation(s): University of the Cumberlands; matches AMIR Lab seed paper 'ABMF-Net: An Attentive Bayesian Multi-Stage Deep Learning Model for Robust Forecasting of Electricity Price and Demand' (publications/doi/10.1109/ojcs.2025.3579522)."
+        },
+        {
+          "url": "https://amirl.org/peopleDetailsView/akbiswas/",
+          "reason": "AMIR Lab public profile provides the independent identity and publication context."
+        },
+        {
+          "url": "https://scholar.google.com/citations?user=s1bXKVEAAAAJ&hl=en",
+          "reason": "Seed-linked Google Scholar profile used as an additional identity cross-check."
+        }
+      ],
+      "notes": "Confirmed by exact OpenAlex DOI authorship. The author display name matches the profile name (or a standard title/initial variant for Dr./Prof. authors); author ID and affiliation are supported by the retrieved OpenAlex work record.",
+      "verifiedAuthorName": "Arindam Kishor Biswas",
+      "verifiedWorkUrl": "https://openalex.org/W4408441548",
+      "verifiedDoi": "https://doi.org/10.1109/access.2025.3551307"
+    },
+    {
+      "slug": "akibur-rahman-prodeep",
+      "fullName": "Akibur Rahman Prodeep",
+      "status": "verified",
+      "authorId": "A5052575792",
+      "profileUrl": "https://amirl.org/peopleDetailsView/Akibur-Rahman-Prodeep/",
+      "evidence": [
+        {
+          "url": "https://openalex.org/A5052575792",
+          "reason": "Primary OpenAlex author record, confirmed from exact DOI authorship evidence."
+        },
+        {
+          "url": "W4295886337",
+          "reason": "OpenAlex work authorship record for DOI 10.1109/ACCESS.2022.3205618 lists Akibur Rahman Prodeep (author A5052575792) with affiliation(s): Bangladesh University of Business and Technology; matches AMIR Lab seed paper 'A Comprehensive Survey on the Process, Methods, Evaluation, and Challenges of Feature Selection,' (publications/doi/10.1109/access.2022.3205618)."
+        },
+        {
+          "url": "https://amirl.org/peopleDetailsView/Akibur-Rahman-Prodeep/",
+          "reason": "AMIR Lab public profile provides the independent identity and publication context."
+        },
+        {
+          "url": "https://scholar.google.com/citations?user=uHlVqzkAAAAJ&hl=en",
+          "reason": "Seed-linked Google Scholar profile used as an additional identity cross-check."
+        }
+      ],
+      "notes": "Confirmed by exact OpenAlex DOI authorship. The author display name matches the profile name (or a standard title/initial variant for Dr./Prof. authors); author ID and affiliation are supported by the retrieved OpenAlex work record.",
+      "verifiedAuthorName": "Akibur Rahman Prodeep",
+      "verifiedWorkUrl": "https://openalex.org/W4295886337",
+      "verifiedDoi": "https://doi.org/10.1109/access.2022.3205618"
+    },
+    {
+      "slug": "aklimalima",
+      "fullName": "Aklima Akter Lima",
+      "status": "verified",
+      "authorId": "A5057406925",
+      "profileUrl": "https://amirl.org/peopleDetailsView/aklimalima/",
+      "evidence": [
+        {
+          "url": "https://openalex.org/A5057406925",
+          "reason": "Primary OpenAlex author record, confirmed from exact DOI authorship evidence."
+        },
+        {
+          "url": "W3217119495",
+          "reason": "OpenAlex work authorship record for DOI 10.1109/ACCESS.2021.3129786 lists Aklima Akter Lima (author A5057406925) with affiliation(s): Bangladesh University of Business and Technology; matches AMIR Lab seed paper 'Automatic Text Summarization: Fundamental Theories, Algorithms, and Challenges' (publications/doi/10.1109/access.2021.3129786)."
+        },
+        {
+          "url": "W4295886337",
+          "reason": "OpenAlex work authorship record for DOI 10.1109/ACCESS.2022.3205618 lists Aklima Akter Lima (author A5057406925) with affiliation(s): Bangladesh University of Business and Technology; matches AMIR Lab seed paper 'A Comprehensive Survey on the Process, Methods, Evaluation, and Challenges of Feature Selection,' (publications/doi/10.1109/access.2022.3205618)."
+        },
+        {
+          "url": "https://amirl.org/peopleDetailsView/aklimalima/",
+          "reason": "AMIR Lab public profile provides the independent identity and publication context."
+        },
+        {
+          "url": "https://scholar.google.com/citations?hl=en&user=ZL2PfyEAAAAJ&view_op=list_works&sortby=pubdate",
+          "reason": "Seed-linked Google Scholar profile used as an additional identity cross-check."
+        }
+      ],
+      "notes": "Confirmed by exact OpenAlex DOI authorship. The author display name matches the profile name (or a standard title/initial variant for Dr./Prof. authors); author ID and affiliation are supported by the retrieved OpenAlex work record.",
+      "verifiedAuthorName": "Aklima Akter Lima",
+      "verifiedWorkUrl": "https://openalex.org/W3217119495",
+      "verifiedDoi": "https://doi.org/10.1109/access.2021.3129786"
+    },
+    {
+      "slug": "anik",
+      "fullName": "Mehedi Hasan Anik",
+      "status": "unresolved",
+      "authorId": null,
+      "profileUrl": "https://amirl.org/peopleDetailsView/anik/",
+      "evidence": [
+        {
+          "url": "https://amirl.org/peopleDetailsView/anik/",
+          "reason": "AMIR Lab public profile; used to check biography, affiliations, links and publication section."
+        }
+      ],
+      "notes": "Attempted exact-name OpenAlex/public web search using the supplied profile context; no independently attributable OpenAlex author record surfaced. This is not proof the person has no OpenAlex record."
+    },
+    {
+      "slug": "anisur",
+      "fullName": "Md Anisur Rahman",
+      "status": "verified",
+      "authorId": "A5110742108",
+      "profileUrl": "https://amirl.org/peopleDetailsView/anisur/",
+      "evidence": [
+        {
+          "url": "https://openalex.org/A5110742108",
+          "reason": "Primary OpenAlex author record, confirmed from exact DOI authorship evidence."
+        },
+        {
+          "url": "W4411022995",
+          "reason": "OpenAlex work authorship record for DOI 10.1016/j.iswa.2025.200537 lists Md Anisur Rahman (author A5110742108) with affiliation(s): Western Illinois University; matches AMIR Lab seed paper 'Advancements and challenges of deep learning architectures for aerial image analysis: A systematic review' (publications/doi/10.1016/j.iswa.2025.200537)."
+        },
+        {
+          "url": "https://amirl.org/peopleDetailsView/anisur/",
+          "reason": "AMIR Lab public profile provides the independent identity and publication context."
+        }
+      ],
+      "notes": "Confirmed by exact OpenAlex DOI authorship. The author display name matches the profile name (or a standard title/initial variant for Dr./Prof. authors); author ID and affiliation are supported by the retrieved OpenAlex work record.",
+      "verifiedAuthorName": "Md Anisur Rahman",
+      "verifiedWorkUrl": "https://openalex.org/W4411022995",
+      "verifiedDoi": "https://doi.org/10.1016/j.iswa.2025.200537"
+    },
+    {
+      "slug": "annesha",
+      "fullName": "Annesha Chowdhury Prapty",
+      "status": "unresolved",
+      "authorId": null,
+      "profileUrl": "https://amirl.org/peopleDetailsView/annesha/",
+      "evidence": [
+        {
+          "url": "https://amirl.org/peopleDetailsView/annesha/",
+          "reason": "AMIR Lab public profile; used to check biography, affiliations, links and publication section."
+        }
+      ],
+      "notes": "Attempted exact-name OpenAlex/public web search using the supplied profile context; no independently attributable OpenAlex author record surfaced. This is not proof the person has no OpenAlex record."
+    },
+    {
+      "slug": "aponriaz",
+      "fullName": "Md. Apon Riaz Talukder",
+      "status": "ambiguous",
+      "authorId": null,
+      "profileUrl": "https://amirl.org/peopleDetailsView/aponriaz/",
+      "evidence": [
+        {
+          "url": "https://amirl.org/peopleDetailsView/aponriaz/",
+          "reason": "AMIR Lab public profile; used to check biography, affiliations, links and publication section."
+        },
+        {
+          "url": "https://scholar.google.com/citations?hl=en&view_op=list_works&gmla=AH70aAWxRsa4kFKzPbJKgUq6OqyxKB4V_tLYm_-0cZUte1NmfPdwqAB1cAq8mBNlCJef7RqVTwy0PYcnc0zpkQ&user=-X3ZSssAAAAJ",
+          "reason": "Seed-linked Google Scholar profile; checked as an identity/publication cross-reference."
+        }
+      ],
+      "notes": "A scholarly profile link exists, but OpenAlex author record could not be retrieved/verified from available public search output. No ID assigned."
+    },
+    {
+      "slug": "arifa-eva",
+      "fullName": "Arifa Akter Eva",
+      "status": "unresolved",
+      "authorId": null,
+      "profileUrl": "https://amirl.org/peopleDetailsView/arifa-eva/",
+      "evidence": [
+        {
+          "url": "https://amirl.org/peopleDetailsView/arifa-eva/",
+          "reason": "AMIR Lab public profile; used to check biography, affiliations, links and publication section."
+        }
+      ],
+      "notes": "Attempted exact-name OpenAlex/public web search using the supplied profile context; no independently attributable OpenAlex author record surfaced. This is not proof the person has no OpenAlex record."
+    },
+    {
+      "slug": "arifur-rahman",
+      "fullName": "Arifur Rahman",
+      "status": "verified",
+      "authorId": "A5102342553",
+      "profileUrl": "https://amirl.org/peopleDetailsView/arifur-rahman/",
+      "evidence": [
+        {
+          "url": "https://openalex.org/A5102342553",
+          "reason": "Primary OpenAlex author record, confirmed from exact DOI authorship evidence."
+        },
+        {
+          "url": "W4411171625",
+          "reason": "OpenAlex work authorship record for DOI 10.1109/OJCS.2025.3577588 lists Arifur Rahman (author A5102342553) with affiliation(s): International American University; matches AMIR Lab seed paper 'A Physics-Guided Bayesian Neural Network for Sensor Fault Detection in Wind Turbines' (publications/doi/10.1109/ojcs.2025.3577588)."
+        },
+        {
+          "url": "https://amirl.org/peopleDetailsView/arifur-rahman/",
+          "reason": "AMIR Lab public profile provides the independent identity and publication context."
+        }
+      ],
+      "notes": "Confirmed by exact OpenAlex DOI authorship. The author display name matches the profile name (or a standard title/initial variant for Dr./Prof. authors); author ID and affiliation are supported by the retrieved OpenAlex work record.",
+      "verifiedAuthorName": "Arifur Rahman",
+      "verifiedWorkUrl": "https://openalex.org/W4411171625",
+      "verifiedDoi": "https://doi.org/10.1109/ojcs.2025.3577588"
+    },
+    {
+      "slug": "aritra-das",
+      "fullName": "Aritra Das",
+      "status": "verified",
+      "authorId": "A5013924717",
+      "profileUrl": "https://amirl.org/peopleDetailsView/Aritra-Das/",
+      "evidence": [
+        {
+          "url": "https://openalex.org/A5013924717",
+          "reason": "Primary OpenAlex author record, confirmed from exact DOI authorship evidence."
+        },
+        {
+          "url": "W4392188185",
+          "reason": "OpenAlex work authorship record for DOI 10.1109/ICCIT60459.2023.10441462 lists Aritra Das (author A5013924717) with affiliation(s): American International University-Bangladesh; matches AMIR Lab seed paper 'Anti-Fraud Mechanism Based Voting Machine With Three Stage Authentication Methods' (publications/doi/10.1109/iccit60459.2023.10441462)."
+        },
+        {
+          "url": "W4406523045",
+          "reason": "OpenAlex work authorship record for DOI 10.1109/DASA63652.2024.10836274 lists Aritra Das (author A5013924717) with affiliation(s): American International University-Bangladesh; matches AMIR Lab seed paper 'NeuroNet: An Attention-Driven Lightweight Deep Learning Model for Improved Brain Cancer Diagnosis.' (publications/doi/10.1109/dasa63652.2024.10836274)."
+        },
+        {
+          "url": "https://amirl.org/peopleDetailsView/Aritra-Das/",
+          "reason": "AMIR Lab public profile provides the independent identity and publication context."
+        },
+        {
+          "url": "https://scholar.google.com/citations?user=-0dG1fkAAAAJ&hl=en",
+          "reason": "Seed-linked Google Scholar profile used as an additional identity cross-check."
+        }
+      ],
+      "notes": "Confirmed by exact OpenAlex DOI authorship. The author display name matches the profile name (or a standard title/initial variant for Dr./Prof. authors); author ID and affiliation are supported by the retrieved OpenAlex work record.",
+      "verifiedAuthorName": "Aritra Das",
+      "verifiedWorkUrl": "https://openalex.org/W4392188185",
+      "verifiedDoi": "https://doi.org/10.1109/iccit60459.2023.10441462"
+    },
+    {
+      "slug": "arjun-kumar-bose-arnob",
+      "fullName": "Arjun Kumar Bose Arnob",
+      "status": "verified",
+      "authorId": "A5093631345",
+      "profileUrl": "https://amirl.org/peopleDetailsView/Arjun-Kumar-Bose-Arnob/",
+      "evidence": [
+        {
+          "url": "https://openalex.org/A5093631345",
+          "reason": "Primary OpenAlex author record, confirmed from exact DOI authorship evidence."
+        },
+        {
+          "url": "W4407151302",
+          "reason": "OpenAlex work authorship record for DOI 10.1007/s44196-025-00741-7 lists Arjun Kumar Bose Arnob (author A5093631345) with affiliation(s): American International University-Bangladesh; matches AMIR Lab seed paper 'An Enhanced LSTM Approach for Detecting IoT-Based DDoS Attacks Using Honeypot Data' (publications/doi/10.1007/s44196-025-00741-7)."
+        },
+        {
+          "url": "W4409472348",
+          "reason": "OpenAlex work authorship record for DOI 10.55056/jec.885 lists Arjun Kumar Bose Arnob (author A5093631345) with affiliation(s): American International University-Bangladesh; matches AMIR Lab seed paper 'A Comprehensive Systematic Review of Intrusion Detection Systems: Emerging Techniques, Challenges, and Future Research Directions' (publications/doi/10.55056/jec.885)."
+        },
+        {
+          "url": "https://amirl.org/peopleDetailsView/Arjun-Kumar-Bose-Arnob/",
+          "reason": "AMIR Lab public profile provides the independent identity and publication context."
+        },
+        {
+          "url": "https://scholar.google.com/citations?hl=en&user=gqUzQf8AAAAJ",
+          "reason": "Seed-linked Google Scholar profile used as an additional identity cross-check."
+        }
+      ],
+      "notes": "Confirmed by exact OpenAlex DOI authorship. The author display name matches the profile name (or a standard title/initial variant for Dr./Prof. authors); author ID and affiliation are supported by the retrieved OpenAlex work record.",
+      "verifiedAuthorName": "Arjun Kumar Bose Arnob",
+      "verifiedWorkUrl": "https://openalex.org/W4407151302",
+      "verifiedDoi": "https://doi.org/10.1007/s44196-025-00741-7"
+    },
+    {
+      "slug": "arnisha-ahmed-nourin",
+      "fullName": "Arnisha Ahmed Nourin",
+      "status": "unresolved",
+      "authorId": null,
+      "profileUrl": "https://amirl.org/peopleDetailsView/Arnisha-Ahmed-Nourin/",
+      "evidence": [
+        {
+          "url": "https://amirl.org/peopleDetailsView/Arnisha-Ahmed-Nourin/",
+          "reason": "AMIR Lab public profile; used to check biography, affiliations, links and publication section."
+        }
+      ],
+      "notes": "Attempted exact-name OpenAlex/public web search using the supplied profile context; no independently attributable OpenAlex author record surfaced. This is not proof the person has no OpenAlex record."
+    },
+    {
+      "slug": "chakrabarty-antu",
+      "fullName": "Chakrabarty Antu",
+      "status": "unresolved",
+      "authorId": null,
+      "profileUrl": "https://amirl.org/peopleDetailsView/Chakrabarty-Antu/",
+      "evidence": [
+        {
+          "url": "https://amirl.org/peopleDetailsView/Chakrabarty-Antu/",
+          "reason": "AMIR Lab public profile; used to check biography, affiliations, links and publication section."
+        }
+      ],
+      "notes": "Attempted exact-name OpenAlex/public web search using the supplied profile context; no independently attributable OpenAlex author record surfaced. This is not proof the person has no OpenAlex record."
+    },
+    {
+      "slug": "dip-kumar-saha",
+      "fullName": "Dip Kumar Saha",
+      "status": "unresolved",
+      "authorId": null,
+      "profileUrl": "https://amirl.org/peopleDetailsView/Dip-Kumar-Saha/",
+      "evidence": [
+        {
+          "url": "https://amirl.org/peopleDetailsView/Dip-Kumar-Saha/",
+          "reason": "AMIR Lab public profile; used to check biography, affiliations, links and publication section."
+        }
+      ],
+      "notes": "Attempted exact-name OpenAlex/public web search using the supplied profile context; no independently attributable OpenAlex author record surfaced. This is not proof the person has no OpenAlex record."
+    },
+    {
+      "slug": "dr-md-rashedul-islam",
+      "fullName": "Dr. Md Rashedul Islam",
+      "status": "verified",
+      "authorId": "A5100755654",
+      "profileUrl": "https://amirl.org/peopleDetailsView/Dr-Md-Rashedul-Islam/",
+      "evidence": [
+        {
+          "url": "https://openalex.org/A5100755654",
+          "reason": "Primary OpenAlex author record, confirmed from exact DOI authorship evidence."
+        },
+        {
+          "url": "W4295886337",
+          "reason": "OpenAlex work authorship record for DOI 10.1109/ACCESS.2022.3205618 lists Md. Rashedul Islam (author A5100755654) with affiliation(s): University of Asia Pacific; matches AMIR Lab seed paper 'A Comprehensive Survey on the Process, Methods, Evaluation, and Challenges of Feature Selection,' (publications/doi/10.1109/access.2022.3205618)."
+        },
+        {
+          "url": "W2998923560",
+          "reason": "OpenAlex work authorship record for DOI 10.1007/s11042-019-08448-6 lists Md. Rashedul Islam (author A5100755654) with affiliation(s): University of Aizu; matches AMIR Lab seed paper 'Hand Gesture Recognition-Based Non-Touch Character Writing System on a Virtual Keyboard' (publications/doi/10.1007/s11042-019-08448-6)."
+        },
+        {
+          "url": "https://amirl.org/peopleDetailsView/Dr-Md-Rashedul-Islam/",
+          "reason": "AMIR Lab public profile provides the independent identity and publication context."
+        },
+        {
+          "url": "https://scholar.google.com/citations?user=V-HK1CEAAAAJ&hl=en",
+          "reason": "Seed-linked Google Scholar profile used as an additional identity cross-check."
+        }
+      ],
+      "notes": "Confirmed by exact OpenAlex DOI authorship. The author display name matches the profile name (or a standard title/initial variant for Dr./Prof. authors); author ID and affiliation are supported by the retrieved OpenAlex work record.",
+      "verifiedAuthorName": "Md. Rashedul Islam",
+      "verifiedWorkUrl": "https://openalex.org/W4295886337",
+      "verifiedDoi": "https://doi.org/10.1109/access.2022.3205618"
+    },
+    {
+      "slug": "dr-mohammad-firoz-mridha",
+      "fullName": "Prof. Dr. Mohammad Firoz Mridha",
+      "status": "verified",
+      "authorId": "A5071208302",
+      "profileUrl": "https://amirl.org/peopleDetailsView/Dr-Mohammad-Firoz-Mridha/",
+      "evidence": [
+        {
+          "url": "https://openalex.org/A5071208302",
+          "reason": "Primary OpenAlex author record, confirmed from exact DOI authorship evidence."
+        },
+        {
+          "url": "W4362654674",
+          "reason": "OpenAlex work authorship record for DOI 10.1109/ACCESS.2023.3264835 lists M. F. Mridha (author A5071208302) with affiliation(s): American International University-Bangladesh; matches AMIR Lab seed paper 'PlantDet: A Robust Multi-Model Ensemble Method Based on Deep Learning for Plant Disease Detection,' (publications/doi/10.1109/access.2023.3264835)."
+        },
+        {
+          "url": "W4366966460",
+          "reason": "OpenAlex work authorship record for DOI 10.1109/ACCESS.2023.3269694 lists M. F. Mridha (author A5071208302) with affiliation(s): American International University-Bangladesh; matches AMIR Lab seed paper 'An Interpretable Skin Cancer Classification Using Optimized Convolutional Neural Network for a Smart Healthcare System,' (publications/doi/10.1109/access.2023.3269694)."
+        },
+        {
+          "url": "W4376955813",
+          "reason": "OpenAlex work authorship record for DOI 10.3390/s23104774 lists M. F. Mridha (author A5071208302) with affiliation(s): American International University-Bangladesh; matches AMIR Lab seed paper 'An Enhanced Ensemble Deep Neural Network Approach for Elderly Fall Detection System Based on Wearable Sensors' (publications/doi/10.3390/s23104774)."
+        },
+        {
+          "url": "W4377294226",
+          "reason": "OpenAlex work authorship record for DOI 10.1109/ACCESS.2023.3278273 lists M. F. Mridha (author A5071208302) with affiliation(s): American International University-Bangladesh; matches AMIR Lab seed paper 'Automated Stroke Prediction Using Machine Learning: An Explainable and Exploratory Study with a Web Application for Early Intervention,' (publications/doi/10.1109/access.2023.3278273)."
+        },
+        {
+          "url": "W4378882530",
+          "reason": "OpenAlex work authorship record for DOI 10.3390/s23115204 lists M. F. Mridha (author A5071208302) with affiliation(s): American International University-Bangladesh; matches AMIR Lab seed paper 'Deep Learning-Based IoT System for Remote Monitoring and Early Detection of Health Issues in Real-Time' (publications/doi/10.3390/s23115204)."
+        },
+        {
+          "url": "https://amirl.org/peopleDetailsView/Dr-Mohammad-Firoz-Mridha/",
+          "reason": "AMIR Lab public profile provides the independent identity and publication context."
+        },
+        {
+          "url": "https://scholar.google.com/citations?hl=en&user=KmgAshMAAAAJ&view_op=list_works&sortby=pubdate",
+          "reason": "Seed-linked Google Scholar profile used as an additional identity cross-check."
+        }
+      ],
+      "notes": "Confirmed by exact OpenAlex DOI authorship. The author display name matches the profile name (or a standard title/initial variant for Dr./Prof. authors); author ID and affiliation are supported by the retrieved OpenAlex work record.",
+      "verifiedAuthorName": "M. F. Mridha",
+      "verifiedWorkUrl": "https://openalex.org/W4362654674",
+      "verifiedDoi": "https://doi.org/10.1109/access.2023.3264835"
+    },
+    {
+      "slug": "dsujoy",
+      "fullName": "Sujoy Chandra Das",
+      "status": "verified",
+      "authorId": "A5038497159",
+      "profileUrl": "https://amirl.org/peopleDetailsView/dsujoy/",
+      "evidence": [
+        {
+          "url": "https://openalex.org/A5038497159",
+          "reason": "Primary OpenAlex author record, confirmed from exact DOI authorship evidence."
+        },
+        {
+          "url": "W3216785383",
+          "reason": "OpenAlex work authorship record for DOI 10.1007/978-981-16-5348-3_16 lists Sujoy Chandra Das (author A5038497159) with affiliation(s): Bangladesh University of Business and Technology; DOI is linked to the seed/profile citation."
+        },
+        {
+          "url": "W4200229038",
+          "reason": "OpenAlex work authorship record for DOI 10.1007/978-981-16-6636-0_42 lists Sujoy Chandra Das (author A5038497159) with affiliation(s): Bangladesh University of Business and Technology; matches AMIR Lab seed paper 'Road Sign Detection Using Variants of YOLO and R-CNN: An Analysis from the Perspective of Bangladesh' (publications/doi/10.1007/978-981-16-6636-0_42)."
+        },
+        {
+          "url": "https://amirl.org/peopleDetailsView/dsujoy/",
+          "reason": "AMIR Lab public profile provides the independent identity and publication context."
+        },
+        {
+          "url": "https://scholar.google.com/citations?user=Qr0QgVQAAAAJ&hl=en",
+          "reason": "Seed-linked Google Scholar profile used as an additional identity cross-check."
+        }
+      ],
+      "notes": "Confirmed by exact OpenAlex DOI authorship. The author display name matches the profile name (or a standard title/initial variant for Dr./Prof. authors); author ID and affiliation are supported by the retrieved OpenAlex work record.",
+      "verifiedAuthorName": "Sujoy Chandra Das",
+      "verifiedWorkUrl": "https://openalex.org/W3216785383",
+      "verifiedDoi": "https://doi.org/10.1007/978-981-16-5348-3_16"
+    },
+    {
+      "slug": "durjoy-mistry",
+      "fullName": "Durjoy Mistry",
+      "status": "unresolved",
+      "authorId": null,
+      "profileUrl": "https://amirl.org/peopleDetailsView/Durjoy-Mistry/",
+      "evidence": [
+        {
+          "url": "https://amirl.org/peopleDetailsView/Durjoy-Mistry/",
+          "reason": "AMIR Lab public profile; used to check biography, affiliations, links and publication section."
+        }
+      ],
+      "notes": "Attempted exact-name OpenAlex/public web search using the supplied profile context; no independently attributable OpenAlex author record surfaced. This is not proof the person has no OpenAlex record."
+    },
+    {
+      "slug": "ekramul-hasib",
+      "fullName": "Ekramul Hasib",
+      "status": "ambiguous",
+      "authorId": null,
+      "profileUrl": "https://amirl.org/peopleDetailsView/Ekramul-Hasib/",
+      "evidence": [
+        {
+          "url": "https://amirl.org/peopleDetailsView/Ekramul-Hasib/",
+          "reason": "AMIR Lab public profile; used to check biography, affiliations, links and publication section."
+        }
+      ],
+      "notes": "Publication-bearing profile; exact name/publication searches were attempted. Search output exposed relevant OpenAlex work records in some cases, but not stable author A-IDs, so no ID is confirmed. Name-only attribution would be unsafe."
+    },
+    {
+      "slug": "esrat-jahan",
+      "fullName": "Esrat Jahan",
+      "status": "verified",
+      "authorId": "A5087112365",
+      "profileUrl": "https://amirl.org/peopleDetailsView/Esrat-Jahan/",
+      "evidence": [
+        {
+          "url": "https://openalex.org/A5087112365",
+          "reason": "Primary OpenAlex author record confirmed through exact authorship of DOI 10.1109/COMPAS60761.2024.10796352."
+        },
+        {
+          "url": "https://openalex.org/W4405601448",
+          "reason": "OpenAlex work authorship for DOI 10.1109/COMPAS60761.2024.10796352 names Esrat Jahan with affiliation Southeast University; title: “An Ensemble Machine Learning-Based Method to Determine the Presence of Heart Ailment Using Pooled Dataset”."
+        },
+        {
+          "url": "https://amirl.org/peopleDetailsView/Esrat-Jahan/",
+          "reason": "AMIR Lab public profile identifies the person and publication/education context."
+        },
+        {
+          "url": "https://www.researchgate.net/publication/387255796_An_Ensemble_Machine_Learning-Based_Method_to_Determine_the_Presence_of_Heart_Ailment_Using_Pooled_Dataset",
+          "reason": "Independent publication record confirms Esrat Jahan’s authorship and COMPAS 2024 DOI; the institution agrees with her AMIR Lab academic-background section."
+        }
+      ],
+      "notes": "Confirmed through exact DOI authorship and matching profile publication/title and affiliation context (Southeast University).",
+      "verifiedAuthorName": "Esrat Jahan",
+      "verifiedWorkUrl": "https://openalex.org/W4405601448",
+      "verifiedDoi": "https://doi.org/10.1109/compas60761.2024.10796352"
+    },
+    {
+      "slug": "fahad-pathan",
+      "fullName": "Fahad Pathan",
+      "status": "verified",
+      "authorId": "A5116224374",
+      "profileUrl": "https://amirl.org/peopleDetailsView/Fahad-Pathan/",
+      "evidence": [
+        {
+          "url": "https://openalex.org/A5116224374",
+          "reason": "Primary OpenAlex author record confirmed through exact authorship of DOI 10.1109/ICCIT64611.2024.11021956."
+        },
+        {
+          "url": "https://openalex.org/W4411171970",
+          "reason": "OpenAlex work authorship for DOI 10.1109/ICCIT64611.2024.11021956 names Fahad Pathan with affiliation Shahjalal University of Science and Technology; title: “Explainable AI-Driven Vision Transformers for Assessing Fruit Freshness via Transfer Learning”."
+        },
+        {
+          "url": "https://amirl.org/peopleDetailsView/Fahad-Pathan/",
+          "reason": "AMIR Lab public profile identifies the person and publication/education context."
+        },
+        {
+          "url": "https://fahadpathan7.github.io/",
+          "reason": "Personal research site lists the same publication and contact email matching the AMIR Lab seed profile; this links the publication to the specific person."
+        },
+        {
+          "url": "https://amirl.org/peopleDetailsView/Aritra-Das/",
+          "reason": "AMIR Lab coauthor profile lists Fahad Pathan on the same paper title."
+        }
+      ],
+      "notes": "Confirmed through exact DOI authorship and matching profile publication/title and affiliation context (Shahjalal University of Science and Technology).",
+      "verifiedAuthorName": "Fahad Pathan",
+      "verifiedWorkUrl": "https://openalex.org/W4411171970",
+      "verifiedDoi": "https://doi.org/10.1109/iccit64611.2024.11021956"
+    },
+    {
+      "slug": "farisa-benta-safir",
+      "fullName": "Farisa Benta Safir",
+      "status": "verified",
+      "authorId": "A5036429772",
+      "profileUrl": "https://amirl.org/peopleDetailsView/Farisa-Benta-Safir/",
+      "evidence": [
+        {
+          "url": "https://openalex.org/A5036429772",
+          "reason": "Primary OpenAlex author record, confirmed from exact DOI authorship evidence."
+        },
+        {
+          "url": "W3038985617",
+          "reason": "OpenAlex work authorship record for DOI 10.1016/j.knosys.2020.106190 lists Farisa Benta Safir (author A5036429772) with affiliation(s): Bangladesh University of Business and Technology; matches AMIR Lab seed paper 'AutoEmbedder: A semi-supervised DNN embedding system for clustering' (publications/doi/10.1016/j.knosys.2020.106190)."
+        },
+        {
+          "url": "https://amirl.org/peopleDetailsView/Farisa-Benta-Safir/",
+          "reason": "AMIR Lab public profile provides the independent identity and publication context."
+        },
+        {
+          "url": "https://scholar.google.com/citations?user=319iM8gAAAAJ&hl=en",
+          "reason": "Seed-linked Google Scholar profile used as an additional identity cross-check."
+        }
+      ],
+      "notes": "Confirmed by exact OpenAlex DOI authorship. The author display name matches the profile name (or a standard title/initial variant for Dr./Prof. authors); author ID and affiliation are supported by the retrieved OpenAlex work record.",
+      "verifiedAuthorName": "Farisa Benta Safir",
+      "verifiedWorkUrl": "https://openalex.org/W3038985617",
+      "verifiedDoi": "https://doi.org/10.1016/j.knosys.2020.106190"
+    },
+    {
+      "slug": "farnaz-faria",
+      "fullName": "Farnaz Faria",
+      "status": "unresolved",
+      "authorId": null,
+      "profileUrl": "https://amirl.org/peopleDetailsView/Farnaz-Faria/",
+      "evidence": [
+        {
+          "url": "https://amirl.org/peopleDetailsView/Farnaz-Faria/",
+          "reason": "AMIR Lab public profile; used to check biography, affiliations, links and publication section."
+        }
+      ],
+      "notes": "Attempted exact-name OpenAlex/public web search using the supplied profile context; no independently attributable OpenAlex author record surfaced. This is not proof the person has no OpenAlex record."
+    },
+    {
+      "slug": "habibor-rahman-rabby",
+      "fullName": "Habibor Rahman Rabby",
+      "status": "verified",
+      "authorId": "A5116372782",
+      "profileUrl": "https://amirl.org/peopleDetailsView/Habibor-Rahman-Rabby/",
+      "evidence": [
+        {
+          "url": "https://openalex.org/A5116372782",
+          "reason": "Primary OpenAlex author record, identified from exact authorship of DOI 10.1038/s41598-026-45041-y."
+        },
+        {
+          "url": "https://openalex.org/W7140333278",
+          "reason": "OpenAlex authorship for DOI 10.1038/s41598-026-45041-y names this author and reports affiliation Campbellsville University; publication title: “Spatial–temporal graph neural network with autoencoder pretraining for intrusion detection in healthcare IoT ecosystems”. This is the AMIR Lab seed paper (publications/doi/10.1038/s41598-026-45041-y)."
+        },
+        {
+          "url": "https://amirl.org/peopleDetailsView/Habibor-Rahman-Rabby/",
+          "reason": "AMIR Lab profile independently gives the author’s name and academic/employment context."
+        },
+        {
+          "url": "https://habiborrabby.net/assets/resume/HabiborRabby_CV.pdf",
+          "reason": "Author CV/publication list supports scholarly identity and context for the AMIR Lab profile."
+        }
+      ],
+      "notes": "Confirmed by exact author name and institutional context in OpenAlex DOI authorship; publication is linked to the AMIR Lab profile/seed context.",
+      "verifiedAuthorName": "Habibor Rahman Rabby",
+      "verifiedWorkUrl": "https://openalex.org/W7140333278",
+      "verifiedDoi": "https://doi.org/10.1038/s41598-026-45041-y"
+    },
+    {
+      "slug": "hafiz",
+      "fullName": "Md Sadman Hafiz",
+      "status": "verified",
+      "authorId": "A5095820646",
+      "profileUrl": "https://amirl.org/peopleDetailsView/hafiz/",
+      "evidence": [
+        {
+          "url": "https://openalex.org/A5095820646",
+          "reason": "Primary OpenAlex author record, identified from exact authorship of DOI 10.1016/j.dib.2024.110462."
+        },
+        {
+          "url": "https://openalex.org/W4394987577",
+          "reason": "OpenAlex authorship for DOI 10.1016/j.dib.2024.110462 names this author and reports affiliation Shahjalal University of Science and Technology; publication title: “Tea leaf age quality: Age-stratified tea leaf quality classification dataset”."
+        },
+        {
+          "url": "https://amirl.org/peopleDetailsView/hafiz/",
+          "reason": "AMIR Lab profile independently gives the author’s name and academic/employment context."
+        },
+        {
+          "url": "https://www.sciencedirect.com/science/article/pii/S2352340924004311",
+          "reason": "Publisher record confirms the matching publication title, DOI, and authors including Md Sadman Hafiz."
+        }
+      ],
+      "notes": "Confirmed by exact author name and institutional context in OpenAlex DOI authorship; publication is linked to the AMIR Lab profile/seed context.",
+      "verifiedAuthorName": "Md Sadman Hafiz",
+      "verifiedWorkUrl": "https://openalex.org/W4394987577",
+      "verifiedDoi": "https://doi.org/10.1016/j.dib.2024.110462"
+    },
+    {
+      "slug": "iftekhar-anam",
+      "fullName": "Iftekhar Anam",
+      "status": "ambiguous",
+      "authorId": null,
+      "profileUrl": "https://amirl.org/peopleDetailsView/Iftekhar-Anam/",
+      "evidence": [
+        {
+          "url": "https://openalex.org/W4404322142",
+          "reason": "OpenAlex work for DOI 10.1016/j.atech.2024.100647 lists Iftekhar Anam, but the author.id field is null."
+        },
+        {
+          "url": "https://amirl.org/peopleDetailsView/Iftekhar-Anam/",
+          "reason": "AMIR Lab public profile; used to check biography, affiliations, links and publication section."
+        },
+        {
+          "url": "https://scholar.google.com/citations?user=yaCB_OIAAAAJ&hl=en",
+          "reason": "Seed-linked Google Scholar profile; checked as an identity/publication cross-reference."
+        }
+      ],
+      "notes": "Matching publication authorship exists, but OpenAlex exposes no author entity ID for Iftekhar Anam on this work; exact author-search calls were rate limited, so left unresolved.",
+      "candidates": [
+        {
+          "authorId": null,
+          "fullName": "Iftekhar Anam",
+          "workId": "W4404322142",
+          "reason": "OpenAlex DOI work lists Iftekhar Anam on the matching profile publication, but its authorship author ID is null; no A-ID may be inferred."
+        }
+      ]
+    },
+    {
+      "slug": "imam",
+      "fullName": "Imam Hasain",
+      "status": "unresolved",
+      "authorId": null,
+      "profileUrl": "https://amirl.org/peopleDetailsView/imam/",
+      "evidence": [
+        {
+          "url": "https://amirl.org/peopleDetailsView/imam/",
+          "reason": "AMIR Lab public profile; used to check biography, affiliations, links and publication section."
+        }
+      ],
+      "notes": "Attempted exact-name OpenAlex/public web search using the supplied profile context; no independently attributable OpenAlex author record surfaced. This is not proof the person has no OpenAlex record."
+    },
+    {
+      "slug": "iqbalhabib",
+      "fullName": "Iqbal Habib",
+      "status": "unresolved",
+      "authorId": null,
+      "profileUrl": "https://amirl.org/peopleDetailsView/iqbalhabib/",
+      "evidence": [
+        {
+          "url": "https://amirl.org/peopleDetailsView/iqbalhabib/",
+          "reason": "AMIR Lab public profile; used to check biography, affiliations, links and publication section."
+        }
+      ],
+      "notes": "Attempted exact-name OpenAlex/public web search using the supplied profile context; no independently attributable OpenAlex author record surfaced. This is not proof the person has no OpenAlex record."
+    },
+    {
+      "slug": "irteeja",
+      "fullName": "Md. Irteeja Kobir",
+      "status": "unresolved",
+      "authorId": null,
+      "profileUrl": "https://amirl.org/peopleDetailsView/irteeja/",
+      "evidence": [
+        {
+          "url": "https://amirl.org/peopleDetailsView/irteeja/",
+          "reason": "AMIR Lab public profile; used to check biography, affiliations, links and publication section."
+        }
+      ],
+      "notes": "Attempted exact-name OpenAlex/public web search using the supplied profile context; no independently attributable OpenAlex author record surfaced. This is not proof the person has no OpenAlex record."
+    },
+    {
+      "slug": "ishmam-newaz",
+      "fullName": "Ishmam Newaz",
+      "status": "unresolved",
+      "authorId": null,
+      "profileUrl": "https://amirl.org/peopleDetailsView/Ishmam-Newaz/",
+      "evidence": [
+        {
+          "url": "https://amirl.org/peopleDetailsView/Ishmam-Newaz/",
+          "reason": "AMIR Lab public profile; used to check biography, affiliations, links and publication section."
+        }
+      ],
+      "notes": "Attempted exact-name OpenAlex/public web search using the supplied profile context; no independently attributable OpenAlex author record surfaced. This is not proof the person has no OpenAlex record."
+    },
+    {
+      "slug": "israt-jahan",
+      "fullName": "Israt Jahan",
+      "status": "verified",
+      "authorId": "A5039480309",
+      "profileUrl": "https://amirl.org/peopleDetailsView/israt-jahan/",
+      "evidence": [
+        {
+          "url": "https://openalex.org/A5039480309",
+          "reason": "Primary OpenAlex author record, confirmed from exact DOI authorship evidence."
+        },
+        {
+          "url": "W3171302872",
+          "reason": "OpenAlex work authorship record for DOI 10.1109/ACCESS.2021.3084299 lists Israt Jahan (author A5039480309) with affiliation(s): Bangladesh University of Business and Technology; matches AMIR Lab seed paper 'A Survey of Speaker Recognition: Fundamental Theories, Recognition Methods and Opportunities' (publications/doi/10.1109/access.2021.3084299)."
+        },
+        {
+          "url": "W4210334334",
+          "reason": "OpenAlex work authorship record for DOI 10.1109/ICCIT54785.2021.9689780 lists Israt Jahan (author A5039480309) with affiliation(s): Bangladesh University of Business and Technology; matches AMIR Lab seed paper 'An Offline Writer-independent Signature Verification System using AutoEmbedder,' (publications/doi/10.1109/iccit54785.2021.9689780)."
+        },
+        {
+          "url": "https://amirl.org/peopleDetailsView/israt-jahan/",
+          "reason": "AMIR Lab public profile provides the independent identity and publication context."
+        },
+        {
+          "url": "https://scholar.google.com/citations?user=IT8lkEgAAAAJ",
+          "reason": "Seed-linked Google Scholar profile used as an additional identity cross-check."
+        }
+      ],
+      "notes": "Confirmed by exact OpenAlex DOI authorship. The author display name matches the profile name (or a standard title/initial variant for Dr./Prof. authors); author ID and affiliation are supported by the retrieved OpenAlex work record.",
+      "verifiedAuthorName": "Israt Jahan",
+      "verifiedWorkUrl": "https://openalex.org/W3171302872",
+      "verifiedDoi": "https://doi.org/10.1109/access.2021.3084299"
+    },
+    {
+      "slug": "istiak",
+      "fullName": "Istiak Mahmud",
+      "status": "ambiguous",
+      "authorId": null,
+      "profileUrl": "https://amirl.org/peopleDetailsView/istiak/",
+      "evidence": [
+        {
+          "url": "https://amirl.org/peopleDetailsView/istiak/",
+          "reason": "AMIR Lab public profile; used to check biography, affiliations, links and publication section."
+        },
+        {
+          "url": "https://scholar.google.com/citations?user=DTzE4wkAAAAJ&hl=en",
+          "reason": "Seed-linked Google Scholar profile; checked as an identity/publication cross-reference."
+        }
+      ],
+      "notes": "A scholarly profile link exists, but OpenAlex author record could not be retrieved/verified from available public search output. No ID assigned."
+    },
+    {
+      "slug": "jakir",
+      "fullName": "Dr. Md. Jakir Hossen",
+      "status": "verified",
+      "authorId": "A5041704835",
+      "profileUrl": "https://amirl.org/peopleDetailsView/Jakir/",
+      "evidence": [
+        {
+          "url": "https://openalex.org/A5041704835",
+          "reason": "Primary OpenAlex author record, confirmed from exact DOI authorship evidence."
+        },
+        {
+          "url": "W4411232076",
+          "reason": "OpenAlex work authorship record for DOI 10.1109/OJCS.2025.3579522 lists Md. Jakir Hossen (author A5041704835) with affiliation(s): Multimedia University; matches AMIR Lab seed paper 'ABMF-Net: An Attentive Bayesian Multi-Stage Deep Learning Model for Robust Forecasting of Electricity Price and Demand' (publications/doi/10.1109/ojcs.2025.3579522)."
+        },
+        {
+          "url": "https://amirl.org/peopleDetailsView/Jakir/",
+          "reason": "AMIR Lab public profile provides the independent identity and publication context."
+        },
+        {
+          "url": "https://scholar.google.com/citations?user=oKuBw2EAAAAJ&hl=en",
+          "reason": "Seed-linked Google Scholar profile used as an additional identity cross-check."
+        }
+      ],
+      "notes": "Confirmed by exact OpenAlex DOI authorship. The author display name matches the profile name (or a standard title/initial variant for Dr./Prof. authors); author ID and affiliation are supported by the retrieved OpenAlex work record.",
+      "verifiedAuthorName": "Md. Jakir Hossen",
+      "verifiedWorkUrl": "https://openalex.org/W4411232076",
+      "verifiedDoi": "https://doi.org/10.1109/ojcs.2025.3579522"
+    },
+    {
+      "slug": "jamin-rahman-jim",
+      "fullName": "Jamin Rahman Jim",
+      "status": "verified",
+      "authorId": "A5092162515",
+      "profileUrl": "https://amirl.org/peopleDetailsView/JAMIN-RAHMAN-JIM/",
+      "evidence": [
+        {
+          "url": "https://openalex.org/A5092162515",
+          "reason": "Primary OpenAlex author record, confirmed from exact DOI authorship evidence."
+        },
+        {
+          "url": "W4392173886",
+          "reason": "OpenAlex work authorship record for DOI 10.1109/ACCESS.2024.3370848 lists Jamin Rahman Jim (author A5092162515) with affiliation(s): American International University-Bangladesh; matches AMIR Lab seed paper 'Generative adversarial networks (GANs) in medical imaging: Advancements, applications, and challenges' (publications/doi/10.1109/access.2024.3370848)."
+        },
+        {
+          "url": "https://amirl.org/peopleDetailsView/JAMIN-RAHMAN-JIM/",
+          "reason": "AMIR Lab public profile provides the independent identity and publication context."
+        },
+        {
+          "url": "https://scholar.google.com/citations?user=qAM9cKEAAAAJ&hl=en&oi=sra",
+          "reason": "Seed-linked Google Scholar profile used as an additional identity cross-check."
+        }
+      ],
+      "notes": "Confirmed by exact OpenAlex DOI authorship. The author display name matches the profile name (or a standard title/initial variant for Dr./Prof. authors); author ID and affiliation are supported by the retrieved OpenAlex work record.",
+      "verifiedAuthorName": "Jamin Rahman Jim",
+      "verifiedWorkUrl": "https://openalex.org/W4392173886",
+      "verifiedDoi": "https://doi.org/10.1109/access.2024.3370848"
+    },
+    {
+      "slug": "keya",
+      "fullName": "Ashfia Jannat Keya",
+      "status": "verified",
+      "authorId": "A5080599946",
+      "profileUrl": "https://amirl.org/peopleDetailsView/keya/",
+      "evidence": [
+        {
+          "url": "https://api.openalex.org/authors?search=Ashfia%20Jannat%20Keya&per-page=5",
+          "reason": "OpenAlex public author search attempted using the exact seed full name; the captured result informed the candidate list."
+        },
+        {
+          "url": "https://amirl.org/peopleDetailsView/keya/",
+          "reason": "AMIR Lab public profile used to compare education, affiliation, links, and any publication details."
+        },
+        {
+          "url": "https://openalex.org/W4389235193",
+          "reason": "OpenAlex work record independently lists the profile-matching author; exact DOI 10.1371/journal.pone.0294701."
+        },
+        {
+          "url": "https://openalex.org/W3216370178",
+          "reason": "OpenAlex authorship record for DOI 10.1109/access.2021.3129329 contains the named person; direct API authorship IDs and affiliation are preserved in seed-author-api-raw-1.json."
+        },
+        {
+          "url": "https://openalex.org/W4200467578",
+          "reason": "OpenAlex authorship record for DOI 10.3390/cancers13236116 contains the named person; direct API authorship IDs and affiliation are preserved in seed-author-api-raw-1.json."
+        },
+        {
+          "url": "https://openalex.org/A5080599946",
+          "reason": "Direct OpenAlex author entity; full public response is preserved in seed-author-api-raw-1.json."
+        }
+      ],
+      "notes": "Two seed-listed DOI works independently name Ashfia Jannat Keya; both OpenAlex authorships use A5080599946 and BUBT affiliation. The author entity ORCID is 0000-0002-8553-6546.",
+      "verifiedAuthorName": "Ashfia Jannat Keya",
+      "verifiedWorkUrl": "https://openalex.org/W3216370178",
+      "verifiedDoi": "https://doi.org/10.1109/access.2021.3129329"
+    },
+    {
+      "slug": "khan-md-hasib",
+      "fullName": "Khan Md Hasib",
+      "status": "verified",
+      "authorId": "A5005839288",
+      "profileUrl": "https://amirl.org/peopleDetailsView/Khan-Md-Hasib/",
+      "evidence": [
+        {
+          "url": "https://api.openalex.org/authors?search=Khan%20Md%20Hasib&per-page=5",
+          "reason": "OpenAlex public author search attempted using the exact seed full name; the captured result informed the candidate list."
+        },
+        {
+          "url": "https://amirl.org/peopleDetailsView/Khan-Md-Hasib/",
+          "reason": "AMIR Lab public profile used to compare education, affiliation, links, and any publication details."
+        },
+        {
+          "url": "https://openalex.org/W4383892345",
+          "reason": "OpenAlex work record independently lists the profile-matching author; exact DOI 10.1016/j.engappai.2023.106688."
+        },
+        {
+          "url": "https://openalex.org/W4383892345",
+          "reason": "OpenAlex authorship record for DOI 10.1016/j.engappai.2023.106688 contains the named person; direct API authorship IDs and affiliation are preserved in seed-author-api-raw-1.json."
+        },
+        {
+          "url": "https://openalex.org/A5005839288",
+          "reason": "Direct OpenAlex author entity; full public response is preserved in seed-author-api-raw-1.json."
+        }
+      ],
+      "notes": "The AMIR profile explicitly links ORCID 0000-0001-6504-4192. Seed DOI 10.1016/j.engappai.2023.106688 has the same ORCID, BUBT affiliation, and OpenAlex author ID A5005839288.",
+      "verifiedAuthorName": "Khan Md. Hasib",
+      "verifiedWorkUrl": "https://openalex.org/W4383892345",
+      "verifiedDoi": "https://doi.org/10.1016/j.engappai.2023.106688"
+    },
+    {
+      "slug": "maharin-afroj",
+      "fullName": "Maharin Afroj",
+      "status": "ambiguous",
+      "authorId": null,
+      "profileUrl": "https://amirl.org/peopleDetailsView/Maharin-Afroj/",
+      "evidence": [
+        {
+          "url": "https://api.openalex.org/authors?search=Maharin%20Afroj&per-page=5",
+          "reason": "OpenAlex public author search attempted using the exact seed full name; the captured result informed the candidate list."
+        },
+        {
+          "url": "https://amirl.org/peopleDetailsView/Maharin-Afroj/",
+          "reason": "AMIR Lab public profile used to compare education, affiliation, links, and any publication details."
+        },
+        {
+          "url": "https://api.openalex.org/authors?search=Maharin%20Afroj&per-page=5&per-page=10",
+          "reason": "Multiple plausible or insufficiently distinguishable OpenAlex candidates were returned; candidate IDs are retained below."
+        }
+      ],
+      "notes": "No author ID selected: the captured OpenAlex candidates do not have an independently verified DOI, ORCID, affiliation, or coauthor link to this person’s profile. Candidate records are retained for follow-up.",
+      "candidates": [
+        {
+          "authorId": "A5021986765",
+          "displayName": "Maharin Afroj",
+          "orcid": "https://orcid.org/0000-0003-1827-4109",
+          "affiliations": [
+            "Bangladesh University of Business and Technology"
+          ]
+        }
+      ]
+    },
+    {
+      "slug": "maliha-mehjabin",
+      "fullName": "Maliha Mehjabin",
+      "status": "ambiguous",
+      "authorId": null,
+      "profileUrl": "https://amirl.org/peopleDetailsView/Maliha-Mehjabin/",
+      "evidence": [
+        {
+          "url": "https://api.openalex.org/authors?search=Maliha%20Mehjabin&per-page=5",
+          "reason": "OpenAlex public author search attempted using the exact seed full name; the captured result informed the candidate list."
+        },
+        {
+          "url": "https://amirl.org/peopleDetailsView/Maliha-Mehjabin/",
+          "reason": "AMIR Lab public profile used to compare education, affiliation, links, and any publication details."
+        },
+        {
+          "url": "https://api.openalex.org/authors?search=Maliha%20Mehjabin&per-page=5&per-page=10",
+          "reason": "Multiple plausible or insufficiently distinguishable OpenAlex candidates were returned; candidate IDs are retained below."
+        }
+      ],
+      "notes": "No author ID selected: the captured OpenAlex candidates do not have an independently verified DOI, ORCID, affiliation, or coauthor link to this person’s profile. Candidate records are retained for follow-up.",
+      "candidates": [
+        {
+          "authorId": "A5087123914",
+          "displayName": "Maliha Mehjabin Mitu",
+          "orcid": null,
+          "affiliations": [
+            "United International University"
+          ]
+        },
+        {
+          "authorId": "A5093770956",
+          "displayName": "Maliha Mehjabin",
+          "orcid": null,
+          "affiliations": [
+            "CUET",
+            "AIUB",
+            "University of Texas at Dallas"
+          ]
+        },
+        {
+          "authorId": "A5094010467",
+          "displayName": "Mitu Maliha Mehjabin",
+          "orcid": null,
+          "affiliations": [
+            "United International University"
+          ]
+        }
+      ]
+    },
+    {
+      "slug": "md-abrar-jahin",
+      "fullName": "Md Abrar Jahin",
+      "status": "verified",
+      "authorId": "A5065477478",
+      "profileUrl": "https://amirl.org/peopleDetailsView/Md-Abrar-Jahin/",
+      "evidence": [
+        {
+          "url": "https://api.openalex.org/authors?search=Md%20Abrar%20Jahin&per-page=5",
+          "reason": "OpenAlex public author search attempted using the exact seed full name; the captured result informed the candidate list."
+        },
+        {
+          "url": "https://amirl.org/peopleDetailsView/Md-Abrar-Jahin/",
+          "reason": "AMIR Lab public profile used to compare education, affiliation, links, and any publication details."
+        },
+        {
+          "url": "https://openalex.org/A5065477478",
+          "reason": "Direct OpenAlex author entity; full public response is preserved in seed-author-api-raw-1.json."
+        }
+      ],
+      "notes": "The AMIR biography names KUET and OIST research appointments. OpenAlex author A5065477478 has both institutions among its affiliations and matching research profile context.",
+      "verifiedAuthorName": "Md Abrar Jahin",
+      "verifiedAffiliations": [
+        "University of Southern California",
+        "Khulna University of Engineering and Technology",
+        "Okinawa Institute of Science and Technology Graduate University"
+      ]
+    },
+    {
+      "slug": "md-aktarujjaman",
+      "fullName": "Md Aktarujjaman",
+      "status": "ambiguous",
+      "authorId": null,
+      "profileUrl": "https://amirl.org/peopleDetailsView/Md-Aktarujjaman/",
+      "evidence": [
+        {
+          "url": "https://api.openalex.org/authors?search=Md%20Aktarujjaman&per-page=5",
+          "reason": "OpenAlex public author search attempted using the exact seed full name; the captured result informed the candidate list."
+        },
+        {
+          "url": "https://amirl.org/peopleDetailsView/Md-Aktarujjaman/",
+          "reason": "AMIR Lab public profile used to compare education, affiliation, links, and any publication details."
+        },
+        {
+          "url": "https://api.openalex.org/authors?search=Md%20Aktarujjaman&per-page=5&per-page=10",
+          "reason": "Multiple plausible or insufficiently distinguishable OpenAlex candidates were returned; candidate IDs are retained below."
+        }
+      ],
+      "notes": "No author ID selected: the captured OpenAlex candidates do not have an independently verified DOI, ORCID, affiliation, or coauthor link to this person’s profile. Candidate records are retained for follow-up.",
+      "candidates": [
+        {
+          "authorId": "A5091714891",
+          "displayName": "Md. Aktarujjaman",
+          "orcid": "https://orcid.org/0000-0001-5895-6943",
+          "affiliations": [
+            "Patuakhali Science and Technology University"
+          ]
+        },
+        {
+          "authorId": "A5116482111",
+          "displayName": "Md. Aktarujjaman",
+          "orcid": null,
+          "affiliations": [
+            "Webster University"
+          ]
+        },
+        {
+          "authorId": "A5121327878",
+          "displayName": "Md Aktarujjaman",
+          "orcid": null,
+          "affiliations": [
+            "Webster University"
+          ]
+        },
+        {
+          "authorId": "A5040408750",
+          "displayName": "M. Aktarujjaman",
+          "orcid": null,
+          "affiliations": [
+            "University of Tasmania",
+            "Hydro Tasmania"
+          ]
+        }
+      ]
+    },
+    {
+      "slug": "md-anwar-hussen-wadud",
+      "fullName": "Md. Anwar Hussen Wadud",
+      "status": "verified",
+      "authorId": "A5080809190",
+      "profileUrl": "https://amirl.org/peopleDetailsView/Md-Anwar-Hussen-Wadud/",
+      "evidence": [
+        {
+          "url": "https://api.openalex.org/authors?search=Md.%20Anwar%20Hussen%20Wadud&per-page=5",
+          "reason": "OpenAlex public author search attempted using the exact seed full name; the captured result informed the candidate list."
+        },
+        {
+          "url": "https://amirl.org/peopleDetailsView/Md-Anwar-Hussen-Wadud/",
+          "reason": "AMIR Lab public profile used to compare education, affiliation, links, and any publication details."
+        },
+        {
+          "url": "https://openalex.org/W4403256852",
+          "reason": "OpenAlex work record independently lists the profile-matching author; the listed authors and BUBT context match the AMIR profile."
+        },
+        {
+          "url": "https://openalex.org/W4283739917",
+          "reason": "OpenAlex authorship record for DOI 10.1016/j.jjimei.2022.100095 contains the named person; direct API authorship IDs and affiliation are preserved in seed-author-api-raw-1.json."
+        },
+        {
+          "url": "https://openalex.org/W4293027464",
+          "reason": "OpenAlex authorship record for DOI 10.3390/app12178398 contains the named person; direct API authorship IDs and affiliation are preserved in seed-author-api-raw-1.json."
+        },
+        {
+          "url": "https://openalex.org/W4403256852",
+          "reason": "Same indexed seed paper lists Md. Anwar Hussen Wadud with BUBT affiliation; DOI 10.1016/j.heliyon.2024.e38997."
+        },
+        {
+          "url": "https://openalex.org/A5080809190",
+          "reason": "Direct OpenAlex author entity; full public response is preserved in seed-author-api-raw-1.json."
+        }
+      ],
+      "notes": "Seed DOIs 10.1016/j.jjimei.2022.100095 and 10.3390/app12178398 list Md. Anwar Hussen Wadud with BUBT affiliation under A5080809190; the 2024 Heliyon work also lists him alongside another AMIR seed researcher.",
+      "verifiedAuthorName": "Md. Anwar Hussen Wadud",
+      "verifiedWorkUrl": "https://openalex.org/W4283739917",
+      "verifiedDoi": "https://doi.org/10.1016/j.jjimei.2022.100095"
+    },
+    {
+      "slug": "md-ashfi-ar-raihan",
+      "fullName": "Md. Ashfi Ar Raihan",
+      "status": "verified",
+      "authorId": "A5138428005",
+      "profileUrl": "https://amirl.org/peopleDetailsView/Md-Ashfi-Ar-Raihan/",
+      "evidence": [
+        {
+          "url": "https://api.openalex.org/authors?search=Md.%20Ashfi%20Ar%20Raihan&per-page=5",
+          "reason": "OpenAlex public author search attempted using the exact seed full name; the captured result informed the candidate list."
+        },
+        {
+          "url": "https://amirl.org/peopleDetailsView/Md-Ashfi-Ar-Raihan/",
+          "reason": "AMIR Lab public profile used to compare education, affiliation, links, and any publication details."
+        },
+        {
+          "url": "https://openalex.org/A5138428005",
+          "reason": "Direct OpenAlex author entity; full public response is preserved in seed-author-api-raw-1.json."
+        }
+      ],
+      "notes": "The AMIR profile’s academic section says B.Sc. Computer Science at AIUB. The exact-name OpenAlex author candidate A5138428005 is affiliated with AIUB and has one indexed work.",
+      "verifiedAuthorName": "MD Ashfi Ar Raihan",
+      "verifiedAffiliations": [
+        "American International University-Bangladesh"
+      ]
+    },
+    {
+      "slug": "md-farhan-ishmam",
+      "fullName": "Md Farhan Ishmam",
+      "status": "verified",
+      "authorId": "A5093806397",
+      "profileUrl": "https://amirl.org/peopleDetailsView/Md-Farhan-Ishmam/",
+      "evidence": [
+        {
+          "url": "https://api.openalex.org/authors?search=Md%20Farhan%20Ishmam&per-page=5",
+          "reason": "OpenAlex public author search attempted using the exact seed full name; the captured result informed the candidate list."
+        },
+        {
+          "url": "https://amirl.org/peopleDetailsView/Md-Farhan-Ishmam/",
+          "reason": "AMIR Lab public profile used to compare education, affiliation, links, and any publication details."
+        },
+        {
+          "url": "https://openalex.org/A5093806397",
+          "reason": "Direct OpenAlex author entity; full public response is preserved in seed-author-api-raw-1.json."
+        }
+      ],
+      "notes": "The AMIR biography and research section identify IUT as his degree and research institution. The exact-name OpenAlex author A5093806397 has an IUT affiliation; its other affiliation is Utah.",
+      "verifiedAuthorName": "Md Farhan Ishmam",
+      "verifiedAffiliations": [
+        "University of Utah",
+        "Islamic University of Technology"
+      ]
+    },
+    {
+      "slug": "md-fuad-hasan",
+      "fullName": "Md. Fuad Hasan",
+      "status": "unresolved",
+      "authorId": null,
+      "profileUrl": "https://amirl.org/peopleDetailsView/Md-Fuad-Hasan/",
+      "evidence": [
+        {
+          "url": "https://api.openalex.org/authors?search=Md.%20Fuad%20Hasan&per-page=5",
+          "reason": "OpenAlex public author search attempted using the exact seed full name; the captured result informed the candidate list."
+        },
+        {
+          "url": "https://amirl.org/peopleDetailsView/Md-Fuad-Hasan/",
+          "reason": "AMIR Lab public profile used to compare education, affiliation, links, and any publication details."
+        }
+      ],
+      "notes": "25 lexical search results were returned, but no candidate in the captured set matched the person’s stated computer-systems engineering context."
+    },
+    {
+      "slug": "md-habibul-arif",
+      "fullName": "Md Habibul Arif",
+      "status": "verified",
+      "authorId": "A5121076004",
+      "profileUrl": "https://amirl.org/peopleDetailsView/Md-Habibul-Arif/",
+      "evidence": [
+        {
+          "url": "https://api.openalex.org/authors?search=Md%20Habibul%20Arif&per-page=5",
+          "reason": "OpenAlex public author search attempted using the exact seed full name; the captured result informed the candidate list."
+        },
+        {
+          "url": "https://amirl.org/peopleDetailsView/Md-Habibul-Arif/",
+          "reason": "AMIR Lab public profile used to compare education, affiliation, links, and any publication details."
+        },
+        {
+          "url": "https://openalex.org/W7153085694",
+          "reason": "OpenAlex work record independently lists the profile-matching author; exact DOI 10.1371/journal.pone.0343669."
+        },
+        {
+          "url": "https://openalex.org/W7140333278",
+          "reason": "OpenAlex authorship record for DOI 10.1038/s41598-026-45041-y contains the named person; direct API authorship IDs and affiliation are preserved in seed-author-api-raw-1.json."
+        },
+        {
+          "url": "https://openalex.org/W7140481074",
+          "reason": "OpenAlex authorship record for DOI 10.1109/3ict68299.2025.11442074 contains the named person; direct API authorship IDs and affiliation are preserved in seed-author-api-raw-1.json."
+        },
+        {
+          "url": "https://openalex.org/A5121076004",
+          "reason": "Direct OpenAlex author entity; full public response is preserved in seed-author-api-raw-1.json."
+        }
+      ],
+      "notes": "The AMIR profile includes DOI 10.1038/s41598-026-45041-y and identifies University of the Potomac study. That exact OpenAlex work lists Md Habibul Arif at Potomac under A5121076004; the 2025 listed papers repeat the same author ID.",
+      "verifiedAuthorName": "Md Habibul Arif",
+      "verifiedWorkUrl": "https://openalex.org/W7140333278",
+      "verifiedDoi": "https://doi.org/10.1038/s41598-026-45041-y"
+    },
+    {
+      "slug": "md-humaion-kabir-mehedi",
+      "fullName": "Md. Humaion Kabir Mehedi",
+      "status": "ambiguous",
+      "authorId": null,
+      "profileUrl": "https://amirl.org/peopleDetailsView/MD-HUMAION-KABIR-MEHEDI/",
+      "evidence": [
+        {
+          "url": "https://api.openalex.org/authors?search=Md.%20Humaion%20Kabir%20Mehedi&per-page=5",
+          "reason": "OpenAlex public author search attempted using the exact seed full name; the captured result informed the candidate list."
+        },
+        {
+          "url": "https://amirl.org/peopleDetailsView/MD-HUMAION-KABIR-MEHEDI/",
+          "reason": "AMIR Lab public profile used to compare education, affiliation, links, and any publication details."
+        },
+        {
+          "url": "https://openalex.org/A5016911866",
+          "reason": "Primary OpenAlex author entity selected after comparing the record with the profile evidence."
+        },
+        {
+          "url": "https://openalex.org/W4416291949",
+          "reason": "OpenAlex work record independently lists the profile-matching author; exact DOI 10.1038/s41598-025-23856-5."
+        },
+        {
+          "url": "https://openalex.org/W4416291949",
+          "reason": "Candidate-only publication DOI 10.1038/s41598-025-23856-5 lists Md Humaion Kabir Mehedi with known AMIR seed researcher Khan Md. Hasib; it is not listed on this alumnus’s profile, so it remains supporting but not conclusive identity evidence."
+        }
+      ],
+      "notes": "Two OpenAlex records share the exact name and BRAC affiliation, but the AMIR alumni profile only states an M.Sc. in Computer Science and has no ORCID, publications, or institutional link. The indexed DOI record for candidate A5016911866 is not tied to this person by the seed evidence, so no ID is selected.",
+      "candidates": [
+        {
+          "authorId": "A5016911866",
+          "displayName": "Md Humaion Kabir Mehedi",
+          "orcid": "https://orcid.org/0000-0002-5759-022X",
+          "affiliations": [
+            "BRAC University"
+          ]
+        },
+        {
+          "authorId": "A5121604524",
+          "displayName": "Md Humaion Kabir Mehedi",
+          "orcid": null,
+          "affiliations": [
+            "BRAC University"
+          ]
+        }
+      ]
+    },
+    {
+      "slug": "md-imran-nazir",
+      "fullName": "Md. Imran Nazir",
+      "status": "verified",
+      "authorId": "A5114063309",
+      "profileUrl": "https://amirl.org/peopleDetailsView/Md-Imran-Nazir/",
+      "evidence": [
+        {
+          "url": "https://api.openalex.org/authors?search=Md.%20Imran%20Nazir&per-page=5",
+          "reason": "OpenAlex public author search attempted using the exact seed full name; the captured result informed the candidate list."
+        },
+        {
+          "url": "https://amirl.org/peopleDetailsView/Md-Imran-Nazir/",
+          "reason": "AMIR Lab public profile used to compare education, affiliation, links, and any publication details."
+        },
+        {
+          "url": "https://openalex.org/A5114063309",
+          "reason": "Direct OpenAlex author entity; full public response is preserved in seed-author-api-raw-1.json."
+        },
+        {
+          "url": "https://openalex.org/W4403256852",
+          "reason": "OpenAlex work DOI 10.1016/j.heliyon.2024.e38997 lists Md. Imran Nazir (A5114063309) and Md. Anwar Hussen Wadud (confirmed AMIR seed person index 44); its author affiliation is BUBT. This is independent coauthor and institutional context, although this work is not an AMIR seed paper."
+        }
+      ],
+      "notes": "The exact-name OpenAlex author is listed on a BUBT-affiliated Heliyon paper (DOI 10.1016/j.heliyon.2024.e38997) with Md. Anwar Hussen Wadud, a separately confirmed AMIR seed researcher. The AMIR profile itself has no publication links, so this is external coauthor and affiliation corroboration, not a profile-listed paper match.",
+      "verifiedAuthorName": "Md. Imran Nazir",
+      "verifiedWorkUrl": "https://openalex.org/W4403256852",
+      "verifiedDoi": "https://doi.org/10.1016/j.heliyon.2024.e38997"
+    },
+    {
+      "slug": "md-juniadul-islam",
+      "fullName": "Md. Juniadul Islam",
+      "status": "verified",
+      "authorId": "A5113429336",
+      "profileUrl": "https://amirl.org/peopleDetailsView/Md-Juniadul-Islam/",
+      "evidence": [
+        {
+          "url": "https://api.openalex.org/authors?search=Md.%20Juniadul%20Islam&per-page=5",
+          "reason": "OpenAlex public author search attempted using the exact seed full name; the captured result informed the candidate list."
+        },
+        {
+          "url": "https://amirl.org/peopleDetailsView/Md-Juniadul-Islam/",
+          "reason": "AMIR Lab public profile used to compare education, affiliation, links, and any publication details."
+        },
+        {
+          "url": "https://api.openalex.org/authors?search=Md.%20Juniadul%20Islam&per-page=5&per-page=10",
+          "reason": "Multiple plausible or insufficiently distinguishable OpenAlex candidates were returned; candidate IDs are retained below."
+        },
+        {
+          "url": "https://openalex.org/W4404571282",
+          "reason": "Exact publication DOI 10.48550/arXiv.2411.11740 appears on the AMIR profile; OpenAlex authorship record lists the target researcher and author ID A5113429336."
+        },
+        {
+          "url": "https://openalex.org/A5113429336",
+          "reason": "Direct OpenAlex author entity; full public response is preserved in seed-author-api-raw-1.json."
+        }
+      ],
+      "notes": "The profile lists the exact paper title and arXiv DOI 10.48550/arXiv.2411.11740. Its OpenAlex authorship lists Md Juniadul Islam as A5113429336.",
+      "verifiedAuthorName": "Md Juniadul Islam",
+      "verifiedWorkUrl": "https://openalex.org/W4404571282",
+      "verifiedDoi": "https://doi.org/10.48550/arxiv.2411.11740"
+    },
+    {
+      "slug": "md-khaled",
+      "fullName": "Md Khaled",
+      "status": "ambiguous",
+      "authorId": null,
+      "profileUrl": "https://amirl.org/peopleDetailsView/MD-KHALED/",
+      "evidence": [
+        {
+          "url": "https://api.openalex.org/authors?search=Md%20Khaled&per-page=5",
+          "reason": "OpenAlex public author search attempted using the exact seed full name; the captured result informed the candidate list."
+        },
+        {
+          "url": "https://amirl.org/peopleDetailsView/MD-KHALED/",
+          "reason": "AMIR Lab public profile used to compare education, affiliation, links, and any publication details."
+        },
+        {
+          "url": "https://api.openalex.org/authors?search=Md%20Khaled&per-page=5&per-page=10",
+          "reason": "Multiple plausible or insufficiently distinguishable OpenAlex candidates were returned; candidate IDs are retained below."
+        }
+      ],
+      "notes": "No author ID selected: the captured OpenAlex candidates do not have an independently verified DOI, ORCID, affiliation, or coauthor link to this person’s profile. Candidate records are retained for follow-up.",
+      "candidates": [
+        {
+          "authorId": "A5064722384",
+          "displayName": "Khaled Parvez",
+          "orcid": "https://orcid.org/0000-0003-2851-9907",
+          "affiliations": [
+            "Max Planck Society",
+            "University of Manchester"
+          ]
+        },
+        {
+          "authorId": "A5059264521",
+          "displayName": "Khaled Hossain",
+          "orcid": "https://orcid.org/0000-0003-0878-915X",
+          "affiliations": [
+            "Tokyo Medical and Dental University"
+          ]
+        },
+        {
+          "authorId": "A5090193033",
+          "displayName": "Khaled Jamal Saleh",
+          "orcid": "https://orcid.org/0000-0002-7734-1933",
+          "affiliations": [
+            "University College Dublin"
+          ]
+        },
+        {
+          "authorId": "A5069872443",
+          "displayName": "Md Khaled Mosharaf",
+          "orcid": "https://orcid.org/0000-0002-3176-6741",
+          "affiliations": [
+            "University of Nottingham"
+          ]
+        },
+        {
+          "authorId": "A5051675200",
+          "displayName": "Md. Khaled Hossain",
+          "orcid": "https://orcid.org/0000-0002-0138-4523",
+          "affiliations": [
+            "Sogang University"
+          ]
+        }
+      ]
+    },
+    {
+      "slug": "md-mithun-hossain",
+      "fullName": "Md. Mithun Hossain",
+      "status": "verified",
+      "authorId": "A5111285702",
+      "profileUrl": "https://amirl.org/peopleDetailsView/Md-Mithun-Hossain/",
+      "evidence": [
+        {
+          "url": "https://api.openalex.org/authors?search=Md.%20Mithun%20Hossain&per-page=5",
+          "reason": "OpenAlex public author search attempted using the exact seed full name; the captured result informed the candidate list."
+        },
+        {
+          "url": "https://amirl.org/peopleDetailsView/Md-Mithun-Hossain/",
+          "reason": "AMIR Lab public profile used to compare education, affiliation, links, and any publication details."
+        },
+        {
+          "url": "https://api.openalex.org/authors?search=Md.%20Mithun%20Hossain&per-page=5&per-page=10",
+          "reason": "Multiple plausible or insufficiently distinguishable OpenAlex candidates were returned; candidate IDs are retained below."
+        },
+        {
+          "url": "https://openalex.org/W4401452685",
+          "reason": "OpenAlex authorship record for DOI 10.1109/ACCESS.2024.3441323 contains the named person; direct API authorship IDs and affiliation are preserved in seed-author-api-raw-1.json."
+        },
+        {
+          "url": "https://openalex.org/W4405754382",
+          "reason": "OpenAlex authorship record for DOI 10.1109/ACCESS.2024.3522061 contains the named person; direct API authorship IDs and affiliation are preserved in seed-author-api-raw-1.json."
+        },
+        {
+          "url": "https://openalex.org/A5111285702",
+          "reason": "Direct OpenAlex author entity; full public response is preserved in seed-author-api-raw-1.json."
+        }
+      ],
+      "notes": "The profile lists two exact IEEE Access DOIs. Both OpenAlex works list Md. Mithun Hossain as A5111285702 with BUBT affiliation and ORCID 0009-0001-4883-1802.",
+      "verifiedAuthorName": "Md. Mithun Hossain",
+      "verifiedWorkUrl": "https://openalex.org/W4401452685",
+      "verifiedDoi": "https://doi.org/10.1109/access.2024.3441323"
+    },
+    {
+      "slug": "md-mohsin-kabir",
+      "fullName": "Md Mohsin Kabir",
+      "status": "verified",
+      "authorId": "A5041757523",
+      "profileUrl": "https://amirl.org/peopleDetailsView/Md-Mohsin-Kabir/",
+      "evidence": [
+        {
+          "url": "https://api.openalex.org/authors?search=Md%20Mohsin%20Kabir&per-page=5",
+          "reason": "OpenAlex public author search attempted using the exact seed full name; the captured result informed the candidate list."
+        },
+        {
+          "url": "https://amirl.org/peopleDetailsView/Md-Mohsin-Kabir/",
+          "reason": "AMIR Lab public profile used to compare education, affiliation, links, and any publication details."
+        },
+        {
+          "url": "https://openalex.org/W4411022995",
+          "reason": "OpenAlex authorship record for DOI 10.1016/j.iswa.2025.200537 contains the named person; direct API authorship IDs and affiliation are preserved in seed-author-api-raw-1.json."
+        },
+        {
+          "url": "https://openalex.org/W4388948690",
+          "reason": "OpenAlex authorship record for DOI 10.1016/j.jafr.2023.100880 contains the named person; direct API authorship IDs and affiliation are preserved in seed-author-api-raw-1.json."
+        },
+        {
+          "url": "https://openalex.org/W4392173886",
+          "reason": "OpenAlex authorship record for DOI 10.1109/access.2024.3370848 contains the named person; direct API authorship IDs and affiliation are preserved in seed-author-api-raw-1.json."
+        },
+        {
+          "url": "https://openalex.org/W4413849126",
+          "reason": "OpenAlex authorship record for DOI 10.1186/s12880-025-01902-y contains the named person; direct API authorship IDs and affiliation are preserved in seed-author-api-raw-1.json."
+        },
+        {
+          "url": "https://openalex.org/A5041757523",
+          "reason": "Direct OpenAlex author entity; full public response is preserved in seed-author-api-raw-1.json."
+        }
+      ],
+      "notes": "Four seed-listed DOI works include Md. Mohsin Kabir. OpenAlex assigns the same author ID A5041757523 across them; one DOI record gives BUBT and the profile lists him as coauthor with the same lab group.",
+      "verifiedAuthorName": "Md. Mohsin Kabir",
+      "verifiedWorkUrl": "https://openalex.org/W4411022995",
+      "verifiedDoi": "https://doi.org/10.1016/j.iswa.2025.200537"
+    },
+    {
+      "slug": "md-nazmul-hossain-mir",
+      "fullName": "Md Nazmul Hossain Mir",
+      "status": "ambiguous",
+      "authorId": null,
+      "profileUrl": "https://amirl.org/peopleDetailsView/Md-Nazmul-Hossain-Mir/",
+      "evidence": [
+        {
+          "url": "https://api.openalex.org/authors?search=Md%20Nazmul%20Hossain%20Mir&per-page=5",
+          "reason": "OpenAlex public author search attempted using the exact seed full name; the captured result informed the candidate list."
+        },
+        {
+          "url": "https://amirl.org/peopleDetailsView/Md-Nazmul-Hossain-Mir/",
+          "reason": "AMIR Lab public profile used to compare education, affiliation, links, and any publication details."
+        },
+        {
+          "url": "https://api.openalex.org/authors?search=Md%20Nazmul%20Hossain%20Mir&per-page=5&per-page=10",
+          "reason": "Multiple plausible or insufficiently distinguishable OpenAlex candidates were returned; candidate IDs are retained below."
+        }
+      ],
+      "notes": "No author ID selected: the captured OpenAlex candidates do not have an independently verified DOI, ORCID, affiliation, or coauthor link to this person’s profile. Candidate records are retained for follow-up.",
+      "candidates": [
+        {
+          "authorId": "A5114224385",
+          "displayName": "Md Nazmul Hossain Mir",
+          "orcid": "https://orcid.org/0009-0001-7390-3046",
+          "affiliations": []
+        },
+        {
+          "authorId": "A5023652077",
+          "displayName": "Md. Nazmul Hossain Mir",
+          "orcid": null,
+          "affiliations": [
+            "Daffodil International University"
+          ]
+        }
+      ]
+    },
+    {
+      "slug": "md-reazul-islam",
+      "fullName": "Md. Reazul Islam",
+      "status": "verified",
+      "authorId": "A5104202182",
+      "profileUrl": "https://amirl.org/peopleDetailsView/MD-Reazul-Islam/",
+      "evidence": [
+        {
+          "url": "https://api.openalex.org/authors?search=Md.%20Reazul%20Islam&per-page=5",
+          "reason": "OpenAlex public author search attempted using the exact seed full name; the captured result informed the candidate list."
+        },
+        {
+          "url": "https://amirl.org/peopleDetailsView/MD-Reazul-Islam/",
+          "reason": "AMIR Lab public profile used to compare education, affiliation, links, and any publication details."
+        },
+        {
+          "url": "https://api.openalex.org/authors?search=Md.%20Reazul%20Islam&per-page=5&per-page=10",
+          "reason": "Multiple plausible or insufficiently distinguishable OpenAlex candidates were returned; candidate IDs are retained below."
+        },
+        {
+          "url": "https://openalex.org/W4388948690",
+          "reason": "OpenAlex authorship record for DOI 10.1016/j.jafr.2023.100880 contains the named person; direct API authorship IDs and affiliation are preserved in seed-author-api-raw-1.json."
+        },
+        {
+          "url": "https://openalex.org/W4388948690",
+          "reason": "Exact seed paper DOI 10.1016/j.jafr.2023.100880 lists Md Reazul Islam as an author with BUBT affiliation and OpenAlex author ID A5104202182."
+        },
+        {
+          "url": "https://openalex.org/A5104202182",
+          "reason": "Direct OpenAlex author entity; full public response is preserved in seed-author-api-raw-1.json."
+        }
+      ],
+      "notes": "Seed DOI 10.1016/j.jafr.2023.100880 lists Md Reazul Islam as A5104202182 with BUBT affiliation. This aligns with the profile’s IoT and machine-learning research focus.",
+      "verifiedAuthorName": "Md Reazul Islam",
+      "verifiedWorkUrl": "https://openalex.org/W4388948690",
+      "verifiedDoi": "https://doi.org/10.1016/j.jafr.2023.100880"
+    },
+    {
+      "slug": "md-sakib-hossain-shovon",
+      "fullName": "Md Sakib Hossain Shovon",
+      "status": "verified",
+      "authorId": "A5057388374",
+      "profileUrl": "https://amirl.org/peopleDetailsView/Md-Sakib-Hossain-Shovon/",
+      "evidence": [
+        {
+          "url": "https://api.openalex.org/authors?search=Md%20Sakib%20Hossain%20Shovon&per-page=5",
+          "reason": "OpenAlex public author search attempted using the exact seed full name; the captured result informed the candidate list."
+        },
+        {
+          "url": "https://amirl.org/peopleDetailsView/Md-Sakib-Hossain-Shovon/",
+          "reason": "AMIR Lab public profile used to compare education, affiliation, links, and any publication details."
+        },
+        {
+          "url": "https://openalex.org/W4376955813",
+          "reason": "OpenAlex authorship record for DOI 10.3390/s23104774 contains the named person; direct API authorship IDs and affiliation are preserved in seed-author-api-raw-1.json."
+        },
+        {
+          "url": "https://openalex.org/A5057388374",
+          "reason": "Direct OpenAlex author entity; full public response is preserved in seed-author-api-raw-1.json."
+        }
+      ],
+      "notes": "Seed DOI 10.3390/s23104774 lists Md Sakib Hossain Shovon as A5057388374. The OpenAlex author entity also carries his BUBT/AIUB affiliations and ORCID 0000-0002-5013-8556.",
+      "verifiedAuthorName": "Md Sakib Hossain Shovon",
+      "verifiedWorkUrl": "https://openalex.org/W4376955813",
+      "verifiedDoi": "https://doi.org/10.3390/s23104774"
+    },
+    {
+      "slug": "md-shakil-hossain",
+      "fullName": "Md. Shakil Hossain",
+      "status": "verified",
+      "authorId": "A5083695209",
+      "profileUrl": "https://amirl.org/peopleDetailsView/Md-Shakil-Hossain/",
+      "evidence": [
+        {
+          "url": "https://api.openalex.org/authors?search=Md.%20Shakil%20Hossain&per-page=5",
+          "reason": "OpenAlex public author search attempted using the exact seed full name; the captured result informed the candidate list."
+        },
+        {
+          "url": "https://amirl.org/peopleDetailsView/Md-Shakil-Hossain/",
+          "reason": "AMIR Lab public profile used to compare education, affiliation, links, and any publication details."
+        },
+        {
+          "url": "https://api.openalex.org/authors?search=Md.%20Shakil%20Hossain&per-page=5&per-page=10",
+          "reason": "Multiple plausible or insufficiently distinguishable OpenAlex candidates were returned; candidate IDs are retained below."
+        },
+        {
+          "url": "https://openalex.org/W4401452685",
+          "reason": "OpenAlex authorship record for DOI 10.1109/ACCESS.2024.3441323 contains the named person; direct API authorship IDs and affiliation are preserved in seed-author-api-raw-1.json."
+        },
+        {
+          "url": "https://openalex.org/W4405754382",
+          "reason": "OpenAlex authorship record for DOI 10.1109/ACCESS.2024.3522061 contains the named person; direct API authorship IDs and affiliation are preserved in seed-author-api-raw-1.json."
+        },
+        {
+          "url": "https://openalex.org/A5083695209",
+          "reason": "Direct OpenAlex author entity; full public response is preserved in seed-author-api-raw-1.json."
+        }
+      ],
+      "notes": "The profile lists the two exact IEEE Access DOIs. Both OpenAlex works list Md. Shakil Hossain as A5083695209 with BUBT affiliation and ORCID 0009-0003-3641-3739.",
+      "verifiedAuthorName": "Md. Shakil Hossain",
+      "verifiedWorkUrl": "https://openalex.org/W4401452685",
+      "verifiedDoi": "https://doi.org/10.1109/access.2024.3441323"
+    },
+    {
+      "slug": "md-tafhimul-haque-sadi",
+      "fullName": "Md Tafhimul Haque Sadi",
+      "status": "verified",
+      "authorId": "A5055346973",
+      "profileUrl": "https://amirl.org/peopleDetailsView/MD-TAFHIMUL-HAQUE-SADI/",
+      "evidence": [
+        {
+          "url": "https://api.openalex.org/authors?search=Md%20Tafhimul%20Haque%20Sadi&per-page=5",
+          "reason": "OpenAlex public author search attempted using the exact seed full name; the captured result informed the candidate list."
+        },
+        {
+          "url": "https://amirl.org/peopleDetailsView/MD-TAFHIMUL-HAQUE-SADI/",
+          "reason": "AMIR Lab public profile used to compare education, affiliation, links, and any publication details."
+        },
+        {
+          "url": "https://openalex.org/W4404488673",
+          "reason": "OpenAlex authorship record for DOI 10.4236/jcc.2024.1211007 contains the named person; direct API authorship IDs and affiliation are preserved in seed-author-api-raw-1.json."
+        },
+        {
+          "url": "https://openalex.org/A5055346973",
+          "reason": "Direct OpenAlex author entity; full public response is preserved in seed-author-api-raw-1.json."
+        }
+      ],
+      "notes": "The profile lists the exact article title and DOI 10.4236/jcc.2024.1211007. OpenAlex authorship identifies Md Tafhimul Haque Sadi as A5055346973 with AIUB affiliation and ORCID 0009-0000-6598-9890.",
+      "verifiedAuthorName": "Md Tafhimul Haque Sadi",
+      "verifiedWorkUrl": "https://openalex.org/W4404488673",
+      "verifiedDoi": "https://doi.org/10.4236/jcc.2024.1211007"
+    },
+    {
+      "slug": "md-zakir-hossain-zamil",
+      "fullName": "Md Zakir Hossain Zamil",
+      "status": "verified",
+      "authorId": "A5084975255",
+      "profileUrl": "https://amirl.org/peopleDetailsView/Md-Zakir-Hossain-Zamil/",
+      "evidence": [
+        {
+          "url": "https://api.openalex.org/authors?search=Md%20Zakir%20Hossain%20Zamil&per-page=5",
+          "reason": "OpenAlex public author search attempted using the exact seed full name; the captured result informed the candidate list."
+        },
+        {
+          "url": "https://amirl.org/peopleDetailsView/Md-Zakir-Hossain-Zamil/",
+          "reason": "AMIR Lab public profile used to compare education, affiliation, links, and any publication details."
+        },
+        {
+          "url": "https://openalex.org/A5084975255",
+          "reason": "Direct OpenAlex author entity; full public response is preserved in seed-author-api-raw-1.json."
+        },
+        {
+          "url": "https://amirl.org/people/",
+          "reason": "Canonical AMIR team directory explicitly identifies Western Illinois University; independently matches OpenAlex author affiliation."
+        }
+      ],
+      "notes": "The exact-name OpenAlex entity A5084975255 has BUBT affiliation and ORCID 0009-0008-2012-1666; the AMIR profile links a Google Scholar author page and a matching personal LinkedIn profile. No seed DOI was available.",
+      "verifiedAuthorName": "Md Zakir Hossain Zamil",
+      "verifiedAffiliations": [
+        "Western Illinois University",
+        "Bangladesh University of Business and Technology"
+      ]
+    },
+    {
+      "slug": "mdshahriar-imtiaz",
+      "fullName": "Md. Shahriar Imtiaz",
+      "status": "ambiguous",
+      "authorId": null,
+      "profileUrl": "https://amirl.org/peopleDetailsView/MDSHAHRIAR-IMTIAZ/",
+      "evidence": [
+        {
+          "url": "https://api.openalex.org/authors?search=Md.%20Shahriar%20Imtiaz&per-page=5",
+          "reason": "OpenAlex public author search attempted using the exact seed full name; the captured result informed the candidate list."
+        },
+        {
+          "url": "https://amirl.org/peopleDetailsView/MDSHAHRIAR-IMTIAZ/",
+          "reason": "AMIR Lab public profile used to compare education, affiliation, links, and any publication details."
+        },
+        {
+          "url": "https://openalex.org/A5137345567",
+          "reason": "Exact-name candidate with AIUB affiliation and ORCID 0009-0001-0068-6263; retained as ambiguous because the AMIR profile does not independently connect the person to AIUB or this ORCID."
+        }
+      ],
+      "notes": "One exact-name candidate has an AIUB affiliation and ORCID, but the AMIR profile identifies only a CSE degree and research interests; it does not name AIUB, publish an ORCID, or link a DOI. No independent fact ties this candidate to the person, so the match is unresolved.",
+      "candidates": [
+        {
+          "authorId": "A5137345567",
+          "displayName": "Md. Shahriar Imtiaz",
+          "orcid": "https://orcid.org/0009-0001-0068-6263",
+          "affiliations": [
+            "American International University-Bangladesh"
+          ]
+        }
+      ]
+    },
+    {
+      "slug": "mehedi",
+      "fullName": "Md. Mehedi Hasan",
+      "status": "ambiguous",
+      "authorId": null,
+      "profileUrl": "https://amirl.org/peopleDetailsView/mehedi/",
+      "evidence": [
+        {
+          "url": "https://api.openalex.org/authors?search=Md.%20Mehedi%20Hasan&per-page=5",
+          "reason": "OpenAlex public author search attempted using the exact seed full name; the captured result informed the candidate list."
+        },
+        {
+          "url": "https://amirl.org/peopleDetailsView/mehedi/",
+          "reason": "AMIR Lab public profile used to compare education, affiliation, links, and any publication details."
+        },
+        {
+          "url": "https://api.openalex.org/authors?search=Md.%20Mehedi%20Hasan&per-page=5&per-page=10",
+          "reason": "Multiple plausible or insufficiently distinguishable OpenAlex candidates were returned; candidate IDs are retained below."
+        }
+      ],
+      "notes": "No author ID selected: the captured OpenAlex candidates do not have an independently verified DOI, ORCID, affiliation, or coauthor link to this person’s profile. Candidate records are retained for follow-up.",
+      "candidates": [
+        {
+          "authorId": "A5016805823",
+          "displayName": "Md. Mehedi Hasan",
+          "orcid": "https://orcid.org/0000-0001-7801-0506",
+          "affiliations": [
+            "Louisiana State University",
+            "Khulna University"
+          ]
+        },
+        {
+          "authorId": "A5101790347",
+          "displayName": "Mehedi Hasan",
+          "orcid": "https://orcid.org/0000-0003-2153-4979",
+          "affiliations": [
+            "Khulna University",
+            "BRAC"
+          ]
+        },
+        {
+          "authorId": "A5061480012",
+          "displayName": "Md Mehedi Hasan",
+          "orcid": "https://orcid.org/0000-0003-4952-0739",
+          "affiliations": [
+            "Kunming University of Science and Technology",
+            "Louisiana State University"
+          ]
+        },
+        {
+          "authorId": "A5082282169",
+          "displayName": "Md Mehedi Hasan Emon",
+          "orcid": "https://orcid.org/0000-0002-6224-9552",
+          "affiliations": [
+            "AIUB",
+            "University of Dhaka"
+          ]
+        },
+        {
+          "authorId": "A5100623891",
+          "displayName": "Md. Mehedi Hasan",
+          "orcid": "https://orcid.org/0000-0002-4885-3921",
+          "affiliations": [
+            "ANU",
+            "KUET"
+          ]
+        }
+      ]
+    },
+    {
+      "slug": "mejanur-rahman",
+      "fullName": "Mejanur Rahman",
+      "status": "ambiguous",
+      "authorId": null,
+      "profileUrl": "https://amirl.org/peopleDetailsView/Mejanur-Rahman/",
+      "evidence": [
+        {
+          "url": "https://api.openalex.org/authors?search=Mejanur%20Rahman&per-page=5",
+          "reason": "OpenAlex public author search attempted using the exact seed full name; the captured result informed the candidate list."
+        },
+        {
+          "url": "https://amirl.org/peopleDetailsView/Mejanur-Rahman/",
+          "reason": "AMIR Lab public profile used to compare education, affiliation, links, and any publication details."
+        },
+        {
+          "url": "https://api.openalex.org/authors?search=Mejanur%20Rahman&per-page=5&per-page=10",
+          "reason": "Multiple plausible or insufficiently distinguishable OpenAlex candidates were returned; candidate IDs are retained below."
+        }
+      ],
+      "notes": "No author ID selected: the captured OpenAlex candidates do not have an independently verified DOI, ORCID, affiliation, or coauthor link to this person’s profile. Candidate records are retained for follow-up.",
+      "candidates": [
+        {
+          "authorId": "A5024383246",
+          "displayName": "Md. Mejanur Rahman",
+          "orcid": null,
+          "affiliations": [
+            "Bangladesh Agricultural University"
+          ]
+        },
+        {
+          "authorId": "A5134902694",
+          "displayName": "Md Mejanur Rahman Mejan",
+          "orcid": null,
+          "affiliations": []
+        }
+      ]
+    },
+    {
+      "slug": "mir-maruf-ahmed",
+      "fullName": "Mir Maruf Ahmed",
+      "status": "verified",
+      "authorId": "A5113241714",
+      "profileUrl": "https://amirl.org/peopleDetailsView/Mir-Maruf-Ahmed/",
+      "evidence": [
+        {
+          "url": "https://api.openalex.org/authors?search=Mir%20Maruf%20Ahmed&per-page=5",
+          "reason": "OpenAlex public author search attempted using the exact seed full name; the captured result informed the candidate list."
+        },
+        {
+          "url": "https://amirl.org/peopleDetailsView/Mir-Maruf-Ahmed/",
+          "reason": "AMIR Lab public profile used to compare education, affiliation, links, and any publication details."
+        },
+        {
+          "url": "https://openalex.org/W4401482773",
+          "reason": "OpenAlex authorship record for DOI 10.1007/s00521-024-10283-2 contains the named person; direct API authorship IDs and affiliation are preserved in seed-author-api-raw-1.json."
+        },
+        {
+          "url": "https://openalex.org/W4405600977",
+          "reason": "OpenAlex authorship record for DOI 10.1109/COMPAS60761.2024.10797096 contains the named person; direct API authorship IDs and affiliation are preserved in seed-author-api-raw-1.json."
+        },
+        {
+          "url": "https://openalex.org/A5113241714",
+          "reason": "Direct OpenAlex author entity; full public response is preserved in seed-author-api-raw-1.json."
+        }
+      ],
+      "notes": "Multiple DOIs listed on the profile map to A5113241714. The OpenAlex works list the same author with AIUB affiliation; title and DOI matches include leaf disease and facial recognition research.",
+      "verifiedAuthorName": "Mir Maruf Ahmed",
+      "verifiedWorkUrl": "https://openalex.org/W7117961833",
+      "verifiedDoi": "https://doi.org/10.1007/978-3-032-08596-2_11"
+    },
+    {
+      "slug": "mohammad-sadman-sharar-sayem",
+      "fullName": "Mohammad Sadman Sharar Sayem",
+      "status": "unresolved",
+      "authorId": null,
+      "profileUrl": "https://amirl.org/peopleDetailsView/Mohammad-Sadman--Sharar-Sayem/",
+      "evidence": [
+        {
+          "url": "https://api.openalex.org/authors?search=Mohammad%20Sadman%20Sharar%20Sayem&per-page=5",
+          "reason": "OpenAlex public author search attempted using the exact seed full name; the captured result informed the candidate list."
+        },
+        {
+          "url": "https://amirl.org/peopleDetailsView/Mohammad-Sadman--Sharar-Sayem/",
+          "reason": "AMIR Lab public profile used to compare education, affiliation, links, and any publication details."
+        }
+      ],
+      "notes": "No author record returned for the exact name; profile has no ORCID that could disambiguate an alternate name."
+    },
+    {
+      "slug": "mohammad-sayem-chowdhury",
+      "fullName": "Mohammad Sayem Chowdhury",
+      "status": "verified",
+      "authorId": "A5006832600",
+      "profileUrl": "https://amirl.org/peopleDetailsView/Mohammad-Sayem-Chowdhury/",
+      "evidence": [
+        {
+          "url": "https://api.openalex.org/authors?search=Mohammad%20Sayem%20Chowdhury&per-page=5",
+          "reason": "OpenAlex public author search attempted using the exact seed full name; the captured result informed the candidate list."
+        },
+        {
+          "url": "https://amirl.org/peopleDetailsView/Mohammad-Sayem-Chowdhury/",
+          "reason": "AMIR Lab public profile used to compare education, affiliation, links, and any publication details."
+        },
+        {
+          "url": "https://openalex.org/W4393263816",
+          "reason": "OpenAlex authorship record for DOI 10.1111/srt.13660 contains the named person; direct API authorship IDs and affiliation are preserved in seed-author-api-raw-1.json."
+        },
+        {
+          "url": "https://openalex.org/W4407388803",
+          "reason": "OpenAlex authorship record for DOI 10.1002/pld3.70047 contains the named person; direct API authorship IDs and affiliation are preserved in seed-author-api-raw-1.json."
+        },
+        {
+          "url": "https://openalex.org/A5006832600",
+          "reason": "Direct OpenAlex author entity; full public response is preserved in seed-author-api-raw-1.json."
+        }
+      ],
+      "notes": "The profile lists multiple exact DOIs. OpenAlex records for hair/scalp, pox, fire detection, and LeafDNet all list Mohammad Sayem Chowdhury as A5006832600 with AIUB affiliation.",
+      "verifiedAuthorName": "Mohammad Sayem Chowdhury",
+      "verifiedWorkUrl": "https://openalex.org/W4407388803",
+      "verifiedDoi": "https://doi.org/10.1002/pld3.70047"
+    },
+    {
+      "slug": "moshiur-rahman-tonmoy",
+      "fullName": "Moshiur Rahman Tonmoy",
+      "status": "verified",
+      "authorId": "A5094198086",
+      "profileUrl": "https://amirl.org/peopleDetailsView/Moshiur-Rahman-Tonmoy/",
+      "evidence": [
+        {
+          "url": "https://api.openalex.org/authors?search=Moshiur%20Rahman%20Tonmoy&per-page=5",
+          "reason": "OpenAlex public author search attempted using the exact seed full name; the captured result informed the candidate list."
+        },
+        {
+          "url": "https://amirl.org/peopleDetailsView/Moshiur-Rahman-Tonmoy/",
+          "reason": "AMIR Lab public profile used to compare education, affiliation, links, and any publication details."
+        },
+        {
+          "url": "https://openalex.org/A5094198086",
+          "reason": "Direct OpenAlex author entity; full public response is preserved in seed-author-api-raw-1.json."
+        }
+      ],
+      "notes": "The AMIR profile states he completed his CSE degree at University of Asia Pacific. OpenAlex author A5094198086 has University of Asia Pacific affiliation and ORCID 0009-0004-3628-8242.",
+      "verifiedAuthorName": "Moshiur Rahman Tonmoy",
+      "verifiedAffiliations": [
+        "Texas A&M University – Kingsville",
+        "University of Asia Pacific"
+      ]
+    },
+    {
+      "slug": "most-lailun-nahar-aurthy",
+      "fullName": "Most. Lailun Nahar Aurthy",
+      "status": "ambiguous",
+      "authorId": null,
+      "profileUrl": "https://amirl.org/peopleDetailsView/Most-Lailun-Nahar-Aurthy/",
+      "evidence": [
+        {
+          "url": "https://api.openalex.org/authors?search=Most.%20Lailun%20Nahar%20Aurthy&per-page=5",
+          "reason": "OpenAlex public author search attempted using the exact seed full name; the captured result informed the candidate list."
+        },
+        {
+          "url": "https://amirl.org/peopleDetailsView/Most-Lailun-Nahar-Aurthy/",
+          "reason": "AMIR Lab public profile used to compare education, affiliation, links, and any publication details."
+        },
+        {
+          "url": "https://api.openalex.org/authors?search=Most.%20Lailun%20Nahar%20Aurthy&per-page=5&per-page=10",
+          "reason": "Multiple plausible or insufficiently distinguishable OpenAlex candidates were returned; candidate IDs are retained below."
+        }
+      ],
+      "notes": "No author ID selected: the captured OpenAlex candidates do not have an independently verified DOI, ORCID, affiliation, or coauthor link to this person’s profile. Candidate records are retained for follow-up.",
+      "candidates": [
+        {
+          "authorId": "A5108340571",
+          "displayName": "Most. Lailun Nahar Aurthy",
+          "orcid": null,
+          "affiliations": [
+            "AIUB"
+          ]
+        }
+      ]
+    },
+    {
+      "slug": "nabil",
+      "fullName": "Hadiur Rahman Nabil",
+      "status": "verified",
+      "authorId": "A5102774041",
+      "profileUrl": "https://amirl.org/peopleDetailsView/nabil/",
+      "evidence": [
+        {
+          "url": "https://api.openalex.org/authors?search=Hadiur%20Rahman%20Nabil&per-page=5",
+          "reason": "OpenAlex public author search attempted using the exact seed full name; the captured result informed the candidate list."
+        },
+        {
+          "url": "https://amirl.org/peopleDetailsView/nabil/",
+          "reason": "AMIR Lab public profile used to compare education, affiliation, links, and any publication details."
+        },
+        {
+          "url": "https://openalex.org/W4392173886",
+          "reason": "OpenAlex authorship record for DOI 10.1109/ACCESS.2024.3370848 contains the named person; direct API authorship IDs and affiliation are preserved in seed-author-api-raw-1.json."
+        },
+        {
+          "url": "https://openalex.org/W4413849126",
+          "reason": "OpenAlex authorship record for DOI 10.1186/s12880-025-01902-y contains the named person; direct API authorship IDs and affiliation are preserved in seed-author-api-raw-1.json."
+        },
+        {
+          "url": "https://openalex.org/W4411022995",
+          "reason": "OpenAlex authorship record for DOI 10.1016/j.iswa.2025.200537 contains the named person; direct API authorship IDs and affiliation are preserved in seed-author-api-raw-1.json."
+        },
+        {
+          "url": "https://openalex.org/A5102774041",
+          "reason": "Direct OpenAlex author entity; full public response is preserved in seed-author-api-raw-1.json."
+        }
+      ],
+      "notes": "The profile’s listed DOI works repeatedly name Hadiur Rahman Nabil. OpenAlex resolves those exact works to A5102774041, which has matching BUBT/AIUB affiliations and ORCID 0009-0005-4311-2875.",
+      "verifiedAuthorName": "Hadiur Rahman Nabil",
+      "verifiedWorkUrl": "https://openalex.org/W4411022995",
+      "verifiedDoi": "https://doi.org/10.1016/j.iswa.2025.200537"
+    },
+    {
+      "slug": "nafis-saami-azad",
+      "fullName": "Nafis Saami Azad",
+      "status": "verified",
+      "authorId": "A5092874267",
+      "profileUrl": "https://amirl.org/peopleDetailsView/NAFIS-SAAMI-AZAD/",
+      "evidence": [
+        {
+          "url": "https://api.openalex.org/authors?search=Nafis%20Saami%20Azad&per-page=5",
+          "reason": "OpenAlex public author search attempted using the exact seed full name; the captured result informed the candidate list."
+        },
+        {
+          "url": "https://amirl.org/peopleDetailsView/NAFIS-SAAMI-AZAD/",
+          "reason": "AMIR Lab public profile used to compare education, affiliation, links, and any publication details."
+        },
+        {
+          "url": "https://openalex.org/A5092874267",
+          "reason": "Direct OpenAlex author entity; full public response is preserved in seed-author-api-raw-1.json."
+        }
+      ],
+      "notes": "The biography says he worked at the RIoT Lab at Independent University, Bangladesh. Exact-name OpenAlex author A5092874267 has IUB affiliation and three indexed works.",
+      "verifiedAuthorName": "Nafis Saami Azad",
+      "verifiedAffiliations": [
+        "University of South Florida",
+        "Independent University, Bangladesh"
+      ]
+    },
+    {
+      "slug": "nafiz-ahmed",
+      "fullName": "Nafiz Ahmed",
+      "status": "ambiguous",
+      "authorId": null,
+      "profileUrl": "https://amirl.org/peopleDetailsView/Nafiz-Ahmed/",
+      "evidence": [
+        {
+          "url": "https://api.openalex.org/authors?search=Nafiz%20Ahmed&per-page=5",
+          "reason": "OpenAlex public author search attempted using the exact seed full name; the captured result informed the candidate list."
+        },
+        {
+          "url": "https://amirl.org/peopleDetailsView/Nafiz-Ahmed/",
+          "reason": "AMIR Lab public profile used to compare education, affiliation, links, and any publication details."
+        },
+        {
+          "url": "https://api.openalex.org/authors?search=Nafiz%20Ahmed&per-page=5&per-page=10",
+          "reason": "Multiple plausible or insufficiently distinguishable OpenAlex candidates were returned; candidate IDs are retained below."
+        }
+      ],
+      "notes": "No author ID selected: the captured OpenAlex candidates do not have an independently verified DOI, ORCID, affiliation, or coauthor link to this person’s profile. Candidate records are retained for follow-up.",
+      "candidates": [
+        {
+          "authorId": "A5104205134",
+          "displayName": "Nafiz Ahmed",
+          "orcid": null,
+          "affiliations": [
+            "AIUB"
+          ]
+        },
+        {
+          "authorId": "A5041070692",
+          "displayName": "Nafiz Ahmed Chisty",
+          "orcid": "https://orcid.org/0000-0001-5016-241X",
+          "affiliations": [
+            "AIUB",
+            "Lund University"
+          ]
+        },
+        {
+          "authorId": "A5087290531",
+          "displayName": "Nafiz Ahmed",
+          "orcid": "https://orcid.org/0000-0002-9445-2846",
+          "affiliations": [
+            "North South University",
+            "University of Dhaka"
+          ]
+        }
+      ]
+    },
+    {
+      "slug": "nahid",
+      "fullName": "Md Nahid Hasan",
+      "status": "verified",
+      "authorId": "A5100607097",
+      "profileUrl": "https://amirl.org/peopleDetailsView/nahid/",
+      "evidence": [
+        {
+          "url": "https://api.openalex.org/authors?search=Md%20Nahid%20Hasan&per-page=5",
+          "reason": "OpenAlex public author search attempted using the exact seed full name; the captured result informed the candidate list."
+        },
+        {
+          "url": "https://amirl.org/peopleDetailsView/nahid/",
+          "reason": "AMIR Lab public profile used to compare education, affiliation, links, and any publication details."
+        },
+        {
+          "url": "https://api.openalex.org/authors?search=Md%20Nahid%20Hasan&per-page=5&per-page=10",
+          "reason": "Multiple plausible or insufficiently distinguishable OpenAlex candidates were returned; candidate IDs are retained below."
+        },
+        {
+          "url": "https://openalex.org/W3135165517",
+          "reason": "Exact publication DOI 10.9734/jsrr/2021/v27i130351 appears on the AMIR profile; OpenAlex authorship record lists the target researcher and author ID A5100607097."
+        },
+        {
+          "url": "https://openalex.org/A5100607097",
+          "reason": "Direct OpenAlex author entity; full public response is preserved in seed-author-api-raw-1.json."
+        },
+        {
+          "url": "https://openalex.org/W4200229038",
+          "reason": "Second profile-listed DOI 10.1007/978-981-16-6636-0_42 also lists Md. Nahid Hasan with Bangladesh University of Business and Technology affiliation."
+        }
+      ],
+      "notes": "Two exact DOIs listed in the AMIR profile identify Md. Nahid Hasan as A5100607097. Both OpenAlex works list BUBT affiliation, matching the profile’s CSE study at BUBT; author entity ORCID is 0009-0009-1791-7505.",
+      "verifiedAuthorName": "Md. Nahid Hasan",
+      "verifiedWorkUrl": "https://openalex.org/W4200229038",
+      "verifiedDoi": "https://doi.org/10.1007/978-981-16-6636-0_42"
+    },
+    {
+      "slug": "naiem-arafat",
+      "fullName": "Naiem Arafat",
+      "status": "unresolved",
+      "authorId": null,
+      "profileUrl": "https://amirl.org/peopleDetailsView/Naiem-Arafat/",
+      "evidence": [
+        {
+          "url": "https://api.openalex.org/authors?search=Naiem%20Arafat&per-page=5",
+          "reason": "OpenAlex public author search attempted using the exact seed full name; the captured result informed the candidate list."
+        },
+        {
+          "url": "https://amirl.org/peopleDetailsView/Naiem-Arafat/",
+          "reason": "AMIR Lab public profile used to compare education, affiliation, links, and any publication details."
+        }
+      ],
+      "notes": "No author record returned for the exact name; profile has no ORCID that could disambiguate an alternate name."
+    },
+    {
+      "slug": "najmus-saadat",
+      "fullName": "Najmus Saadat",
+      "status": "verified",
+      "authorId": "A5135442703",
+      "profileUrl": "https://amirl.org/peopleDetailsView/Najmus-Saadat/",
+      "evidence": [
+        {
+          "url": "https://api.openalex.org/authors?search=Najmus%20Saadat&per-page=5",
+          "reason": "OpenAlex public author search attempted using the exact seed full name; the captured result informed the candidate list."
+        },
+        {
+          "url": "https://amirl.org/peopleDetailsView/Najmus-Saadat/",
+          "reason": "AMIR Lab public profile used to compare education, affiliation, links, and any publication details."
+        },
+        {
+          "url": "https://openalex.org/A5135442703",
+          "reason": "Direct OpenAlex author entity; full public response is preserved in seed-author-api-raw-1.json."
+        }
+      ],
+      "notes": "The AMIR profile says he studies at Southeast University. OpenAlex author A5135442703 is affiliated with Southeast University and has ORCID 0009-0002-2559-168X; the exact author name matches.",
+      "verifiedAuthorName": "Najmus Saadat",
+      "verifiedAffiliations": [
+        "Southeast University",
+        "Southeast University"
+      ]
+    },
+    {
+      "slug": "nasif-hannan",
+      "fullName": "Nasif Hannan",
+      "status": "ambiguous",
+      "authorId": null,
+      "profileUrl": "https://amirl.org/peopleDetailsView/Nasif-Hannan/",
+      "evidence": [
+        {
+          "url": "https://api.openalex.org/authors?search=Nasif%20Hannan&per-page=5",
+          "reason": "OpenAlex public author search attempted using the exact seed full name; the captured result informed the candidate list."
+        },
+        {
+          "url": "https://amirl.org/peopleDetailsView/Nasif-Hannan/",
+          "reason": "AMIR Lab public profile used to compare education, affiliation, links, and any publication details."
+        },
+        {
+          "url": "https://api.openalex.org/authors?search=Nasif%20Hannan&per-page=5&per-page=10",
+          "reason": "Multiple plausible or insufficiently distinguishable OpenAlex candidates were returned; candidate IDs are retained below."
+        }
+      ],
+      "notes": "No author ID selected: the captured OpenAlex candidates do not have an independently verified DOI, ORCID, affiliation, or coauthor link to this person’s profile. Candidate records are retained for follow-up.",
+      "candidates": [
+        {
+          "authorId": "A5094010169",
+          "displayName": "Nasif Hannan",
+          "orcid": "https://orcid.org/0009-0009-8911-2749",
+          "affiliations": [
+            "AIUB",
+            "Lamar University"
+          ]
+        }
+      ]
+    },
+    {
+      "slug": "naziba",
+      "fullName": "Naziba Tasnim",
+      "status": "ambiguous",
+      "authorId": null,
+      "profileUrl": "https://amirl.org/peopleDetailsView/naziba/",
+      "evidence": [
+        {
+          "url": "https://amirl.org/peopleDetailsView/naziba/",
+          "reason": "AMIR Lab profile provided identity/context; authorship must be established independently."
+        },
+        {
+          "url": "https://openalex.org/A5134413127",
+          "reason": "OpenAlex author search exact-name result; search returned author record. Candidate requires record/works cross-check."
+        }
+      ],
+      "notes": "OpenAlex lookup attempted; candidate(s) remain unresolved because identity or authorship context is insufficient. See candidate records and preserved API responses.",
+      "candidates": [
+        {
+          "authorId": null,
+          "name": "Naziba Tasnim",
+          "reason": "Exact-name OpenAlex candidate and/or affiliation candidate found, but exact work authorship or matching researcher profile evidence not independently verified."
+        }
+      ]
+    },
+    {
+      "slug": "niha",
+      "fullName": "Sadia Islam Niha",
+      "status": "verified",
+      "authorId": "A5094010252",
+      "profileUrl": "https://amirl.org/peopleDetailsView/niha/",
+      "evidence": [
+        {
+          "url": "https://amirl.org/peopleDetailsView/niha/",
+          "reason": "AMIR Lab profile provided identity/context; authorship must be established independently."
+        },
+        {
+          "url": "https://openalex.org/A5094010252",
+          "reason": "OpenAlex author search exact-name result; search returned author record. Candidate requires record/works cross-check."
+        },
+        {
+          "url": "https://api.openalex.org/authors/A5094010252",
+          "reason": "Public OpenAlex author record endpoint; queried by exact full name. See ORCID and affiliation summary in verification."
+        },
+        {
+          "url": "https://www.researchgate.net/profile/Sadia-Niha",
+          "reason": "Independent public biography or publication source confirms identity, affiliation, and/or matching works."
+        }
+      ],
+      "notes": "Exact-name OpenAlex author candidate corroborated by profile/ORCID/affiliation and matching publication context.",
+      "verifiedAuthorName": "Sadia Islam Niha",
+      "verifiedAffiliations": [
+        "American International University-Bangladesh"
+      ]
+    },
+    {
+      "slug": "nilanjan-dey",
+      "fullName": "Dr. Nilanjan Dey",
+      "status": "ambiguous",
+      "authorId": null,
+      "profileUrl": "https://amirl.org/peopleDetailsView/Nilanjan-Dey/",
+      "evidence": [
+        {
+          "url": "https://amirl.org/peopleDetailsView/Nilanjan-Dey/",
+          "reason": "AMIR Lab profile provided identity/context; authorship must be established independently."
+        },
+        {
+          "url": "https://openalex.org/A5029425408",
+          "reason": "OpenAlex author search exact-name result; search returned author record. Candidate requires record/works cross-check."
+        }
+      ],
+      "notes": "OpenAlex lookup attempted; candidate(s) remain unresolved because identity or authorship context is insufficient. See candidate records and preserved API responses.",
+      "candidates": [
+        {
+          "authorId": "A5029425408",
+          "name": "Nilanjan Dey",
+          "orcid": "0000-0002-3988-1509",
+          "reason": "Direct OpenAlex record has 232 works, ORCID, but dominant affiliations do not match seed employment at Techno International New Town/Reading/Ton Duc Thang; may be another Nilanjan Dey."
+        }
+      ]
+    },
+    {
+      "slug": "nusrat-yasmin-nadia",
+      "fullName": "Nusrat Yasmin Nadia",
+      "status": "verified",
+      "authorId": "A5130698264",
+      "profileUrl": "https://amirl.org/peopleDetailsView/Nusrat-Yasmin-Nadia/",
+      "evidence": [
+        {
+          "url": "https://amirl.org/peopleDetailsView/Nusrat-Yasmin-Nadia/",
+          "reason": "AMIR Lab profile provided identity/context; authorship must be established independently."
+        },
+        {
+          "url": "https://openalex.org/A5130698264",
+          "reason": "OpenAlex author search exact-name result; search returned author record. Candidate requires record/works cross-check."
+        },
+        {
+          "url": "https://amirl.org/peopleDetailsView/Md-Habibul-Arif/",
+          "reason": "Seed work match: Privacy-Preserving Multimodal Federated Learning Pipeline for Cyber-Resilient Healthcare Systems; DOI None; contributor source IDs ['peopleDetailsView/Md-Habibul-Arif', 'peopleDetailsView/Nusrat-Yasmin-Nadia']"
+        },
+        {
+          "url": "https://doi.org/10.1038/s41598-026-45041-y",
+          "reason": "Seed profile-listed publication DOI; supports expected work context, but API authorship match was rate-limited."
+        },
+        {
+          "url": "https://doi.org/10.1109/3ict68299.2025.11442074",
+          "reason": "Seed profile-listed publication DOI; supports expected work context, but API authorship match was rate-limited."
+        },
+        {
+          "url": "https://openalex.org/W7140333278",
+          "reason": "Exact seeded DOI work lists Nusrat Yasmin Nadia as author ID A5130698264 and matching ORCID."
+        },
+        {
+          "url": "https://openalex.org/W7140481074",
+          "reason": "Second exact seeded DOI work lists same author ID and ORCID."
+        },
+        {
+          "url": "https://openalex.org/W7140796562",
+          "reason": "Third exact seeded DOI work lists same author ID and ORCID."
+        },
+        {
+          "url": "https://openalex.org/W7128696524",
+          "reason": "Fourth exact seeded DOI work lists same author ID and ORCID."
+        },
+        {
+          "url": "https://openalex.org/W7140333278",
+          "reason": "Exact seed DOI work record; authorship row has verified author ID A5130698264 and matching name/ORCID."
+        },
+        {
+          "url": "https://openalex.org/W7140481074",
+          "reason": "Exact seed DOI work record; authorship row has verified author ID A5130698264 and matching name/ORCID."
+        },
+        {
+          "url": "https://openalex.org/W7140796562",
+          "reason": "Exact seed DOI work record; authorship row has verified author ID A5130698264 and matching name/ORCID."
+        },
+        {
+          "url": "https://openalex.org/W7128696524",
+          "reason": "Exact seed DOI work record; authorship row has verified author ID A5130698264 and matching name/ORCID."
+        }
+      ],
+      "notes": "Verified by exact DOI work author records with repeated stable OpenAlex author ID and ORCID/affiliation evidence.",
+      "verifiedAuthorName": "Nusrat Yasmin Nadia",
+      "verifiedWorkUrl": "https://openalex.org/W7140333278",
+      "verifiedDoi": "https://doi.org/10.1038/s41598-026-45041-y"
+    },
+    {
+      "slug": "oliullah",
+      "fullName": "Khondokar Oliullah",
+      "status": "verified",
+      "authorId": "A5061831457",
+      "profileUrl": "https://amirl.org/peopleDetailsView/oliullah/",
+      "evidence": [
+        {
+          "url": "https://amirl.org/peopleDetailsView/oliullah/",
+          "reason": "AMIR Lab profile provided identity/context; authorship must be established independently."
+        },
+        {
+          "url": "https://openalex.org/A5061831457",
+          "reason": "OpenAlex author search exact-name result; search returned author record. Candidate requires record/works cross-check."
+        },
+        {
+          "url": "https://doi.org/10.1016/j.jafr.2023.100880",
+          "reason": "Seed work match: Machine learning enabled IoT system for soil nutrients monitoring and crop recommendation; DOI 10.1016/j.jafr.2023.100880; contributor source IDs []"
+        },
+        {
+          "url": "https://api.openalex.org/authors/A5061831457",
+          "reason": "Public OpenAlex author record endpoint; queried by exact full name. See ORCID and affiliation summary in verification."
+        },
+        {
+          "url": "https://www.stud.cou.ac.bd/faculty_member_details/AQNXK",
+          "reason": "Independent public biography or publication source confirms identity, affiliation, and/or matching works."
+        },
+        {
+          "url": "https://openalex.org/W4388948690",
+          "reason": "Exact seed DOI work record; authorship row has verified author ID A5061831457 and matching name/ORCID."
+        }
+      ],
+      "notes": "Verified by exact DOI work author records with repeated stable OpenAlex author ID and ORCID/affiliation evidence.",
+      "verifiedAuthorName": "Khondokar Oliullah",
+      "verifiedAffiliations": [
+        "Comilla University",
+        "Bangladesh University of Business and Technology",
+        "Jahangirnagar University",
+        "University of Diyala"
+      ]
+    },
+    {
+      "slug": "osim-kumar-pal",
+      "fullName": "Osim Kumar Pal",
+      "status": "verified",
+      "authorId": "A5038584873",
+      "profileUrl": "https://amirl.org/peopleDetailsView/Osim-Kumar-Pal/",
+      "evidence": [
+        {
+          "url": "https://amirl.org/peopleDetailsView/Osim-Kumar-Pal/",
+          "reason": "AMIR Lab profile provided identity/context; authorship must be established independently."
+        },
+        {
+          "url": "https://openalex.org/A5038584873",
+          "reason": "OpenAlex author search exact-name result; search returned author record. Candidate requires record/works cross-check."
+        },
+        {
+          "url": "https://doi.org/10.1109/ACCESS.2023.3264835",
+          "reason": "Seed profile-listed publication DOI; supports expected work context, but API authorship match was rate-limited."
+        },
+        {
+          "url": "https://doi.org/10.22161/ijaers.96.2",
+          "reason": "Seed profile-listed publication DOI; supports expected work context, but API authorship match was rate-limited."
+        },
+        {
+          "url": "https://api.openalex.org/authors/A5038584873",
+          "reason": "Public OpenAlex author record endpoint; queried by exact full name. See ORCID and affiliation summary in verification."
+        },
+        {
+          "url": "https://dblp.org/pid/334/2158",
+          "reason": "Independent public biography or publication source confirms identity, affiliation, and/or matching works."
+        },
+        {
+          "url": "https://doi.org/10.1109/ACCESS.2023.3264835",
+          "reason": "Seed profile lists this publication DOI; direct OpenAlex author-work lookup was rate-limited."
+        },
+        {
+          "url": "https://openalex.org/W4362654674",
+          "reason": "Exact seed DOI lists Osim Kumar Pal with author ID A5038584873, ORCID, and AIUB."
+        },
+        {
+          "url": "https://openalex.org/W4285137846",
+          "reason": "Second exact DOI work repeats same ID and ORCID."
+        },
+        {
+          "url": "https://openalex.org/W4210743245",
+          "reason": "Third exact DOI work repeats same ID and ORCID."
+        },
+        {
+          "url": "https://openalex.org/W4200492042",
+          "reason": "Fourth exact DOI work repeats same ID and ORCID."
+        },
+        {
+          "url": "https://openalex.org/W4362654674",
+          "reason": "Exact seed DOI work record; authorship row has verified author ID A5038584873 and matching name/ORCID."
+        },
+        {
+          "url": "https://openalex.org/W4285137846",
+          "reason": "Exact seed DOI work record; authorship row has verified author ID A5038584873 and matching name/ORCID."
+        },
+        {
+          "url": "https://openalex.org/W4210743245",
+          "reason": "Exact seed DOI work record; authorship row has verified author ID A5038584873 and matching name/ORCID."
+        },
+        {
+          "url": "https://openalex.org/W4200492042",
+          "reason": "Exact seed DOI work record; authorship row has verified author ID A5038584873 and matching name/ORCID."
+        }
+      ],
+      "notes": "Verified by exact DOI work author records with repeated stable OpenAlex author ID and ORCID/affiliation evidence.",
+      "verifiedAuthorName": "Osim Kumar Pal",
+      "verifiedWorkUrl": "https://openalex.org/W4362654674",
+      "verifiedDoi": "https://doi.org/10.1109/access.2023.3264835"
+    },
+    {
+      "slug": "parthamalakar",
+      "fullName": "Partha Malakar",
+      "status": "unresolved",
+      "authorId": null,
+      "profileUrl": "https://amirl.org/peopleDetailsView/parthamalakar/",
+      "evidence": [
+        {
+          "url": "https://amirl.org/peopleDetailsView/parthamalakar/",
+          "reason": "AMIR Lab profile provided identity/context; authorship must be established independently."
+        }
+      ],
+      "notes": "OpenAlex exact-name author search was attempted and returned zero matches or only clearly mismatched candidates for this name; subsequent API search calls were rate-limited. No author ID assigned; absence from OpenAlex is not established."
+    },
+    {
+      "slug": "prof-dr-jungpil-shin",
+      "fullName": "Prof. Dr. Jungpil Shin",
+      "status": "unresolved",
+      "authorId": null,
+      "profileUrl": "https://amirl.org/peopleDetailsView/Prof-Dr-Jungpil-Shin/",
+      "evidence": [
+        {
+          "url": "https://amirl.org/peopleDetailsView/Prof-Dr-Jungpil-Shin/",
+          "reason": "AMIR Lab profile provided identity/context; authorship must be established independently."
+        }
+      ],
+      "notes": "OpenAlex exact-name author search was attempted and returned zero matches or only clearly mismatched candidates for this name; subsequent API search calls were rate-limited. No author ID assigned; absence from OpenAlex is not established."
+    },
+    {
+      "slug": "prof-dr-md-abdul-hamid",
+      "fullName": "Prof. Dr. Md. Abdul Hamid",
+      "status": "unresolved",
+      "authorId": null,
+      "profileUrl": "https://amirl.org/peopleDetailsView/Prof-Dr-MD-ABDUL-HAMID/",
+      "evidence": [
+        {
+          "url": "https://amirl.org/peopleDetailsView/Prof-Dr-MD-ABDUL-HAMID/",
+          "reason": "AMIR Lab profile provided identity/context; authorship must be established independently."
+        }
+      ],
+      "notes": "OpenAlex exact-name author search was attempted and returned zero matches or only clearly mismatched candidates for this name; subsequent API search calls were rate-limited. No author ID assigned; absence from OpenAlex is not established."
+    },
+    {
+      "slug": "prof-dr-muhammad-mostofa-monwar",
+      "fullName": "Prof. Dr. Muhammad Mostofa Monwar",
+      "status": "unresolved",
+      "authorId": null,
+      "profileUrl": "https://amirl.org/peopleDetailsView/Prof-Dr-Muhammad-Mostofa-Monwar/",
+      "evidence": [
+        {
+          "url": "https://amirl.org/peopleDetailsView/Prof-Dr-Muhammad-Mostofa-Monwar/",
+          "reason": "AMIR Lab profile provided identity/context; authorship must be established independently."
+        }
+      ],
+      "notes": "OpenAlex exact-name author search was attempted and returned zero matches or only clearly mismatched candidates for this name; subsequent API search calls were rate-limited. No author ID assigned; absence from OpenAlex is not established."
+    },
+    {
+      "slug": "professor-ts-dr-shayla-islam",
+      "fullName": "Professor Ts Dr Shayla Islam",
+      "status": "unresolved",
+      "authorId": null,
+      "profileUrl": "https://amirl.org/peopleDetailsView/Professor-Ts-Dr-Shayla-Islam/",
+      "evidence": [
+        {
+          "url": "https://amirl.org/peopleDetailsView/Professor-Ts-Dr-Shayla-Islam/",
+          "reason": "AMIR Lab profile provided identity/context; authorship must be established independently."
+        }
+      ],
+      "notes": "OpenAlex exact-name author search was attempted and returned zero matches or only clearly mismatched candidates for this name; subsequent API search calls were rate-limited. No author ID assigned; absence from OpenAlex is not established."
+    },
+    {
+      "slug": "quwsar-ohi",
+      "fullName": "Quwsar Ohi",
+      "status": "verified",
+      "authorId": "A5025023245",
+      "profileUrl": "https://amirl.org/peopleDetailsView/quwsar-ohi/",
+      "evidence": [
+        {
+          "url": "https://amirl.org/peopleDetailsView/quwsar-ohi/",
+          "reason": "AMIR Lab profile provided identity/context; authorship must be established independently."
+        },
+        {
+          "url": "https://openalex.org/A5025023245",
+          "reason": "OpenAlex author search exact-name result; search returned author record. Candidate requires record/works cross-check."
+        },
+        {
+          "url": "https://doi.org/10.1007/s10462-021-10083-3",
+          "reason": "Seed work match: A Study on the Challenges and Opportunities of Speech Recognition for Bengali Language,; DOI 10.1007/s10462-021-10083-3; contributor source IDs ['peopleDetailsView/Dr-Mohammad-Firoz-Mridha']"
+        },
+        {
+          "url": "https://doi.org/10.1016/j.dib.2020.106633",
+          "reason": "Seed work match: BanglaWriting: A multi-purpose offline Bangla handwriting dataset,; DOI 10.1016/j.dib.2020.106633; contributor source IDs ['peopleDetailsView/Dr-Mohammad-Firoz-Mridha']"
+        },
+        {
+          "url": "https://doi.org/10.1016/j.knosys.2020.106190",
+          "reason": "Seed work match: AutoEmbedder: A semi-supervised DNN embedding system for clustering; DOI 10.1016/j.knosys.2020.106190; contributor source IDs ['peopleDetailsView/Dr-Mohammad-Firoz-Mridha']"
+        },
+        {
+          "url": "https://doi.org/10.1038/s41598-020-79147-8",
+          "reason": "Seed work match: Optimal control of epidemic spread using reinforcement learning; DOI 10.1038/s41598-020-79147-8; contributor source IDs ['peopleDetailsView/Dr-Mohammad-Firoz-Mridha']"
+        },
+        {
+          "url": "https://doi.org/10.1109/access.2021.3114799",
+          "reason": "Seed work match: A Thresholded Gabor-CNN Based Writer Identification System for Indic Scripts; DOI 10.1109/access.2021.3114799; contributor source IDs ['peopleDetailsView/Dr-Mohammad-Firoz-Mridha']"
+        },
+        {
+          "url": "https://doi.org/10.3390/agronomy11122440",
+          "reason": "Seed work match: FruitDet: Attentive Feature Aggregation for Real-time Fruit Detection in Orchards; DOI 10.3390/agronomy11122440; contributor source IDs ['peopleDetailsView/Dr-Mohammad-Firoz-Mridha']"
+        },
+        {
+          "url": "https://doi.org/10.3390/app112110079",
+          "reason": "Seed work match: U-vectors: Generating clusterable speaker embedding from unlabeled data; DOI 10.3390/app112110079; contributor source IDs ['peopleDetailsView/Dr-Mohammad-Firoz-Mridha']"
+        },
+        {
+          "url": "https://doi.org/10.3390/cancers13236116",
+          "reason": "Seed work match: A Comprehensive Survey on Deep Learning Based Breast Cancer Diagnosis; DOI 10.3390/cancers13236116; contributor source IDs ['peopleDetailsView/Dr-Mohammad-Firoz-Mridha']"
+        },
+        {
+          "url": "https://api.openalex.org/authors/A5025023245",
+          "reason": "Public OpenAlex author record endpoint; queried by exact full name. See ORCID and affiliation summary in verification."
+        },
+        {
+          "url": "https://www.bubt.edu.bd/home/faculty_details/67",
+          "reason": "Independent public biography or publication source confirms identity, affiliation, and/or matching works."
+        },
+        {
+          "url": "https://openalex.org/W3211341841",
+          "reason": "Exact seed DOI work record; authorship row has verified author ID A5025023245 and matching name/ORCID."
+        },
+        {
+          "url": "https://openalex.org/W3112419705",
+          "reason": "Exact seed DOI work record; authorship row has verified author ID A5025023245 and matching name/ORCID."
+        },
+        {
+          "url": "https://openalex.org/W3038985617",
+          "reason": "Exact seed DOI work record; authorship row has verified author ID A5025023245 and matching name/ORCID."
+        },
+        {
+          "url": "https://openalex.org/W3112853524",
+          "reason": "Exact seed DOI work record; authorship row has verified author ID A5025023245 and matching name/ORCID."
+        },
+        {
+          "url": "https://openalex.org/W3202454856",
+          "reason": "Exact seed DOI work record; authorship row has verified author ID A5025023245 and matching name/ORCID."
+        },
+        {
+          "url": "https://openalex.org/W3216362879",
+          "reason": "Exact seed DOI work record; authorship row has verified author ID A5025023245 and matching name/ORCID."
+        },
+        {
+          "url": "https://openalex.org/W3208516011",
+          "reason": "Exact seed DOI work record; authorship row has verified author ID A5025023245 and matching name/ORCID."
+        },
+        {
+          "url": "https://openalex.org/W4200467578",
+          "reason": "Exact seed DOI work record; authorship row has verified author ID A5025023245 and matching name/ORCID."
+        }
+      ],
+      "notes": "Verified by exact DOI work author records with repeated stable OpenAlex author ID and ORCID/affiliation evidence.",
+      "verifiedAuthorName": "Abu Quwsar Ohi",
+      "verifiedAffiliations": [
+        "University of Calgary",
+        "King Abdulaziz University",
+        "Bangladesh University of Business and Technology",
+        "University of Business and Technology"
+      ]
+    },
+    {
+      "slug": "raisul",
+      "fullName": "Md Raisul Islam",
+      "status": "unresolved",
+      "authorId": null,
+      "profileUrl": "https://amirl.org/peopleDetailsView/raisul/",
+      "evidence": [
+        {
+          "url": "https://amirl.org/peopleDetailsView/raisul/",
+          "reason": "AMIR Lab profile provided identity/context; authorship must be established independently."
+        }
+      ],
+      "notes": "OpenAlex exact-name author search was attempted and returned zero matches or only clearly mismatched candidates for this name; subsequent API search calls were rate-limited. No author ID assigned; absence from OpenAlex is not established."
+    },
+    {
+      "slug": "rajieb",
+      "fullName": "Rajieb",
+      "status": "unresolved",
+      "authorId": null,
+      "profileUrl": "https://amirl.org/peopleDetailsView/rajieb/",
+      "evidence": [
+        {
+          "url": "https://amirl.org/peopleDetailsView/rajieb/",
+          "reason": "AMIR Lab profile provided identity/context; authorship must be established independently."
+        }
+      ],
+      "notes": "OpenAlex exact-name author search was attempted and returned zero matches or only clearly mismatched candidates for this name; subsequent API search calls were rate-limited. No author ID assigned; absence from OpenAlex is not established."
+    },
+    {
+      "slug": "rayed",
+      "fullName": "Md. Eshmam Rayed",
+      "status": "verified",
+      "authorId": "A5094010250",
+      "profileUrl": "https://amirl.org/peopleDetailsView/rayed/",
+      "evidence": [
+        {
+          "url": "https://amirl.org/peopleDetailsView/rayed/",
+          "reason": "AMIR Lab profile provided identity/context; authorship must be established independently."
+        },
+        {
+          "url": "https://openalex.org/A5094010250",
+          "reason": "OpenAlex author search exact-name result; search returned author record. Candidate requires record/works cross-check."
+        },
+        {
+          "url": "https://api.openalex.org/authors/A5094010250",
+          "reason": "Public OpenAlex author record endpoint; queried by exact full name. See ORCID and affiliation summary in verification."
+        },
+        {
+          "url": "https://cir.nii.ac.jp/crid/1360870769121456256",
+          "reason": "Independent public biography or publication source confirms identity, affiliation, and/or matching works."
+        }
+      ],
+      "notes": "Exact-name OpenAlex author candidate corroborated by profile/ORCID/affiliation and matching publication context.",
+      "verifiedAuthorName": "Md. Eshmam Rayed",
+      "verifiedAffiliations": [
+        "American International University-Bangladesh"
+      ]
+    },
+    {
+      "slug": "rl",
+      "fullName": "Mohammad Sakib Mahmood",
+      "status": "verified",
+      "authorId": "A5073097845",
+      "profileUrl": "https://amirl.org/peopleDetailsView/rl/",
+      "evidence": [
+        {
+          "url": "https://amirl.org/peopleDetailsView/rl/",
+          "reason": "AMIR Lab profile provided identity/context; authorship must be established independently."
+        },
+        {
+          "url": "https://openalex.org/A5073097845",
+          "reason": "OpenAlex author search exact-name result; search returned author record. Candidate requires record/works cross-check."
+        },
+        {
+          "url": "https://api.openalex.org/authors/A5073097845",
+          "reason": "Public OpenAlex author record endpoint; queried by exact full name. See ORCID and affiliation summary in verification."
+        },
+        {
+          "url": "https://www.proceedings.com/content/037/037472webtoc.pdf",
+          "reason": "Independent public biography or publication source confirms identity, affiliation, and/or matching works."
+        }
+      ],
+      "notes": "Exact-name OpenAlex author candidate corroborated by profile/ORCID/affiliation and matching publication context.",
+      "verifiedAuthorName": "Mohammad Sakib Mahmood",
+      "verifiedAffiliations": [
+        "American International University-Bangladesh",
+        "Missouri State University",
+        "Ahsanullah University of Science and Technology",
+        "BRAC University"
+      ]
+    },
+    {
+      "slug": "rufaida-mamun",
+      "fullName": "Rufaida Mamun",
+      "status": "verified",
+      "authorId": "A5107697494",
+      "profileUrl": "https://amirl.org/peopleDetailsView/Rufaida-Mamun/",
+      "evidence": [
+        {
+          "url": "https://amirl.org/peopleDetailsView/Rufaida-Mamun/",
+          "reason": "AMIR Lab profile provided identity/context; authorship must be established independently."
+        },
+        {
+          "url": "https://openalex.org/A5107697494",
+          "reason": "OpenAlex author search exact-name result; search returned author record. Candidate requires record/works cross-check."
+        },
+        {
+          "url": "https://doi.org/10.1007/s11042-026-21390-8",
+          "reason": "Seed profile-listed publication DOI; supports expected work context, but API authorship match was rate-limited."
+        },
+        {
+          "url": "https://api.openalex.org/authors/A5107697494",
+          "reason": "Public OpenAlex author record endpoint; queried by exact full name. See ORCID and affiliation summary in verification."
+        },
+        {
+          "url": "https://amirl.org/peopleDetailsView/Rufaida-Mamun/",
+          "reason": "Independent public biography or publication source confirms identity, affiliation, and/or matching works."
+        },
+        {
+          "url": "https://doi.org/10.1007/s11042-026-21390-8",
+          "reason": "Seed profile lists this publication DOI; direct OpenAlex author-work lookup was rate-limited."
+        },
+        {
+          "url": "https://openalex.org/W7131631111",
+          "reason": "Exact seed DOI work record; authorship row has verified author ID A5107697494 and matching name/ORCID."
+        }
+      ],
+      "notes": "Verified by exact DOI work author records with repeated stable OpenAlex author ID and ORCID/affiliation evidence.",
+      "verifiedAuthorName": "Rufaida Mamun",
+      "verifiedWorkUrl": "https://openalex.org/W7131631111",
+      "verifiedDoi": "https://doi.org/10.1007/s11042-026-21390-8"
+    },
+    {
+      "slug": "sabrina-islam-tesa",
+      "fullName": "Sabrina Islam Tesa",
+      "status": "unresolved",
+      "authorId": null,
+      "profileUrl": "https://amirl.org/peopleDetailsView/Sabrina-Islam--Tesa/",
+      "evidence": [
+        {
+          "url": "https://amirl.org/peopleDetailsView/Sabrina-Islam--Tesa/",
+          "reason": "AMIR Lab profile provided identity/context; authorship must be established independently."
+        }
+      ],
+      "notes": "OpenAlex exact-name author search was attempted and returned zero matches or only clearly mismatched candidates for this name; subsequent API search calls were rate-limited. No author ID assigned; absence from OpenAlex is not established."
+    },
+    {
+      "slug": "saida",
+      "fullName": "Saida Binta Alam",
+      "status": "unresolved",
+      "authorId": null,
+      "profileUrl": "https://amirl.org/peopleDetailsView/saida/",
+      "evidence": [
+        {
+          "url": "https://amirl.org/peopleDetailsView/saida/",
+          "reason": "AMIR Lab profile provided identity/context; authorship must be established independently."
+        }
+      ],
+      "notes": "OpenAlex exact-name author search was attempted and returned zero matches or only clearly mismatched candidates for this name; subsequent API search calls were rate-limited. No author ID assigned; absence from OpenAlex is not established."
+    },
+    {
+      "slug": "sajin",
+      "fullName": "Tanjim Hussain Sajin",
+      "status": "unresolved",
+      "authorId": null,
+      "profileUrl": "https://amirl.org/peopleDetailsView/sajin/",
+      "evidence": [
+        {
+          "url": "https://amirl.org/peopleDetailsView/sajin/",
+          "reason": "AMIR Lab profile provided identity/context; authorship must be established independently."
+        }
+      ],
+      "notes": "OpenAlex exact-name author search was attempted and returned zero matches or only clearly mismatched candidates for this name; subsequent API search calls were rate-limited. No author ID assigned; absence from OpenAlex is not established."
+    },
+    {
+      "slug": "samia",
+      "fullName": "Moythry Manir Samia",
+      "status": "verified",
+      "authorId": "A5046805765",
+      "profileUrl": "https://amirl.org/peopleDetailsView/samia/",
+      "evidence": [
+        {
+          "url": "https://amirl.org/peopleDetailsView/samia/",
+          "reason": "AMIR Lab profile provided identity/context; authorship must be established independently."
+        },
+        {
+          "url": "https://doi.org/10.14569/ijacsa.2022.01312112",
+          "reason": "Seed work match: Aspect-based Sentiment Analysis for Bengali Text using Bidirectional Encoder Representations from Transformers (BERT); DOI 10.14569/ijacsa.2022.01312112; contributor source IDs ['peopleDetailsView/samia']"
+        },
+        {
+          "url": "https://doi.org/10.14569/IJACSA.2022.01312112",
+          "reason": "Seed profile-listed publication DOI; supports expected work context, but API authorship match was rate-limited."
+        },
+        {
+          "url": "https://openalex.org/W4313330995",
+          "reason": "Exact seed DOI work record; authorship row has verified author ID A5046805765 and matching name/ORCID."
+        }
+      ],
+      "notes": "Verified by exact DOI work author records with repeated stable OpenAlex author ID and ORCID/affiliation evidence.",
+      "verifiedAuthorName": "Moythry Manir Samia",
+      "verifiedWorkUrl": "https://openalex.org/W4313330995",
+      "verifiedDoi": "https://doi.org/10.14569/ijacsa.2022.01312112"
+    },
+    {
+      "slug": "sayma",
+      "fullName": "Maksuda Haider Sayma",
+      "status": "verified",
+      "authorId": "A5019541504",
+      "profileUrl": "https://amirl.org/peopleDetailsView/sayma/",
+      "evidence": [
+        {
+          "url": "https://amirl.org/peopleDetailsView/sayma/",
+          "reason": "AMIR Lab profile provided identity/context; authorship must be established independently."
+        },
+        {
+          "url": "https://doi.org/10.14569/ijacsa.2022.01312100",
+          "reason": "Seed work match: Design and Implementation of an Unreal Engine 4-Based Smart Traffic Control System for Smart City Applications; DOI 10.14569/ijacsa.2022.01312100; contributor source IDs ['peopleDetailsView/sayma']"
+        },
+        {
+          "url": "https://doi.org/10.14569/IJACSA.2022.01312100",
+          "reason": "Seed profile-listed publication DOI; supports expected work context, but API authorship match was rate-limited."
+        },
+        {
+          "url": "https://openalex.org/W4313330876",
+          "reason": "Exact seed DOI work lists Maksuda Haider Sayma as author ID A5019541504, ORCID 0000-0001-5429-7792, Comilla University."
+        },
+        {
+          "url": "https://openalex.org/W4313330876",
+          "reason": "Exact seed DOI work record; authorship row has verified author ID A5019541504 and matching name/ORCID."
+        }
+      ],
+      "notes": "Verified by exact DOI work author records with repeated stable OpenAlex author ID and ORCID/affiliation evidence.",
+      "verifiedAuthorName": "Maksuda Haider Sayma",
+      "verifiedWorkUrl": "https://openalex.org/W4313330876",
+      "verifiedDoi": "https://doi.org/10.14569/ijacsa.2022.01312100"
+    },
+    {
+      "slug": "shab",
+      "fullName": "Md Sabbir Hossain",
+      "status": "unresolved",
+      "authorId": null,
+      "profileUrl": "https://amirl.org/peopleDetailsView/shab/",
+      "evidence": [
+        {
+          "url": "https://amirl.org/peopleDetailsView/shab/",
+          "reason": "AMIR Lab profile provided identity/context; authorship must be established independently."
+        }
+      ],
+      "notes": "OpenAlex exact-name author search was attempted and returned zero matches or only clearly mismatched candidates for this name; subsequent API search calls were rate-limited. No author ID assigned; absence from OpenAlex is not established."
+    },
+    {
+      "slug": "shafiul-ajam-opee",
+      "fullName": "Shafiul Ajam Opee",
+      "status": "verified",
+      "authorId": "A5117235462",
+      "profileUrl": "https://amirl.org/peopleDetailsView/Shafiul-Ajam-Opee/",
+      "evidence": [
+        {
+          "url": "https://amirl.org/peopleDetailsView/Shafiul-Ajam-Opee/",
+          "reason": "AMIR Lab profile provided identity/context; authorship must be established independently."
+        },
+        {
+          "url": "https://openalex.org/A5117235462",
+          "reason": "OpenAlex author search exact-name result; search returned author record. Candidate requires record/works cross-check."
+        },
+        {
+          "url": "https://api.openalex.org/authors/A5117235462",
+          "reason": "Direct OpenAlex entity GET returns exact author name, ORCID 0009-0009-9526-647X, 4 works, AIUB affiliation (2025-26). AMIR profile provides Google Scholar identifier and work listings; exact work list GET was blocked."
+        },
+        {
+          "url": "https://amirl.org/peopleDetailsView/Shafiul-Ajam-Opee/",
+          "reason": "AMIR Lab biography and publication profile context; same exact-name author identity."
+        }
+      ],
+      "notes": "Exact profile entity plus ORCID and AMIR Lab author profile context match; candidate GET verified. Works list endpoint was rate-limited.",
+      "verifiedAuthorName": "Shafiul Ajam Opee",
+      "verifiedAffiliations": [
+        "American International University-Bangladesh"
+      ]
+    },
+    {
+      "slug": "shahriar-soudeep",
+      "fullName": "Shahriar Soudeep",
+      "status": "ambiguous",
+      "authorId": null,
+      "profileUrl": "https://amirl.org/peopleDetailsView/Shahriar-Soudeep/",
+      "evidence": [
+        {
+          "url": "https://amirl.org/peopleDetailsView/Shahriar-Soudeep/",
+          "reason": "AMIR Lab profile provided identity/context; authorship must be established independently."
+        },
+        {
+          "url": "https://openalex.org/A5108340570",
+          "reason": "OpenAlex author search exact-name result; search returned author record. Candidate requires record/works cross-check."
+        },
+        {
+          "url": "https://api.openalex.org/authors/A5108340570",
+          "reason": "Direct OpenAlex entity GET returns exact author name, ORCID 0009-0004-9317-2326, 8 works, AIUB affiliation (2024-26)."
+        }
+      ],
+      "notes": "Downgraded after review: seed record provides no independent public identity/work evidence linking this OpenAlex candidate beyond name similarity and OpenAlex AIUB affiliation. Do not assign without additional identity evidence.",
+      "candidates": [
+        {
+          "authorId": "A5108340570",
+          "name": "Shahriar Soudeep",
+          "orcid": "0009-0004-9317-2326",
+          "reason": "Exact/normalized name and OpenAlex affiliation candidate only; seed has no independent biography, DOI authorship, ORCID, or valid profile identity tying it to this researcher."
+        }
+      ]
+    },
+    {
+      "slug": "shaila-sharmin",
+      "fullName": "Shaila Sharmin",
+      "status": "verified",
+      "authorId": "A5113705576",
+      "profileUrl": "https://amirl.org/peopleDetailsView/Shaila-Sharmin/",
+      "evidence": [
+        {
+          "url": "https://amirl.org/peopleDetailsView/Shaila-Sharmin/",
+          "reason": "AMIR Lab profile provided identity/context; authorship must be established independently."
+        },
+        {
+          "url": "https://openalex.org/A5113705576",
+          "reason": "OpenAlex author search exact-name result; search returned author record. Candidate requires record/works cross-check."
+        },
+        {
+          "url": "https://doi.org/10.3390/jimaging11040115",
+          "reason": "Seed profile-listed publication DOI; supports expected work context, but API authorship match was rate-limited."
+        },
+        {
+          "url": "https://openalex.org/W4409337983",
+          "reason": "Exact seed DOI work lists Shaila Sharmin as author ID A5113705576, ORCID 0009-0001-1178-2621, AIUB affiliation."
+        },
+        {
+          "url": "https://openalex.org/W4409337983",
+          "reason": "Exact seed DOI work record; authorship row has verified author ID A5113705576 and matching name/ORCID."
+        }
+      ],
+      "notes": "Verified by exact DOI work author records with repeated stable OpenAlex author ID and ORCID/affiliation evidence.",
+      "verifiedAuthorName": "Shaila Sharmin",
+      "verifiedWorkUrl": "https://openalex.org/W4409337983",
+      "verifiedDoi": "https://doi.org/10.3390/jimaging11040115"
+    },
+    {
+      "slug": "shajib",
+      "fullName": "S.M. Sajibul Islam",
+      "status": "ambiguous",
+      "authorId": null,
+      "profileUrl": "https://amirl.org/peopleDetailsView/shajib/",
+      "evidence": [
+        {
+          "url": "https://amirl.org/peopleDetailsView/shajib/",
+          "reason": "AMIR Lab profile provided identity/context; authorship must be established independently."
+        },
+        {
+          "url": "https://openalex.org/A5101161076",
+          "reason": "OpenAlex author search exact-name result; search returned author record. Candidate requires record/works cross-check."
+        },
+        {
+          "url": "https://api.openalex.org/authors/A5101161076",
+          "reason": "Direct OpenAlex entity GET returns normalized name S. M. Sajibul Islam, 2 works, AIUB affiliation in 2023-24; seed lists full name S.M. Sajibul Islam."
+        },
+        {
+          "url": "https://aiub.edu/Files/Uploads/22nd-convocation_1st-release.pdf",
+          "reason": "AIUB convocation document identifies S.M. Sajibul Islam as an AIUB CSE student; corroborates the OpenAlex affiliation context."
+        }
+      ],
+      "notes": "Downgraded after review: seed record provides no independent public identity/work evidence linking this OpenAlex candidate beyond name similarity and OpenAlex AIUB affiliation. Do not assign without additional identity evidence.",
+      "candidates": [
+        {
+          "authorId": "A5101161076",
+          "name": "S.M. Sajibul Islam",
+          "orcid": null,
+          "reason": "Exact/normalized name and OpenAlex affiliation candidate only; seed has no independent biography, DOI authorship, ORCID, or valid profile identity tying it to this researcher."
+        }
+      ]
+    },
+    {
+      "slug": "shihab-ahmed",
+      "fullName": "Shihab Ahmed",
+      "status": "unresolved",
+      "authorId": null,
+      "profileUrl": "https://amirl.org/peopleDetailsView/Shihab-Ahmed/",
+      "evidence": [
+        {
+          "url": "https://amirl.org/peopleDetailsView/Shihab-Ahmed/",
+          "reason": "AMIR Lab profile provided identity/context; authorship must be established independently."
+        }
+      ],
+      "notes": "OpenAlex exact-name author search was attempted and returned zero matches or only clearly mismatched candidates for this name; subsequent API search calls were rate-limited. No author ID assigned; absence from OpenAlex is not established."
+    },
+    {
+      "slug": "showrov",
+      "fullName": "Showrov Islam",
+      "status": "unresolved",
+      "authorId": null,
+      "profileUrl": "https://amirl.org/peopleDetailsView/showrov/",
+      "evidence": [
+        {
+          "url": "https://amirl.org/peopleDetailsView/showrov/",
+          "reason": "AMIR Lab profile provided identity/context; authorship must be established independently."
+        }
+      ],
+      "notes": "OpenAlex exact-name author search was attempted and returned zero matches or only clearly mismatched candidates for this name; subsequent API search calls were rate-limited. No author ID assigned; absence from OpenAlex is not established."
+    },
+    {
+      "slug": "sultanul-arifeen-hamim",
+      "fullName": "Sultanul Arifeen Hamim",
+      "status": "verified",
+      "authorId": "A5106152722",
+      "profileUrl": "https://amirl.org/peopleDetailsView/Sultanul-Arifeen-Hamim/",
+      "evidence": [
+        {
+          "url": "https://amirl.org/peopleDetailsView/Sultanul-Arifeen-Hamim/",
+          "reason": "AMIR Lab profile provided identity/context; authorship must be established independently."
+        },
+        {
+          "url": "https://openalex.org/A5106152722",
+          "reason": "OpenAlex author search exact-name result; search returned author record. Candidate requires record/works cross-check."
+        },
+        {
+          "url": "https://doi.org/10.56532/mjsat.v4i4.273",
+          "reason": "Seed work match: Emotion Classification in Bangla Text Data Using Gaussian Naive Bayes Classifier: A Computational Linguistic Study; DOI 10.56532/mjsat.v4i4.273; contributor source IDs ['peopleDetailsView/Sultanul-Arifeen-Hamim']"
+        },
+        {
+          "url": "https://doi.org/10.5815/ijisa.2025.05.04",
+          "reason": "Seed work match: Advanced Heart Attack Prediction Using a Stacked Ensemble Machine Learning Model and Diverse Data Integration; DOI 10.5815/ijisa.2025.05.04; contributor source IDs ['peopleDetailsView/Mir-Maruf-Ahmed', 'peopleDetailsView/aftabrakinsad']"
+        },
+        {
+          "url": "https://doi.org/10.5815/ijmecs.2024.05.07",
+          "reason": "Seed work match: A Comprehensive Study to Analyze Student Evaluations of Teaching in Online Education; DOI 10.5815/ijmecs.2024.05.07; contributor source IDs ['peopleDetailsView/Sultanul-Arifeen-Hamim']"
+        },
+        {
+          "url": "https://doi.org/10.56532/mjsat.v4i4.273",
+          "reason": "Seed profile-listed publication DOI; supports expected work context, but API authorship match was rate-limited."
+        },
+        {
+          "url": "https://doi.org/10.55056/jec.758",
+          "reason": "Seed profile-listed publication DOI; supports expected work context, but API authorship match was rate-limited."
+        },
+        {
+          "url": "https://api.openalex.org/authors/A5106152722",
+          "reason": "Public OpenAlex author record endpoint; queried by exact full name. See ORCID and affiliation summary in verification."
+        },
+        {
+          "url": "https://amirl.org/peopleDetailsView/Sultanul-Arifeen-Hamim/",
+          "reason": "Independent public biography or publication source confirms identity, affiliation, and/or matching works."
+        },
+        {
+          "url": "https://doi.org/10.56532/mjsat.v4i4.273",
+          "reason": "Seed profile lists this publication DOI; direct OpenAlex author-work lookup was rate-limited."
+        },
+        {
+          "url": "https://openalex.org/W4400848988",
+          "reason": "Exact seed DOI work lists Sultanul Arifeen Hamim as author ID A5106152722, ORCID, AIUB."
+        },
+        {
+          "url": "https://openalex.org/W4401050363",
+          "reason": "Second exact DOI work repeats same ID and ORCID."
+        },
+        {
+          "url": "https://openalex.org/W4402994290",
+          "reason": "Third exact DOI work repeats same ID and ORCID."
+        },
+        {
+          "url": "https://openalex.org/W4404779836",
+          "reason": "Exact seed DOI work record; authorship row has verified author ID A5106152722 and matching name/ORCID."
+        },
+        {
+          "url": "https://openalex.org/W4400848988",
+          "reason": "Exact seed DOI work record; authorship row has verified author ID A5106152722 and matching name/ORCID."
+        },
+        {
+          "url": "https://openalex.org/W4401050363",
+          "reason": "Exact seed DOI work record; authorship row has verified author ID A5106152722 and matching name/ORCID."
+        },
+        {
+          "url": "https://openalex.org/W4402994290",
+          "reason": "Exact seed DOI work record; authorship row has verified author ID A5106152722 and matching name/ORCID."
+        }
+      ],
+      "notes": "Verified by exact DOI work author records with repeated stable OpenAlex author ID and ORCID/affiliation evidence.",
+      "verifiedAuthorName": "Sultanul Arifeen Hamim",
+      "verifiedWorkUrl": "https://openalex.org/W4404779836",
+      "verifiedDoi": "https://doi.org/10.56532/mjsat.v4i4.273"
+    },
+    {
+      "slug": "sunipun-seemanta",
+      "fullName": "Sunipun Seemanta",
+      "status": "verified",
+      "authorId": "A5120354549",
+      "profileUrl": "https://amirl.org/peopleDetailsView/Sunipun-Seemanta/",
+      "evidence": [
+        {
+          "url": "https://amirl.org/peopleDetailsView/Sunipun-Seemanta/",
+          "reason": "AMIR Lab profile provided identity/context; authorship must be established independently."
+        },
+        {
+          "url": "https://openalex.org/A5120354549",
+          "reason": "OpenAlex author search exact-name result; search returned author record. Candidate requires record/works cross-check."
+        },
+        {
+          "url": "https://api.openalex.org/authors/A5120354549",
+          "reason": "Direct OpenAlex entity GET returns exact author name, 12 works and AIUB affiliation in 2025-26, consistent with seed-listed AIUB student and publication-section works."
+        }
+      ],
+      "notes": "Exact-name author record and AIUB affiliation/year context match. Seed publication titles are listed as submitted/review context; works list endpoint blocked.",
+      "verifiedAuthorName": "Sunipun Seemanta",
+      "verifiedAffiliations": [
+        "American International University-Bangladesh"
+      ]
+    },
+    {
+      "slug": "syeda-aynul-karim",
+      "fullName": "Syeda Aynul Karim",
+      "status": "unresolved",
+      "authorId": null,
+      "profileUrl": "https://amirl.org/peopleDetailsView/Syeda-Aynul-Karim/",
+      "evidence": [
+        {
+          "url": "https://amirl.org/peopleDetailsView/Syeda-Aynul-Karim/",
+          "reason": "AMIR Lab profile provided identity/context; authorship must be established independently."
+        }
+      ],
+      "notes": "OpenAlex exact-name author search was attempted and returned zero matches or only clearly mismatched candidates for this name; subsequent API search calls were rate-limited. No author ID assigned; absence from OpenAlex is not established."
+    },
+    {
+      "slug": "tanzim-ahmed",
+      "fullName": "Tanzim Ahmed",
+      "status": "unresolved",
+      "authorId": null,
+      "profileUrl": "https://amirl.org/peopleDetailsView/Tanzim-Ahmed/",
+      "evidence": [
+        {
+          "url": "https://amirl.org/peopleDetailsView/Tanzim-Ahmed/",
+          "reason": "AMIR Lab profile provided identity/context; authorship must be established independently."
+        }
+      ],
+      "notes": "OpenAlex exact-name author search was attempted and returned zero matches or only clearly mismatched candidates for this name; subsequent API search calls were rate-limited. No author ID assigned; absence from OpenAlex is not established."
+    },
+    {
+      "slug": "taufikur-rahman-fuad",
+      "fullName": "Taufikur Rahman Fuad",
+      "status": "unresolved",
+      "authorId": null,
+      "profileUrl": "https://amirl.org/peopleDetailsView/Taufikur-Rahman-Fuad/",
+      "evidence": [
+        {
+          "url": "https://amirl.org/peopleDetailsView/Taufikur-Rahman-Fuad/",
+          "reason": "AMIR Lab profile provided identity/context; authorship must be established independently."
+        }
+      ],
+      "notes": "OpenAlex exact-name author search was attempted and returned zero matches or only clearly mismatched candidates for this name; subsequent API search calls were rate-limited. No author ID assigned; absence from OpenAlex is not established."
+    },
+    {
+      "slug": "tawfiqul-hasan",
+      "fullName": "Tawfiqul Hasan",
+      "status": "unresolved",
+      "authorId": null,
+      "profileUrl": "https://amirl.org/peopleDetailsView/Tawfiqul-Hasan/",
+      "evidence": [
+        {
+          "url": "https://amirl.org/peopleDetailsView/Tawfiqul-Hasan/",
+          "reason": "AMIR Lab profile provided identity/context; authorship must be established independently."
+        }
+      ],
+      "notes": "OpenAlex exact-name author search was attempted and returned zero matches or only clearly mismatched candidates for this name; subsequent API search calls were rate-limited. No author ID assigned; absence from OpenAlex is not established."
+    },
+    {
+      "slug": "utsho",
+      "fullName": "A S M Morshedul Hoque Utsho",
+      "status": "unresolved",
+      "authorId": null,
+      "profileUrl": "https://amirl.org/peopleDetailsView/utsho/",
+      "evidence": [
+        {
+          "url": "https://amirl.org/peopleDetailsView/utsho/",
+          "reason": "AMIR Lab profile provided identity/context; authorship must be established independently."
+        }
+      ],
+      "notes": "OpenAlex exact-name author search was attempted and returned zero matches or only clearly mismatched candidates for this name; subsequent API search calls were rate-limited. No author ID assigned; absence from OpenAlex is not established."
+    },
+    {
+      "slug": "zabir",
+      "fullName": "Zabir Mohammad",
+      "status": "verified",
+      "authorId": "A5048179636",
+      "profileUrl": "https://amirl.org/peopleDetailsView/zabir/",
+      "evidence": [
+        {
+          "url": "https://amirl.org/peopleDetailsView/zabir/",
+          "reason": "AMIR Lab profile provided identity/context; authorship must be established independently."
+        },
+        {
+          "url": "https://openalex.org/A5048179636",
+          "reason": "OpenAlex author search exact-name result; search returned author record. Candidate requires record/works cross-check."
+        },
+        {
+          "url": "https://doi.org/10.32604/csse.2023.032977",
+          "reason": "Seed work match: An Unsupervised Writer Identification based on Generating Clusterable Embeddings; DOI 10.32604/csse.2023.032977; contributor source IDs ['peopleDetailsView/Dr-Mohammad-Firoz-Mridha']"
+        },
+        {
+          "url": "https://api.openalex.org/authors/A5048179636",
+          "reason": "Public OpenAlex author record endpoint; queried by exact full name. See ORCID and affiliation summary in verification."
+        },
+        {
+          "url": "https://zabirmohammad.vercel.app/CV.pdf",
+          "reason": "Independent public biography or publication source confirms identity, affiliation, and/or matching works."
+        },
+        {
+          "url": "https://openalex.org/W4319659870",
+          "reason": "Exact seed DOI work record; authorship row has verified author ID A5048179636 and matching name/ORCID."
+        }
+      ],
+      "notes": "Verified by exact DOI work author records with repeated stable OpenAlex author ID and ORCID/affiliation evidence.",
+      "verifiedAuthorName": "Zabir Mohammad",
+      "verifiedAffiliations": [
+        "Bangladesh University of Business and Technology"
+      ]
+    },
+    {
+      "slug": "zafrin-sultana",
+      "fullName": "Zafrin Sultana",
+      "status": "unresolved",
+      "authorId": null,
+      "profileUrl": "https://amirl.org/peopleDetailsView/Zafrin-Sultana/",
+      "evidence": [
+        {
+          "url": "https://amirl.org/peopleDetailsView/Zafrin-Sultana/",
+          "reason": "AMIR Lab profile provided identity/context; authorship must be established independently."
+        }
+      ],
+      "notes": "OpenAlex exact-name author search was attempted and returned zero matches or only clearly mismatched candidates for this name; subsequent API search calls were rate-limited. No author ID assigned; absence from OpenAlex is not established."
+    }
+  ]
+}

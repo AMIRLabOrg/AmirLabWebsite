@@ -82,12 +82,13 @@ it('invalidates after public background work, including failed work, but not unr
   for (const type of [
     'DISCOVER_RESEARCH_SOURCE',
     'SYNC_SCHOLAR_PROFILE',
+    'SYNC_OPENALEX_AUTHOR',
     'RECALCULATE_ALL_RANKS',
   ])
     await settled(type);
   await settled('MAIL');
   await settled(PUBLIC_CACHE_JOB);
-  expect(global.fetch).toHaveBeenCalledTimes(3);
+  expect(global.fetch).toHaveBeenCalledTimes(4);
 });
 
 it('records a shared revision even when webhook delivery is not configured', async () => {

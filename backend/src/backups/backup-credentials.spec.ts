@@ -1,12 +1,16 @@
 import { mkdtemp, readFile, rm, stat } from 'node:fs/promises';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
-import { BackupCredentials, mergeSecrets } from './backup-credentials';
+import { mergeSecrets } from './backup-credentials';
+import { EncryptedCredentials } from '../common/encrypted-credentials';
 describe('Encrypted backup credentials', () => {
   it('round trips without plaintext and protects the key file', async () => {
     const root = await mkdtemp(join(tmpdir(), 'backup-key-'));
     try {
-      const store = new BackupCredentials(join(root, 'key'));
+      const store = new EncryptedCredentials<{
+        secretAccessKey: string;
+        accessKeyId: string;
+      }>(join(root, 'key'));
       const encrypted = await store.encrypt({
         secretAccessKey: 'sample-secret',
         accessKeyId: 'sample-id',

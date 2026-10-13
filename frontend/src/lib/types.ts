@@ -27,6 +27,7 @@ export interface NotificationRecord {
 }
 
 export interface ResearchItem {
+  openAlexWorkId?: string | null;
   id: string;
   slug: string;
   title: string | null;

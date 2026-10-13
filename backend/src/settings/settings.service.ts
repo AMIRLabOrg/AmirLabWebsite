@@ -1,10 +1,16 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  ServiceUnavailableException,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { AcademicRank, Prisma } from '../../generated/prisma/client';
 import type { Environment } from '../config/environment';
 import { PrismaService } from '../database/prisma.service';
 import { RECALCULATE_ALL_RANKS_JOB } from '../jobs/job-types';
 import { JobsService } from '../jobs/jobs.service';
+import { resolve } from 'node:path';
+import { EncryptedCredentials } from '../common/encrypted-credentials';
 
 export type VerificationMode = 'AUTOMATIC' | 'MANUAL';
 
@@ -129,6 +135,7 @@ const VERIFICATION_KEY = 'verification-policy';
 const RANK_KEY = 'rank-policy';
 const APPOINTMENT_LETTER_KEY = 'appointment-letter-template';
 const NOTIFICATION_POLICY_KEY = 'notification-policy';
+const OPENALEX_CREDENTIALS_KEY = 'openalex.credentials';
 
 @Injectable()
 export class SettingsService {
@@ -137,6 +144,131 @@ export class SettingsService {
     private readonly prisma: PrismaService,
     private readonly config: ConfigService<Environment, true>,
   ) {}
+
+  private openAlexCredentials() {
+    return new EncryptedCredentials<{ apiKey: string }>(
+      `${resolve(this.config.get('uploadRoot', { infer: true }))}/.openalex-key`,
+    );
+  }
+
+  async openAlexApiKey(): Promise<string | null> {
+    const row = await this.prisma.siteSetting.findUnique({
+      where: { key: OPENALEX_CREDENTIALS_KEY },
+    });
+    if (!row) return this.config.get('openalexApiKey', { infer: true }) ?? null;
+    const value = row.value;
+    if (
+      !value ||
+      typeof value !== 'object' ||
+      Array.isArray(value) ||
+      !('credentials' in value)
+    )
+      throw new BadRequestException(
+        'OpenAlex settings cannot be read. Save the API key again.',
+      );
+    if (value.credentials === null) return null;
+    const credentials = value.credentials;
+    if (
+      !credentials ||
+      typeof credentials !== 'object' ||
+      Array.isArray(credentials) ||
+      typeof credentials.iv !== 'string' ||
+      typeof credentials.tag !== 'string' ||
+      typeof credentials.ciphertext !== 'string'
+    )
+      throw new BadRequestException(
+        'OpenAlex settings cannot be read. Save the API key again.',
+      );
+    const secret = await this.openAlexCredentials().decrypt({
+      iv: credentials.iv,
+      tag: credentials.tag,
+      ciphertext: credentials.ciphertext,
+    });
+    if (typeof secret.apiKey !== 'string' || !secret.apiKey)
+      throw new BadRequestException(
+        'OpenAlex settings cannot be read. Save the API key again.',
+      );
+    return secret.apiKey;
+  }
+
+  async openAlexStatus() {
+    const row = await this.prisma.siteSetting.findUnique({
+      where: { key: OPENALEX_CREDENTIALS_KEY },
+    });
+    if (!row) {
+      const configured = Boolean(
+        this.config.get('openalexApiKey', { infer: true }),
+      );
+      return { configured, source: configured ? 'environment' : 'none' };
+    }
+    const configured = Boolean(
+      row.value &&
+      typeof row.value === 'object' &&
+      !Array.isArray(row.value) &&
+      row.value.credentials,
+    );
+    return { configured, source: configured ? 'admin' : 'none' };
+  }
+
+  async updateOpenAlexApiKey(value: string, actorId: string) {
+    const apiKey = value.trim();
+    if (apiKey.length > 512 || (apiKey && !/^[A-Za-z0-9._-]+$/.test(apiKey)))
+      throw new BadRequestException('Enter a valid OpenAlex API key.');
+    if (apiKey) await this.validateOpenAlexApiKey(apiKey);
+    const credentials = apiKey
+      ? await this.openAlexCredentials().encrypt({ apiKey })
+      : null;
+    const json: Prisma.InputJsonObject = {
+      credentials: credentials ? { ...credentials } : null,
+    };
+    await this.prisma.$transaction(async (transaction) => {
+      await transaction.siteSetting.upsert({
+        where: { key: OPENALEX_CREDENTIALS_KEY },
+        create: { key: OPENALEX_CREDENTIALS_KEY, value: json },
+        update: { value: json },
+      });
+      await transaction.auditRecord.create({
+        data: {
+          action: 'settings.openalex-key-updated',
+          actorId,
+          entityId: OPENALEX_CREDENTIALS_KEY,
+          entityType: 'SiteSetting',
+          details: { configured: Boolean(apiKey) },
+        },
+      });
+    });
+    return { configured: Boolean(apiKey), source: apiKey ? 'admin' : 'none' };
+  }
+
+  private async validateOpenAlexApiKey(apiKey: string) {
+    let response: Response;
+    try {
+      response = await fetch('https://api.openalex.org/rate-limit', {
+        headers: { Authorization: `Bearer ${apiKey}` },
+        signal: AbortSignal.timeout(10_000),
+        redirect: 'error',
+      });
+    } catch {
+      throw new ServiceUnavailableException({
+        publicMessage:
+          'Could not verify the OpenAlex API key. Try again; the saved key has not changed.',
+        code: 'OPENALEX_KEY_CHECK_UNAVAILABLE',
+      });
+    }
+    await response.body?.cancel();
+    if (response.status === 401 || response.status === 403)
+      throw new BadRequestException({
+        publicMessage:
+          'OpenAlex rejected this API key. Check it and try again.',
+        code: 'OPENALEX_KEY_INVALID',
+      });
+    if (!response.ok)
+      throw new ServiceUnavailableException({
+        publicMessage:
+          'Could not verify the OpenAlex API key. Try again; the saved key has not changed.',
+        code: 'OPENALEX_KEY_CHECK_UNAVAILABLE',
+      });
+  }
 
   async verification(): Promise<VerificationPolicy> {
     const setting = await this.prisma.siteSetting.findUnique({

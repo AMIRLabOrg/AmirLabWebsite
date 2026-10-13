@@ -273,3 +273,30 @@ DATABASE_URL='postgresql://user:password@127.0.0.1:5433/local_test' \
 The JSON uses the admin settings names, plus credentials. For example an S3 file contains `provider`, `bucket`, `region`, optional `endpoint`, `prefix`, `forcePathStyle`, `accessKeyId`, `secretAccessKey`, `enabled: false`, and `intervalMinutes: 60`. An SFTP file contains `provider`, `host`, `port`, `username`, `remoteDirectory`, `hostKey`, `authentication`, the matching `privateKey` or `password`, and the same schedule fields. Never commit this file. Stop the API and other writers before recovery. The old local-directory command still works, and the CLI never loads `.env` or permits production/remote database targets.
 
 Provider contract tests cover streaming, pagination, publication order, path validation, SSH command quoting and credential cleanup. Live S3 and SFTP delivery/restore require actual credentials and an endpoint and must be verified before relying on them.
+
+### OpenAlex publications
+
+Use **My profile → Research sync → OpenAlex** and enter the author's ID (for example, `A5106152722`). Administrators use the existing member profile editor. The ID follows the normal profile save/approval policy and is stored as an OpenAlex profile link; eligible imports do not need paper-by-paper approval.
+
+The real-person seed includes 58 verified OpenAlex author IDs; 56 profiles remain unassigned because no reliable match was established. Matching evidence and unresolved candidates are recorded in `backend/seed/openalex-author-matches.json`. Seeded profiles still await normal profile review before their OpenAlex sync starts.
+
+Setting, changing or removing this link replaces that person's previous paper and dataset associations immediately when the profile change is applied. Unshared old outputs are deleted; outputs still associated with another person remain. Changing the link queues the new author's data. Removing it pauses sync. Internal projects and unrelated profile information remain intact. Each author ID can be linked to one local person; invalid or duplicate links are rejected.
+
+The server uses the existing jobs worker, with a due check every hour and a successful sync interval of 24 hours. Keep the backend running for scheduled sync. Administrators can set, replace or remove the API key under **Settings → Verification → OpenAlex** without restarting or deploying. New keys are checked with OpenAlex before saving; rejected keys or failed validation requests leave the previous setting intact. Keys are encrypted in the database and never returned to the browser or included in audit details. Preserve the private `${UPLOAD_ROOT}/.openalex-key` file with persistent server data; if it is lost, re-enter the API key. Optional backend `OPENALEX_API_KEY` is a fallback until an administrator saves a setting; removing the key explicitly selects anonymous access. Rate limits and partial fetch failures back off without applying partial results. Articles, reviews, conference papers, book chapters and datasets are supported. Retractions go to review. Unsupported types or conflicting identifiers are recorded in the source's skipped summary; use the existing manual path for exceptions. Local corrections and contributor decisions survive refreshes of an unchanged author ID. Missing upstream works are recorded in the summary and retained until the link changes or is removed.
+
+The schema is additive (`backend/prisma/migrations/20261012000000_openalex_author_sync/migration.sql`). Normal `db:push` also applies it. Schema deployment does **not** clear existing papers. The destructive reset is a separate, local-only test command that never loads `.env`:
+
+```bash
+DATABASE_URL='postgresql://<local-user>:<local-password>@127.0.0.1:5433/amirl' \
+  pnpm --dir backend research:reset:local \
+  ../.local-verification/legacy-pre-openalex-20261012 --replace-local-papers
+```
+
+Stop local writers first. This command requires a matching SHA-256 legacy backup manifest and actual local database identity. It removes only paper records, their dependent links and demonstrably matched profile copies, preserving accounts, projects, datasets and unrelated profile fields. The legacy dump and uploads remain under `.local-verification/legacy-pre-openalex-20261012/`; do not commit them. Recover the dump into a **separate local recovery database** with `pg_restore --no-owner --no-acl --dbname=<explicit-local-recovery-url> database.dump`. Verify the recovered data and copied uploads before replacing an active database. Never use the hosted `.env` URL for this workflow.
+
+Rollback-only integration checks require the same explicit local target:
+
+```bash
+DATABASE_URL='postgresql://<local-user>:<local-password>@127.0.0.1:5433/amirl' \
+  pnpm --dir backend test:openalex:local
+```
