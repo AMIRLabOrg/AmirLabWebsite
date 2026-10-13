@@ -55,4 +55,8 @@ The current NestJS service has a global throttle of 100 requests per 60 seconds 
 
 ## Known scaffold limitations
 
-Only `/api/health` and JSON 404 are implemented. CORS preview-host behavior, authentication, throttling, compression, shutdown policy, readiness/liveness split, all feature routes, and API docs are pending. Do not switch production traffic to this scaffold.
+The `/api/publications` vertical slice now has a controller, validated query DTO, service, and parameterized PostgreSQL repository. It implements filters, sorting, pagination, contributor names and global facets. **It is not yet proven response-compatible**: the Prisma `RESEARCH_INCLUDE` graph contains nested relationships (notably project/dataset structures) that require explicit parity verification, and production data/HTTP contract tests have not been run. Do not switch this route to Rust until contract tests pass. Other than that slice, only `/api/health` and JSON 404 are implemented. CORS preview-host behavior, authentication, throttling, compression, shutdown policy, readiness/liveness split, all feature routes, and API docs are pending. Do not switch production traffic to this scaffold.
+
+## Publications migration checkpoint
+
+Compare NestJS and Rust for `GET /api/publications` with defaults, empty results, case-insensitive search, literal `%` and `_`, category/year, all three sort orders, pagination boundaries, contributor/person joins, facets, nulls, timestamps and validation errors. Verify actual Prisma serialization for every returned field. The SQL is an initial implementation, **not a verified parity migration**. Cargo was not available in the authoring environment; CI must compile and test before this checkpoint is accepted.
