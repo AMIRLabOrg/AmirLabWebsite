@@ -1,6 +1,7 @@
 export interface Environment {
   publicCacheRevalidationSecret?: string;
   databaseUrl: string;
+  encryptionKey?: string;
   frontendOrigins: string[];
   publicSiteEmail: string;
   storageProvider: 'local' | 's3';
@@ -45,6 +46,15 @@ export function validateEnvironment(
     );
   }
   const databaseUrl = requiredString(source, 'DATABASE_URL');
+  const encryptionKey = optionalValue(source.ENCRYPTION_KEY);
+  if (encryptionKey) {
+    const decodedEncryptionKey = Buffer.from(encryptionKey, 'base64');
+    if (
+      decodedEncryptionKey.length !== 32 ||
+      decodedEncryptionKey.toString('base64') !== encryptionKey
+    )
+      throw new Error('ENCRYPTION_KEY must be a base64-encoded 32-byte key');
+  }
   const frontendOrigins = requiredString(source, 'FRONTEND_ORIGINS')
     .split(',')
     .map((origin) => origin.trim())
@@ -122,6 +132,8 @@ export function validateEnvironment(
     throw new Error('PUBLIC_SITE_EMAIL must be a valid email address');
   }
   if (nodeEnv === 'production') {
+    if (!encryptionKey)
+      throw new Error('ENCRYPTION_KEY is required in production');
     rejectProductionPlaceholder(databaseUrl, 'DATABASE_URL');
     rejectProductionPlaceholder(frontendOrigins.join(','), 'FRONTEND_ORIGINS');
     if (smtpFromValue) rejectProductionPlaceholder(smtpFromValue, 'SMTP_FROM');
@@ -145,6 +157,7 @@ export function validateEnvironment(
   return {
     publicCacheRevalidationSecret,
     databaseUrl,
+    encryptionKey,
     frontendOrigins,
     publicSiteEmail,
     storageProvider: storageProvider as Environment['storageProvider'],

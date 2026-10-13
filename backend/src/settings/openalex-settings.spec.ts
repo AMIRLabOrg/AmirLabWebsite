@@ -30,7 +30,11 @@ describe('admin OpenAlex credentials', () => {
     const service = Object.assign(Object.create(SettingsService.prototype), {
       config: {
         get: (name: string) =>
-          name === 'uploadRoot' ? join(root, 'storage') : 'environment-token',
+          name === 'uploadRoot'
+            ? join(root, 'storage')
+            : name === 'encryptionKey'
+              ? 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA='
+              : 'environment-token',
       },
       prisma: {
         ...db,
