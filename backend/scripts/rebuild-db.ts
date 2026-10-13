@@ -32,10 +32,13 @@ import { seedAdminCredentials } from './seed-credentials';
 import {
   type AmirSeedData,
   type SeedPaper,
+  type SeedUniversity,
   firstKnownContributorSourceIdForSeed,
   missingSeedAvatarFiles,
+  missingSeedUniversityLogoFiles,
   readSeedData,
   seedAssetRoot,
+  universitySeedAssetRoot,
 } from './seed-data';
 
 const uploadRoot = resolve(process.env.UPLOAD_ROOT ?? './storage');
@@ -59,9 +62,10 @@ const {
 export async function rebuildDatabase() {
   const data = await readSeedData();
   const missingFiles = await missingSeedAvatarFiles(data);
-  if (missingFiles.length) {
+  const missingUniversityLogos = await missingSeedUniversityLogoFiles(data);
+  if (missingFiles.length || missingUniversityLogos.length) {
     throw new Error(
-      `Seed references ${missingFiles.length} missing avatar file(s)`,
+      `Seed references ${missingFiles.length} missing avatar file(s) and ${missingUniversityLogos.length} missing university logo file(s)`,
     );
   }
 
@@ -226,6 +230,23 @@ export async function rebuildDatabase() {
         ? (personIdBySource.get(defaultApprover.sourceId) ?? null)
         : null,
     );
+
+    for (const university of data.universities) {
+      const logoAssetId = await createUniversityLogoAsset(
+        prisma,
+        university,
+        admin.id,
+      );
+      await prisma.university.create({
+        data: {
+          isPublished: university.isPublished,
+          logoAssetId,
+          name: university.name,
+          slug: university.slug,
+          websiteUrl: university.websiteUrl,
+        },
+      });
+    }
 
     for (const department of data.departments) {
       const departmentId = required(
@@ -404,6 +425,7 @@ export async function rebuildDatabase() {
     console.log(`[db] People: ${data.people.length}`);
     console.log(`[db] People images imported: ${importedAvatars}`);
     console.log(`[db] Departments: ${data.departments.length}`);
+    console.log(`[db] Academic partners: ${data.universities.length}`);
     console.log(`[db] Papers: ${data.papers.length}`);
     console.log(`[db] Projects: ${data.projects.length}`);
     console.log(`[db] Positions: ${data.positions.length}`);
@@ -414,6 +436,43 @@ export async function rebuildDatabase() {
   } finally {
     await prisma.$disconnect();
   }
+}
+
+async function createUniversityLogoAsset(
+  prisma: ReturnType<typeof createCliPrisma>,
+  university: SeedUniversity,
+  createdById: string,
+): Promise<string> {
+  const sourcePath = resolve(
+    universitySeedAssetRoot,
+    university.logoSourceFile,
+  );
+  const source = await readFile(sourcePath);
+  const image = await sharp(source)
+    .rotate()
+    .resize({ height: 80, withoutEnlargement: true })
+    .png({ quality: 90 })
+    .toBuffer({ resolveWithObject: true });
+  const checksum = createHash('sha256').update(image.data).digest('hex');
+  const storageKey = `university-logos/${university.slug}-${checksum.slice(0, 12)}.png`;
+  const target = resolve(uploadRoot, storageKey);
+  await mkdir(dirname(target), { recursive: true });
+  await writeFile(target, image.data, { flag: 'wx' });
+  const asset = await prisma.asset.create({
+    data: {
+      access: AssetAccess.PUBLIC,
+      byteSize: image.data.length,
+      checksum,
+      createdById,
+      height: image.info.height,
+      kind: AssetKind.UNIVERSITY_LOGO,
+      mimeType: 'image/png',
+      originalName: basename(university.logoSourceFile),
+      storageKey,
+      width: image.info.width,
+    },
+  });
+  return asset.id;
 }
 
 async function seedDocuments(

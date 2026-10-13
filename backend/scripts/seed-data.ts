@@ -59,6 +59,14 @@ export interface SeedDepartment {
   }>;
 }
 
+export interface SeedUniversity {
+  slug: string;
+  name: string;
+  websiteUrl: string;
+  logoSourceFile: string;
+  isPublished: boolean;
+}
+
 export interface SeedPaper {
   sourceId: string;
   sourceUrl: string;
@@ -116,6 +124,7 @@ export interface AmirSeedData {
   };
   site: Record<string, unknown>;
   departments: SeedDepartment[];
+  universities: SeedUniversity[];
   people: SeedPerson[];
   papers: SeedPaper[];
   datasets: unknown[];
@@ -125,6 +134,10 @@ export interface AmirSeedData {
 
 export const seedPath = resolve(process.cwd(), 'seed/amirl-site.json');
 export const seedAssetRoot = resolve(process.cwd(), 'seed/assets/people');
+export const universitySeedAssetRoot = resolve(
+  process.cwd(),
+  'seed/assets/universities',
+);
 
 export async function readSeedData(): Promise<AmirSeedData> {
   const parsed = JSON.parse(await readFile(seedPath, 'utf8')) as AmirSeedData;
@@ -150,6 +163,7 @@ export function validateSeedData(data: AmirSeedData): void {
   uniqueOptional(data.people, (item) => item.sourceUrl, 'person sourceUrl');
   unique(data.departments, (item) => item.slug, 'department slug');
   unique(data.departments, (item) => item.sourceId, 'department sourceId');
+  unique(data.universities, (item) => item.slug, 'university slug');
   unique(data.papers, (item) => item.sourceId, 'paper sourceId');
   uniqueOptional(data.papers, (item) => item.doi, 'paper DOI');
   uniqueOptional(
@@ -251,6 +265,21 @@ export function validateSeedData(data: AmirSeedData): void {
         ['HEAD', 'LEAD', 'MEMBER'],
         `department ${department.slug} membership role`,
       );
+    }
+  }
+
+  for (const university of data.universities) {
+    ensureMeaningfulText(university.name, `university ${university.slug} name`);
+    ensureUrl(
+      university.websiteUrl,
+      `university ${university.slug} websiteUrl`,
+    );
+    ensureMeaningfulText(
+      university.logoSourceFile,
+      `university ${university.slug} logoSourceFile`,
+    );
+    if (typeof university.isPublished !== 'boolean') {
+      throw new Error(`Invalid university ${university.slug} isPublished`);
     }
   }
 
@@ -408,6 +437,22 @@ export async function missingSeedAvatarFiles(
       if (!info.isFile()) missing.push({ slug: person.slug, file });
     } catch {
       missing.push({ slug: person.slug, file });
+    }
+  }
+  return missing;
+}
+
+export async function missingSeedUniversityLogoFiles(
+  data: AmirSeedData,
+): Promise<Array<{ slug: string; file: string }>> {
+  const missing: Array<{ slug: string; file: string }> = [];
+  for (const university of data.universities) {
+    const file = resolve(universitySeedAssetRoot, university.logoSourceFile);
+    try {
+      if (!(await stat(file)).isFile())
+        missing.push({ slug: university.slug, file });
+    } catch {
+      missing.push({ slug: university.slug, file });
     }
   }
   return missing;
