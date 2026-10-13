@@ -1,0 +1,31 @@
+name: Rust engine checks
+
+on:
+  push:
+    branches: [engine/rust]
+    paths:
+      - 'backend-rust/**'
+      - '.github/workflows/rust-engine.yml'
+  pull_request:
+    paths:
+      - 'backend-rust/**'
+      - '.github/workflows/rust-engine.yml'
+
+jobs:
+  rust:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend-rust
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: backend-rust
+      - run: cargo fmt --check
+      - run: cargo check
+      - run: cargo clippy --all-targets -- -D warnings
+      - run: cargo test
