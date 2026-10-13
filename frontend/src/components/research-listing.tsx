@@ -85,7 +85,7 @@ export function ResearchListingView({
           {visibleItems.length ? (
             <div className="grid">
               {visibleItems.map((item, index) =>
-                type === "PAPER" ? (
+                type === "PAPER" || type === "DATASET" ? (
                   <PaperCard
                     frame
                     item={item}

@@ -8,6 +8,8 @@ export function FormField({
   htmlFor,
   label,
   labelClassName,
+  message,
+  messageTone = "error",
 }: {
   children: ReactNode;
   className?: string;
@@ -15,6 +17,8 @@ export function FormField({
   htmlFor?: string;
   label?: ReactNode;
   labelClassName?: string;
+  message?: ReactNode;
+  messageTone?: "error" | "info" | "muted" | "success";
 }) {
   return (
     <div className={cn(className, "field grid content-start gap-1.5")}>
@@ -44,6 +48,21 @@ export function FormField({
       {description ? (
         <p className="m-0 text-[.82rem] leading-[1.5] text-ink-muted">
           {description}
+        </p>
+      ) : null}
+      {message !== undefined ? (
+        <p
+          aria-live="polite"
+          className={cn(
+            "m-0 min-h-[1.2em] text-xs leading-[1.2]",
+            messageTone === "error" && "text-danger",
+            messageTone === "success" && "text-success",
+            messageTone === "info" && "text-info",
+            messageTone === "muted" && "text-ink-muted",
+          )}
+          role={messageTone === "error" && message ? "alert" : undefined}
+        >
+          {message || " "}
         </p>
       ) : null}
     </div>

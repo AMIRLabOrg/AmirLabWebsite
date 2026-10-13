@@ -19,6 +19,13 @@ import type {
   VerificationPolicy,
 } from '../settings.service';
 
+export class OpenAlexApiKeyDto {
+  @IsString()
+  @MaxLength(512)
+  @Matches(/^[A-Za-z0-9._-]*$/)
+  apiKey!: string;
+}
+
 export class AppointmentLetterTemplateDto implements Omit<
   AppointmentLetterTemplate,
   'version'

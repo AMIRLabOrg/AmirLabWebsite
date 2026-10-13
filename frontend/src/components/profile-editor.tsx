@@ -139,6 +139,18 @@ export function ProfileEditor({ userId }: ProfileEditorProps) {
     () => (avatar ? URL.createObjectURL(avatar) : null),
     [avatar],
   );
+  const openAlexLinkIndex = profile.links.findIndex(
+    ({ type }) => type === "OPENALEX",
+  );
+  const openAlexId =
+    openAlexLinkIndex < 0
+      ? ""
+      : (profile.links[openAlexLinkIndex].url
+          .split("/")
+          .filter(Boolean)
+          .at(-1) ?? "");
+  const openAlexIdInvalid =
+    openAlexLinkIndex >= 0 && !/^A[1-9]\d{0,19}$/i.test(openAlexId);
 
   useEffect(
     () => () => {
@@ -660,6 +672,84 @@ export function ProfileEditor({ userId }: ProfileEditorProps) {
 
       {researchProfile ? (
         <section className="relative col-start-1 -ml-[var(--workspace-gutter)] grid gap-[1.2rem] border-y border-line-strong bg-transparent py-[1.55rem] pr-[1.55rem] pl-[var(--workspace-gutter)] max-[980px]:col-start-1 max-[640px]:ml-0 max-[640px]:px-4">
+          <div className="grid gap-3 border-b border-line pb-[1.2rem]">
+            <div>
+              <p className="m-0 mb-3 font-[var(--font-sans)] text-[.75rem] font-extrabold uppercase tracking-[.12em] text-brand">
+                Research sync
+              </p>
+              <h2 className="text-[1.35rem] font-semibold">OpenAlex</h2>
+              <p className="m-0 mt-2 text-sm text-ink-muted">
+                Enter your OpenAlex author ID to sync papers and datasets daily.
+                Changing or removing it clears this profile&apos;s previous
+                outputs.
+              </p>
+            </div>
+            {openAlexLinkIndex === -1 ? (
+              <ButtonControl
+                className="w-fit whitespace-nowrap"
+                loading={editorLoading}
+                variant="add-empty"
+                onClick={() =>
+                  setProfile({
+                    ...profile,
+                    links: [
+                      ...profile.links,
+                      { type: "OPENALEX", label: "OpenAlex", url: "" },
+                    ],
+                  })
+                }
+                type="button"
+              >
+                <Plus aria-hidden="true" size={16} /> Connect OpenAlex profile
+              </ButtonControl>
+            ) : (
+              <FormField
+                className="gap-1"
+                message={
+                  openAlexIdInvalid
+                    ? openAlexId
+                      ? "Enter a valid OpenAlex ID (for example, A5106152722)."
+                      : "Enter an OpenAlex author ID."
+                    : ""
+                }
+              >
+                <div className="grid grid-cols-[minmax(0,1fr)_42px] gap-[.7rem]">
+                  <InputControl
+                    loading={editorLoading}
+                    aria-label="OpenAlex author ID"
+                    aria-invalid={openAlexIdInvalid || undefined}
+                    onChange={(event) => {
+                      const links = [...profile.links];
+                      links[openAlexLinkIndex] = {
+                        ...links[openAlexLinkIndex],
+                        url: event.target.value,
+                      };
+                      setProfile({ ...profile, links });
+                    }}
+                    placeholder="A5106152722"
+                    type="text"
+                    value={openAlexId}
+                  />
+                  <ButtonControl
+                    aria-label="Remove OpenAlex profile"
+                    className="min-h-[42px] w-[42px] justify-self-end rounded-control p-0 text-ink-muted"
+                    loading={editorLoading}
+                    onClick={() =>
+                      setProfile({
+                        ...profile,
+                        links: profile.links.filter(
+                          (_, index) => index !== openAlexLinkIndex,
+                        ),
+                      })
+                    }
+                    type="button"
+                  >
+                    <X aria-hidden="true" size={17} />
+                  </ButtonControl>
+                </div>
+              </FormField>
+            )}
+          </div>
           <div className="mb-0 flex items-end justify-between gap-8 border-b border-line pb-[.95rem]">
             <div>
               <p className="m-0 mb-4 font-[var(--font-sans)] text-[.75rem] font-extrabold uppercase tracking-[.12em] text-brand">
@@ -668,6 +758,7 @@ export function ProfileEditor({ userId }: ProfileEditorProps) {
               <h2 className="text-[1.35rem] font-semibold">Profile links</h2>
             </div>
             <ButtonControl
+              className="shrink-0 whitespace-nowrap"
               loading={editorLoading}
               variant="add-empty"
               onClick={() =>
@@ -685,14 +776,17 @@ export function ProfileEditor({ userId }: ProfileEditorProps) {
             </ButtonControl>
           </div>
           <div className="grid gap-0">
-            {profile.links.map((link, index) => (
+            {profile.links
+              .map((link, index) => ({ link, index }))
+              .filter(({ link }) => link.type !== "OPENALEX")
+              .map(({ link, index }, displayIndex) => (
               <div
                 className={`grid items-center gap-[.7rem] border-b border-line py-[.7rem] ${link.type !== "OTHER" ? "grid-cols-[170px_minmax(0,1fr)_42px]" : "grid-cols-[170px_180px_minmax(0,1fr)_42px]"} max-[760px]:grid-cols-1`}
                 key={index}
               >
                 <SelectControl
                   loading={editorLoading}
-                  ariaLabel={`Link ${index + 1} type`}
+                  ariaLabel={`Link ${displayIndex + 1} type`}
                   onValueChange={(value) => {
                     const links = [...profile.links];
                     links[index] = {
@@ -712,7 +806,7 @@ export function ProfileEditor({ userId }: ProfileEditorProps) {
                 {link.type === "OTHER" && (
                   <InputControl
                     loading={editorLoading}
-                    aria-label={`Link ${index + 1} label`}
+                    aria-label={`Link ${displayIndex + 1} label`}
                     onChange={(event) => {
                       const links = [...profile.links];
                       links[index] = { ...link, label: event.target.value };
@@ -725,7 +819,7 @@ export function ProfileEditor({ userId }: ProfileEditorProps) {
                 )}
                 <InputControl
                   loading={editorLoading}
-                  aria-label={`Link ${index + 1} URL`}
+                  aria-label={`Link ${displayIndex + 1} URL`}
                   onChange={(event) => {
                     const links = [...profile.links];
                     links[index] = { ...link, url: event.target.value };
@@ -737,7 +831,7 @@ export function ProfileEditor({ userId }: ProfileEditorProps) {
                   value={link.url}
                 />
                 <ButtonControl
-                  aria-label={`Remove link ${index + 1}`}
+                  aria-label={`Remove link ${displayIndex + 1}`}
                   className="min-h-[42px] rounded-control p-0 text-ink-muted"
                   loading={editorLoading}
                   onClick={() =>
@@ -753,7 +847,7 @@ export function ProfileEditor({ userId }: ProfileEditorProps) {
                   <X aria-hidden="true" size={17} />
                 </ButtonControl>
               </div>
-            ))}
+              ))}
           </div>
         </section>
       ) : null}

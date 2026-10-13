@@ -272,7 +272,7 @@ export class ResearchProfileSyncService {
   }
 }
 
-function isOutputSection(
+export function isOutputSection(
   type: PersonSectionType,
   title: string,
   outputType: ResearchItemType,

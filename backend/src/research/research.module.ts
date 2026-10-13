@@ -1,3 +1,5 @@
+import { OpenAlexClient } from './openalex-client';
+import { OpenAlexService } from './openalex.service';
 import { Module } from '@nestjs/common';
 import { ResearchController } from './research.controller';
 import { ResearchDiscoveryService } from './research-discovery.service';
@@ -12,6 +14,8 @@ import { SettingsModule } from '../settings/settings.module';
   imports: [SettingsModule],
   controllers: [ResearchController],
   providers: [
+    OpenAlexClient,
+    OpenAlexService,
     ResearchService,
     ResearchDiscoveryService,
     ResearchRelationshipsService,
@@ -19,6 +23,6 @@ import { SettingsModule } from '../settings/settings.module';
     SafeSourceFetcher,
     RankingsService,
   ],
-  exports: [RankingsService, ResearchProfileSyncService],
+  exports: [RankingsService, ResearchProfileSyncService, OpenAlexService],
 })
 export class ResearchModule {}

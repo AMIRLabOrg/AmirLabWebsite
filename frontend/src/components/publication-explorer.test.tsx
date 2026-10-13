@@ -14,12 +14,13 @@ const mocks = vi.hoisted(() => ({
   request: vi.fn(),
   replace: vi.fn(),
   suspended: false,
+  search: "",
 }));
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ replace: mocks.replace }),
   useSearchParams: () => {
     if (mocks.suspended) throw new Promise(() => {});
-    return new URLSearchParams();
+    return new URLSearchParams(mocks.search);
   },
 }));
 vi.mock("@/lib/client-api", () => ({ apiRequest: mocks.request }));
@@ -53,6 +54,7 @@ const seed: PublicationResponse = {
 afterEach(() => {
   cleanup();
   mocks.suspended = false;
+  mocks.search = "";
   vi.clearAllMocks();
 });
 
@@ -106,4 +108,22 @@ test("filter requests retain pending UI then display their result", async () => 
     ),
   );
   expect(mocks.request).toHaveBeenCalledTimes(1);
+});
+
+test("fresh server props do not replace an already matching papers URL", async () => {
+  mocks.search = "page=1&pageSize=12&sort=NEWEST";
+  const view = render(<PublicationExplorer initialData={seed} />);
+  await new Promise((resolve) => setTimeout(resolve, 350));
+  view.rerender(
+    <PublicationExplorer
+      initialData={{
+        ...seed,
+        items: [{ ...seed.items[0], title: "Fresh cached result" }],
+      }}
+    />,
+  );
+  await new Promise((resolve) => setTimeout(resolve, 350));
+  expect(mocks.replace).not.toHaveBeenCalled();
+  expect(mocks.request).not.toHaveBeenCalled();
+  expect(screen.getByText("Fresh cached result")).toBeTruthy();
 });

@@ -68,7 +68,7 @@ export function ProfileRecords({
         aria-label="Profile sections"
         className={cn(
           publicShellWidthClass,
-          "sticky top-[62px] z-20 flex overflow-x-auto border-b border-line-strong bg-canvas [scrollbar-width:none]",
+          "sticky top-[62px] z-20 flex overflow-x-auto border-x border-b border-line-strong bg-canvas [scrollbar-width:none]",
         )}
       >
         {visible.map((record) => (

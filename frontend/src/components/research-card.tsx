@@ -1,3 +1,4 @@
+import { PaperCard } from "@/components/paper-card";
 import { ExternalLink } from "lucide-react";
 import Link from "next/link";
 import type { ResearchItem } from "@/lib/types";
@@ -17,6 +18,9 @@ export function ResearchCard({
   variant?: "card" | "index";
   frame?: boolean;
 }) {
+  if (item?.type === "DATASET") {
+    return <PaperCard item={item} loading={loading} frame={frame} />;
+  }
   const meta =
     item?.paper?.venue ??
     item?.dataset?.license ??

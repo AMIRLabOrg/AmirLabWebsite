@@ -1,6 +1,7 @@
 "use client";
 
 import { cn } from "@/lib/cn";
+import { OpenAlexApiSettings } from "@/components/openalex-api-settings";
 import { loadingPlaceholder } from "@/lib/loading-style";
 import { useEffect, useState } from "react";
 import { Save, ShieldCheck } from "lucide-react";
@@ -522,6 +523,8 @@ export function AdminSettings() {
                 </label>
               </div>
             </section>
+
+            <OpenAlexApiSettings />
 
             <footer className="frame-rail-section flex items-center justify-between gap-4 py-5 max-[640px]:flex-col max-[640px]:items-stretch">
               <p className="m-0 text-[.72rem] leading-[1.5] text-ink-muted">

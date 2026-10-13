@@ -1,3 +1,4 @@
+import { normalizeAuthorId } from '../research/openalex-client';
 import { BadRequestException } from '@nestjs/common';
 import {
   PersonLinkType,
@@ -205,6 +206,7 @@ function links(value: unknown): ProfileEditPayload['links'] {
       'profile.links must contain at most 20 items',
     );
   }
+  let hasOpenAlex = false;
   return value.map((item, index) => {
     if (!item || Array.isArray(item) || typeof item !== 'object') {
       throw new BadRequestException(`profile.links[${index}] is invalid`);
@@ -215,7 +217,15 @@ function links(value: unknown): ProfileEditPayload['links'] {
     ) {
       throw new BadRequestException(`profile.links[${index}].type is invalid`);
     }
-    const url = requiredText(source.url, `links[${index}].url`, 1, 2_000);
+    let url = requiredText(source.url, `links[${index}].url`, 1, 2_000);
+    if (source.type === PersonLinkType.OPENALEX) {
+      if (hasOpenAlex)
+        throw new BadRequestException(
+          'Use one OpenAlex author link per profile.',
+        );
+      hasOpenAlex = true;
+      url = `https://openalex.org/authors/${normalizeAuthorId(url)}`;
+    }
     let parsed: URL;
     try {
       parsed = new URL(url);

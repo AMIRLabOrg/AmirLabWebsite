@@ -229,4 +229,23 @@ describe('parseProfilePayload', () => {
       ),
     ).toThrow('must use HTTP or HTTPS');
   });
+  it('uses one normalized OpenAlex author link in the existing profile payload', () => {
+    const link = {
+      type: PersonLinkType.OPENALEX,
+      label: 'OpenAlex',
+      url: 'https://openalex.org/authors/a123',
+    };
+    expect(
+      parseProfilePayload({ ...profile, links: [link] }).links[0].url,
+    ).toBe('https://openalex.org/authors/A123');
+    expect(() =>
+      parseProfilePayload({ ...profile, links: [link, link] }),
+    ).toThrow('one OpenAlex');
+    expect(() =>
+      parseProfilePayload({
+        ...profile,
+        links: [{ ...link, url: 'https://evil.test/A123' }],
+      }),
+    ).toThrow('OpenAlex');
+  });
 });

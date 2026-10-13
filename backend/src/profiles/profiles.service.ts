@@ -1,3 +1,5 @@
+import { isOutputSection } from '../research/research-profile-sync.service';
+import { OpenAlexService } from '../research/openalex.service';
 import { randomUUID } from 'node:crypto';
 import {
   BadRequestException,
@@ -58,6 +60,7 @@ export class ProfilesService {
     private readonly prisma: PrismaService,
     private readonly profileSync: ResearchProfileSyncService,
     private readonly settings: SettingsService,
+    private readonly openAlex: OpenAlexService,
   ) {}
 
   async mine(user: AuthenticatedUser) {
@@ -246,6 +249,17 @@ export class ProfilesService {
 
     try {
       await this.prisma.$transaction(async (transaction) => {
+        if (
+          scope === 'RESEARCH' &&
+          (await this.openAlex.applyLinks(
+            person.id,
+            payload.links,
+            transaction,
+          ))
+        )
+          payload.sections = payload.sections.filter(
+            ({ type, title }) => !isOutputSection(type, title, 'DATASET'),
+          );
         await transaction.person.update({
           where: { id: person.id },
           data: profileUpdateData(payload, publishedAvatarId, scope),
@@ -274,6 +288,8 @@ export class ProfilesService {
         await this.assets.remove(assetId);
       }
     }
+    if (scope === 'RESEARCH')
+      await this.openAlex.afterProfileChange([person.id]);
     return { outcome: 'APPLIED' as const, direct: true };
   }
 
@@ -479,6 +495,21 @@ export class ProfilesService {
 
     const reviewedAt = new Date();
     await this.prisma.$transaction(async (transaction) => {
+      for (const { request, payload, scope } of [...approved].sort((a, b) =>
+        a.request.personId.localeCompare(b.request.personId),
+      )) {
+        if (
+          scope === 'RESEARCH' &&
+          (await this.openAlex.applyLinks(
+            request.personId,
+            payload.links,
+            transaction,
+          ))
+        )
+          payload.sections = payload.sections.filter(
+            ({ type, title }) => !isOutputSection(type, title, 'DATASET'),
+          );
+      }
       const claimRows = dto.items.map(
         ({ id, revision }) => Prisma.sql`(${id}::uuid, ${revision}::integer)`,
       );
@@ -660,6 +691,11 @@ export class ProfilesService {
     });
 
     if (dto.status === ProfileReviewStatus.APPROVED) {
+      await this.openAlex.afterProfileChange(
+        approved
+          .filter(({ scope }) => scope === 'RESEARCH')
+          .map(({ request }) => request.personId),
+      );
       const obsoleteAvatarIds = approved.flatMap(
         ({ approvedAvatarId, oldAvatarId }) =>
           oldAvatarId && oldAvatarId !== approvedAvatarId ? [oldAvatarId] : [],
@@ -762,6 +798,18 @@ export class ProfilesService {
       throw new BadRequestException('A reviewer note is required');
     }
     await this.prisma.$transaction(async (transaction) => {
+      if (
+        payload &&
+        scope === 'RESEARCH' &&
+        (await this.openAlex.applyLinks(
+          request.personId,
+          payload.links,
+          transaction,
+        ))
+      )
+        payload.sections = payload.sections.filter(
+          ({ type, title }) => !isOutputSection(type, title, 'DATASET'),
+        );
       const claimed = await transaction.profileEditRequest.updateMany({
         where: {
           id,
@@ -825,6 +873,8 @@ export class ProfilesService {
     ) {
       await this.assets.remove(oldAvatarId);
     }
+    if (dto.status === ProfileReviewStatus.APPROVED && scope === 'RESEARCH')
+      await this.openAlex.afterProfileChange([request.personId]);
     if (request.person.userId) {
       await this.notifications.create(request.person.userId, {
         type: NotificationType.PROFILE_REVIEWED,

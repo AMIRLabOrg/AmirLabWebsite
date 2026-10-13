@@ -1,6 +1,3 @@
-"use client";
-
-import { useState } from "react";
 import { ArrowUpRight } from "lucide-react";
 import type { ResearchItem } from "@/lib/types";
 import { Badge } from "@/components/ui/badge";
@@ -17,12 +14,16 @@ export function PaperCard({
   item?: ResearchItem;
   loading?: boolean;
 }) {
-  const [open, setOpen] = useState(false);
-  const source = item?.canonicalUrl ?? item?.legacyUrl;
+  const dataset = item?.type === "DATASET";
+  const source = item?.canonicalUrl ?? item?.legacyUrl ?? undefined;
   const title =
     item?.title ??
     item?.paper?.citation ??
-    (loading ? "Publication title is loading" : "Untitled paper");
+    (loading
+      ? "Publication title is loading"
+      : dataset
+        ? "Untitled dataset"
+        : "Untitled paper");
   const linkedAuthors = (item?.contributors ?? [])
     .slice()
     .sort((a, b) => a.sortOrder - b.sortOrder)
@@ -32,11 +33,15 @@ export function PaperCard({
     linkedAuthors ||
     authorsFromCitation(item?.paper?.citation, title) ||
     (loading ? "Authors and affiliations" : "");
-  const details = item?.summary ?? item?.paper?.citation;
-  const category = item?.paper?.publicationType
-    ?.toLowerCase()
-    .replaceAll("_", " ");
-  const doi = normalizeDoi(item?.paper?.doi);
+  const category = dataset
+    ? "dataset"
+    : item?.paper?.publicationType?.toLowerCase().replaceAll("_", " ");
+  const doi = normalizeDoi(
+    item?.paper?.doi ??
+      source?.match(/^https?:\/\/(?:dx\.)?doi\.org\/(.+)$/i)?.[1],
+  );
+  const clickable = !loading && Boolean(source);
+  const Row = clickable ? "a" : "div";
   return (
     <FramedRow
       as="article"
@@ -45,37 +50,55 @@ export function PaperCard({
       className={cn("bg-transparent")}
       data-loading={loading || undefined}
     >
-      <button
-        aria-expanded={!loading && open}
+      <Row
         className={cn(
-          "group block w-full cursor-pointer border-0 bg-transparent px-1 py-3 text-left text-inherit hover:bg-transparent focus-visible:bg-surface-subtle disabled:cursor-default disabled:hover:bg-transparent",
+          "group block w-full bg-transparent px-1 py-3 text-left text-inherit no-underline",
+          clickable && "cursor-pointer focus-visible:bg-surface-subtle",
           frame && "px-[var(--public-gutter)]",
         )}
-        disabled={loading || !details}
-        onClick={() => setOpen((current) => !current)}
-        type="button"
+        href={clickable ? source : undefined}
+        rel={clickable ? "noreferrer" : undefined}
+        target={clickable ? "_blank" : undefined}
       >
         <span className="grid gap-[.36rem]">
           <span className="flex flex-wrap items-center gap-[7px]">
-            <Badge loading={loading}>
-              {item?.paper?.year ?? (loading ? "0000" : "Undated")}
-            </Badge>
+            {!dataset ? (
+              <Badge loading={loading}>
+                {item?.paper?.year ?? (loading ? "0000" : "Undated")}
+              </Badge>
+            ) : null}
+            {!loading && item?.openAlexWorkId ? <Badge>OpenAlex</Badge> : null}
             {loading || category ? (
               <Badge loading={loading}>{category ?? "publication"}</Badge>
             ) : null}
             {!loading && item?.paper?.venue ? (
               <Badge>{item.paper.venue}</Badge>
             ) : null}
+            {dataset && item?.dataset?.license ? (
+              <Badge>{item.dataset.license}</Badge>
+            ) : null}
+            {dataset && item?.dataset?.version ? (
+              <Badge>{item.dataset.version}</Badge>
+            ) : null}
           </span>
           <strong
             className={cn(
-              "font-sans text-base leading-[1.35] font-medium tracking-[-.01em] transition-colors duration-[140ms] group-hover:text-brand",
+              "flex items-start gap-1 font-sans text-base leading-[1.35] font-medium tracking-[-.01em] transition-colors duration-[140ms]",
+              clickable &&
+                "group-hover:text-brand group-focus-visible:text-brand",
               loading && loadingPlaceholder(true, "text", "long"),
             )}
             data-placeholder={loading ? "text" : undefined}
             data-placeholder-width="long"
           >
-            {title}
+            <span>{title}</span>
+            {clickable ? (
+              <ArrowUpRight
+                aria-hidden="true"
+                className="mt-[.15rem] shrink-0"
+                size={14}
+              />
+            ) : null}
           </strong>
           {loading || authors ? (
             <span
@@ -89,67 +112,27 @@ export function PaperCard({
               {authors}
             </span>
           ) : null}
-          {loading || details ? (
-            <em
-              className={cn(
-                "text-[.63rem] font-normal text-ink-faint not-italic",
-                loading && loadingPlaceholder(true, "text", "short"),
-              )}
-              data-placeholder={loading ? "text" : undefined}
-              data-placeholder-width="short"
-            >
-              {loading
-                ? "Loading details"
-                : open
-                  ? "Click to collapse details"
-                  : "Click to expand details"}
-            </em>
+          {!loading && item?.summary ? (
+            <span className="text-[.72rem] leading-[1.5] text-ink-muted">
+              {item.summary}
+            </span>
           ) : null}
-        </span>
-      </button>
-      {!loading && open && details ? (
-        <div className={cn("px-1 pb-3", frame && "px-[var(--public-gutter)]")}>
-          <p className="m-0 max-w-[850px] text-[.76rem] leading-[1.65] text-ink-muted">
-            {details}
-          </p>
-        </div>
-      ) : null}
-      <footer
-        className={cn(
-          "flex items-center justify-between gap-4 px-1 pb-3 max-[640px]:flex-col max-[640px]:items-start",
-          frame && "px-[var(--public-gutter)]",
-        )}
-      >
-        <span
-          className={cn(
-            "font-mono text-[.55rem] text-ink-muted [overflow-wrap:anywhere]",
-            loading && loadingPlaceholder(true, "text", "medium"),
-          )}
-          data-placeholder={loading ? "text" : undefined}
-          data-placeholder-width="medium"
-        >
-          {loading
-            ? "doi.org/00.0000/example"
-            : doi
-              ? `doi.org/${doi}`
-              : "DOI not available"}
-        </span>
-        {loading ? (
           <span
-            aria-hidden="true"
-            className="h-[.7rem] w-20 bg-surface-subtle"
-          />
-        ) : source ? (
-          <a
-            className="inline-flex items-center gap-[.3rem] text-[.66rem] font-semibold text-brand"
-            href={source}
-            rel="noreferrer"
-            target="_blank"
+            className={cn(
+              "font-mono text-[.55rem] text-ink-muted [overflow-wrap:anywhere]",
+              loading && loadingPlaceholder(true, "text", "medium"),
+            )}
+            data-placeholder={loading ? "text" : undefined}
+            data-placeholder-width="medium"
           >
-            Read paper <ArrowUpRight aria-hidden="true" size={14} />
-          </a>
-        ) : null}
-      </footer>
+            {loading
+              ? "doi.org/00.0000/example"
+              : doi
+                ? `doi.org/${doi}`
+                : "DOI not available"}
+          </span>
+        </span>
+      </Row>
     </FramedRow>
   );
 }

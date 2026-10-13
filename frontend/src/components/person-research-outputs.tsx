@@ -117,7 +117,7 @@ export function PersonResearchOutputs({
                 </div>
                 <div className="grid px-[var(--public-gutter)]">
                   {visible.map((item, index) =>
-                    type === "PAPER" ? (
+                    type === "PAPER" || type === "DATASET" ? (
                       <PaperCard
                         frame
                         item={item}

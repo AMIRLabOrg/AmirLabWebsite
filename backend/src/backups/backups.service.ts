@@ -36,11 +36,11 @@ import {
   type BackupSecrets,
   type Snapshot,
 } from './backup-storage';
+import { mergeSecrets } from './backup-credentials';
 import {
-  BackupCredentials,
-  mergeSecrets,
+  EncryptedCredentials,
   type EncryptedSecrets,
-} from './backup-credentials';
+} from '../common/encrypted-credentials';
 import { LocalBackupStorage } from './local-backup-storage';
 import { S3BackupStorage } from './s3-backup-storage';
 import { SftpBackupStorage } from './sftp-backup-storage';
@@ -144,7 +144,7 @@ export class BackupsService implements OnModuleInit, OnModuleDestroy {
   }
 
   private credentials() {
-    return new BackupCredentials(
+    return new EncryptedCredentials<BackupSecrets>(
       `${resolve(this.config.get('uploadRoot', { infer: true }))}.backup-key`,
     );
   }

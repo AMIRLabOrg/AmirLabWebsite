@@ -205,6 +205,7 @@ enum AssetAccess {
 }
 
 enum PersonLinkType {
+  OPENALEX
   ORCID
   GOOGLE_SCHOLAR
   RESEARCH_GATE
@@ -366,6 +367,7 @@ model Person {
   links               PersonLink[]
   profileSections     PersonProfileSection[]
   profileEditRequest  ProfileEditRequest?
+  openAlexProfile     OpenAlexProfile?
   metrics             PersonMetric?
   projectMemberships  ProjectMembership[]
   projectMilestones   ProjectMilestone[]
@@ -491,6 +493,7 @@ model PersonDepartment {
 }
 
 model ResearchItem {
+  openAlexWorkId      String?                 @unique
   id                  String                  @id @default(uuid()) @db.Uuid
   type                ResearchItemType
   slug                String                  @unique
@@ -900,13 +903,14 @@ model ProjectChangeRequest {
 }
 
 model ResearchContributor {
-  researchItemId String             @db.Uuid
-  sortOrder      Int
-  displayName    String
-  personId       String?            @db.Uuid
-  researchItem   ResearchItem       @relation(fields: [researchItemId], references: [id], onDelete: Cascade)
-  person         Person?            @relation(fields: [personId], references: [id], onDelete: SetNull)
-  matches        ContributorMatch[]
+  openAlexAuthorId String?
+  researchItemId   String             @db.Uuid
+  sortOrder        Int
+  displayName      String
+  personId         String?            @db.Uuid
+  researchItem     ResearchItem       @relation(fields: [researchItemId], references: [id], onDelete: Cascade)
+  person           Person?            @relation(fields: [personId], references: [id], onDelete: SetNull)
+  matches          ContributorMatch[]
 
   @@id([researchItemId, sortOrder])
   @@index([personId])
@@ -1165,17 +1169,17 @@ model Asset {
 
 model Session {
   pushSubscriptions PushSubscription[]
-  id            String    @id @default(uuid()) @db.Uuid
-  tokenHash     String    @unique
-  csrfTokenHash String
-  userAgent     String?
-  ipAddress     String?
-  expiresAt     DateTime
-  lastSeenAt    DateTime  @default(now())
-  revokedAt     DateTime?
-  createdAt     DateTime  @default(now())
-  userId        String    @db.Uuid
-  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id                String             @id @default(uuid()) @db.Uuid
+  tokenHash         String             @unique
+  csrfTokenHash     String
+  userAgent         String?
+  ipAddress         String?
+  expiresAt         DateTime
+  lastSeenAt        DateTime           @default(now())
+  revokedAt         DateTime?
+  createdAt         DateTime           @default(now())
+  userId            String             @db.Uuid
+  user              User               @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, expiresAt])
 }
@@ -1288,4 +1292,30 @@ model SiteSetting {
   key       String   @id
   value     Json
   updatedAt DateTime @updatedAt
+}
+
+model OpenAlexProfile {
+  personId       String             @id @db.Uuid
+  authorId       String?            @unique
+  bindingVersion Int                @default(0)
+  status         OpenAlexSyncStatus @default(IDLE)
+  attemptedAt    DateTime?
+  syncedAt       DateTime?
+  nextAttemptAt  DateTime?
+  failureCount   Int                @default(0)
+  failureReason  String?            @db.Text
+  summary        Json?
+  createdAt      DateTime           @default(now())
+  updatedAt      DateTime           @updatedAt
+  person         Person             @relation(fields: [personId], references: [id], onDelete: Cascade)
+
+  @@index([nextAttemptAt, status])
+}
+
+enum OpenAlexSyncStatus {
+  IDLE
+  QUEUED
+  RUNNING
+  SUCCEEDED
+  FAILED
 }

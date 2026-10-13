@@ -5,6 +5,7 @@ import type { AuthenticatedUser } from '../auth/auth.types';
 import {
   AppointmentLetterTemplateDto,
   NotificationPolicyDto,
+  OpenAlexApiKeyDto,
   RankPolicyDto,
   VerificationPolicyDto,
 } from './dto/settings.dto';
@@ -17,6 +18,19 @@ import {
 @RequireRole(PlatformRole.ADMIN)
 export class SettingsController {
   constructor(private readonly settings: SettingsService) {}
+
+  @Get('openalex')
+  openAlex() {
+    return this.settings.openAlexStatus();
+  }
+
+  @Put('openalex')
+  updateOpenAlex(
+    @Body() body: OpenAlexApiKeyDto,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    return this.settings.updateOpenAlexApiKey(body.apiKey, user.id);
+  }
 
   @Get('appointment-letter')
   async appointmentLetter() {
