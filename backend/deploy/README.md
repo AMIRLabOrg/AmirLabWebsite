@@ -77,13 +77,14 @@ sudo -u amirl --preserve-env=DATABASE_URL,UPLOAD_ROOT pnpm --dir /opt/amirl/back
 On first install, seed the database and create the administrator.
 Never run `db:rebuild` on production data because it resets the database:
 
-`db:seed` applies the schema (running the compatibility migrations and
-`prisma db push`) and inserts only the seed records that are missing, without
-deleting or overwriting existing data. It is safe to re-run against a populated
-database, for example on every deploy. `db:verify` checks the fresh seed state
-and is not a production health check after users have edited or approved
-records. See the [database command reference](../../README.md#database-commands)
-for the complete list.
+`db:push` applies the schema (running the compatibility migrations and
+`prisma db push`) without seeding records. `db:seed` first runs `db:push`, then
+inserts only the seed records that are missing, without deleting or overwriting
+existing data, so it is safe to re-run against a populated database, for
+example on every deploy. `db:verify` checks the fresh seed state and is not a
+production health check after users have edited or approved records. See the
+[database command reference](../../README.md#database-commands) for the
+complete list.
 
 ```bash
 sudo -u amirl --preserve-env=DATABASE_URL,UPLOAD_ROOT pnpm --dir /opt/amirl/backend run db:seed

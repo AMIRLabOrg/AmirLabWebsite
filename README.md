@@ -50,7 +50,8 @@ value).
 | Command | Behavior |
 | --- | --- |
 | `db:generate` | Generates the Prisma client and types from `backend/prisma/schema.prisma`. Does not modify the database. Installation and backend builds also generate the client automatically. |
-| `db:seed` | Applies the schema (running the legacy profile-entry, single-email, and system-account migrations, then `prisma db push`) and additively inserts any seed records that are missing. Never deletes or overwrites existing data, so it is safe to re-run against a populated database. New imported profiles, papers, and projects await review; positions start as drafts. |
+| `db:push` | Applies the schema to the database: runs the legacy profile-entry, single-email, and system-account migrations, then `prisma db push`, and regenerates the client. Does not seed records, delete data, or reset the schema; Prisma can reject a change that would lose data. |
+| `db:seed` | Runs `db:push`, then additively inserts any seed records that are missing. Never deletes or overwrites existing data, so it is safe to re-run against a populated database. New imported profiles, papers, and projects await review; positions start as drafts. |
 | `db:rebuild` | **Force-resets the application database schema, deletes all of its data**, regenerates the client, seeds it, then verifies the import. Works against any host, but prompts for confirmation first; pass `-- --yes` (or `DB_REBUILD_CONFIRM=yes`) to skip the prompt. Use only when existing data can be discarded. |
 | `db:verify` | Checks the expected fresh seed state, including record counts, review statuses, contributor provenance, site settings, and avatar files. This is a seed verification command, not a general health check: later edits or approvals can make it fail. |
 | `seed:validate` | Validates `backend/seed/amirl-site.json` and checks referenced avatar and university-logo source files. Prints dataset counts without connecting to PostgreSQL. |
@@ -72,9 +73,9 @@ For normal development with existing data:
 pnpm run dev
 ```
 
-After changing the Prisma schema, run `pnpm run db:seed` to apply it and insert
-any new seed records without discarding data. Run `pnpm run db:generate` first
-if you only need to refresh the generated client.
+After changing the Prisma schema, run `pnpm run db:push` to apply it, or
+`pnpm run db:seed` to apply it and insert any new seed records. Run
+`pnpm run db:generate` if you only need to refresh the generated client.
 
 
 ## Local backup and recovery testing

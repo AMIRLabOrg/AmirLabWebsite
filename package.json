@@ -11,6 +11,7 @@
     "typecheck": "pnpm --dir backend run typecheck && pnpm --dir frontend run typecheck",
     "test": "pnpm --dir backend run test && pnpm --dir frontend run test",
     "db:generate": "pnpm --dir backend run db:generate",
+    "db:push": "pnpm --dir backend run db:push",
     "seed:validate": "pnpm --dir backend run seed:validate",
     "db:seed": "pnpm --dir backend run db:seed",
     "db:verify": "pnpm --dir backend run db:verify",
