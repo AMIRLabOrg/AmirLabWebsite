@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { ArrowRight, CalendarDays } from "lucide-react";
 import { useState } from "react";
 import { StatePanel } from "@/components/state-panel";
@@ -9,6 +8,7 @@ import {
   FramedCollection,
   FramedRow,
   PublicSection,
+  CollectionHeading,
 } from "@/components/ui/public-shell";
 import { cn } from "@/lib/cn";
 import { loadingPlaceholder } from "@/lib/loading-style";
@@ -16,9 +16,11 @@ import type { Position } from "@/lib/types";
 
 export function PositionList({
   positions = [],
+  onApply,
   loading = false,
 }: {
   positions?: Position[];
+  onApply: (positionId: string) => void;
   loading?: boolean;
 }) {
   const [category, setCategory] = useState("ALL");
@@ -49,38 +51,13 @@ export function PositionList({
       contentClassName="grid gap-4 pt-8 pb-14"
       data-loading={loading || undefined}
     >
-      <div className="flex items-end justify-between max-[640px]:flex-col max-[640px]:items-start">
-        <div>
-          <p
-            aria-hidden={loading || undefined}
-            className={cn(
-              "m-0 mb-4 font-[var(--font-sans)] text-[.75rem] font-extrabold uppercase tracking-[.12em] text-brand",
-              loading && loadingPlaceholder(true, "label", "medium"),
-            )}
-          >
-            Current opportunities
-          </p>
-          <h2
-            aria-hidden={loading || undefined}
-            className={cn(
-              "mt-[.1rem] font-sans text-[1.9rem] font-medium tracking-[-.03em]",
-              loading && loadingPlaceholder(true, "text", "medium"),
-            )}
-            id="current-opportunities"
-          >
-            Open roles
-          </h2>
-        </div>
-        <span
-          className={cn(
-            "font-mono text-[.68rem] text-ink-muted",
-            loadingPlaceholder(loading, "text", "short"),
-          )}
-          data-placeholder={loading ? "text" : undefined}
-        >
-          {loading ? "00 available" : `${positions.length} available`}
-        </span>
-      </div>
+      <CollectionHeading
+        eyebrow="Current opportunities"
+        title="Open roles"
+        id="current-opportunities"
+        count={`${positions.length} available`}
+        loading={loading}
+      />
       {!loading && tabs.length > 2 ? (
         <TabsControl
           ariaLabel="Position categories"
@@ -117,8 +94,19 @@ export function PositionList({
                   )}
                   data-placeholder={loading ? "text" : undefined}
                 >
-                  {position?.title ??
-                    (loading ? "Position title is loading" : "")}
+                  {position ? (
+                    <a
+                      href="#apply"
+                      onClick={() => onApply(position.id)}
+                      className="hover:text-brand focus-visible:outline-brand"
+                    >
+                      {position.title}
+                    </a>
+                  ) : loading ? (
+                    "Position title is loading"
+                  ) : (
+                    ""
+                  )}
                 </h3>
                 {loading || position?.summary ? (
                   <p
@@ -159,12 +147,14 @@ export function PositionList({
                   className="mt-[.2rem] h-[.75rem] w-16 bg-surface-subtle max-[640px]:justify-self-start"
                 />
               ) : (
-                <Link
+                <a
                   className="inline-flex items-center gap-[.35rem] pt-[.2rem] text-[.78rem] font-bold text-brand max-[640px]:justify-self-start"
                   href="#apply"
+                  aria-label={`Apply for ${position?.title}`}
+                  onClick={() => position && onApply(position.id)}
                 >
                   Apply <ArrowRight aria-hidden="true" size={16} />
-                </Link>
+                </a>
               )}
             </FramedRow>
           ))}

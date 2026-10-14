@@ -96,6 +96,7 @@ export function WorkspaceTasks() {
 
       {error && !tasks ? (
         <StatePanel
+          frame="workspace"
           action={{
             label: "Try again",
             onClick: () => setReload((value) => value + 1),

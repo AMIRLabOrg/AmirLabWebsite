@@ -4,9 +4,7 @@ import { PageIntro } from "./page-intro";
 import { PaperCard } from "./paper-card";
 import { ResearchCard } from "./research-card";
 import { StatePanel } from "./state-panel";
-import { cn } from "@/lib/cn";
-import { loadingPlaceholder } from "@/lib/loading-style";
-import { PublicSection } from "@/components/ui/public-shell";
+import { CollectionHeading, PublicSection } from "@/components/ui/public-shell";
 
 type ResearchListingProps = {
   type: ResearchItemType;
@@ -61,27 +59,16 @@ export function ResearchListingView({
         aria-label={title}
       >
         <div className="min-w-0">
-          <header className="flex items-end justify-between pb-[.7rem]">
-            <div>
-              <span className="font-mono text-[.55rem] tracking-[.08em] text-ink-faint">
-                {isDataset ? "DATASETS" : "PROJECTS"}
-              </span>
-              <h2 className="mt-[.15rem] mb-0 font-serif text-[1.55rem] font-medium tracking-[-.03em]">
-                {isDataset
-                  ? "Available research resources"
-                  : "Current and completed work"}
-              </h2>
-            </div>
-            <strong
-              className={cn(
-                "font-serif text-[2rem] font-medium",
-                loading && loadingPlaceholder(true, "value"),
-              )}
-              data-placeholder={loading ? "value" : undefined}
-            >
-              {loading ? "00" : list.length.toString()}
-            </strong>
-          </header>
+          <CollectionHeading
+            eyebrow={isDataset ? "Datasets" : "Projects"}
+            title={
+              isDataset
+                ? "Available research resources"
+                : "Current and completed work"
+            }
+            count={list.length}
+            loading={loading}
+          />
           {visibleItems.length ? (
             <div className="grid">
               {visibleItems.map((item, index) =>

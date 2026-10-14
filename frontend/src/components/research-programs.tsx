@@ -211,6 +211,7 @@ export function ResearchPrograms() {
       <div className="grid gap-[1.5rem] max-[640px]:gap-[.9rem]">
         {error ? (
           <StatePanel
+            frame="workspace"
             action={
               !programs
                 ? {

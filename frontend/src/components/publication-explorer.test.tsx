@@ -58,6 +58,32 @@ afterEach(() => {
   vi.clearAllMocks();
 });
 
+test("distinguishes an empty catalogue from a filtered catalogue", async () => {
+  const empty: PublicationResponse = { ...seed, items: [], total: 0 };
+  const view = render(<PublicationExplorer initialData={empty} />);
+  expect(
+    screen.getByRole("heading", { name: "No publications yet" }),
+  ).toBeTruthy();
+  view.rerender(
+    <PublicationExplorer
+      initialData={{
+        ...empty,
+        facets: {
+          categories: [{ value: "JOURNAL", label: "Journal", count: 1 }],
+          years: [],
+        },
+      }}
+    />,
+  );
+  await waitFor(() =>
+    expect(
+      screen.getByRole("heading", {
+        name: "No publications match these filters",
+      }),
+    ).toBeTruthy(),
+  );
+});
+
 test("server fallback renders cached publications when URL hooks suspend", () => {
   mocks.suspended = true;
   expect(renderToString(<PublicationExplorer initialData={seed} />)).toContain(

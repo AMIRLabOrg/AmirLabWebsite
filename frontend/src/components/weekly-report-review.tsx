@@ -101,7 +101,9 @@ export function WeeklyReportReview() {
   );
   const selectableReports = visible.filter(({ id }) => !blockedIds.has(id));
   const bulk = useBulkSelection(selectableReports.map(({ id }) => id));
-  const selectedReports = selectableReports.filter(({ id }) => bulk.isSelected(id));
+  const selectedReports = selectableReports.filter(({ id }) =>
+    bulk.isSelected(id),
+  );
   const selectedAttentionCount = selectedReports.filter(
     ({ id }) => reviewIssues.forItem(id).length > 0,
   ).length;
@@ -231,6 +233,7 @@ export function WeeklyReportReview() {
 
       {error ? (
         <StatePanel
+          frame="workspace"
           action={
             !reports
               ? {
@@ -492,7 +495,11 @@ export function WeeklyReportReview() {
                             reviewIssues.forItem(selected.id).length,
                           )
                         }
-                        title={selected && blockedIds.has(selected.id) ? selfReviewReason : undefined}
+                        title={
+                          selected && blockedIds.has(selected.id)
+                            ? selfReviewReason
+                            : undefined
+                        }
                         onClick={() => void review("CHANGES_REQUESTED")}
                         variant="secondary"
                       >
@@ -508,7 +515,11 @@ export function WeeklyReportReview() {
                             reviewIssues.forItem(selected.id).length,
                           )
                         }
-                        title={selected && blockedIds.has(selected.id) ? selfReviewReason : undefined}
+                        title={
+                          selected && blockedIds.has(selected.id)
+                            ? selfReviewReason
+                            : undefined
+                        }
                         onClick={() => void review("REVIEWED")}
                         variant="primary"
                       >

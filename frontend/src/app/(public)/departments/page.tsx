@@ -7,6 +7,7 @@ import {
   FramedCollection,
   FramedRow,
   PublicSection,
+  CollectionHeading,
 } from "@/components/ui/public-shell";
 import { getDepartments } from "@/lib/api";
 
@@ -42,9 +43,12 @@ export default async function DepartmentsPage() {
         and publications to involve members from multiple departments.
       </PageIntro>
 
-      <PublicSection
-        contentClassName={departments.length ? "pb-10" : "pt-8 pb-10"}
-      >
+      <PublicSection contentClassName="pt-8 pb-10">
+        <CollectionHeading
+          eyebrow="Research units"
+          title="Lab departments"
+          count={`${departments.length} departments`}
+        />
         {departments.length ? (
           <FramedCollection className="grid">
             {departments.map((department) => {

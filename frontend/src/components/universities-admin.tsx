@@ -265,6 +265,7 @@ export function UniversityEditor({ id }: { id?: string }) {
   if (!loading && error && id && !university.id)
     return (
       <StatePanel
+        frame="workspace"
         action={{ label: "Retry", onClick: load }}
         body="The university record could not be retrieved."
         title={error}

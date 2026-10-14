@@ -23,9 +23,13 @@ type SubmissionState =
 
 export function ApplicationForm({
   positions,
+  positionId,
+  onPositionChange,
   loading = false,
 }: {
   positions: Position[];
+  positionId: string;
+  onPositionChange: (positionId: string) => void;
   loading?: boolean;
 }) {
   const { showToast } = useNotifications();
@@ -91,6 +95,7 @@ export function ApplicationForm({
         title: "Application submitted",
       });
       formElement.reset();
+      onPositionChange("");
       setFile(undefined);
       setParseResult(undefined);
     } catch (error) {
@@ -154,6 +159,8 @@ export function ApplicationForm({
           disabled={!positions.length || loading}
           id="positionId"
           name="positionId"
+          value={positionId}
+          onValueChange={onPositionChange}
           loading={loading}
           options={positions.map((position) => ({
             label: position.title,
@@ -172,7 +179,10 @@ export function ApplicationForm({
       >
         <label
           className={cn(
-            "grid min-h-[170px] cursor-pointer place-content-center gap-[.35rem] rounded-panel border border-dashed border-line-strong bg-surface-subtle p-[1.6rem] text-center transition-[background,border-color] duration-[220ms] hover:border-brand-hover hover:bg-brand-soft focus-within:border-brand focus-within:border-solid motion-reduce:transition-none",
+            "grid min-h-[170px] place-content-center gap-[.35rem] rounded-panel border border-dashed border-line-strong bg-surface-subtle p-[1.6rem] text-center transition-[background,border-color] duration-[220ms] focus-within:border-brand focus-within:border-solid motion-reduce:transition-none",
+            loading || !positions.length
+              ? "cursor-not-allowed"
+              : "cursor-pointer hover:border-brand-hover hover:bg-brand-soft",
             loading && loadingPlaceholder(true, "control"),
           )}
           htmlFor="cv"
@@ -188,7 +198,7 @@ export function ApplicationForm({
           </span>
           <FileInputControl
             accept="application/pdf,.pdf"
-            disabled={loading}
+            disabled={loading || !positions.length}
             id="cv"
             loading={loading}
             onChange={(event) => void inspectFile(event.target.files?.[0])}

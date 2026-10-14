@@ -247,6 +247,7 @@ export function ProjectReviewQueue() {
       <WorkspaceCollection data-loading={initialLoading || undefined}>
         {error && !items.length && !loading ? (
           <StatePanel
+            frame={false}
             action={{ label: "Retry", onClick: () => void load() }}
             body="The connection dropped. Nothing was lost; reconnect to continue."
             title="Could not load project changes"
@@ -424,6 +425,7 @@ export function ProjectReviewQueue() {
 
         {hasLoaded && !loading && !error && !items.length ? (
           <StatePanel
+            frame={false}
             action={{ href: "/workspace/projects", label: "View projects" }}
             body="Project edits that require manual review will appear here. Automatic project changes continue to publish directly based on the current policy."
             title="Project change queue is clear"

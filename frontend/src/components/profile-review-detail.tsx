@@ -111,6 +111,7 @@ export function ProfileReviewDetail({
   if (!request && message)
     return (
       <StatePanel
+        frame="workspace"
         action={{
           label: "Retry",
           onClick: () => setReload((value) => value + 1),

@@ -385,6 +385,7 @@ export function ProfileEditor({ userId }: ProfileEditorProps) {
   if (!editorLoading && loadError) {
     return (
       <StatePanel
+        frame="workspace"
         body="The profile record could not be retrieved."
         title={loadError}
         variant="error"

@@ -210,6 +210,7 @@ export function ProjectIndex() {
       <WorkspaceCollection>
         {error && !projects.length && !loading ? (
           <StatePanel
+            frame={false}
             action={{
               label: "Retry",
               onClick: () => {
@@ -329,6 +330,7 @@ export function ProjectIndex() {
           : null}
         {!loading && !projects.length && !error ? (
           <StatePanel
+            frame={false}
             body="Create a project or assign this account to an existing workspace."
             title="No project workspaces are assigned to this account yet"
             variant="empty"

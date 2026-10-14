@@ -174,6 +174,7 @@ export function WorkspaceDashboard() {
 
       {error && !overview ? (
         <StatePanel
+          frame="workspace"
           action={{
             label: "Try again",
             onClick: () => setReload((value) => value + 1),

@@ -129,6 +129,7 @@ export function AccountForm({ accountId }: { accountId?: string }) {
         title="Account unavailable"
       >
         <StatePanel
+          frame="workspace"
           body="The account record could not be retrieved."
           title={loadError}
           variant="error"

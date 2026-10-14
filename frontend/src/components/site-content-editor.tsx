@@ -118,6 +118,7 @@ export function SiteContentEditor({ page }: { page: SiteContentPage }) {
       </Link>
       {error && !updatedAt && !loading ? (
         <StatePanel
+          frame="workspace"
           action={{
             label: "Retry",
             onClick: () => {

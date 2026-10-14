@@ -417,6 +417,7 @@ export function PositionAdminEditor({ id }: { id?: string }) {
   if (!editorLoading && loadError) {
     return (
       <StatePanel
+        frame="workspace"
         body="The position record could not be retrieved."
         title={loadError}
         variant="error"

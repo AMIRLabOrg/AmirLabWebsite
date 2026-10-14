@@ -17,13 +17,14 @@ const ICONS = {
 export function StatePanel({
   action,
   body,
-  frame = false,
+  frame,
   title,
   variant = "empty",
 }: {
   action?: { href?: string; label: string; onClick?: () => void };
   body: ReactNode;
-  frame?: boolean | "workspace";
+  // Public sections reach their rails; workspace panels use their own border.
+  frame: boolean | "workspace";
   title: string;
   variant?: keyof typeof ICONS;
 }) {

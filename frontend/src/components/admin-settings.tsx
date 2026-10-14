@@ -258,6 +258,7 @@ export function AdminSettings() {
 
         {loadFailed ? (
           <StatePanel
+            frame="workspace"
             action={{
               label: "Retry",
               onClick: () => {

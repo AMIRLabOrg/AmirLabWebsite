@@ -158,6 +158,7 @@ export function WeeklyReports() {
 
       {error ? (
         <StatePanel
+          frame="workspace"
           action={
             !context
               ? {

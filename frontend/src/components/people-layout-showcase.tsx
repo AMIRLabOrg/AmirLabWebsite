@@ -4,8 +4,14 @@ import Link from "next/link";
 import { useState } from "react";
 import { ArrowDown, ArrowRight, ArrowUp, MoveUpRight } from "lucide-react";
 import { PersonPortrait } from "@/components/person-portrait";
-import { FrameRule, publicShellClass } from "@/components/ui/public-shell";
+import {
+  FrameRule,
+  PublicSection,
+  CollectionHeading,
+  publicShellClass,
+} from "@/components/ui/public-shell";
 import { cn } from "@/lib/cn";
+import { StatePanel } from "@/components/state-panel";
 import { loadingPlaceholder } from "@/lib/loading-style";
 import { peopleGroup, type PeopleGroup } from "@/lib/people-groups";
 import type { Person } from "@/lib/types";
@@ -53,6 +59,20 @@ export function PeopleDirectory({
       className="grid w-full pb-20"
       data-loading={loading || undefined}
     >
+      {!loading && people.length === 0 ? (
+        <PublicSection contentClassName="pt-8">
+          <CollectionHeading
+            eyebrow="People"
+            title="Lab members"
+            count="0 members"
+          />
+          <StatePanel
+            frame
+            title="No people published yet"
+            body="Published lab profiles will appear here when available."
+          />
+        </PublicSection>
+      ) : null}
       {founder || loading ? (
         <Founder loading={loading} person={founder} />
       ) : null}
@@ -194,24 +214,15 @@ function PeopleHeading({
   loading?: boolean;
 }) {
   return (
-    <header className="mb-[1.15rem] flex items-baseline justify-between gap-[.8rem]">
-      <h2 className="font-sans text-[clamp(1.55rem,2.3vw,2.25rem)] font-medium tracking-[-.025em]">
-        {title}
-      </h2>
-      {count !== undefined || loading ? (
-        <span
-          className={cn(
-            "font-mono text-[.58rem] uppercase tracking-[.07em] text-ink-faint",
-            loadingPlaceholder(loading, "value", "short"),
-          )}
-          data-placeholder={loading ? "value" : undefined}
-        >
-          <span aria-hidden={loading || undefined}>
-            {loading ? "—" : `${count} ${count === 1 ? "member" : "members"}`}
-          </span>
-        </span>
-      ) : null}
-    </header>
+    <CollectionHeading
+      title={title}
+      loading={loading}
+      count={
+        count !== undefined || loading
+          ? `${count ?? 0} ${count === 1 ? "member" : "members"}`
+          : undefined
+      }
+    />
   );
 }
 

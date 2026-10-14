@@ -192,6 +192,9 @@ function PublicationExplorerInner({
   const activeFilters = Boolean(
     category !== "ALL" || year !== "ALL" || sort !== "NEWEST",
   );
+  const hasPublications = result?.facets.categories.some(
+    (category) => category.count > 0,
+  );
   const visibleRows: Array<ResearchItem | undefined> = busy
     ? Array.from(
         { length: Math.max(result?.items.length ?? 0, 6) },
@@ -321,6 +324,7 @@ function PublicationExplorerInner({
         ) : null}
         {error && !result && !busy ? (
           <StatePanel
+            frame
             body={error}
             title="Publications could not be loaded"
             variant="error"
@@ -338,8 +342,17 @@ function PublicationExplorerInner({
           </div>
         ) : (
           <StatePanel
-            body="Try a broader title, author, year, or publication category."
-            title="No publications match these filters"
+            frame
+            body={
+              hasPublications
+                ? "Try a broader title, author, year, or publication category."
+                : "Published work will appear here when available."
+            }
+            title={
+              hasPublications
+                ? "No publications match these filters"
+                : "No publications yet"
+            }
           />
         )}
         {busy || result ? (

@@ -141,6 +141,7 @@ export function ResearchLibrary() {
 
       {error ? (
         <StatePanel
+          frame="workspace"
           action={{
             label: "Try again",
             onClick: () => setReload((value) => value + 1),
@@ -172,6 +173,7 @@ export function ResearchLibrary() {
           ))}
           {!loading && !result.items.length ? (
             <StatePanel
+              frame={false}
               body="No source-synced papers or datasets match this view."
               title="No research outputs"
             />

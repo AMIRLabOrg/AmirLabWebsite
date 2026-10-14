@@ -13,6 +13,8 @@ import type { AboutContent } from "@/lib/types";
 
 const eyebrow =
   "m-0 font-mono text-[.66rem] font-semibold tracking-[.105em] text-brand uppercase";
+const editorialColumns =
+  "grid grid-cols-[minmax(150px,.28fr)_minmax(0,1fr)] gap-[clamp(2rem,5vw,5rem)] max-[820px]:grid-cols-1";
 const sectionTitle =
   "m-0 font-sans text-[clamp(1.9rem,3vw,3rem)] leading-[1.08] font-medium tracking-[-.035em]";
 
@@ -96,7 +98,8 @@ export function AboutPageView({
         aria-busy={loading || undefined}
         className={cn(
           publicShellClass,
-          "grid grid-cols-[minmax(150px,.28fr)_minmax(0,1fr)] gap-[clamp(2rem,5vw,5rem)] py-[clamp(3rem,6vw,5rem)] max-[820px]:grid-cols-1",
+          editorialColumns,
+          "py-[clamp(3rem,6vw,5rem)]",
         )}
         data-loading={loading || undefined}
       >
@@ -139,7 +142,7 @@ export function AboutPageView({
             "bg-surface py-[clamp(3rem,6vw,5rem)]",
           )}
         >
-          <header className="mb-[1.6rem] grid grid-cols-[minmax(150px,.28fr)_minmax(0,1fr)] items-end gap-8 max-[820px]:grid-cols-1">
+          <header className={cn(editorialColumns, "mb-[1.6rem] items-end")}>
             <p className={eyebrow}>Research focus</p>
             <h2
               aria-hidden={loading || undefined}
@@ -178,7 +181,8 @@ export function AboutPageView({
         aria-busy={loading || undefined}
         className={cn(
           publicShellClass,
-          "grid grid-cols-[minmax(150px,.28fr)_minmax(0,1fr)] gap-[clamp(2rem,5vw,5rem)] py-[clamp(3rem,6vw,5rem)] max-[820px]:grid-cols-1",
+          editorialColumns,
+          "py-[clamp(3rem,6vw,5rem)]",
         )}
         data-loading={loading || undefined}
       >

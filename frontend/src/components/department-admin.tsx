@@ -331,6 +331,7 @@ export function DepartmentEditor({ id }: { id?: string }) {
   if (!loading && error && !department.id && id)
     return (
       <StatePanel
+        frame="workspace"
         action={{ label: "Retry", onClick: load }}
         body="The department record could not be retrieved."
         title={error}

@@ -161,6 +161,7 @@ export function DocumentsWorkspace() {
     return (
       <AdminOnly>
         <StatePanel
+          frame="workspace"
           action={{
             label: "Retry",
             onClick: refresh,

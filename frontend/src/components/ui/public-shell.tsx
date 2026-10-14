@@ -1,5 +1,53 @@
 import type { ComponentPropsWithoutRef, ElementType, ReactNode } from "react";
 import { cn } from "@/lib/cn";
+import { loadingPlaceholder } from "@/lib/loading-style";
+
+export function CollectionHeading({
+  eyebrow,
+  title,
+  count,
+  action,
+  loading = false,
+  id,
+}: {
+  eyebrow?: string;
+  title: string;
+  count?: ReactNode;
+  action?: ReactNode;
+  loading?: boolean;
+  id?: string;
+}) {
+  return (
+    <header className="flex items-end justify-between gap-5 pb-4 max-[640px]:flex-wrap">
+      <div className="min-w-0">
+        {eyebrow ? (
+          <p className="mb-2 font-mono text-[.61rem] font-semibold tracking-[.1em] text-brand uppercase">
+            {eyebrow}
+          </p>
+        ) : null}
+        <h2
+          id={id}
+          className="m-0 font-sans text-[clamp(1.55rem,2.3vw,2.25rem)] leading-[1.15] font-medium tracking-[-.025em]"
+        >
+          {title}
+        </h2>
+      </div>
+      {count !== undefined ? (
+        <span
+          aria-hidden={loading || undefined}
+          className={cn(
+            "shrink-0 font-mono text-[.68rem] text-ink-muted",
+            loadingPlaceholder(loading, "value"),
+          )}
+          data-placeholder={loading ? "value" : undefined}
+        >
+          {count}
+        </span>
+      ) : null}
+      {action}
+    </header>
+  );
+}
 
 /**
  * The public content box. Its edges are the inner frame rails at every width

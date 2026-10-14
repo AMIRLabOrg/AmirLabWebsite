@@ -9,6 +9,7 @@ import { StatePanel } from "@/components/state-panel";
 import { UniversitiesMarquee } from "@/components/universities-marquee";
 import { ButtonLink } from "@/components/ui/button-control";
 import {
+  CollectionHeading,
   FrameBays,
   FrameRule,
   publicShellClass,
@@ -30,8 +31,6 @@ const EMPTY_STATS: PublicStats = {
   projects: 0,
   openPositions: 0,
 };
-const eyebrow =
-  "font-mono text-[.66rem] font-semibold tracking-[.105em] text-brand uppercase";
 
 export function HomePageView({
   content = DEFAULT_HOME_CONTENT,
@@ -103,24 +102,20 @@ export function HomePageView({
         className={cn(publicShellClass, "py-[clamp(3.25rem,6vw,5.5rem)]")}
         data-loading={loading || undefined}
       >
-        <div className="mb-[1.4rem] flex items-end justify-between gap-5 max-[640px]:flex-col max-[640px]:items-start">
-          <div>
-            <p className={cn(eyebrow, "mb-[.65rem]")}>
-              {content.latestEyebrow}
-            </p>
-            <h2 className="m-0 font-sans text-[clamp(1.9rem,3vw,3rem)] font-medium tracking-[-.035em]">
-              {content.latestTitle}
-            </h2>
-          </div>
-          <Link
-            className="text-[.76rem] font-semibold text-brand underline decoration-[color-mix(in_srgb,var(--brand)_35%,transparent)] underline-offset-[3px]"
-            href="/papers"
-            prefetch={false}
-          >
-            View all{" "}
-            <ArrowRight aria-hidden="true" className="inline" size={16} />
-          </Link>
-        </div>
+        <CollectionHeading
+          eyebrow={content.latestEyebrow}
+          title={content.latestTitle}
+          action={
+            <Link
+              className="text-[.76rem] font-semibold text-brand underline decoration-[color-mix(in_srgb,var(--brand)_35%,transparent)] underline-offset-[3px]"
+              href="/papers"
+              prefetch={false}
+            >
+              View all{" "}
+              <ArrowRight aria-hidden="true" className="inline" size={16} />
+            </Link>
+          }
+        />
         {researchRows.length ? (
           <div className="grid gap-0">
             {researchRows.map((item, index) =>
@@ -138,6 +133,7 @@ export function HomePageView({
           </div>
         ) : (
           <StatePanel
+            frame
             body="Published work will appear here when available."
             title="No publications yet"
           />

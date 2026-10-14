@@ -189,6 +189,7 @@ export function ApplicationReviewDetail({
   if (!loading && !application)
     return (
       <StatePanel
+        frame="workspace"
         action={{
           label: "Retry",
           onClick: () => {
@@ -497,6 +498,7 @@ export function ApplicationReviewDetail({
         </div>
       ) : user?.role !== "ADMIN" && application?.status === "NEEDS_REVIEW" ? (
         <StatePanel
+          frame="workspace"
           body="Moderators may inspect applications, but only an administrator can make the final decision."
           title="Administrator decision required"
           variant="permission"

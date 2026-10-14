@@ -1,9 +1,7 @@
 import type { ReactNode } from "react";
-import { ApplicationForm } from "@/components/application-form";
-import { ApplicationProcess } from "@/components/application-process";
+import { OpenPositionsContent } from "@/components/open-positions-content";
+export { OpenPositionsContent } from "@/components/open-positions-content";
 import { PageIntro } from "@/components/page-intro";
-import { PositionList } from "@/components/position-list";
-import { PublicSection } from "@/components/ui/public-shell";
 import type { Position } from "@/lib/types";
 
 export function OpenPositionsPageView({
@@ -35,30 +33,6 @@ export function OpenPositionsPageView({
       {positionsContent ?? (
         <OpenPositionsContent loading={loading} positions={positions} />
       )}
-    </>
-  );
-}
-
-export function OpenPositionsContent({
-  positions,
-  loading = false,
-}: {
-  positions?: Position[];
-  loading?: boolean;
-}) {
-  const list = positions ?? [];
-  return (
-    <>
-      <PositionList loading={loading} positions={list} />
-      <PublicSection
-        contentClassName="grid grid-cols-[minmax(0,1fr)_minmax(280px,360px)] items-start gap-[clamp(1.5rem,3vw,3rem)] pt-8 pb-16 max-[900px]:grid-cols-1"
-        id="apply"
-      >
-        <ApplicationForm loading={loading} positions={list} />
-        <div>
-          <ApplicationProcess loading={loading} />
-        </div>
-      </PublicSection>
     </>
   );
 }

@@ -35,7 +35,8 @@ export function CheckboxControl({
   return (
     <label
       className={cn(
-        "flex cursor-pointer items-start gap-[.7rem] whitespace-normal text-[.8rem] leading-[1.5] text-ink-muted",
+        "flex items-start gap-[.7rem] whitespace-normal text-[.8rem] leading-[1.5] text-ink-muted",
+        disabled || loading ? "cursor-not-allowed" : "cursor-pointer",
         loading && loadingPlaceholder(true, "control"),
         className,
       )}
@@ -44,7 +45,7 @@ export function CheckboxControl({
     >
       <Checkbox.Root
         aria-label={ariaLabel}
-        className="mt-px inline-flex h-5 w-5 shrink-0 cursor-pointer items-center justify-center rounded-[var(--radius-checkbox)] border border-line bg-surface p-0 text-on-accent transition-[background,border-color,transform] duration-150 data-[state=checked]:scale-105 data-[state=checked]:border-brand data-[state=checked]:bg-brand data-[state=indeterminate]:scale-105 data-[state=indeterminate]:border-brand data-[state=indeterminate]:bg-brand focus-visible:shadow-[var(--focus-ring)] motion-reduce:transition-none"
+        className="mt-px inline-flex h-5 w-5 shrink-0 cursor-pointer items-center justify-center rounded-[var(--radius-checkbox)] border border-line bg-surface p-0 text-on-accent transition-[background,border-color,transform] duration-150 data-[state=checked]:scale-105 data-[state=checked]:border-brand data-[state=checked]:bg-brand data-[state=indeterminate]:scale-105 data-[state=indeterminate]:border-brand data-[state=indeterminate]:bg-brand focus-visible:shadow-[var(--focus-ring)] disabled:cursor-not-allowed motion-reduce:transition-none"
         checked={checked}
         defaultChecked={defaultChecked}
         disabled={disabled || loading}
