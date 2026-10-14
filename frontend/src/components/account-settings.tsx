@@ -196,7 +196,7 @@ export function AccountSettings() {
     ? [undefined, undefined]
     : groups;
   return (
-    <WorkspaceSurface measure="form">
+    <WorkspaceSurface>
       <WorkspaceHero
         eyebrow="Settings"
         title="Account & devices"
@@ -222,12 +222,15 @@ export function AccountSettings() {
         }
       >
         {errors.others ? (
-          <div role="alert" className="p-4">
+          <div role="alert" className="px-[var(--workspace-gutter)] py-5">
             <SemanticStatus tone="error">{errors.others}</SemanticStatus>
           </div>
         ) : null}
         {loadError ? (
-          <div role="alert" className="grid gap-3 p-4">
+          <div
+            role="alert"
+            className="grid gap-3 px-[var(--workspace-gutter)] py-5"
+          >
             <SemanticStatus tone="error">
               Could not load signed-in devices. Try again.
             </SemanticStatus>
@@ -249,7 +252,7 @@ export function AccountSettings() {
             return (
               <div
                 key={session?.id ?? index}
-                className="grid gap-3 border-b border-line p-4 last:border-b-0 sm:grid-cols-[minmax(0,1fr)_auto]"
+                className="grid gap-3 border-b border-line px-[var(--workspace-gutter)] py-5 last:border-b-0 sm:grid-cols-[minmax(0,1fr)_auto]"
               >
                 <div className="grid min-w-0 gap-2">
                   <div className="flex flex-wrap items-center gap-2">
@@ -336,7 +339,7 @@ export function AccountSettings() {
           })}
         </div>
         {!loading && !loadError && sessions.length === 0 ? (
-          <p className="p-4 text-sm text-ink-muted">
+          <p className="px-[var(--workspace-gutter)] py-5 text-sm text-ink-muted">
             No active devices found. Reload to check your current session.
           </p>
         ) : null}
@@ -345,7 +348,7 @@ export function AccountSettings() {
         title="Browser notifications"
         description="Receive a generic workspace update on your lock screen. Enable notifications separately on each device."
       >
-        <div className="grid gap-3 p-4">
+        <div className="grid gap-3 px-[var(--workspace-gutter)] py-5">
           <div role="status">
             <SemanticStatus tone={pushError ? "error" : "neutral"}>
               {supported
@@ -360,7 +363,7 @@ export function AccountSettings() {
             then open the app. If permission is denied, allow notifications in
             browser or device settings.
           </p>
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap justify-end gap-2">
             <ButtonControl
               variant="primary"
               disabled={!registration || pushBusy}
@@ -387,7 +390,7 @@ export function AccountSettings() {
         title="Install AmirLab"
         description="Open your workspace from your Home Screen or desktop."
       >
-        <div className="grid gap-3 p-4">
+        <div className="grid gap-3 px-[var(--workspace-gutter)] py-5">
           <p className="text-sm text-ink-muted">
             Use your browser&apos;s Install app option. On iPhone or iPad,
             choose Share → Add to Home Screen. You need an internet connection
@@ -395,6 +398,7 @@ export function AccountSettings() {
           </p>
           {install ? (
             <ButtonControl
+              className="justify-self-end"
               variant="primary"
               onClick={() => void install().catch(() => {})}
             >

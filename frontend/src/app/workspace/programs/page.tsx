@@ -1,5 +1,10 @@
+import { WorkspaceContent } from "@/components/workspace-content";
 import { ResearchPrograms } from "@/components/research-programs";
 
 export default function ResearchProgramsPage() {
-  return <ResearchPrograms />;
+  return (
+    <WorkspaceContent>
+      <ResearchPrograms />
+    </WorkspaceContent>
+  );
 }

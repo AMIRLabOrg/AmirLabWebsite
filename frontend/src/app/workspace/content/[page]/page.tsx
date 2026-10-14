@@ -1,3 +1,4 @@
+import { AdminOnly } from "@/components/admin-only";
 import { notFound } from "next/navigation";
 import { WorkspacePageShell } from "@/components/workspace-page-shell";
 import {
@@ -14,7 +15,9 @@ export default async function EditSiteContentPage({
   if (page !== "home" && page !== "about") notFound();
   return (
     <WorkspacePageShell>
-      <SiteContentEditor page={page as SiteContentPage} />
+      <AdminOnly>
+        <SiteContentEditor page={page as SiteContentPage} />
+      </AdminOnly>
     </WorkspacePageShell>
   );
 }

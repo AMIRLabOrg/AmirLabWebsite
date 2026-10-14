@@ -1,5 +1,11 @@
 "use client";
 
+import {
+  WorkspaceRecordPanel,
+  WorkspaceRecordPanelHeader,
+  WorkspaceRecordPanelTitle,
+} from "@/components/workspace-record";
+
 import { useCallback, useEffect, useState } from "react";
 import { RefreshCw } from "lucide-react";
 import { apiRequest } from "@/lib/client-api";
@@ -94,19 +100,17 @@ export function OpenAlexApiSettings() {
   }
 
   return (
-    <section className="frame-rail-section grid gap-[1.1rem] py-5">
-      <header className="border-b border-line pb-4">
-        <p className="m-0 mb-4 text-[.75rem] font-extrabold uppercase tracking-[.12em] text-brand">
+    <WorkspaceRecordPanel>
+      <WorkspaceRecordPanelHeader>
+        <p className="m-0 font-mono text-[.61rem] font-semibold uppercase tracking-[.11em] text-brand">
           Research sync
         </p>
-        <h2 className="font-sans text-[clamp(1.75rem,3vw,2.6rem)] font-normal leading-none">
-          OpenAlex
-        </h2>
-        <p className="mt-3 text-sm text-ink-muted">
+        <WorkspaceRecordPanelTitle>OpenAlex</WorkspaceRecordPanelTitle>
+        <p className="m-0 text-[.76rem] leading-[1.55] text-ink-muted">
           A free API key increases the daily allowance. New keys are verified
           with OpenAlex before saving and apply to the next sync request.
         </p>
-      </header>
+      </WorkspaceRecordPanelHeader>
       <FormField
         htmlFor="openalex-api-key"
         label="API key"
@@ -136,6 +140,7 @@ export function OpenAlexApiSettings() {
           busy={saving}
           disabled={!apiKey.trim()}
           onClick={() => void save(apiKey.trim())}
+          variant="primary"
         >
           Save API key
         </ButtonControl>
@@ -202,6 +207,6 @@ export function OpenAlexApiSettings() {
           </p>
         )}
       </section>
-    </section>
+    </WorkspaceRecordPanel>
   );
 }

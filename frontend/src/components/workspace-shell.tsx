@@ -3,7 +3,7 @@
 import { loadingPlaceholder } from "@/lib/loading-style";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useState, type ReactNode } from "react";
+import { Suspense, useEffect, useState, type ReactNode } from "react";
 import {
   ArrowUpRight,
   Bell,
@@ -13,6 +13,7 @@ import {
   PanelLeftOpen,
 } from "lucide-react";
 import { useAuth } from "@/components/auth-provider";
+import { WorkspaceLoading } from "@/components/workspace-content";
 import { ConfirmDialog } from "@/components/confirm-dialog";
 import {
   AccountIdentity,
@@ -77,7 +78,10 @@ export function WorkspaceShell({ children }: { children: ReactNode }) {
   };
 
   const accountName = user?.person?.fullName ?? user?.email ?? "AmirLab member";
-  const navigationGroups = workspaceNavigation(user?.role);
+  const checkingAccess = loading || !user;
+  const navigationGroups = workspaceNavigation(
+    checkingAccess ? "ADMIN" : user.role,
+  );
   const currentLabel =
     workspaceNavigationItem(pathname, navigationGroups)?.label ?? "Workspace";
 
@@ -130,65 +134,95 @@ export function WorkspaceShell({ children }: { children: ReactNode }) {
               sidebarOpen ? "px-[.85rem]" : "px-[.4rem]",
             )}
           >
-            {navigationGroups.map((group) => (
-              <div
-                className="grid gap-0 border-b border-line pb-[.4rem]"
-                key={group.label}
-              >
-                {sidebarOpen ? (
-                  <span className="px-[.45rem] pt-[.28rem] pb-[.38rem] font-mono text-[.55rem] tracking-[.105em] text-ink-faint uppercase">
-                    {group.label}
-                  </span>
-                ) : (
-                  <div className="h-[12px]" />
-                )}
-                {group.items.map((item) => {
-                  const { href, icon: Icon, indicator, label } = item;
-                  const active = isWorkspaceNavigationActive(
-                    pathname,
-                    href,
-                    item.match,
-                  );
-                  const indicatorCount =
-                    indicator === "notifications"
-                      ? unreadCount
-                      : indicator
-                        ? queueCounts[indicator]
-                        : 0;
-                  return (
-                    <Link
+            {navigationGroups.map((group) =>
+              checkingAccess ? (
+                <div
+                  aria-hidden="true"
+                  className="grid gap-2 border-b border-line px-2 py-3"
+                  key={group.label}
+                >
+                  <span
+                    className={cn("h-2 w-20", loadingPlaceholder(true, "text"))}
+                    data-placeholder="text"
+                  />
+                  {group.items.map((item) => (
+                    <span
                       className={cn(
-                        "flex min-h-[34px] items-center gap-2 border-l-2 py-[.42rem] text-[.73rem] font-medium transition-colors hover:bg-surface-subtle hover:text-ink",
-                        sidebarOpen
-                          ? "px-[.48rem]"
-                          : "justify-center px-0 relative",
-                        active
-                          ? "border-l-brand bg-surface-subtle text-ink"
-                          : "border-l-transparent text-ink-muted",
+                        "h-[34px] w-full",
+                        loadingPlaceholder(true, "control"),
                       )}
-                      href={href}
-                      key={href}
-                      title={!sidebarOpen ? label : undefined}
-                    >
-                      <Icon aria-hidden="true" size={17} className="shrink-0" />
-                      <span
+                      data-placeholder="control"
+                      key={item.href}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <div
+                  className="grid gap-0 border-b border-line pb-[.4rem]"
+                  key={group.label}
+                >
+                  {sidebarOpen ? (
+                    <span className="px-[.45rem] pt-[.28rem] pb-[.38rem] font-mono text-[.55rem] tracking-[.105em] text-ink-faint uppercase">
+                      {group.label}
+                    </span>
+                  ) : (
+                    <div className="h-[12px]" />
+                  )}
+                  {group.items.map((item) => {
+                    const { href, icon: Icon, indicator, label } = item;
+                    const active = isWorkspaceNavigationActive(
+                      pathname,
+                      href,
+                      item.match,
+                    );
+                    const indicatorCount =
+                      indicator === "notifications"
+                        ? unreadCount
+                        : indicator
+                          ? queueCounts[indicator]
+                          : 0;
+                    return (
+                      <Link
                         className={cn(
-                          "whitespace-nowrap",
-                          !sidebarOpen && "hidden",
+                          "flex min-h-[34px] items-center gap-2 border-l-2 py-[.42rem] text-[.73rem] font-medium transition-colors hover:bg-surface-subtle hover:text-ink",
+                          sidebarOpen
+                            ? "px-[.48rem]"
+                            : "justify-center px-0 relative",
+                          active
+                            ? "border-l-brand bg-surface-subtle text-ink"
+                            : "border-l-transparent text-ink-muted",
                         )}
+                        href={href}
+                        key={href}
+                        title={!sidebarOpen ? label : undefined}
                       >
-                        {label}
-                      </span>
-                      {sidebarOpen && indicatorCount > 0 ? (
-                        <CountPill className="ml-auto" count={indicatorCount} />
-                      ) : !sidebarOpen && indicatorCount > 0 ? (
-                        <div className="absolute top-1 right-[.35rem] h-[6px] w-[6px] rounded-full bg-brand" />
-                      ) : null}
-                    </Link>
-                  );
-                })}
-              </div>
-            ))}
+                        <Icon
+                          aria-hidden="true"
+                          size={17}
+                          className="shrink-0"
+                        />
+                        <span
+                          className={cn(
+                            "whitespace-nowrap",
+                            !sidebarOpen && "hidden",
+                          )}
+                        >
+                          {label}
+                        </span>
+                        {sidebarOpen && indicatorCount > 0 ? (
+                          <CountPill
+                            className="ml-auto"
+                            count={indicatorCount}
+                          />
+                        ) : !sidebarOpen && indicatorCount > 0 ? (
+                          <div className="absolute top-1 right-[.35rem] h-[6px] w-[6px] rounded-full bg-brand" />
+                        ) : null}
+                      </Link>
+                    );
+                  })}
+                </div>
+              ),
+            )}
           </nav>
           <div
             className={cn(
@@ -271,6 +305,7 @@ export function WorkspaceShell({ children }: { children: ReactNode }) {
                   menuTriggerClass,
                   "-mr-[calc(var(--workspace-gutter)_-_8px)] hidden max-[820px]:inline-flex",
                 )}
+                disabled={checkingAccess}
                 onClick={() => setMenuOpen(true)}
                 type="button"
               >
@@ -314,14 +349,14 @@ export function WorkspaceShell({ children }: { children: ReactNode }) {
                 : "p-0",
             )}
           >
-            {loading || !user ? null : children}
+            <Suspense fallback={<WorkspaceLoading />}>{children}</Suspense>
           </div>
         </div>
       </div>
       <MenuSheet
         label="Workspace menu"
         onClose={() => setMenuOpen(false)}
-        open={menuOpen}
+        open={!checkingAccess && menuOpen}
       >
         {user ? <AccountIdentity user={user} /> : null}
         <nav aria-label="Workspace navigation" className="grid">

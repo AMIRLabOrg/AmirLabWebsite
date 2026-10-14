@@ -261,7 +261,7 @@ export function BackupSettings() {
   }
   return (
     <AdminOnly>
-      <WorkspaceSurface measure="form">
+      <WorkspaceSurface>
         <WorkspaceHero
           eyebrow="Administration"
           title="Backup & restore"
@@ -272,7 +272,7 @@ export function BackupSettings() {
           description="Local development and testing only. Settings take effect without redeploying."
         >
           <form
-            className="grid gap-4 p-4"
+            className="grid gap-4 px-[var(--workspace-gutter)] py-5"
             onSubmit={(event) => {
               event.preventDefault();
               void action("configure");
@@ -444,7 +444,9 @@ export function BackupSettings() {
               minute. An enabled schedule with no backup runs on the next check.
             </p>
             <ButtonControl
+              className="justify-self-end"
               type="submit"
+              variant="primary"
               loading={!status}
               busy={busy}
               disabled={disabled || status?.reason === "LOCAL_TEST_ONLY"}
@@ -457,13 +459,7 @@ export function BackupSettings() {
           title="Create a backup"
           description="Includes a PostgreSQL archive and local uploads, with SHA-256 integrity checks."
         >
-          <div className="grid justify-items-start gap-3 p-4">
-            <ButtonControl
-              disabled={disabled || dirty || !status?.canBackup}
-              onClick={() => void action("capture")}
-            >
-              Create backup
-            </ButtonControl>
+          <div className="grid gap-3 px-[var(--workspace-gutter)] py-5">
             <p className="text-xs text-ink-muted">
               Last backup:{" "}
               {status?.lastBackup
@@ -473,13 +469,20 @@ export function BackupSettings() {
               {dirty &&
                 " Save changed settings before creating or restoring a backup."}
             </p>
+            <ButtonControl
+              className="justify-self-end"
+              disabled={disabled || dirty || !status?.canBackup}
+              onClick={() => void action("capture")}
+            >
+              Create backup
+            </ButtonControl>
           </div>
         </WorkspacePanel>
         <WorkspacePanel
           title="Restore a backup"
           description="Replaces local database records and uploaded files. Stop other writes before restoring. A safety backup is created first."
         >
-          <div className="grid gap-4 p-4">
+          <div className="grid gap-4 px-[var(--workspace-gutter)] py-5">
             <FormField htmlFor="backup-selection" label="Backup">
               <SelectControl
                 id="backup-selection"
@@ -509,6 +512,7 @@ export function BackupSettings() {
               />
             </FormField>
             <ButtonControl
+              className="justify-self-end"
               variant="danger"
               disabled={
                 disabled ||

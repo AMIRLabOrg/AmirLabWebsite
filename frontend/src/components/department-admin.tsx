@@ -14,6 +14,8 @@ import {
   WorkspaceRecord,
   WorkspaceRecordForm,
   WorkspaceRecordPanel,
+  WorkspaceRecordPanelHeader,
+  WorkspaceRecordPanelTitle,
 } from "@/components/workspace-record";
 import { ApiRequestError, apiRequest } from "@/lib/client-api";
 import { Badge } from "@/components/ui/badge";
@@ -360,20 +362,19 @@ export function DepartmentEditor({ id }: { id?: string }) {
         }
       >
         <WorkspaceRecordForm
-          className="gap-[1.2rem]"
           data-loading={loading || undefined}
           id="department-record"
           onSubmit={save}
         >
-          <header className="grid gap-[.35rem] border-b border-line pb-[1.15rem]">
+          <WorkspaceRecordPanelHeader>
             <p className="m-0 font-mono text-[.62rem] font-semibold uppercase tracking-[.1em] text-brand">
               Details
             </p>
-            <h2 className="m-0 font-sans text-[clamp(1.4rem,2.4vw,2rem)] font-normal leading-[1.1]">
+            <WorkspaceRecordPanelTitle>
               Department information
-            </h2>
-          </header>
-          <div className="grid gap-[1.2rem] grid-cols-2 max-[640px]:grid-cols-1">
+            </WorkspaceRecordPanelTitle>
+          </WorkspaceRecordPanelHeader>
+          <div className="grid gap-[1.2rem]">
             <FormField htmlFor="department-name" label="Name">
               <InputControl
                 loading={loading}
@@ -386,11 +387,7 @@ export function DepartmentEditor({ id }: { id?: string }) {
                 value={department.name}
               />
             </FormField>
-            <FormField
-              className="col-span-full"
-              htmlFor="department-description"
-              label="Description"
-            >
+            <FormField htmlFor="department-description" label="Description">
               <TextareaControl
                 loading={loading}
                 disabled={loading}
@@ -426,17 +423,17 @@ export function DepartmentEditor({ id }: { id?: string }) {
         </WorkspaceRecordForm>
         {id ? (
           <WorkspaceRecordPanel data-loading={loading || undefined}>
-            <header className="grid gap-[.35rem] border-b border-line pb-[1.15rem]">
+            <WorkspaceRecordPanelHeader>
               <p className="m-0 font-mono text-[.62rem] font-semibold uppercase tracking-[.1em] text-brand">
                 Membership
               </p>
-              <h2 className="m-0 font-sans text-[clamp(1.4rem,2.4vw,2rem)] font-normal leading-[1.1]">
+              <WorkspaceRecordPanelTitle>
                 Department team
-              </h2>
+              </WorkspaceRecordPanelTitle>
               <p className="m-0 text-[.82rem] leading-[1.55] text-ink-muted">
                 Link registered people to the department and set their role.
               </p>
-            </header>
+            </WorkspaceRecordPanelHeader>
             <div className="grid border-t border-line">
               {(loading && !department.people.length
                 ? Array.from({ length: 2 }, () => undefined)
@@ -554,18 +551,18 @@ export function DepartmentEditor({ id }: { id?: string }) {
         ) : null}
         {id ? (
           <WorkspaceRecordPanel className="border-danger/40 bg-danger-soft/30">
-            <header className="grid gap-[.35rem] border-b border-danger/30 pb-[1.15rem]">
+            <WorkspaceRecordPanelHeader className="border-danger/30">
               <p className="m-0 font-mono text-[.62rem] font-semibold uppercase tracking-[.1em] text-danger">
                 Danger zone
               </p>
-              <h2 className="m-0 font-sans text-[clamp(1.4rem,2.4vw,2rem)] font-normal leading-[1.1]">
+              <WorkspaceRecordPanelTitle>
                 Delete department
-              </h2>
+              </WorkspaceRecordPanelTitle>
               <p className="m-0 text-[.82rem] leading-[1.55] text-ink-muted">
                 Deleting this department removes it permanently from the
                 database and public directory.
               </p>
-            </header>
+            </WorkspaceRecordPanelHeader>
             <ButtonControl
               onClick={() => setDeletePending(true)}
               type="button"

@@ -13,6 +13,10 @@ import { InputControl } from "@/components/ui/form-controls";
 import { SegmentedControl } from "@/components/ui/segmented-control";
 import { apiRequest } from "@/lib/client-api";
 import { ButtonControl } from "@/components/ui/button-control";
+import {
+  WorkspaceHero,
+  WorkspacePanel,
+} from "@/components/ui/workspace-surface";
 
 type VerificationMode = "AUTOMATIC" | "MANUAL";
 
@@ -233,9 +237,14 @@ export function AdminSettings() {
   return (
     <AdminOnly>
       <div
-        className="grid w-full gap-8"
+        className="grid w-full gap-6"
         data-loading={initialLoading || undefined}
       >
+        <WorkspaceHero
+          eyebrow="Administration"
+          title="Settings"
+          description="Manage content review, research ranks, and notification delivery."
+        />
         {message ? (
           <p className="m-0 border-l-[3px] border-success bg-success-soft px-4 py-[.8rem] text-[.78rem]">
             {message}
@@ -262,26 +271,12 @@ export function AdminSettings() {
           />
         ) : (
           <>
-            <section className="frame-rail-section grid gap-[1.1rem] py-5">
-              <header className="grid grid-cols-[42px_minmax(0,1fr)] items-start gap-[1.2rem] border-b border-line pb-4 max-[640px]:grid-cols-1">
-                <span className="pt-[.35rem] font-mono text-[.62rem] text-ink-faint">
-                  01
-                </span>
-                <div>
-                  <p className="m-0 mb-4 font-[var(--font-sans)] text-[.75rem] font-extrabold uppercase tracking-[.12em] text-brand">
-                    Review gates
-                  </p>
-                  <h2 className="mt-[.35rem] font-sans text-[clamp(1.75rem,3vw,2.6rem)] font-normal leading-none">
-                    Content verification
-                  </h2>
-                  <p className="mt-[.7rem] max-w-[680px] text-[.78rem] leading-[1.55] text-ink-muted">
-                    Route sensitive changes through the moderator queue while
-                    allowing low-risk updates to publish immediately.
-                  </p>
-                </div>
-              </header>
-
-              <div className="ml-[calc(42px+1.2rem)] grid overflow-hidden border-y border-line-strong bg-transparent max-[640px]:ml-0">
+            <WorkspacePanel
+              eyebrow="Review gates"
+              title="Content verification"
+              description="Route sensitive changes through the moderator queue while allowing low-risk updates to publish immediately."
+            >
+              <div className="grid overflow-hidden">
                 {(Object.keys(LABELS) as VisibleVerificationKey[]).map(
                   (key) => {
                     const manual = displayedVerification[key] === "MANUAL";
@@ -332,28 +327,14 @@ export function AdminSettings() {
                   },
                 )}
               </div>
-            </section>
+            </WorkspacePanel>
 
-            <section className="frame-rail-section grid gap-[1.1rem] py-5">
-              <header className="grid grid-cols-[42px_minmax(0,1fr)] items-start gap-[1.2rem] border-b border-line pb-4 max-[640px]:grid-cols-1">
-                <span className="pt-[.35rem] font-mono text-[.62rem] text-ink-faint">
-                  02
-                </span>
-                <div>
-                  <p className="m-0 mb-4 font-[var(--font-sans)] text-[.75rem] font-extrabold uppercase tracking-[.12em] text-brand">
-                    Public ordering
-                  </p>
-                  <h2 className="mt-[.35rem] font-sans text-[clamp(1.75rem,3vw,2.6rem)] font-normal leading-none">
-                    Research rank thresholds
-                  </h2>
-                  <p className="mt-[.7rem] max-w-[680px] text-[.78rem] leading-[1.55] text-ink-muted">
-                    Control when publication activity can lift a public profile
-                    above its appointed account rank.
-                  </p>
-                </div>
-              </header>
-
-              <div className="ml-[calc(42px+1.2rem)] grid gap-4 border-y border-line-strong bg-transparent p-4 max-[640px]:ml-0">
+            <WorkspacePanel
+              eyebrow="Public ordering"
+              title="Research rank thresholds"
+              description="Control when publication activity can lift a public profile above its appointed account rank."
+            >
+              <div className="grid gap-4 p-4">
                 <div className="grid grid-cols-[auto_minmax(0,1fr)] items-start gap-[.8rem] rounded-panel bg-brand-faint p-4">
                   <ShieldCheck className="text-brand" size={22} />
                   <div>
@@ -366,11 +347,11 @@ export function AdminSettings() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1">
-                  <strong className="border-t border-line pb-[.2rem] pt-4 text-[.9rem]">
+                <div className="grid grid-cols-2 gap-x-4 max-[640px]:grid-cols-1">
+                  <strong className="col-span-2 border-t border-line pb-[.2rem] pt-4 text-[.9rem] max-[640px]:col-span-1">
                     Senior researcher
                   </strong>
-                  <label className="grid grid-cols-[minmax(0,1fr)_160px] items-center gap-4 border-t border-line py-[.7rem] text-[.8rem] font-semibold text-ink-muted max-[640px]:grid-cols-1">
+                  <label className="grid gap-2 py-[.7rem] text-[.8rem] font-semibold text-ink-muted">
                     Published papers
                     <InputControl
                       className={loadingPlaceholder(initialLoading, "control")}
@@ -388,7 +369,7 @@ export function AdminSettings() {
                       value={displayedRanking.seniorPaperMinimum}
                     />
                   </label>
-                  <label className="grid grid-cols-[minmax(0,1fr)_160px] items-center gap-4 border-t border-line py-[.7rem] text-[.8rem] font-semibold text-ink-muted max-[640px]:grid-cols-1">
+                  <label className="grid gap-2 py-[.7rem] text-[.8rem] font-semibold text-ink-muted">
                     OpenAlex citations
                     <InputControl
                       className={loadingPlaceholder(initialLoading, "control")}
@@ -407,10 +388,10 @@ export function AdminSettings() {
                     />
                   </label>
 
-                  <strong className="border-t border-line pb-[.2rem] pt-4 text-[.9rem]">
+                  <strong className="col-span-2 border-t border-line pb-[.2rem] pt-4 text-[.9rem] max-[640px]:col-span-1">
                     Lead researcher
                   </strong>
-                  <label className="grid grid-cols-[minmax(0,1fr)_160px] items-center gap-4 border-t border-line py-[.7rem] text-[.8rem] font-semibold text-ink-muted max-[640px]:grid-cols-1">
+                  <label className="grid gap-2 py-[.7rem] text-[.8rem] font-semibold text-ink-muted">
                     Published papers
                     <InputControl
                       className={loadingPlaceholder(initialLoading, "control")}
@@ -428,7 +409,7 @@ export function AdminSettings() {
                       value={displayedRanking.leadPaperMinimum}
                     />
                   </label>
-                  <label className="grid grid-cols-[minmax(0,1fr)_160px] items-center gap-4 border-t border-line py-[.7rem] text-[.8rem] font-semibold text-ink-muted max-[640px]:grid-cols-1">
+                  <label className="grid gap-2 py-[.7rem] text-[.8rem] font-semibold text-ink-muted">
                     OpenAlex citations
                     <InputControl
                       className={loadingPlaceholder(initialLoading, "control")}
@@ -448,27 +429,14 @@ export function AdminSettings() {
                   </label>
                 </div>
               </div>
-            </section>
+            </WorkspacePanel>
 
-            <section className="frame-rail-section grid gap-[1.1rem] py-5">
-              <header className="grid grid-cols-[42px_minmax(0,1fr)] items-start gap-[1.2rem] border-b border-line pb-4 max-[640px]:grid-cols-1">
-                <span className="pt-[.35rem] font-mono text-[.62rem] text-ink-faint">
-                  03
-                </span>
-                <div>
-                  <p className="m-0 mb-4 font-[var(--font-sans)] text-[.75rem] font-extrabold uppercase tracking-[.12em] text-brand">
-                    Delivery rules
-                  </p>
-                  <h2 className="mt-[.35rem] font-sans text-[clamp(1.75rem,3vw,2.6rem)] font-normal leading-none">
-                    Email and notifications
-                  </h2>
-                  <p className="mt-[.7rem] max-w-[760px] text-[.78rem] leading-[1.55] text-ink-muted">
-                    Each workflow can be enabled independently. Deadline notices
-                    are deduplicated, so a person receives each event once.
-                  </p>
-                </div>
-              </header>
-              <div className="ml-[calc(42px+1.2rem)] grid overflow-hidden border-y border-line-strong bg-transparent max-[640px]:ml-0">
+            <WorkspacePanel
+              eyebrow="Delivery rules"
+              title="Email and notifications"
+              description="Each workflow can be enabled independently. Deadline notices are deduplicated, so a person receives each event once."
+            >
+              <div className="grid overflow-hidden">
                 {(
                   Object.keys(NOTIFICATION_LABELS) as Array<
                     Exclude<keyof NotificationPolicy, "reminderDays">
@@ -528,13 +496,13 @@ export function AdminSettings() {
                   />
                 </label>
               </div>
-            </section>
+            </WorkspacePanel>
 
             <OpenAlexApiSettings />
             <MailProviderSettings />
 
-            <footer className="frame-rail-section flex items-center justify-between gap-4 py-5 max-[640px]:flex-col max-[640px]:items-stretch">
-              <p className="m-0 text-[.72rem] leading-[1.5] text-ink-muted">
+            <footer className="flex flex-wrap items-center justify-end gap-4 border-t border-line py-5">
+              <p className="m-0 mr-auto text-[.72rem] leading-[1.5] text-ink-muted">
                 OpenAlex author profiles sync papers, datasets, and citation
                 totals daily.
               </p>
@@ -545,6 +513,7 @@ export function AdminSettings() {
                 loading={initialLoading}
                 busy={saving}
                 onClick={save}
+                variant="primary"
                 type="button"
               >
                 <Save size={15} />

@@ -199,7 +199,7 @@ export function ProjectCreationForm() {
     >
       <WorkspaceRecordForm onSubmit={submit}>
         <WorkspaceRecordPanelHeader>
-          <p className="m-0 font-sans text-[.65rem] font-semibold uppercase tracking-[.1em] text-brand">
+          <p className="m-0 font-mono text-[.62rem] font-semibold uppercase tracking-[.1em] text-brand">
             Project foundation
           </p>
           <WorkspaceRecordPanelTitle>

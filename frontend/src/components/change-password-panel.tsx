@@ -1,5 +1,10 @@
 "use client";
 
+import {
+  WorkspaceRecordPanel,
+  WorkspaceRecordPanelTitle,
+} from "@/components/workspace-record";
+
 import Link from "next/link";
 import { SyntheticEvent, useState } from "react";
 import { ButtonControl } from "@/components/ui/button-control";
@@ -52,13 +57,15 @@ export function ChangePasswordPanel() {
 
   return (
     <form className="mt-[1.35rem] w-full" onSubmit={submit}>
-      <section className="grid gap-[1.2rem] border-y border-line-strong bg-transparent p-[1.55rem]">
+      <WorkspaceRecordPanel>
         <div className="mb-0 flex items-end justify-between gap-8 border-b border-line pb-[.95rem]">
           <div>
-            <p className="m-0 mb-4 font-[var(--font-sans)] text-[.75rem] font-extrabold uppercase tracking-[.12em] text-brand">
+            <p className="m-0 mb-2 font-mono text-[.61rem] font-semibold uppercase tracking-[.11em] text-brand">
               Security
             </p>
-            <h2 className="text-[1.35rem] font-semibold">Change password</h2>
+            <WorkspaceRecordPanelTitle>
+              Change password
+            </WorkspaceRecordPanelTitle>
           </div>
         </div>
 
@@ -104,17 +111,17 @@ export function ChangePasswordPanel() {
           </div>
         </div>
 
-        <div className="mt-2">
+        <div className="mt-2 flex justify-end">
           <ButtonControl
             disabled={saving}
             busy={saving}
             type="submit"
-            variant="secondary"
+            variant="primary"
           >
             Update password
           </ButtonControl>
         </div>
-      </section>
+      </WorkspaceRecordPanel>
     </form>
   );
 }

@@ -2,11 +2,6 @@ import type { ComponentPropsWithoutRef, ReactNode } from "react";
 import { cn } from "@/lib/cn";
 import { loadingPlaceholder } from "@/lib/loading-style";
 
-// Form pages use a narrower content box. Each measure is a complete class so
-// no two max-width utilities are ever combined (`cn` does not merge them).
-const formShellClass =
-  "mx-auto w-full max-w-[min(var(--workspace-form),calc(100%_-_2*var(--frame-mobile-inner)))] px-[var(--workspace-gutter)]";
-
 /**
  * The workspace content box. Its edges are the workspace rails at every width
  * (see --frame-inner with --frame-wide: var(--workspace-wide)).
@@ -16,7 +11,6 @@ export const workspaceShellClass =
 
 export function WorkspaceSurface({
   children,
-  measure = "reading",
 }: {
   children: ReactNode;
   measure?: "form" | "reading" | "wide";
@@ -24,8 +18,8 @@ export function WorkspaceSurface({
   return (
     <main
       className={cn(
-        measure === "form" ? formShellClass : workspaceShellClass,
-        "relative grid min-h-[calc(100svh-64px)] gap-[1.5rem] pt-[1.75rem] pb-12 max-[820px]:min-h-0 max-[640px]:gap-[.9rem] max-[640px]:pt-4 max-[640px]:pb-10",
+        workspaceShellClass,
+        "relative grid content-start min-h-[calc(100svh-64px)] gap-[1.5rem] pt-[1.75rem] pb-12 max-[820px]:min-h-0 max-[640px]:gap-[.9rem] max-[640px]:pt-4 max-[640px]:pb-10",
       )}
     >
       {children}
@@ -38,25 +32,44 @@ export function WorkspaceHero({
   description,
   eyebrow,
   meta,
+  loading = false,
   title,
 }: {
   action?: ReactNode;
   description?: ReactNode;
   eyebrow: ReactNode;
   meta?: ReactNode;
+  loading?: boolean;
   title: ReactNode;
 }) {
   return (
-    <header className="relative mx-[calc(var(--workspace-gutter)*-1)] grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-end gap-5 border-b border-line-strong px-[var(--workspace-gutter)] pt-[.4rem] pb-[1.15rem] max-[640px]:grid-cols-1 max-[640px]:items-start">
+    <header
+      className="relative grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-end gap-5 border border-line-strong bg-surface px-[var(--workspace-gutter)] py-5 max-[640px]:grid-cols-1 max-[640px]:items-start"
+      data-loading={loading || undefined}
+    >
       <div className="min-w-0">
         <p className="mb-[.42rem] font-mono text-[.61rem] font-semibold tracking-[.11em] text-brand uppercase">
           {eyebrow}
         </p>
-        <h1 className="m-0 font-serif text-[clamp(1.85rem,2.7vw,2.35rem)] leading-[1.02] font-medium tracking-[-.035em] max-[640px]:text-[clamp(1.8rem,9vw,2.25rem)]">
+        <h1
+          className={cn(
+            "m-0 break-words font-serif text-[clamp(1.7rem,3vw,2.35rem)] leading-[1.02] font-medium tracking-[-.03em]",
+            loadingPlaceholder(loading, "text", "long"),
+          )}
+          data-placeholder={loading ? "text" : undefined}
+          data-placeholder-width="long"
+        >
           {title}
         </h1>
         {description ? (
-          <p className="mt-[.65rem] mb-0 max-w-[700px] text-[.76rem] leading-[1.55] text-ink-muted">
+          <p
+            className={cn(
+              "mt-[.65rem] mb-0 max-w-[700px] text-[.76rem] leading-[1.55] text-ink-muted",
+              loadingPlaceholder(loading, "text", "long"),
+            )}
+            data-placeholder={loading ? "text" : undefined}
+            data-placeholder-width="long"
+          >
             {description}
           </p>
         ) : null}
@@ -67,7 +80,7 @@ export function WorkspaceHero({
         ) : null}
       </div>
       {action ? (
-        <div className="flex shrink-0 items-center max-[640px]:w-full max-[640px]:[&>*]:w-full">
+        <div className="flex max-w-full flex-wrap items-center justify-end gap-[.65rem] max-[640px]:justify-start">
           {action}
         </div>
       ) : null}
@@ -90,14 +103,14 @@ export function WorkspacePanel({
 }) {
   return (
     <section className="relative min-w-0 border border-line-strong bg-surface">
-      <header className="flex items-start justify-between gap-[1.2rem] border-b border-line px-4 py-[.9rem] max-[640px]:flex-col max-[640px]:p-[.8rem]">
+      <header className="flex items-start justify-between gap-[1.2rem] border-b border-line px-[var(--workspace-gutter)] py-5 max-[640px]:flex-col">
         <div className="min-w-0 flex-1">
           {eyebrow ? (
             <p className="mb-[.42rem] font-mono text-[.61rem] font-semibold tracking-[.11em] text-brand uppercase">
               {eyebrow}
             </p>
           ) : null}
-          <h2 className="m-0 font-serif text-[1.2rem] leading-[1.1] font-medium tracking-[-.018em]">
+          <h2 className="m-0 font-sans text-[1.2rem] leading-[1.15] font-medium">
             {title}
           </h2>
           {description ? (

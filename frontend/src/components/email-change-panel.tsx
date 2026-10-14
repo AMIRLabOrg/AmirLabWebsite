@@ -1,5 +1,10 @@
 "use client";
 
+import {
+  WorkspaceRecordPanel,
+  WorkspaceRecordPanelTitle,
+} from "@/components/workspace-record";
+
 import { SyntheticEvent, useEffect, useState } from "react";
 import { useNotifications } from "@/components/notification-provider";
 import { ButtonControl } from "@/components/ui/button-control";
@@ -124,13 +129,15 @@ export function EmailChangePanel() {
   }
 
   return (
-    <section className="mt-[1.35rem] grid w-full gap-[1.2rem] border-y border-line-strong bg-transparent p-[1.55rem]">
+    <WorkspaceRecordPanel>
       <div className="flex items-end justify-between gap-8 border-b border-line pb-[.95rem]">
         <div>
-          <p className="m-0 mb-4 text-[.75rem] font-extrabold uppercase tracking-[.12em] text-brand">
+          <p className="m-0 mb-2 font-mono text-[.61rem] font-semibold uppercase tracking-[.11em] text-brand">
             Security
           </p>
-          <h2 className="text-[1.35rem] font-semibold">Change login email</h2>
+          <WorkspaceRecordPanelTitle>
+            Change login email
+          </WorkspaceRecordPanelTitle>
         </div>
       </div>
 
@@ -169,13 +176,13 @@ export function EmailChangePanel() {
             value={currentPassword}
           />
         </div>
-        <div>
+        <div className="flex justify-end">
           <ButtonControl
             disabled={saving || loading}
             loading={loading}
             busy={saving}
             type="submit"
-            variant="secondary"
+            variant="primary"
           >
             {status?.pending ? "Send a new code" : "Send verification code"}
           </ButtonControl>
@@ -205,7 +212,7 @@ export function EmailChangePanel() {
               value={otp}
             />
           </FormField>
-          <div>
+          <div className="flex justify-end">
             <ButtonControl
               disabled={saving || otp.length !== 6}
               busy={saving}
@@ -217,6 +224,6 @@ export function EmailChangePanel() {
           </div>
         </form>
       ) : null}
-    </section>
+    </WorkspaceRecordPanel>
   );
 }

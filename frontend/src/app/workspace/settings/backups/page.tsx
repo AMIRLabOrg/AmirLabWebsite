@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
-import { WorkspacePageShell } from "@/components/workspace-page-shell";
+import { WorkspaceContent } from "@/components/workspace-content";
 import { BackupSettings } from "@/components/backup-settings";
 export const metadata: Metadata = { title: "Backup & restore" };
 export default function BackupPage() {
   return (
-    <WorkspacePageShell>
+    <WorkspaceContent>
       <BackupSettings />
-    </WorkspacePageShell>
+    </WorkspaceContent>
   );
 }

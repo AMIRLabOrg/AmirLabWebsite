@@ -17,6 +17,7 @@ import { FormField } from "@/components/ui/form-field";
 import { ButtonControl, ButtonLink } from "@/components/ui/button-control";
 import { useNotifications } from "@/components/notification-provider";
 import { useAuth } from "@/components/auth-provider";
+import { WorkspaceRecordPanelTitle } from "@/components/workspace-record";
 
 interface ConnectionItem {
   displayName: string;
@@ -212,20 +213,17 @@ export function ResearchConnectionsPanel() {
   if (!authLoading && staff) {
     return (
       <section
-        className="frame-rail-section mt-6 grid gap-6 py-[clamp(1.2rem,3vw,2rem)]"
+        className="mt-6 grid gap-5 border border-line-strong bg-surface px-[var(--workspace-gutter)] py-5"
         aria-labelledby="research-admin-title"
       >
         <div>
-          <p className="m-0 mb-4 font-[var(--font-sans)] text-[.75rem] font-extrabold uppercase tracking-[.12em] text-brand">
+          <p className="m-0 mb-2 font-mono text-[.61rem] font-semibold uppercase tracking-[.11em] text-brand">
             Research administration
           </p>
-          <h2
-            className="mt-[.35rem] font-sans text-[clamp(1.8rem,4vw,2.8rem)]"
-            id="research-admin-title"
-          >
+          <WorkspaceRecordPanelTitle id="research-admin-title">
             Paper and dataset register
-          </h2>
-          <p className="mt-3 max-w-[720px] text-[.86rem] leading-[1.6] text-ink-muted">
+          </WorkspaceRecordPanelTitle>
+          <p className="mt-2 max-w-[700px] text-[.76rem] leading-[1.55] text-ink-muted">
             Staff create records on behalf of registered members. Imported and
             newly submitted records remain in the verification queue until
             contributor identities and source evidence are reviewed.
@@ -241,21 +239,18 @@ export function ResearchConnectionsPanel() {
   }
   return (
     <section
-      className="frame-rail-section mt-6 grid gap-6 py-[clamp(1.2rem,3vw,2rem)]"
+      className="mt-6 grid gap-5 border border-line-strong bg-surface px-[var(--workspace-gutter)] py-5"
       aria-labelledby="research-connections-title"
       data-loading={loading || undefined}
     >
       <div className="flex items-end justify-between gap-4 max-[640px]:flex-col max-[640px]:items-start">
         <div>
-          <p className="m-0 mb-4 font-[var(--font-sans)] text-[.75rem] font-extrabold uppercase tracking-[.12em] text-brand">
+          <p className="m-0 mb-2 font-mono text-[.61rem] font-semibold uppercase tracking-[.11em] text-brand">
             Entity relationships
           </p>
-          <h2
-            className="mt-[.35rem] font-sans text-[clamp(1.8rem,4vw,2.8rem)]"
-            id="research-connections-title"
-          >
+          <WorkspaceRecordPanelTitle id="research-connections-title">
             Research connections
-          </h2>
+          </WorkspaceRecordPanelTitle>
         </div>
         <Badge loading={loading}>{connections.length} verified</Badge>
       </div>
@@ -357,7 +352,7 @@ export function ResearchConnectionsPanel() {
       ) : null}
 
       <form
-        className="grid grid-cols-[minmax(220px,1fr)_minmax(220px,1fr)_auto] items-end gap-[.8rem] border-t border-line pt-5 max-[640px]:grid-cols-1"
+        className="grid grid-cols-2 items-end gap-4 border-t border-line pt-5 max-[640px]:grid-cols-1"
         ref={searchForm}
         onSubmit={(event) => {
           event.preventDefault();
@@ -392,6 +387,7 @@ export function ResearchConnectionsPanel() {
           />
         </FormField>
         <ButtonControl
+          className="col-span-2 justify-self-end max-[640px]:col-span-1"
           loading={loading}
           disabled={searching || draftQuery.trim().length < 2}
           type="submit"

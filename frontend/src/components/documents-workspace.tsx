@@ -6,7 +6,6 @@ import {
   Download,
   ExternalLink,
   FilePlus2,
-  FileText,
   Mail,
   Save,
   Send,
@@ -32,6 +31,8 @@ import { SelectControl } from "@/components/ui/select-control";
 import { API_URL } from "@/lib/api-url";
 import { apiRequest } from "@/lib/client-api";
 import { cn } from "@/lib/cn";
+import { WorkspaceHero } from "@/components/ui/workspace-surface";
+import { WorkspaceRecordPanelTitle } from "@/components/workspace-record";
 
 type DocumentKind = "OFFER" | "LETTER" | "CERTIFICATE";
 type WorkspaceView = "issue" | "templates" | "issued" | "approval";
@@ -175,22 +176,11 @@ export function DocumentsWorkspace() {
   return (
     <AdminOnly>
       <div className="grid gap-6" data-loading={initialLoading || undefined}>
-        <header className="frame-rail-section grid grid-cols-[42px_minmax(0,1fr)] items-start gap-5 py-5 max-[640px]:grid-cols-1">
-          <FileText aria-hidden="true" className="mt-1 text-brand" size={26} />
-          <div className="flex items-end justify-between gap-5 max-[720px]:items-start max-[720px]:flex-col">
-            <div>
-              <p className="m-0 font-mono text-[.64rem] font-semibold uppercase tracking-[.12em] text-brand">
-                Official records
-              </p>
-              <h1 className="mt-2 font-sans text-[clamp(2rem,4vw,3.4rem)] font-normal leading-none">
-                Documents
-              </h1>
-              <p className="mt-3 max-w-[700px] text-[.84rem] leading-[1.6] text-ink-muted">
-                Issue offers, letters, and certificates from versioned
-                templates. Every PDF keeps the approver and template values used
-                at issue time.
-              </p>
-            </div>
+        <WorkspaceHero
+          eyebrow="Official records"
+          title="Documents"
+          description="Issue offers, letters, and certificates from versioned templates. Every PDF keeps the approver and template values used at issue time."
+          action={
             <SegmentedControl
               ariaLabel="Document workspace view"
               disabled={initialLoading}
@@ -203,8 +193,8 @@ export function DocumentsWorkspace() {
               ]}
               value={view}
             />
-          </div>
-        </header>
+          }
+        />
 
         {error ? <FormMessage>{error}</FormMessage> : null}
         {view === "issue" ? (
@@ -357,9 +347,9 @@ function IssueDocumentPanel({
   }
 
   return (
-    <form className="grid gap-0" onSubmit={issue}>
-      <section className="frame-rail-section grid gap-5 py-[clamp(1rem,3vw,1.7rem)]">
-        <div className="grid grid-cols-3 gap-4 max-[820px]:grid-cols-1">
+    <form className="grid gap-5" onSubmit={issue}>
+      <section className="grid gap-5 border border-line-strong bg-surface px-[var(--workspace-gutter)] py-5">
+        <div className="grid grid-cols-2 gap-4 max-[640px]:grid-cols-1">
           <FormField label="Document type">
             <SelectControl
               disabled={loading || saving}
@@ -453,7 +443,7 @@ function IssueDocumentPanel({
         }
       />
       {error ? <FormMessage>{error}</FormMessage> : null}
-      <footer className="flex justify-end border-b border-line-strong px-[clamp(1rem,3vw,1.7rem)] py-5">
+      <footer className="flex justify-end border-t border-line py-5">
         <ButtonControl
           disabled={!templateId}
           busy={saving}
@@ -480,10 +470,10 @@ function KindFields({
 }) {
   if (kind === "OFFER") {
     return (
-      <section className="grid gap-4 border-b border-line-strong bg-transparent p-[clamp(1rem,3vw,1.7rem)]">
+      <section className="grid gap-4 border border-line-strong bg-surface px-[var(--workspace-gutter)] py-5">
         <header className="flex items-center gap-3 border-b border-line pb-4">
           <Send aria-hidden="true" className="text-brand" size={19} />
-          <strong>Offer details</strong>
+          <WorkspaceRecordPanelTitle>Offer details</WorkspaceRecordPanelTitle>
         </header>
         <div className="grid grid-cols-2 gap-4 max-[640px]:grid-cols-1">
           {[
@@ -525,10 +515,10 @@ function KindFields({
   }
   if (kind === "LETTER") {
     return (
-      <section className="grid gap-4 border-b border-line-strong bg-transparent p-[clamp(1rem,3vw,1.7rem)]">
+      <section className="grid gap-4 border border-line-strong bg-surface px-[var(--workspace-gutter)] py-5">
         <header className="flex items-center gap-3 border-b border-line pb-4">
           <Mail aria-hidden="true" className="text-brand" size={19} />
-          <strong>Letter details</strong>
+          <WorkspaceRecordPanelTitle>Letter details</WorkspaceRecordPanelTitle>
         </header>
         <FormField htmlFor="letter-subject" label="Subject">
           <InputControl
@@ -553,10 +543,12 @@ function KindFields({
     );
   }
   return (
-    <section className="grid gap-4 border-b border-line-strong bg-transparent p-[clamp(1rem,3vw,1.7rem)]">
+    <section className="grid gap-4 border border-line-strong bg-surface px-[var(--workspace-gutter)] py-5">
       <header className="flex items-center gap-3 border-b border-line pb-4">
         <Award aria-hidden="true" className="text-brand" size={20} />
-        <strong>Certificate details</strong>
+        <WorkspaceRecordPanelTitle>
+          Certificate details
+        </WorkspaceRecordPanelTitle>
       </header>
       <div className="grid grid-cols-2 gap-4 max-[640px]:grid-cols-1">
         <FormField htmlFor="certificate-program" label="Program">
@@ -719,7 +711,7 @@ function TemplatesPanel({
           ?.variables ?? []);
 
   return (
-    <div className="frame-rail-section grid grid-cols-[290px_minmax(0,1fr)] !px-0 max-[900px]:grid-cols-1">
+    <div className="grid grid-cols-[290px_minmax(0,1fr)] border border-line-strong bg-surface max-[900px]:grid-cols-1">
       <aside className="grid content-start border-r border-line-strong p-4 max-[900px]:border-r-0 max-[900px]:border-b">
         <ButtonControl
           className="mb-2 justify-start"
@@ -754,7 +746,10 @@ function TemplatesPanel({
         ))}
       </aside>
 
-      <form className="grid gap-5 p-[clamp(1rem,3vw,1.7rem)]" onSubmit={save}>
+      <form
+        className="grid gap-5 px-[var(--workspace-gutter)] py-5"
+        onSubmit={save}
+      >
         <div className="grid grid-cols-2 gap-4 max-[640px]:grid-cols-1">
           <FormField htmlFor="template-name" label="Template name">
             <InputControl
@@ -927,7 +922,7 @@ function IssuedPanel({
     <div className="grid gap-3">
       {documents.map((document) => (
         <article
-          className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-5 border-y border-line-strong bg-transparent p-4 max-[720px]:grid-cols-1"
+          className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-5 border border-line-strong bg-surface p-4 max-[720px]:grid-cols-1"
           key={document.id}
         >
           <div className="min-w-0">
@@ -1065,7 +1060,7 @@ function ApprovalPanel({
 
   return (
     <form className="grid gap-5" onSubmit={save}>
-      <section className="frame-rail-section grid gap-5 py-[clamp(1rem,3vw,1.7rem)]">
+      <section className="grid gap-5 border border-line-strong bg-surface px-[var(--workspace-gutter)] py-5">
         <header className="flex items-start gap-3 border-b border-line pb-4">
           <UserCheck
             aria-hidden="true"
@@ -1073,7 +1068,9 @@ function ApprovalPanel({
             size={20}
           />
           <div>
-            <strong>Document approval</strong>
+            <WorkspaceRecordPanelTitle>
+              Document approval
+            </WorkspaceRecordPanelTitle>
             <p className="mt-1 text-[.76rem] leading-[1.55] text-ink-muted">
               Choose the existing person whose identity verifies newly issued
               documents. Their profile remains the source for name, role, and
@@ -1118,9 +1115,11 @@ function ApprovalPanel({
         ) : null}
       </section>
 
-      <section className="frame-rail-section grid gap-4 py-[clamp(1rem,3vw,1.7rem)]">
+      <section className="grid gap-4 border border-line-strong bg-surface px-[var(--workspace-gutter)] py-5">
         <div>
-          <strong>Approval signature</strong>
+          <WorkspaceRecordPanelTitle>
+            Approval signature
+          </WorkspaceRecordPanelTitle>
           <p className="mt-1 text-[.76rem] leading-[1.55] text-ink-muted">
             Any valid image is normalized to a private PNG. If it is missing or
             unavailable, the PDF is generated without an image.
@@ -1177,9 +1176,11 @@ function ApprovalPanel({
         ) : null}
       </section>
 
-      <section className="frame-rail-section grid gap-4 py-[clamp(1rem,3vw,1.7rem)]">
+      <section className="grid gap-4 border border-line-strong bg-surface px-[var(--workspace-gutter)] py-5">
         <div>
-          <strong>Document watermark</strong>
+          <WorkspaceRecordPanelTitle>
+            Document watermark
+          </WorkspaceRecordPanelTitle>
           <p className="mt-1 text-[.76rem] leading-[1.55] text-ink-muted">
             Upload the Head logo or another valid image. It is stored privately,
             normalized to PNG, and centered behind every generated PDF page.

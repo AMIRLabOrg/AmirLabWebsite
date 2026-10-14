@@ -222,7 +222,7 @@ export function ApplicationReviewDetail({
           </p>
           <h2
             className={cn(
-              "font-sans text-[clamp(1.7rem,2.8vw,2.4rem)] leading-[1.1]",
+              "font-serif text-[clamp(1.7rem,3vw,2.35rem)] font-medium leading-[1.1]",
               loadingPlaceholder(loading, "text", "long"),
             )}
             data-placeholder="text"

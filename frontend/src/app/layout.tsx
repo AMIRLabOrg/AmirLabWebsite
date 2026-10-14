@@ -20,9 +20,6 @@ export const metadata: Metadata = {
     "Advanced Machine Intelligence Research Lab people, publications, datasets, projects, and opportunities.",
 };
 
-// Private and live sections remain request-bound inside their loading boundaries.
-export const instant = false;
-
 export default function RootLayout({
   children,
 }: {

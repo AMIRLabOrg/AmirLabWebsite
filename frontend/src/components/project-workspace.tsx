@@ -29,7 +29,14 @@ import { SelectControl } from "@/components/ui/select-control";
 import { apiRequest } from "@/lib/client-api";
 import { StatePanel } from "@/components/state-panel";
 import { cn } from "@/lib/cn";
-import { WorkspaceCollection } from "@/components/ui/workspace-surface";
+import {
+  WorkspaceCollection,
+  WorkspaceHero,
+} from "@/components/ui/workspace-surface";
+import {
+  WorkspaceRecordForm,
+  WorkspaceRecordPanelTitle,
+} from "@/components/workspace-record";
 import { ToolbarSearchField } from "@/components/ui/toolbar-search-field";
 import { FormField } from "@/components/ui/form-field";
 import { PaginationControls } from "@/components/pagination-controls";
@@ -536,53 +543,40 @@ export function ProjectManager({ id }: { id: string }) {
           </Link>
         ) : null}
       </div>
-      <header className="flex items-end justify-between gap-8 border-b border-line py-4 pb-[1.15rem] max-[640px]:items-start max-[640px]:flex-col max-[640px]:gap-4">
-        <div className="min-w-0">
-          <p className="mb-[.42rem] font-mono text-[.61rem] font-semibold tracking-[.11em] text-brand uppercase">
-            {currentProject.researchItem.reviewStatus === "ARCHIVED"
-              ? "ARCHIVED"
-              : (currentProject.status?.replaceAll("_", " ") ??
-                "Project workspace")}
-          </p>
-          <h1
+      <WorkspaceHero
+        action={
+          <span
             className={cn(
-              "my-[.25rem] mb-[.55rem] break-words font-sans text-[clamp(2.1rem,4vw,3.5rem)] leading-none font-medium tracking-[-.04em]",
-              loadingPlaceholder(loadingProject, "text", "long"),
+              "shrink-0 rounded-[2px] border border-line px-2 py-[.35rem] font-mono text-[.53rem] text-ink-muted uppercase",
+              loadingPlaceholder(loadingProject, "label", "medium"),
             )}
-            data-placeholder={loadingProject ? "text" : undefined}
-            data-placeholder-width="long"
+            data-placeholder={loadingProject ? "label" : undefined}
+            data-placeholder-width="medium"
           >
-            {currentProject.researchItem.title ??
-              (loadingProject ? "Loading project" : "Untitled project")}
-          </h1>
-          <p
-            className={cn(
-              "m-0 max-w-[720px] text-[.84rem] leading-[1.55] text-ink-muted",
-              loadingPlaceholder(loadingProject, "text", "full"),
-            )}
-            data-placeholder={loadingProject ? "text" : undefined}
-            data-placeholder-width="full"
-          >
-            {currentProject.researchItem.summary ??
-              currentProject.objective ??
-              (loadingProject
-                ? "Loading project summary"
-                : "No project summary yet.")}
-          </p>
-        </div>
-        <span
-          className={cn(
-            "shrink-0 rounded-[2px] border border-line px-2 py-[.35rem] font-mono text-[.53rem] text-ink-muted uppercase",
-            loadingPlaceholder(loadingProject, "label", "medium"),
-          )}
-          data-placeholder={loadingProject ? "label" : undefined}
-          data-placeholder-width="medium"
-        >
-          {currentProject.publicPageEnabled
-            ? "Public profile enabled"
-            : "Internal workspace"}
-        </span>
-      </header>
+            {currentProject.publicPageEnabled
+              ? "Public profile enabled"
+              : "Internal workspace"}
+          </span>
+        }
+        description={
+          currentProject.researchItem.summary ??
+          currentProject.objective ??
+          (loadingProject
+            ? "Loading project summary"
+            : "No project summary yet.")
+        }
+        eyebrow={
+          currentProject.researchItem.reviewStatus === "ARCHIVED"
+            ? "ARCHIVED"
+            : (currentProject.status?.replaceAll("_", " ") ??
+              "Project workspace")
+        }
+        loading={loadingProject}
+        title={
+          currentProject.researchItem.title ??
+          (loadingProject ? "Loading project" : "Untitled project")
+        }
+      />
       <div className="grid grid-cols-[repeat(3,minmax(0,1fr))_auto] border-b border-line-strong max-[900px]:grid-cols-3 max-[640px]:grid-cols-1">
         <div className="grid grid-cols-[1fr_auto] gap-x-2 gap-y-[.1rem] border-r border-line px-[.8rem] py-[.65rem] max-[640px]:border-r-0 max-[640px]:border-b">
           <span className="font-mono text-[.52rem] tracking-[.06em] text-ink-muted uppercase">
@@ -694,7 +688,7 @@ export function ProjectManager({ id }: { id: string }) {
           </p>
           <h2
             className={cn(
-              "my-[.2rem] font-sans text-[1.6rem] font-normal",
+              "m-0 font-sans text-[1.2rem] font-medium",
               loadingPlaceholder(loadingProject, "text", "medium"),
             )}
             data-placeholder={loadingProject ? "text" : undefined}
@@ -928,9 +922,7 @@ function Overview({
         <p className="mb-[.42rem] font-mono text-[.61rem] font-semibold tracking-[.11em] text-brand uppercase">
           Project record
         </p>
-        <h2 className="mt-[.4rem] mb-0 font-sans text-[clamp(1.6rem,3vw,2.3rem)] font-normal">
-          Overview
-        </h2>
+        <WorkspaceRecordPanelTitle>Overview</WorkspaceRecordPanelTitle>
       </header>
       <div className="border-t border-line">
         <div className="grid grid-cols-[120px_1fr] gap-4 border-b border-line py-4">
@@ -972,9 +964,9 @@ function Overview({
             <p className="mb-[.42rem] font-mono text-[.61rem] font-semibold tracking-[.11em] text-brand uppercase">
               Review queue
             </p>
-            <h2 className="mt-[.4rem] mb-0 font-sans text-[clamp(1.3rem,2.5vw,1.8rem)] font-normal">
+            <WorkspaceRecordPanelTitle>
               Pending review
-            </h2>
+            </WorkspaceRecordPanelTitle>
           </header>
           <ul className="m-0 grid list-none border-t border-line p-0">
             {project.changeRequests.map((request) => (
@@ -997,9 +989,9 @@ function Overview({
         <p className="mb-[.42rem] font-mono text-[.61rem] font-semibold tracking-[.11em] text-brand uppercase">
           Scope
         </p>
-        <h2 className="mt-[.4rem] mb-0 font-sans text-[clamp(1.6rem,3vw,2.3rem)] font-normal">
+        <WorkspaceRecordPanelTitle>
           Research objectives
-        </h2>
+        </WorkspaceRecordPanelTitle>
       </header>
       <ol className="m-0 list-none p-0">
         {(loading && !project.objectives.length
@@ -1083,9 +1075,7 @@ function Tasks({
           <p className="mb-[.42rem] font-mono text-[.61rem] font-semibold tracking-[.11em] text-brand uppercase">
             Operational work
           </p>
-          <h2 className="mt-[.4rem] mb-0 font-sans text-[clamp(1.6rem,3vw,2.3rem)] font-normal">
-            Tasks
-          </h2>
+          <WorkspaceRecordPanelTitle>Tasks</WorkspaceRecordPanelTitle>
         </div>
         <span className="font-mono text-[.65rem] text-ink-muted uppercase">
           {project.taskSummary?.openTasks ??
@@ -1093,8 +1083,8 @@ function Tasks({
           open
         </span>
       </header>
-      <form
-        className="grid grid-cols-[minmax(180px,1fr)_minmax(150px,.65fr)_minmax(130px,.45fr)_auto] items-end gap-4 border-y border-line-strong bg-transparent p-[1.2rem] max-[900px]:grid-cols-1"
+      <WorkspaceRecordForm
+        className="grid-cols-[minmax(180px,1fr)_minmax(150px,.65fr)_minmax(100px,.45fr)_minmax(130px,.65fr)] items-end max-[1100px]:grid-cols-2 max-[700px]:grid-cols-1"
         onSubmit={createTask}
       >
         <div className="grid gap-[.35rem] text-[.64rem] font-semibold">
@@ -1107,15 +1097,7 @@ function Tasks({
             value={title}
           />
         </div>
-        <div className="grid col-span-full gap-[.35rem] text-[.64rem] font-semibold max-[900px]:col-auto">
-          <label htmlFor="task-description">Details</label>
-          <TextareaControl
-            id="task-description"
-            onChange={(event) => setDescription(event.target.value)}
-            placeholder="Expected result, evidence, or handoff notes"
-            value={description}
-          />
-        </div>
+
         <label className="grid gap-[.35rem] text-[.64rem] font-semibold">
           Assignee
           <SearchableSelect
@@ -1146,7 +1128,17 @@ function Tasks({
             value={dueAt}
           />
         </label>
+        <div className="grid col-span-full gap-[.35rem] text-[.64rem] font-semibold">
+          <label htmlFor="task-description">Details</label>
+          <TextareaControl
+            id="task-description"
+            onChange={(event) => setDescription(event.target.value)}
+            placeholder="Expected result, evidence, or handoff notes"
+            value={description}
+          />
+        </div>
         <ButtonControl
+          className="col-span-full justify-self-end max-[700px]:w-full"
           disabled={busy || !title.trim()}
           busy={busy}
           type="submit"
@@ -1154,7 +1146,7 @@ function Tasks({
         >
           <Plus size={15} /> Add task
         </ButtonControl>
-      </form>
+      </WorkspaceRecordForm>
       <div className="grid border-t border-line">
         {project.tasks.length ? (
           project.tasks.map((task) => (
@@ -1275,9 +1267,7 @@ function Timeline({
           <p className="mb-[.42rem] font-mono text-[.61rem] font-semibold tracking-[.11em] text-brand uppercase">
             Weighted milestones
           </p>
-          <h2 className="mt-[.4rem] mb-0 font-sans text-[clamp(1.6rem,3vw,2.3rem)] font-normal">
-            Progress model
-          </h2>
+          <WorkspaceRecordPanelTitle>Progress model</WorkspaceRecordPanelTitle>
         </div>
       </header>
       {!items.length ? (
@@ -1401,22 +1391,22 @@ function Updates({
         <p className="mb-[.42rem] font-mono text-[.61rem] font-semibold tracking-[.11em] text-brand uppercase">
           Project activity
         </p>
-        <h2 className="mt-[.4rem] mb-0 font-sans text-[clamp(1.6rem,3vw,2.3rem)] font-normal">
-          Post an update
-        </h2>
+        <WorkspaceRecordPanelTitle>Post an update</WorkspaceRecordPanelTitle>
       </header>
-      <div className="grid grid-cols-2 gap-4 border-y border-line-strong bg-transparent p-[1.2rem] max-[640px]:grid-cols-1">
+      <div className="grid grid-cols-2 gap-[1.2rem] border border-line-strong bg-surface px-[var(--workspace-gutter)] py-5 max-[640px]:grid-cols-1">
         <InputControl
+          className="col-span-full"
           placeholder="Update title"
           value={title}
           onChange={(event) => setTitle(event.target.value)}
         />
         <TextareaControl
+          className="col-span-full"
           placeholder="What changed, what evidence was added, and what happens next?"
           value={body}
           onChange={(event) => setBody(event.target.value)}
         />
-        <div className="flex justify-end gap-[.6rem] max-[640px]:col-span-full">
+        <div className="col-span-full flex justify-end gap-[.6rem]">
           <ButtonControl
             disabled={busy}
             busy={busy}
@@ -1498,9 +1488,7 @@ function People({
         <p className="mb-[.42rem] font-mono text-[.61rem] font-semibold tracking-[.11em] text-brand uppercase">
           Contributor access
         </p>
-        <h2 className="mt-[.4rem] mb-0 font-sans text-[clamp(1.6rem,3vw,2.3rem)] font-normal">
-          Project team
-        </h2>
+        <WorkspaceRecordPanelTitle>Project team</WorkspaceRecordPanelTitle>
       </header>
       <div className="grid border-t border-line">
         {project.memberships.map((item) => (
@@ -1521,8 +1509,8 @@ function People({
           </article>
         ))}
       </div>
-      <form
-        className="grid grid-cols-[minmax(180px,1fr)_minmax(150px,.6fr)_minmax(180px,1fr)_auto] items-end gap-[.8rem] border-y border-line-strong bg-transparent p-4 max-[900px]:grid-cols-2 max-[640px]:grid-cols-1"
+      <WorkspaceRecordForm
+        className="grid grid-cols-[minmax(180px,1fr)_minmax(150px,.6fr)_minmax(180px,1fr)_auto] items-end gap-[1.2rem] max-[900px]:grid-cols-2 max-[640px]:grid-cols-1"
         onSubmit={(event) => {
           event.preventDefault();
           save({
@@ -1556,7 +1544,7 @@ function People({
         <ButtonControl disabled={busy || !personId} busy={busy} type="submit">
           Add member
         </ButtonControl>
-      </form>
+      </WorkspaceRecordForm>
     </div>
   );
 }
@@ -1585,9 +1573,7 @@ function Outputs({
         <p className="mb-[.42rem] font-mono text-[.61rem] font-semibold tracking-[.11em] text-brand uppercase">
           Connected records
         </p>
-        <h2 className="mt-[.4rem] mb-0 font-sans text-[clamp(1.6rem,3vw,2.3rem)] font-normal">
-          Research outputs
-        </h2>
+        <WorkspaceRecordPanelTitle>Research outputs</WorkspaceRecordPanelTitle>
       </header>
       <div className="grid border-t border-line">
         {project.outputReferences.map((reference) => (
@@ -1647,8 +1633,8 @@ function Outputs({
           </a>
         ))}
       </div>
-      <form
-        className="grid grid-cols-[minmax(200px,1fr)_minmax(130px,.35fr)_auto] items-end gap-[.8rem] border-y border-line-strong bg-transparent p-4 max-[640px]:grid-cols-1"
+      <WorkspaceRecordForm
+        className="grid grid-cols-[minmax(200px,1fr)_minmax(130px,.35fr)_auto] items-end gap-[1.2rem] max-[640px]:grid-cols-1"
         onSubmit={(event) => {
           event.preventDefault();
           output({
@@ -1687,9 +1673,9 @@ function Outputs({
         >
           Add reference
         </ButtonControl>
-      </form>
-      <form
-        className="grid grid-cols-[minmax(200px,1fr)_minmax(130px,.35fr)_auto] items-end gap-[.8rem] border-y border-line-strong bg-transparent p-4 max-[640px]:grid-cols-1"
+      </WorkspaceRecordForm>
+      <WorkspaceRecordForm
+        className="grid grid-cols-[minmax(200px,1fr)_minmax(130px,.35fr)_auto] items-end gap-[1.2rem] max-[640px]:grid-cols-1"
         onSubmit={(event) => {
           event.preventDefault();
           resource({ label, url, kind: "LINK" });
@@ -1720,7 +1706,7 @@ function Outputs({
         >
           Add resource
         </ButtonControl>
-      </form>
+      </WorkspaceRecordForm>
     </div>
   );
 }
@@ -1749,12 +1735,10 @@ function Settings({
         <p className="mb-[.42rem] font-mono text-[.61rem] font-semibold tracking-[.11em] text-brand uppercase">
           Project configuration
         </p>
-        <h2 className="mt-[.4rem] mb-0 font-sans text-[clamp(1.6rem,3vw,2.3rem)] font-normal">
-          Settings
-        </h2>
+        <WorkspaceRecordPanelTitle>Settings</WorkspaceRecordPanelTitle>
       </header>
-      <form
-        className="grid grid-cols-2 gap-4 border-y border-line-strong bg-transparent p-[1.2rem] max-[640px]:grid-cols-1"
+      <WorkspaceRecordForm
+        className="grid-cols-2 max-[700px]:grid-cols-1"
         onSubmit={(event) => {
           event.preventDefault();
           save({
@@ -1846,7 +1830,7 @@ function Settings({
         >
           <Save size={15} /> Save settings
         </ButtonControl>
-      </form>
+      </WorkspaceRecordForm>
       {project.researchItem.reviewStatus !== "ARCHIVED" ? (
         <div className="flex items-center justify-between border border-danger/35 bg-danger-soft p-4 max-[640px]:items-stretch max-[640px]:flex-col max-[640px]:gap-3">
           <div>

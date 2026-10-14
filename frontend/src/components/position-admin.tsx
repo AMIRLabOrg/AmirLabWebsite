@@ -25,9 +25,15 @@ import {
 } from "@/components/ui/semantic-status";
 import { useReviewIssues } from "@/lib/use-review-issues";
 import {
+  WorkspaceHero,
   WorkspaceCollection,
   WorkspaceRow,
 } from "@/components/ui/workspace-surface";
+import {
+  WorkspaceRecordPanel,
+  WorkspaceRecordPanelHeader,
+  WorkspaceRecordPanelTitle,
+} from "@/components/workspace-record";
 
 const POSITION_TYPES = [
   "INTERNSHIP",
@@ -428,70 +434,57 @@ export function PositionAdminEditor({ id }: { id?: string }) {
         data-loading={editorLoading || undefined}
         onSubmit={submit}
       >
-        <header className="frame-rail-section flex items-end justify-between gap-4 py-[1.1rem] max-[760px]:flex-col max-[760px]:items-stretch">
-          <div>
-            <p className="m-0 mb-4 font-[var(--font-sans)] text-[.75rem] font-extrabold uppercase tracking-[.12em] text-brand">
-              Job posts
-            </p>
-            <h2
-              className={cn(
-                "mt-[.35rem] font-sans text-[clamp(1.8rem,3vw,2.4rem)] font-normal leading-none",
-                loadingPlaceholder(editorLoading, "text", "medium"),
-              )}
-              data-placeholder={editorLoading ? "text" : undefined}
-              data-placeholder-width="medium"
-            >
-              {id ? "Edit job post" : "Create job post"}
-            </h2>
-            <p className="mt-[.55rem] max-w-[680px] text-[.82rem] leading-[1.55] text-ink-muted">
-              New posts stay disabled until you enable them. Application timing
-              remains separate from the engagement period.
-            </p>
-          </div>
-          <div className="flex flex-wrap justify-end gap-[.6rem] max-[760px]:justify-stretch">
-            {id ? (
-              <>
-                <ButtonControl
-                  compact
-                  className={loadingPlaceholder(editorLoading, "control")}
-                  data-placeholder={editorLoading ? "control" : undefined}
-                  disabled={editorLoading || saving}
-                  onClick={() => void toggleEnabled()}
-                  type="button"
-                  variant="secondary"
-                >
-                  {enabled ? (
-                    <CircleOff aria-hidden="true" size={16} />
-                  ) : (
-                    <CirclePlay aria-hidden="true" size={16} />
-                  )}
-                  {enabled ? "Disable" : "Enable"}
-                </ButtonControl>
-                <ButtonControl
-                  compact
-                  className={loadingPlaceholder(editorLoading, "control")}
-                  data-placeholder={editorLoading ? "control" : undefined}
-                  disabled={editorLoading || saving}
-                  onClick={() => setDeletePending(true)}
-                  type="button"
-                  variant="danger"
-                >
-                  <Trash2 aria-hidden="true" size={16} /> Delete
-                </ButtonControl>
-              </>
-            ) : null}
-            <ButtonControl
-              compact
-              className={loadingPlaceholder(editorLoading, "control")}
-              data-placeholder={editorLoading ? "control" : undefined}
-              disabled={editorLoading || saving}
-              type="submit"
-            >
-              <Save aria-hidden="true" size={16} />{" "}
-              {id ? "Save changes" : "Create job post"}
-            </ButtonControl>
-          </div>
-        </header>
+        <WorkspaceHero
+          action={
+            <div className="flex flex-wrap justify-end gap-[.6rem] max-[760px]:justify-stretch">
+              {id ? (
+                <>
+                  <ButtonControl
+                    compact
+                    className={loadingPlaceholder(editorLoading, "control")}
+                    data-placeholder={editorLoading ? "control" : undefined}
+                    disabled={editorLoading || saving}
+                    onClick={() => void toggleEnabled()}
+                    type="button"
+                    variant="secondary"
+                  >
+                    {enabled ? (
+                      <CircleOff aria-hidden="true" size={16} />
+                    ) : (
+                      <CirclePlay aria-hidden="true" size={16} />
+                    )}
+                    {enabled ? "Disable" : "Enable"}
+                  </ButtonControl>
+                  <ButtonControl
+                    compact
+                    className={loadingPlaceholder(editorLoading, "control")}
+                    data-placeholder={editorLoading ? "control" : undefined}
+                    disabled={editorLoading || saving}
+                    onClick={() => setDeletePending(true)}
+                    type="button"
+                    variant="danger"
+                  >
+                    <Trash2 aria-hidden="true" size={16} /> Delete
+                  </ButtonControl>
+                </>
+              ) : null}
+              <ButtonControl
+                compact
+                className={loadingPlaceholder(editorLoading, "control")}
+                data-placeholder={editorLoading ? "control" : undefined}
+                disabled={editorLoading || saving}
+                type="submit"
+              >
+                <Save aria-hidden="true" size={16} />{" "}
+                {id ? "Save changes" : "Create job post"}
+              </ButtonControl>
+            </div>
+          }
+          description="New posts stay disabled until you enable them. Application timing remains separate from the engagement period."
+          eyebrow="Job posts"
+          loading={editorLoading}
+          title={id ? "Edit job post" : "Create job post"}
+        />
         {submitError ? (
           <p
             className="m-0 border-l-[3px] border-danger bg-danger-soft px-4 py-3 text-[.78rem] text-danger"
@@ -500,16 +493,14 @@ export function PositionAdminEditor({ id }: { id?: string }) {
             {submitError}
           </p>
         ) : null}
-        <section className="frame-rail-section grid gap-6 py-[clamp(1.25rem,3vw,2rem)]">
-          <div className="grid gap-1 border-b border-line pb-[1.15rem]">
-            <h3 className="m-0 text-[clamp(1.35rem,2.5vw,1.8rem)]">
-              Role basics
-            </h3>
+        <WorkspaceRecordPanel>
+          <WorkspaceRecordPanelHeader>
+            <WorkspaceRecordPanelTitle>Role basics</WorkspaceRecordPanelTitle>
             <p className="m-0 text-[.78rem] leading-[1.5] text-ink-muted">
               Public-facing role information and internal categorization.
             </p>
-          </div>
-          <div className="grid grid-cols-2 gap-4 max-[760px]:grid-cols-1">
+          </WorkspaceRecordPanelHeader>
+          <div className="grid grid-cols-2 gap-[1.2rem] max-[700px]:grid-cols-1">
             <Field label="Title">
               <InputControl
                 loading={editorLoading}
@@ -584,16 +575,16 @@ export function PositionAdminEditor({ id }: { id?: string }) {
               />
             </Field>
           </div>
-        </section>
-        <section className="frame-rail-section grid gap-6 py-[clamp(1.25rem,3vw,2rem)]">
-          <div className="grid gap-1 border-b border-line pb-[1.15rem]">
-            <h3 className="m-0 text-[clamp(1.35rem,2.5vw,1.8rem)]">Timing</h3>
+        </WorkspaceRecordPanel>
+        <WorkspaceRecordPanel>
+          <WorkspaceRecordPanelHeader>
+            <WorkspaceRecordPanelTitle>Timing</WorkspaceRecordPanelTitle>
             <p className="m-0 text-[.78rem] leading-[1.5] text-ink-muted">
               Use local time for application windows. Leave close date empty for
               rolling applications.
             </p>
-          </div>
-          <div className="grid grid-cols-2 gap-4 max-[760px]:grid-cols-1">
+          </WorkspaceRecordPanelHeader>
+          <div className="grid grid-cols-2 gap-[1.2rem] max-[700px]:grid-cols-1">
             <Field label="Applications open">
               <DateTimeField
                 disabled={editorLoading}
@@ -693,18 +684,18 @@ export function PositionAdminEditor({ id }: { id?: string }) {
               </p>
             ) : null}
           </div>
-        </section>
-        <section className="frame-rail-section grid gap-6 py-[clamp(1.25rem,3vw,2rem)]">
-          <div className="grid gap-1 border-b border-line pb-[1.15rem]">
-            <h3 className="m-0 text-[clamp(1.35rem,2.5vw,1.8rem)]">
+        </WorkspaceRecordPanel>
+        <WorkspaceRecordPanel>
+          <WorkspaceRecordPanelHeader>
+            <WorkspaceRecordPanelTitle>
               Public content
-            </h3>
+            </WorkspaceRecordPanelTitle>
             <p className="m-0 text-[.78rem] leading-[1.5] text-ink-muted">
               Keep the public posting scannable with one summary and focused
               lists.
             </p>
-          </div>
-          <div className="grid grid-cols-2 gap-4 max-[760px]:grid-cols-1">
+          </WorkspaceRecordPanelHeader>
+          <div className="grid grid-cols-2 gap-[1.2rem] max-[700px]:grid-cols-1">
             <Field full label="Overview">
               <TextareaControl
                 loading={editorLoading}
@@ -761,7 +752,7 @@ export function PositionAdminEditor({ id }: { id?: string }) {
               values={form.requirements}
             />
           </div>
-        </section>
+        </WorkspaceRecordPanel>
       </form>
       <ConfirmDialog
         busy={saving}
@@ -788,7 +779,7 @@ function Field({
 }) {
   return (
     <label
-      className={`grid min-w-0 content-start gap-[.4rem] ${full ? "col-span-full max-[760px]:col-span-1" : ""}`}
+      className={`grid min-w-0 content-start gap-[.4rem] ${full ? "col-span-full max-[700px]:col-span-1" : ""}`}
     >
       <span className="text-[.78rem] font-semibold leading-[1.35] text-ink">
         {label}
@@ -829,7 +820,7 @@ function ListEditor({
   }
 
   return (
-    <div className="col-span-full grid min-w-0 content-start gap-[.4rem] max-[760px]:col-span-1">
+    <div className="col-span-full grid min-w-0 content-start gap-[.4rem] max-[700px]:col-span-1">
       <span className="text-[.78rem] font-semibold leading-[1.35] text-ink">
         {label}
       </span>

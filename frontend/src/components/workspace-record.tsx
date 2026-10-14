@@ -1,9 +1,8 @@
 import { cn } from "@/lib/cn";
-import { loadingPlaceholder } from "@/lib/loading-style";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import type { ComponentPropsWithoutRef, ReactNode } from "react";
-import { WorkspaceRuleBand } from "@/components/ui/workspace-surface";
+import { WorkspaceHero } from "@/components/ui/workspace-surface";
 
 interface WorkspaceRecordProps {
   actions?: ReactNode;
@@ -22,13 +21,10 @@ export function WorkspaceRecordForm({
   ...props
 }: ComponentPropsWithoutRef<"form">) {
   return (
-    <form
-      className="relative border border-line-strong bg-surface"
-      {...props}
-    >
+    <form className="relative border border-line-strong bg-surface" {...props}>
       <div
         className={cn(
-          "mx-auto grid w-full max-w-[820px] gap-[1.35rem] px-[var(--workspace-gutter)] py-[clamp(1.25rem,3vw,2rem)] max-[640px]:px-4",
+          "grid w-full gap-[1.35rem] px-[var(--workspace-gutter)] py-5",
           className,
         )}
       >
@@ -45,13 +41,10 @@ export function WorkspaceRecordPanel({
 }: ComponentPropsWithoutRef<"section">) {
   return (
     <section
-      className={cn(
-        "relative border border-line-strong bg-surface",
-        className,
-      )}
+      className={cn("relative border border-line-strong bg-surface", className)}
       {...props}
     >
-      <div className="mx-auto grid w-full max-w-[820px] gap-[1.35rem] px-[var(--workspace-gutter)] py-[clamp(1.25rem,3vw,2rem)] max-[640px]:px-4">
+      <div className="grid w-full gap-[1.35rem] px-[var(--workspace-gutter)] py-5">
         {children}
       </div>
     </section>
@@ -80,7 +73,7 @@ export function WorkspaceRecordPanelTitle({
   return (
     <h2
       className={cn(
-        "m-0 font-sans text-[clamp(1.2rem,2vw,1.55rem)] font-medium leading-[1.15]",
+        "m-0 font-sans text-[1.2rem] font-medium leading-[1.15]",
         className,
       )}
       {...props}
@@ -109,33 +102,13 @@ export function WorkspaceRecord({
       >
         <ArrowLeft aria-hidden="true" size={15} /> {backLabel}
       </Link>
-      <WorkspaceRuleBand contentClassName="flex items-end justify-between gap-4 py-5 max-[700px]:flex-col max-[700px]:items-stretch">
-        <div>
-          <p className="m-0 mb-2 font-mono text-[.58rem] font-semibold uppercase tracking-[.11em] text-brand">
-            {eyebrow}
-          </p>
-          <h1
-            className={cn(
-              "mt-[.2rem] font-serif text-[clamp(1.7rem,3vw,2.35rem)] font-medium leading-[1.02] tracking-[-.03em]",
-              loadingPlaceholder(loading, "text", "long"),
-            )}
-            data-placeholder={loading ? "text" : undefined}
-            data-placeholder-width="long"
-          >
-            {title}
-          </h1>
-          {description ? (
-            <p className="mt-[.55rem] max-w-[640px] text-[.76rem] leading-[1.55] text-ink-muted">
-              {description}
-            </p>
-          ) : null}
-        </div>
-        {actions ? (
-          <div className="flex flex-wrap justify-end gap-[.65rem] max-[700px]:justify-start">
-            {actions}
-          </div>
-        ) : null}
-      </WorkspaceRuleBand>
+      <WorkspaceHero
+        eyebrow={eyebrow}
+        title={title}
+        description={description}
+        action={actions}
+        loading={loading}
+      />
       {children}
     </div>
   );

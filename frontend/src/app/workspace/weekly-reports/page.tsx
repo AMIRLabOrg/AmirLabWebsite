@@ -1,10 +1,13 @@
+import { WorkspaceContent } from "@/components/workspace-content";
 import { WeeklyReports } from "@/components/weekly-reports";
 import { MemberOnly } from "@/components/member-only";
 
 export default function WeeklyReportsPage() {
   return (
-    <MemberOnly>
-      <WeeklyReports />
-    </MemberOnly>
+    <WorkspaceContent>
+      <MemberOnly>
+        <WeeklyReports />
+      </MemberOnly>
+    </WorkspaceContent>
   );
 }

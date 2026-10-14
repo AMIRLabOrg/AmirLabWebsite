@@ -997,7 +997,7 @@ export function ResearchReviewQueue() {
                     </div>
                     <h2
                       className={cn(
-                        "m-0 font-sans text-[clamp(1.75rem,2.7vw,2.45rem)] leading-[1.08] [overflow-wrap:anywhere]",
+                        "m-0 font-serif text-[clamp(1.7rem,3vw,2.35rem)] font-medium leading-[1.08] [overflow-wrap:anywhere]",
                         loadingPlaceholder(loadingDetail, "text", "full"),
                       )}
                       data-placeholder={loadingDetail ? "text" : undefined}

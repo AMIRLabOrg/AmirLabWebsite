@@ -53,3 +53,9 @@ Controls use skeletons only before their initial data arrives. Later refreshes p
 ## Hosted upgrade
 
 The reviewed `backend/deploy/2026-10-14-openalex-library.sql` upgrades the existing schema without reseeding live accounts or settings. It guards the observed counts and empty legacy references, retires Scholar metrics, and queues current author bindings for full sync. Apply only with the old backend stopped, then verify schema equivalence before deploying. Fresh author associations temporarily leave the public catalogue empty until sync completes. Fly releases run schema checks without seeding files into an unmounted release container.
+
+Dependency review upgraded Next.js to 16.3.8 and patched sharp, source-map-js, handlebars and Prisma tooling dependencies. The remaining unpatched advisories are development-only: braces in ESLint's file-pattern handling and sprintf-js in Jest/Istanbul. Application HTTP inputs do not reach either path; do not feed untrusted glob patterns into the lint tooling.
+
+Workspace pages share the same outer rails, compact serif record heading, white bordered panels, sans section headings, responsive field pairs, and right-aligned primary save actions. Long text fields use a full row. Desktop navigation shows placeholders until the role is known; mobile navigation stays disabled during that check. Initial access checks use skeleton panels rather than warning cards.
+
+The workspace shell renders route segments unconditionally so Next can validate them. Each page gates its client content with `WorkspacePageShell` or `WorkspaceContent`; neither controls nor effects mount before session validation. Server page modules must not fetch private records before that gate: all private APIs continue to enforce session and role checks on the backend. The gate resets client state on account changes. Suspense fallbacks keep the shell visible while route parameters resolve. No Instant Navigation opt-out is required.

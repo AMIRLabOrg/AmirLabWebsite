@@ -1,13 +1,13 @@
 import type { Metadata } from "next";
-import { WorkspacePageShell } from "@/components/workspace-page-shell";
+import { WorkspaceContent } from "@/components/workspace-content";
 import { WorkersMonitor } from "@/components/workers-monitor";
 
 export const metadata: Metadata = { title: "Workers & tasks" };
 
 export default function WorkersPage() {
   return (
-    <WorkspacePageShell>
+    <WorkspaceContent>
       <WorkersMonitor />
-    </WorkspacePageShell>
+    </WorkspaceContent>
   );
 }

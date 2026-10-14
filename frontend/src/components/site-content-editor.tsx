@@ -24,6 +24,10 @@ import type {
   SiteContentResponse,
 } from "@/lib/types";
 import { ButtonControl } from "@/components/ui/button-control";
+import {
+  WorkspaceHero,
+  WorkspacePanel,
+} from "@/components/ui/workspace-surface";
 
 export type SiteContentPage = "about" | "home";
 type EditableContent = AboutContent | HomeContent;
@@ -133,35 +137,28 @@ export function SiteContentEditor({ page }: { page: SiteContentPage }) {
           data-loading={loading || undefined}
           onSubmit={submit}
         >
-          <header className="frame-rail-section flex items-center justify-between gap-8 py-[clamp(1.25rem,2.5vw,1.75rem)] max-[760px]:flex-col max-[760px]:items-start max-[760px]:gap-[.7rem]">
-            <div>
-              <p className="m-0 mb-4 font-[var(--font-sans)] text-[.75rem] font-extrabold uppercase tracking-[.12em] text-brand">
-                Public content
-              </p>
-              <h2 className="mb-[.55rem] mt-[.35rem] text-[clamp(1.55rem,3vw,2.1rem)] font-bold tracking-[-.025em]">
-                {page === "home" ? "Home page" : "About page"}
-              </h2>
-              <p className="m-0 max-w-[680px] text-[.82rem] leading-[1.55] text-ink-muted">
-                Text updates publish directly. Research lists, people,
-                positions, and statistics remain connected to their verified
-                records.
-              </p>
-            </div>
-            <span
-              className={cn(
-                "whitespace-nowrap rounded-small border border-line bg-surface-subtle px-3 py-2 font-mono text-[.62rem] text-ink-muted",
-                loadingPlaceholder(loading, "label", "medium"),
-              )}
-              data-placeholder={loading ? "label" : undefined}
-              data-placeholder-width="medium"
-            >
-              {updatedAt
-                ? `Last saved ${new Date(updatedAt).toLocaleString()}`
-                : loading
-                  ? "Loading saved state"
-                  : "Using designed defaults"}
-            </span>
-          </header>
+          <WorkspaceHero
+            eyebrow="Public content"
+            title={page === "home" ? "Home page" : "About page"}
+            description="Text updates publish directly. Research lists, people, positions, and statistics remain connected to their verified records."
+            loading={loading}
+            action={
+              <span
+                className={cn(
+                  "whitespace-nowrap rounded-small border border-line bg-surface-subtle px-3 py-2 font-mono text-[.62rem] text-ink-muted",
+                  loadingPlaceholder(loading, "label", "medium"),
+                )}
+                data-placeholder={loading ? "label" : undefined}
+                data-placeholder-width="medium"
+              >
+                {updatedAt
+                  ? `Last saved ${new Date(updatedAt).toLocaleString()}`
+                  : loading
+                    ? "Loading saved state"
+                    : "Using designed defaults"}
+              </span>
+            }
+          />
 
           {page === "home" ? (
             <HomeFields
@@ -182,7 +179,7 @@ export function SiteContentEditor({ page }: { page: SiteContentPage }) {
               {error}
             </p>
           ) : null}
-          <footer className="sticky bottom-0 z-[5] flex items-center justify-end gap-3 border-t border-line bg-[color-mix(in_srgb,var(--canvas)_92%,transparent)] py-4 max-[760px]:grid max-[760px]:grid-cols-2 max-[760px]:items-stretch">
+          <footer className="sticky bottom-0 z-[5] flex items-center justify-end gap-3 border-t border-line bg-[color-mix(in_srgb,var(--canvas)_92%,transparent)] py-4 flex-wrap">
             <Link
               className="inline-flex min-h-[44px] items-center justify-center rounded-control border border-line bg-surface px-4 py-[.66rem] text-[.82rem] font-semibold hover:border-brand hover:text-brand"
               href={page === "home" ? "/" : "/about"}
@@ -194,6 +191,7 @@ export function SiteContentEditor({ page }: { page: SiteContentPage }) {
             <ButtonControl
               disabled={loading || saving}
               loading={loading}
+              busy={saving}
               type="submit"
             >
               Publish content
@@ -242,7 +240,7 @@ function HomeFields({
           onChange={update}
           value={content.heroIntroduction}
         />
-        <div className="grid grid-cols-2 gap-4 max-[760px]:grid-cols-1">
+        <div className="col-span-2 grid grid-cols-2 gap-4 max-[640px]:col-span-1 max-[640px]:grid-cols-1">
           <TextField
             loading={loading}
             label="Primary action label"
@@ -262,7 +260,7 @@ function HomeFields({
         </div>
       </EditorSection>
       <EditorSection eyebrow="Research" title="Latest work heading">
-        <div className="grid grid-cols-2 gap-4 max-[760px]:grid-cols-1">
+        <div className="col-span-2 grid grid-cols-2 gap-4 max-[640px]:col-span-1 max-[640px]:grid-cols-1">
           <TextField
             loading={loading}
             label="Eyebrow"
@@ -396,7 +394,7 @@ function AboutFields({
           onChange={update}
           value={content.focusTitle}
         />
-        <div className="grid gap-[.65rem]">
+        <div className="col-span-2 grid gap-[.65rem] max-[640px]:col-span-1">
           {content.focusAreas.map((area, index) => (
             <div
               className="grid grid-cols-[28px_minmax(0,1fr)_40px] items-center gap-[.65rem]"
@@ -465,7 +463,7 @@ function AboutFields({
           onChange={update}
           value={content.organizationBody}
         />
-        <div className="grid gap-[.65rem]">
+        <div className="col-span-2 grid gap-[.65rem] max-[640px]:col-span-1">
           {content.facts.map((fact, index) => (
             <div
               className="grid grid-cols-[28px_minmax(120px,.55fr)_minmax(180px,1fr)_40px] items-center gap-[.65rem] max-[760px]:grid-cols-[28px_minmax(0,1fr)_40px]"
@@ -487,6 +485,7 @@ function AboutFields({
               <InputControl
                 loading={loading}
                 aria-label={`Fact ${index + 1} value`}
+                className="max-[760px]:col-start-2 max-[760px]:row-start-2"
                 maxLength={160}
                 onChange={(event) =>
                   updateFact(index, "value", event.target.value)
@@ -563,17 +562,11 @@ function EditorSection({
   title: string;
 }) {
   return (
-    <section className="frame-rail-section grid gap-5 py-[clamp(1.25rem,2.5vw,1.75rem)]">
-      <header className="border-b border-line pb-4">
-        <p className="m-0 mb-4 font-[var(--font-sans)] text-[.75rem] font-extrabold uppercase tracking-[.12em] text-brand">
-          {eyebrow}
-        </p>
-        <h3 className="mt-[.35rem] text-[1.1rem] font-bold leading-[1.25] tracking-[-.01em]">
-          {title}
-        </h3>
-      </header>
-      <div className="grid min-w-0 gap-4">{children}</div>
-    </section>
+    <WorkspacePanel eyebrow={eyebrow} title={title}>
+      <div className="grid min-w-0 grid-cols-2 gap-4 px-[var(--workspace-gutter)] py-5 max-[640px]:grid-cols-1">
+        {children}
+      </div>
+    </WorkspacePanel>
   );
 }
 
@@ -596,7 +589,12 @@ function TextField({
 }) {
   const id = `site-content-${name}`;
   return (
-    <div className="grid gap-[.45rem]">
+    <div
+      className={cn(
+        "grid gap-[.45rem]",
+        area && "col-span-2 max-[640px]:col-span-1",
+      )}
+    >
       <label
         className="text-[.78rem] font-semibold tracking-[.04em]"
         htmlFor={id}

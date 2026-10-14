@@ -175,7 +175,7 @@ export function ProfileReviewDetail({
           </p>
           <h2
             className={cn(
-              "font-sans text-[clamp(1.6rem,3vw,2.4rem)] font-medium leading-[1.08]",
+              "font-serif text-[clamp(1.7rem,3vw,2.35rem)] font-medium leading-[1.08]",
               loadingPlaceholder(loading, "text", "long"),
             )}
             data-placeholder="text"
@@ -350,7 +350,7 @@ function ProfileDiff({
           </p>
           <h2
             className={cn(
-              "m-0 font-sans text-[clamp(1.4rem,2.4vw,2rem)] font-normal leading-[1.1]",
+              "m-0 font-sans text-[1.2rem] font-medium leading-[1.15]",
               loadingPlaceholder(loading, "text", "medium"),
             )}
             data-placeholder={loading ? "text" : undefined}

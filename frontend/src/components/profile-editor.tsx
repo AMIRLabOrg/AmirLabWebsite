@@ -18,6 +18,10 @@ import { useAuth } from "@/components/auth-provider";
 import { ConfirmDialog } from "@/components/confirm-dialog";
 import { useNotifications } from "@/components/notification-provider";
 import { StatePanel } from "@/components/state-panel";
+import {
+  WorkspaceRecordPanel,
+  WorkspaceRecordPanelTitle,
+} from "@/components/workspace-record";
 import { ASSET_URL } from "@/lib/api-url";
 import { apiRequest } from "@/lib/client-api";
 import type {
@@ -422,7 +426,7 @@ export function ProfileEditor({ userId }: ProfileEditorProps) {
       data-loading={editorLoading || undefined}
       onSubmit={submit}
     >
-      <header className="sticky top-[64px] z-10 col-span-full -mx-[var(--workspace-gutter)] flex items-center justify-between gap-4 border-y border-line-strong bg-[color-mix(in_srgb,var(--surface)_94%,transparent)] px-[var(--workspace-gutter)] py-[.7rem] backdrop-blur-[12px] max-[820px]:top-[55px] max-[640px]:mx-0 max-[640px]:flex-col max-[640px]:items-stretch max-[640px]:px-4">
+      <header className="sticky top-[64px] z-10 col-span-full flex items-center justify-between gap-4 border border-line-strong bg-[color-mix(in_srgb,var(--surface)_94%,transparent)] px-[var(--workspace-gutter)] py-[.7rem] backdrop-blur-[12px] max-[820px]:top-[55px] max-[640px]:flex-col max-[640px]:items-stretch max-[640px]:px-4">
         <p className="m-0 flex items-center gap-[.55rem] text-[.76rem] text-ink-muted">
           <span className="h-[7px] w-[7px] rounded-full bg-brand" />
           {userId || user?.role === "ADMIN"
@@ -447,7 +451,7 @@ export function ProfileEditor({ userId }: ProfileEditorProps) {
           {accountError}
         </p>
       ) : null}
-      <section className="relative col-span-full -mx-[var(--workspace-gutter)] flex items-center gap-[1.6rem] border-y border-line-strong bg-transparent px-[var(--workspace-gutter)] py-[1.6rem] max-[640px]:mx-0 max-[640px]:flex-col max-[640px]:items-start max-[640px]:px-4">
+      <section className="relative col-span-full flex items-center gap-[1.6rem] border border-line-strong bg-surface px-[var(--workspace-gutter)] py-[1.6rem] max-[640px]:flex-col max-[640px]:items-start max-[640px]:px-4">
         <div
           className={cn(
             "relative flex h-28 w-28 flex-[0_0_112px] items-center justify-center rounded-full border border-dashed border-[color-mix(in_srgb,var(--brand)_36%,transparent)]",
@@ -496,12 +500,12 @@ export function ProfileEditor({ userId }: ProfileEditorProps) {
           </span>
         </div>
         <div className="min-w-0">
-          <p className="m-0 mb-4 font-[var(--font-sans)] text-[.75rem] font-extrabold uppercase tracking-[.12em] text-brand">
+          <p className="m-0 mb-[.35rem] font-mono text-[.62rem] font-semibold uppercase tracking-[.1em] text-brand">
             {adminProfile ? "Account portrait" : "Public portrait"}
           </p>
           <h1
             className={cn(
-              "mb-2 mt-[.35rem] font-sans text-[clamp(1.8rem,3vw,2.35rem)] font-semibold leading-[1.05] tracking-[-.035em]",
+              "mb-2 mt-[.35rem] font-serif text-[clamp(1.6rem,2.8vw,2.1rem)] font-medium leading-[1.08] tracking-[-.025em]",
               loadingPlaceholder(editorLoading, "text", "long"),
             )}
             data-placeholder={editorLoading ? "text" : undefined}
@@ -539,19 +543,19 @@ export function ProfileEditor({ userId }: ProfileEditorProps) {
         )}
       >
         <div className="grid min-w-0 gap-[1.2rem]">
-          <section className="relative -ml-[var(--workspace-gutter)] grid gap-[1.2rem] border-y border-line-strong bg-transparent py-[1.55rem] pr-[1.55rem] pl-[var(--workspace-gutter)] max-[640px]:ml-0 max-[640px]:px-4">
-            <div className="mb-0 flex items-end justify-between gap-8 border-b border-line pb-[.95rem]">
+          <WorkspaceRecordPanel>
+            <div className="flex items-end justify-between gap-4 border-b border-line pb-[1.15rem] max-[700px]:flex-col max-[700px]:items-start">
               <div>
-                <p className="m-0 mb-4 font-[var(--font-sans)] text-[.75rem] font-extrabold uppercase tracking-[.12em] text-brand">
+                <p className="m-0 mb-[.35rem] font-mono text-[.62rem] font-semibold uppercase tracking-[.1em] text-brand">
                   Identity
                 </p>
-                <h2 className="text-[1.35rem] font-semibold">
+                <WorkspaceRecordPanelTitle>
                   {staffProfile ? "Staff information" : "Public information"}
-                </h2>
+                </WorkspaceRecordPanelTitle>
               </div>
             </div>
-            <div className="grid gap-[.8rem]">
-              <div className="grid gap-[1.2rem] grid-cols-2 max-[640px]:grid-cols-1">
+            <div className="grid gap-[1.2rem]">
+              <div className="grid gap-[1.2rem] grid-cols-2 max-[700px]:grid-cols-1">
                 <FormField htmlFor="profile-name" label="Full name">
                   <InputControl
                     loading={editorLoading}
@@ -598,7 +602,9 @@ export function ProfileEditor({ userId }: ProfileEditorProps) {
                 ) : null}
                 {staffProfile || (userId && researchProfile) ? (
                   <FormField
-                    className="col-span-full"
+                    className={
+                      staffProfile && !userId ? undefined : "col-span-full"
+                    }
                     htmlFor="profile-role-title"
                     label={staffProfile ? "Staff title" : "Public role title"}
                     description={
@@ -676,7 +682,7 @@ export function ProfileEditor({ userId }: ProfileEditorProps) {
                 ) : null}
                 {staffProfile || researchProfile ? (
                   <FormField
-                    className="col-span-full"
+                    className={staffProfile ? undefined : "col-span-full"}
                     htmlFor="profile-address"
                     label="Contact address"
                   >
@@ -696,16 +702,18 @@ export function ProfileEditor({ userId }: ProfileEditorProps) {
                 ) : null}
               </div>
             </div>
-          </section>
+          </WorkspaceRecordPanel>
 
           {researchProfile ? (
-            <section className="relative col-start-1 -ml-[var(--workspace-gutter)] grid gap-[1.2rem] border-y border-line-strong bg-transparent py-[1.55rem] pr-[1.55rem] pl-[var(--workspace-gutter)] max-[980px]:col-start-1 max-[640px]:ml-0 max-[640px]:px-4">
+            <WorkspaceRecordPanel>
               <div className="grid gap-3 border-b border-line pb-[1.2rem]">
                 <div>
-                  <p className="m-0 mb-3 font-[var(--font-sans)] text-[.75rem] font-extrabold uppercase tracking-[.12em] text-brand">
+                  <p className="m-0 mb-[.35rem] font-mono text-[.62rem] font-semibold uppercase tracking-[.1em] text-brand">
                     Research sync
                   </p>
-                  <h2 className="text-[1.35rem] font-semibold">OpenAlex</h2>
+                  <WorkspaceRecordPanelTitle>
+                    OpenAlex
+                  </WorkspaceRecordPanelTitle>
                   <p className="m-0 mt-2 text-sm text-ink-muted">
                     Enter your OpenAlex author ID to sync papers and datasets
                     daily. Changing or removing it deactivates this
@@ -782,14 +790,14 @@ export function ProfileEditor({ userId }: ProfileEditorProps) {
                   </FormField>
                 )}
               </div>
-              <div className="mb-0 flex items-end justify-between gap-8 border-b border-line pb-[.95rem]">
+              <div className="flex items-end justify-between gap-4 border-b border-line pb-[1.15rem] max-[700px]:flex-col max-[700px]:items-start">
                 <div>
-                  <p className="m-0 mb-4 font-[var(--font-sans)] text-[.75rem] font-extrabold uppercase tracking-[.12em] text-brand">
+                  <p className="m-0 mb-[.35rem] font-mono text-[.62rem] font-semibold uppercase tracking-[.1em] text-brand">
                     Elsewhere
                   </p>
-                  <h2 className="text-[1.35rem] font-semibold">
+                  <WorkspaceRecordPanelTitle>
                     Profile links
-                  </h2>
+                  </WorkspaceRecordPanelTitle>
                 </div>
                 <ButtonControl
                   className="shrink-0 whitespace-nowrap"
@@ -887,19 +895,19 @@ export function ProfileEditor({ userId }: ProfileEditorProps) {
                     </div>
                   ))}
               </div>
-            </section>
+            </WorkspaceRecordPanel>
           ) : null}
 
           {researchProfile ? (
-            <section className="relative col-start-1 -ml-[var(--workspace-gutter)] grid gap-[1.2rem] border-y border-line-strong bg-transparent py-[1.55rem] pr-[1.55rem] pl-[var(--workspace-gutter)] max-[980px]:col-start-1 max-[640px]:ml-0 max-[640px]:px-4">
-              <div className="mb-0 flex items-end justify-between gap-8 border-b border-line pb-[.95rem]">
+            <WorkspaceRecordPanel>
+              <div className="flex items-end justify-between gap-4 border-b border-line pb-[1.15rem] max-[700px]:flex-col max-[700px]:items-start">
                 <div>
-                  <p className="m-0 mb-4 font-[var(--font-sans)] text-[.75rem] font-extrabold uppercase tracking-[.12em] text-brand">
+                  <p className="m-0 mb-[.35rem] font-mono text-[.62rem] font-semibold uppercase tracking-[.1em] text-brand">
                     Record
                   </p>
-                  <h2 className="text-[1.35rem] font-semibold">
+                  <WorkspaceRecordPanelTitle>
                     Profile sections
-                  </h2>
+                  </WorkspaceRecordPanelTitle>
                 </div>
                 <ButtonControl
                   loading={editorLoading}
@@ -989,7 +997,7 @@ export function ProfileEditor({ userId }: ProfileEditorProps) {
                         </FormField>
                       )}
                       <div className="col-span-full grid content-start gap-[.8rem]">
-                        <div className="mb-0 flex items-end justify-between gap-8 border-b border-line pb-[.95rem]">
+                        <div className="flex items-end justify-between gap-4 border-b border-line pb-[1.15rem] max-[700px]:flex-col max-[700px]:items-start">
                           <div>
                             <label>Subsections</label>
                           </div>
@@ -1234,18 +1242,18 @@ export function ProfileEditor({ userId }: ProfileEditorProps) {
                   </article>
                 ))}
               </div>
-            </section>
+            </WorkspaceRecordPanel>
           ) : null}
         </div>
         {showAside ? (
           <aside className="sticky top-[152px] grid min-w-0 gap-4 max-[980px]:static max-[980px]:grid-cols-2 max-[640px]:grid-cols-1">
             {managingAccount ? (
-              <section className="grid gap-[1.2rem] border-y border-line-strong bg-transparent p-[1.55rem]">
-                <div className="mb-0 flex items-end justify-between gap-8 border-b border-line pb-[.95rem]">
+              <WorkspaceRecordPanel>
+                <div className="flex items-end justify-between gap-4 border-b border-line pb-[1.15rem] max-[700px]:flex-col max-[700px]:items-start">
                   <div>
-                    <h2 className="text-[1.35rem] font-semibold">
+                    <WorkspaceRecordPanelTitle>
                       {researchProfile ? "Role and rank" : "Permission role"}
-                    </h2>
+                    </WorkspaceRecordPanelTitle>
                   </div>
                 </div>
                 <div className="grid gap-[.8rem]">
@@ -1282,15 +1290,15 @@ export function ProfileEditor({ userId }: ProfileEditorProps) {
                     </FormField>
                   </div>
                 </div>
-              </section>
+              </WorkspaceRecordPanel>
             ) : null}
             {researchProfile ? (
               <>
-                <section className="border-y border-line-strong bg-transparent p-[1.35rem]">
-                  <p className="m-0 mb-4 font-[var(--font-sans)] text-[.75rem] font-extrabold uppercase tracking-[.12em] text-brand">
+                <WorkspaceRecordPanel>
+                  <p className="m-0 mb-[.35rem] font-mono text-[.62rem] font-semibold uppercase tracking-[.1em] text-brand">
                     Live preview
                   </p>
-                  <div className="mt-4 flex items-center gap-3">
+                  <div className="flex items-center gap-3">
                     <ProfileAvatar
                       avatarId={visibleAvatarId}
                       className="h-12 w-12"
@@ -1329,7 +1337,7 @@ export function ProfileEditor({ userId }: ProfileEditorProps) {
                   </div>
                   <p
                     className={cn(
-                      "mt-4 line-clamp-4 text-[.76rem] leading-[1.55] text-ink-muted",
+                      "m-0 line-clamp-4 text-[.76rem] leading-[1.55] text-ink-muted",
                       loadingPlaceholder(editorLoading, "text", "full"),
                     )}
                     data-placeholder={editorLoading ? "text" : undefined}
@@ -1340,10 +1348,10 @@ export function ProfileEditor({ userId }: ProfileEditorProps) {
                         ? "Loading biography"
                         : "Add a short biography so visitors understand your work and role in the lab.")}
                   </p>
-                </section>
-                <section className="border-y border-line-strong bg-transparent p-[1.35rem]">
+                </WorkspaceRecordPanel>
+                <WorkspaceRecordPanel>
                   <div className="flex items-baseline justify-between">
-                    <p className="m-0 mb-4 font-[var(--font-sans)] text-[.75rem] font-extrabold uppercase tracking-[.12em] text-brand">
+                    <p className="m-0 mb-[.35rem] font-mono text-[.62rem] font-semibold uppercase tracking-[.1em] text-brand">
                       Completeness
                     </p>
                     <strong
@@ -1356,7 +1364,7 @@ export function ProfileEditor({ userId }: ProfileEditorProps) {
                       {completion}%
                     </strong>
                   </div>
-                  <div className="mt-[.9rem] flex gap-1">
+                  <div className="flex gap-1">
                     {completionItems.map(({ complete, label }) => (
                       <span
                         className={`h-[14px] flex-1 rounded-[2px] ${complete ? "bg-brand" : "bg-surface-subtle"}`}
@@ -1364,7 +1372,7 @@ export function ProfileEditor({ userId }: ProfileEditorProps) {
                       />
                     ))}
                   </div>
-                  <ul className="mt-4 grid list-none gap-[.65rem] p-0">
+                  <ul className="m-0 grid list-none gap-[.65rem] p-0">
                     {completionItems.map(({ complete, label }) => (
                       <li
                         className={`flex items-center gap-[.55rem] text-[.72rem] ${complete ? "text-ink" : "text-ink-muted"}`}
@@ -1383,7 +1391,7 @@ export function ProfileEditor({ userId }: ProfileEditorProps) {
                       </li>
                     ))}
                   </ul>
-                </section>
+                </WorkspaceRecordPanel>
               </>
             ) : null}
           </aside>

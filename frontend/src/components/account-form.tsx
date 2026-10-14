@@ -9,7 +9,12 @@ import { FormField, FormMessage } from "@/components/ui/form-field";
 import { InputControl } from "@/components/ui/form-controls";
 import { ButtonControl, ButtonLink } from "@/components/ui/button-control";
 import { useNotifications } from "@/components/notification-provider";
-import { WorkspaceRecord } from "@/components/workspace-record";
+import {
+  WorkspaceRecord,
+  WorkspaceRecordForm,
+  WorkspaceRecordPanelHeader,
+  WorkspaceRecordPanelTitle,
+} from "@/components/workspace-record";
 
 const ROLES = ["MEMBER", "MODERATOR", "ADMIN"] as const;
 const RANKS = [
@@ -146,77 +151,78 @@ export function AccountForm({ accountId }: { accountId?: string }) {
             : "New account"
       }
     >
-      <form
+      <WorkspaceRecordForm
         aria-busy={loading || undefined}
-        className="mx-auto grid w-full max-w-[820px] gap-[1.35rem] border-y border-line-strong bg-transparent p-[clamp(1.25rem,3vw,2rem)] gap-[1.2rem]"
         data-loading={loading || undefined}
         onSubmit={submit}
       >
-        <header className="grid gap-[.35rem] border-b border-line pb-[1.15rem]">
+        <WorkspaceRecordPanelHeader>
           <p className="m-0 font-mono text-[.62rem] font-semibold uppercase tracking-[.1em] text-brand">
             Account details
           </p>
-          <h2 className="m-0 font-sans text-[clamp(1.4rem,2.4vw,2rem)] font-normal leading-[1.1]">
+          <WorkspaceRecordPanelTitle>
             Identity and access
-          </h2>
-        </header>
-        <FormField htmlFor="account-name" label="Full name">
-          <InputControl
-            loading={loading}
-            disabled={loading}
-            id="account-name"
-            onChange={(event) => setFullName(event.target.value)}
-            required
-            value={fullName}
-          />
-        </FormField>
-        <FormField htmlFor="account-email" label="Email">
-          <InputControl
-            loading={loading}
-            disabled={loading || Boolean(accountId)}
-            id="account-email"
-            onChange={(event) => setEmail(event.target.value)}
-            required
-            type="email"
-            value={email}
-          />
-        </FormField>
-        <FormField htmlFor="account-role" label="Permission role">
-          <SelectControl
-            disabled={loading}
-            id="account-role"
-            onValueChange={(value) => {
-              setRole(value);
-              if (!accountId && value === "ADMIN") setRank("NONE");
-            }}
-            options={ROLES.map((item) => ({
-              label: readable(item),
-              value: item,
-            }))}
-            value={role}
-          />
-        </FormField>
-        <FormField
-          description="Staff-only administrator accounts do not need an academic rank."
-          htmlFor="account-rank"
-          label="Research rank"
-        >
-          <SelectControl
-            disabled={loading}
-            id="account-rank"
-            onValueChange={setRank}
-            options={[
-              { label: "No research rank", value: "NONE" },
-              ...RANKS.map((item) => ({
+          </WorkspaceRecordPanelTitle>
+        </WorkspaceRecordPanelHeader>
+        <div className="grid grid-cols-2 gap-[1.2rem] max-[700px]:grid-cols-1">
+          <FormField htmlFor="account-name" label="Full name">
+            <InputControl
+              loading={loading}
+              disabled={loading}
+              id="account-name"
+              onChange={(event) => setFullName(event.target.value)}
+              required
+              value={fullName}
+            />
+          </FormField>
+          <FormField htmlFor="account-email" label="Email">
+            <InputControl
+              loading={loading}
+              disabled={loading || Boolean(accountId)}
+              id="account-email"
+              onChange={(event) => setEmail(event.target.value)}
+              required
+              type="email"
+              value={email}
+            />
+          </FormField>
+          <FormField htmlFor="account-role" label="Permission role">
+            <SelectControl
+              disabled={loading}
+              id="account-role"
+              onValueChange={(value) => {
+                setRole(value);
+                if (!accountId && value === "ADMIN") setRank("NONE");
+              }}
+              options={ROLES.map((item) => ({
                 label: readable(item),
                 value: item,
-              })),
-            ]}
-            value={rank}
-          />
-        </FormField>
+              }))}
+              value={role}
+            />
+          </FormField>
+          <FormField
+            description="Staff-only administrator accounts do not need an academic rank."
+            htmlFor="account-rank"
+            label="Research rank"
+          >
+            <SelectControl
+              disabled={loading}
+              id="account-rank"
+              onValueChange={setRank}
+              options={[
+                { label: "No research rank", value: "NONE" },
+                ...RANKS.map((item) => ({
+                  label: readable(item),
+                  value: item,
+                })),
+              ]}
+              value={rank}
+            />
+          </FormField>
+        </div>
         {error ? <FormMessage>{error}</FormMessage> : null}
-        <div className="flex flex-wrap justify-end gap-[.65rem] max-[640px]:justify-start">
+        <div className="flex flex-wrap justify-end gap-[.65rem] max-[700px]:justify-start">
           <ButtonLink href="/workspace/users">Cancel</ButtonLink>
           <ButtonControl
             loading={loading}
@@ -227,7 +233,7 @@ export function AccountForm({ accountId }: { accountId?: string }) {
             {accountId ? "Save account" : "Create account"}
           </ButtonControl>
         </div>
-      </form>
+      </WorkspaceRecordForm>
     </WorkspaceRecord>
   );
 }

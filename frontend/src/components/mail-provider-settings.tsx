@@ -1,5 +1,11 @@
 "use client";
 
+import {
+  WorkspaceRecordPanel,
+  WorkspaceRecordPanelHeader,
+  WorkspaceRecordPanelTitle,
+} from "@/components/workspace-record";
+
 import { useEffect, useState } from "react";
 import { apiRequest } from "@/lib/client-api";
 import { ButtonControl } from "@/components/ui/button-control";
@@ -150,19 +156,17 @@ export function MailProviderSettings() {
   }
 
   return (
-    <section className="frame-rail-section grid gap-[1.1rem] py-5">
-      <header className="border-b border-line pb-4">
-        <p className="m-0 mb-4 text-[.75rem] font-extrabold uppercase tracking-[.12em] text-brand">
+    <WorkspaceRecordPanel>
+      <WorkspaceRecordPanelHeader>
+        <p className="m-0 font-mono text-[.61rem] font-semibold uppercase tracking-[.11em] text-brand">
           Operations
         </p>
-        <h2 className="font-sans text-[clamp(1.75rem,3vw,2.6rem)] font-normal leading-none">
-          Email delivery
-        </h2>
-        <p className="mt-3 text-sm text-ink-muted">
+        <WorkspaceRecordPanelTitle>Email delivery</WorkspaceRecordPanelTitle>
+        <p className="m-0 text-[.76rem] leading-[1.55] text-ink-muted">
           Configure the provider used for account access, notifications, and lab
           documents.
         </p>
-      </header>
+      </WorkspaceRecordPanelHeader>
       <FormField htmlFor="mail-provider" label="Provider">
         <SelectControl
           id="mail-provider"
@@ -280,17 +284,14 @@ export function MailProviderSettings() {
           {message}
         </p>
       ) : null}
-      <div className="flex flex-wrap gap-3">
-        <ButtonControl
-          loading={loading}
-          busy={saving}
-          onClick={() => void save()}
-        >
-          Verify and save
-        </ButtonControl>
+      <div className="flex flex-wrap items-end justify-between gap-4 border-t border-line pt-4">
         {saved?.configured ? (
-          <>
-            <FormField htmlFor="mail-test-to" label="Test recipient">
+          <div className="flex min-w-0 flex-wrap items-end gap-3 max-[640px]:w-full">
+            <FormField
+              className="min-w-0 flex-1"
+              htmlFor="mail-test-to"
+              label="Test recipient"
+            >
               <InputControl
                 id="mail-test-to"
                 type="email"
@@ -307,8 +308,17 @@ export function MailProviderSettings() {
             >
               Send test email
             </ButtonControl>
-          </>
+          </div>
         ) : null}
+        <ButtonControl
+          className="ml-auto"
+          variant="primary"
+          loading={loading}
+          busy={saving}
+          onClick={() => void save()}
+        >
+          Verify and save
+        </ButtonControl>
       </div>
       <div className="grid gap-2 border-t border-line pt-4">
         <strong className="text-sm font-semibold">Email usage</strong>
@@ -341,6 +351,6 @@ export function MailProviderSettings() {
           </span>
         ) : null}
       </div>
-    </section>
+    </WorkspaceRecordPanel>
   );
 }
