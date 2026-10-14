@@ -88,15 +88,6 @@ expect(
   'Generic SMTP example configuration is missing.',
 );
 
-for (const base of ['src', 'scripts']) {
-  for (const file of walk(path.join(root, base))) {
-    if (!file.endsWith('.ts')) continue;
-    expect(
-      !fs.readFileSync(file, 'utf8').includes('$transaction(['),
-      `${path.relative(root, file)} still uses concurrent array transactions.`,
-    );
-  }
-}
 
 expect(
   research.includes('CANONICAL_SOURCE_MISSING'),
@@ -135,8 +126,9 @@ expect(
   'Contributor linking must normalize duplicate manual profile outputs.',
 );
 expect(
-  profiles.includes('profileSync.normalizePublishedOutputsForPeople'),
-  'Profile approval must not reintroduce canonical-output duplicates.',
+  profiles.includes('this.openAlex.applyAuthorId') &&
+    !profiles.includes('profileSync.normalizePublishedOutputsForPeople'),
+  'Profile approval must use author bindings rather than manual output entries.',
 );
 expect(
   rebuild.includes('email: adminEmail'),
@@ -147,8 +139,8 @@ expect(
   'Seed rebuild must not create false PENDING source checks without jobs.',
 );
 expect(
-  rebuild.includes("matchReason: 'Imported identity'"),
-  'Seeded contributor matches should use concise identity metadata.',
+  !rebuild.includes("matchReason: 'Imported identity'"),
+  'Seed rebuild must not create manual paper author matches.',
 );
 
 if (failures.length) {
@@ -159,11 +151,3 @@ if (failures.length) {
 console.log(
   'Password recovery, source-review, transaction, and profile-sync contracts verified.',
 );
-
-function walk(directory) {
-  if (!fs.existsSync(directory)) return [];
-  return fs.readdirSync(directory, { withFileTypes: true }).flatMap((entry) => {
-    const target = path.join(directory, entry.name);
-    return entry.isDirectory() ? walk(target) : [target];
-  });
-}

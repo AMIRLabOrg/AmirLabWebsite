@@ -19,6 +19,7 @@ import {
   parseResearchLiveEvent,
   type ResearchLiveEvent,
 } from "@/lib/research-live-events";
+import { parseJobLiveEvent, type JobLiveEvent } from "@/lib/job-live-events";
 
 interface NotificationState {
   loading: boolean;
@@ -35,6 +36,7 @@ interface NotificationState {
   subscribeResearchEvents: (
     listener: (event: ResearchLiveEvent) => void,
   ) => () => void;
+  subscribeJobEvents: (listener: (event: JobLiveEvent) => void) => () => void;
 }
 
 export interface WorkspaceQueueCounts {
@@ -76,11 +78,22 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
   const researchEventListeners = useRef(
     new Set<(event: ResearchLiveEvent) => void>(),
   );
+  const jobEventListeners = useRef(
+    new Set<(event: JobLiveEvent) => void>(),
+  );
 
   const subscribeResearchEvents = useCallback(
     (listener: (event: ResearchLiveEvent) => void) => {
       researchEventListeners.current.add(listener);
       return () => researchEventListeners.current.delete(listener);
+    },
+    [],
+  );
+
+  const subscribeJobEvents = useCallback(
+    (listener: (event: JobLiveEvent) => void) => {
+      jobEventListeners.current.add(listener);
+      return () => jobEventListeners.current.delete(listener);
     },
     [],
   );
@@ -206,7 +219,21 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
         listener(researchEvent);
       }
     };
+    const jobEventListener = (event: Event) => {
+      if (!("data" in event) || typeof event.data !== "string") return;
+      let jobEvent: JobLiveEvent | null;
+      try {
+        jobEvent = parseJobLiveEvent(JSON.parse(event.data));
+      } catch {
+        return;
+      }
+      if (!jobEvent) return;
+      for (const listener of jobEventListeners.current) {
+        listener(jobEvent);
+      }
+    };
     events.addEventListener("research", researchEventListener);
+    events.addEventListener("job", jobEventListener);
     events.onmessage = (event) => {
       if (!active) return;
       try {
@@ -241,6 +268,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
     return () => {
       active = false;
       events.removeEventListener("research", researchEventListener);
+      events.removeEventListener("job", jobEventListener);
       events.onopen = null;
       events.onerror = null;
       events.close();
@@ -260,6 +288,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
         refreshUnreadCount,
         showToast,
         subscribeResearchEvents,
+        subscribeJobEvents,
         unreadCount: user ? unreadCount : 0,
       }}
     >

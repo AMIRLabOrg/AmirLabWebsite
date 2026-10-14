@@ -1,3 +1,4 @@
+import { Type } from 'class-transformer';
 import {
   ArrayMaxSize,
   IsArray,
@@ -9,8 +10,26 @@ import {
   IsUUID,
   MaxLength,
   MinLength,
+  ValidateNested,
 } from 'class-validator';
 import { ResearchProgramStatus } from '../../../generated/prisma/client';
+
+export class ResearchProgramOutputReferenceDto {
+  @IsString()
+  @MinLength(1)
+  @MaxLength(500)
+  label!: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(300)
+  doi?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(2_000)
+  url?: string;
+}
 
 export class SaveResearchProgramDto {
   @IsString()
@@ -58,6 +77,7 @@ export class SaveResearchProgramDto {
 
   @IsArray()
   @ArrayMaxSize(100)
-  @IsUUID('4', { each: true })
-  outputIds!: string[];
+  @ValidateNested({ each: true })
+  @Type(() => ResearchProgramOutputReferenceDto)
+  outputReferences!: ResearchProgramOutputReferenceDto[];
 }

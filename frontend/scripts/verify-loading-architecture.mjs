@@ -21,7 +21,10 @@ async function walk(directory) {
 }
 
 const files = await walk(srcRoot);
-const sourceFiles = files.filter((file) => /\.(?:ts|tsx)$/.test(file));
+const sourceFiles = files.filter(
+  (file) =>
+    /\.(?:ts|tsx)$/.test(file) && !/\.(?:test|spec)\.(?:ts|tsx)$/.test(file),
+);
 const failures = [];
 let placeholderCount = 0;
 let loadingStateCount = 0;

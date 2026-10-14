@@ -32,12 +32,6 @@ export class SaveWeeklyReportDto {
   @ArrayMaxSize(30)
   @IsUUID('4', { each: true })
   projectIds!: string[];
-
-  @IsOptional()
-  @IsArray()
-  @ArrayMaxSize(50)
-  @IsUUID('4', { each: true })
-  outputIds?: string[];
 }
 
 export class ReviewWeeklyReportDto {

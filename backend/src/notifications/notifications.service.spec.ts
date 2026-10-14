@@ -18,6 +18,7 @@ jest.mock('../../generated/prisma/client', () => ({
 import { PushService } from '../collaboration/push.service';
 import { NotificationType, Prisma } from '../../generated/prisma/client';
 import { PrismaService } from '../database/prisma.service';
+import { JobsService } from '../jobs/jobs.service';
 import { resolveService } from '../../test/resolve-service';
 import { NotificationsService } from './notifications.service';
 
@@ -37,6 +38,7 @@ describe('NotificationsService read state', () => {
     const service = await resolveService(NotificationsService, [
       { provide: PrismaService, useValue: prisma },
       { provide: PushService, useValue: {} },
+      { provide: JobsService, useValue: { onChange: jest.fn() } },
     ]);
 
     await expect(
@@ -53,6 +55,7 @@ describe('NotificationsService read state', () => {
     const service = await resolveService(NotificationsService, [
       { provide: PrismaService, useValue: prisma },
       { provide: PushService, useValue: {} },
+      { provide: JobsService, useValue: { onChange: jest.fn() } },
     ]);
 
     await expect(
@@ -86,6 +89,7 @@ describe('NotificationsService durable push', () => {
     return resolveService(NotificationsService, [
       { provide: PrismaService, useValue: prisma },
       { provide: PushService, useValue: push },
+      { provide: JobsService, useValue: { onChange: jest.fn() } },
     ]);
   }
   it('persists the notification and delivery fanout in one transaction', async () => {

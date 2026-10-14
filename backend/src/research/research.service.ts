@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   ConflictException,
+  ForbiddenException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -22,6 +23,10 @@ import { PrismaService } from '../database/prisma.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { reviewConflict } from '../common/review-problem';
 import type { CreatePositionDto, UpdatePositionDto } from './dto/position.dto';
+import {
+  ResearchLibraryQueryDto,
+  ResearchLibraryView,
+} from './dto/research-library-query.dto';
 import {
   PublicationQueryDto,
   PublicationSort,
@@ -46,6 +51,11 @@ import { ResearchDiscoveryService } from './research-discovery.service';
 import { ResearchProfileSyncService } from './research-profile-sync.service';
 import { RankingsService } from './rankings.service';
 import { SettingsService, effectiveRank } from '../settings/settings.service';
+import { normalizeDoi } from './openalex-client';
+import {
+  lockResearchIdentities,
+  researchIdentityWhere,
+} from './research-identity';
 
 const RESEARCH_INCLUDE = {
   contributors: {
@@ -71,6 +81,27 @@ const RESEARCH_INCLUDE = {
   },
 } as const;
 
+const RESEARCH_LIBRARY_INCLUDE = {
+  contributors: { orderBy: { sortOrder: 'asc' as const } },
+  dataset: true,
+  paper: true,
+  people: {
+    include: {
+      person: { select: { fullName: true, id: true, slug: true } },
+    },
+    orderBy: { confirmedAt: 'asc' as const },
+  },
+  sourceSnapshot: {
+    select: {
+      failureReason: true,
+      fetchedAt: true,
+      status: true,
+      updatedAt: true,
+      url: true,
+    },
+  },
+} as const;
+
 @Injectable()
 export class ResearchService {
   constructor(
@@ -84,11 +115,15 @@ export class ResearchService {
 
   async people() {
     const people = await this.prisma.person.findMany({
-      where: { isPublished: true },
+      where: {
+        isPublished: true,
+        OR: [{ userId: null }, { user: { is: { isDeleted: false } } }],
+      },
       include: {
         avatar: true,
         departments: { include: { department: true } },
         metrics: true,
+        openAlexProfile: { select: { citationCount: true, syncedAt: true } },
         user: { select: { email: true } },
       },
       orderBy: { fullName: 'asc' },
@@ -103,7 +138,11 @@ export class ResearchService {
 
   async personBySlug(slug: string) {
     const person = await this.prisma.person.findFirst({
-      where: { isPublished: true, slug },
+      where: {
+        isPublished: true,
+        slug,
+        OR: [{ userId: null }, { user: { is: { isDeleted: false } } }],
+      },
       include: {
         avatar: true,
         departments: { include: { department: true } },
@@ -118,6 +157,7 @@ export class ResearchService {
           },
         },
         metrics: true,
+        openAlexProfile: { select: { citationCount: true, syncedAt: true } },
         user: { select: { email: true } },
       },
     });
@@ -129,10 +169,7 @@ export class ResearchService {
         AND: [
           publicResearchWhere(),
           {
-            OR: [
-              { contributors: { some: { personId: person.id } } },
-              { submittedBy: { is: { person: { is: { id: person.id } } } } },
-            ],
+            people: { some: { personId: person.id, isCurrent: true } },
           },
         ],
       },
@@ -153,6 +190,118 @@ export class ResearchService {
       include: RESEARCH_INCLUDE,
       orderBy: [{ publishedAt: 'desc' }, { title: 'asc' }],
     });
+  }
+
+  async library(query: ResearchLibraryQueryDto, user: AuthenticatedUser) {
+    const staff = user.role !== PlatformRole.MEMBER;
+    const personId = user.person?.id;
+    if (!staff && query.view !== ResearchLibraryView.CURRENT) {
+      throw new ForbiddenException('This library view is restricted to staff');
+    }
+    if (!staff && !personId) {
+      throw new ForbiddenException('A research profile is required');
+    }
+    const search = query.search?.trim();
+    const viewWhere: Prisma.ResearchItemWhereInput =
+      query.view === ResearchLibraryView.CURRENT
+        ? {
+            reviewStatus: ReviewStatus.PUBLISHED,
+            people: {
+              some: {
+                isCurrent: true,
+                ...(staff ? {} : { personId }),
+              },
+            },
+          }
+        : query.view === ResearchLibraryView.RETAINED
+          ? {
+              reviewStatus: ReviewStatus.PUBLISHED,
+              people: { some: { isCurrent: false } },
+            }
+          : {
+              OR: [
+                { reviewStatus: ReviewStatus.ARCHIVED },
+                { automationState: ResearchAutomationState.FAILED },
+                {
+                  sourceSnapshot: {
+                    is: {
+                      status: {
+                        in: [
+                          SourceFetchStatus.FAILED,
+                          SourceFetchStatus.UNAVAILABLE,
+                        ],
+                      },
+                    },
+                  },
+                },
+              ],
+            };
+    const searchWhere: Prisma.ResearchItemWhereInput = search
+      ? {
+          OR: [
+            { title: { contains: search, mode: 'insensitive' } },
+            { canonicalUrl: { contains: search, mode: 'insensitive' } },
+            {
+              paper: {
+                is: { doi: { contains: search, mode: 'insensitive' } },
+              },
+            },
+            {
+              contributors: {
+                some: {
+                  displayName: { contains: search, mode: 'insensitive' },
+                },
+              },
+            },
+          ],
+        }
+      : {};
+    const where: Prisma.ResearchItemWhereInput = {
+      type: query.type
+        ? query.type
+        : { in: [ResearchItemType.PAPER, ResearchItemType.DATASET] },
+      AND: [viewWhere, searchWhere],
+    };
+    const [items, total] = await Promise.all([
+      this.prisma.researchItem.findMany({
+        include: RESEARCH_LIBRARY_INCLUDE,
+        orderBy: [{ publishedAt: 'desc' }, { title: 'asc' }, { id: 'asc' }],
+        skip: (query.page - 1) * query.pageSize,
+        take: query.pageSize,
+        where,
+      }),
+      this.prisma.researchItem.count({ where }),
+    ]);
+    return {
+      items,
+      page: query.page,
+      pageSize: query.pageSize,
+      total,
+      totalPages: Math.ceil(total / query.pageSize),
+    };
+  }
+
+  async libraryItem(id: string, user: AuthenticatedUser) {
+    const staff = user.role !== PlatformRole.MEMBER;
+    const personId = user.person?.id;
+    if (!staff && !personId) {
+      throw new ForbiddenException('A research profile is required');
+    }
+    const item = await this.prisma.researchItem.findFirst({
+      where: {
+        id,
+        type: { in: [ResearchItemType.PAPER, ResearchItemType.DATASET] },
+        ...(staff
+          ? {}
+          : {
+              reviewStatus: ReviewStatus.PUBLISHED,
+              people: { some: { isCurrent: true, personId } },
+            }),
+      },
+      include: RESEARCH_LIBRARY_INCLUDE,
+    });
+    if (!item) throw new NotFoundException('Research output not found');
+    return item;
   }
 
   async publications(query: PublicationQueryDto) {
@@ -519,7 +668,7 @@ export class ResearchService {
       items: items.map((item) => ({
         ...item,
         sourceSnapshot: item.sourceSnapshot
-          ? { ...item.sourceSnapshot, failureReason: null }
+          ? publicSourceSnapshot(item.sourceSnapshot)
           : null,
         reviewIssues: researchReviewIssues(item),
       })),
@@ -559,7 +708,7 @@ export class ResearchService {
     return {
       ...item,
       sourceSnapshot: item.sourceSnapshot
-        ? { ...item.sourceSnapshot, failureReason: null }
+        ? publicSourceSnapshot(item.sourceSnapshot)
         : null,
       reviewIssues: researchReviewIssues(item),
     };
@@ -627,13 +776,6 @@ export class ResearchService {
 
   async submit(dto: SubmitResearchDto, user: AuthenticatedUser) {
     const canonicalUrl = new URL(dto.canonicalUrl).toString();
-    const existing = await this.prisma.researchItem.findUnique({
-      where: { canonicalUrl },
-      select: { id: true },
-    });
-    if (existing) {
-      throw new ConflictException('This URL is already registered');
-    }
 
     const staff = user.role !== PlatformRole.MEMBER;
     let submittedById = user.id;
@@ -677,6 +819,17 @@ export class ResearchService {
     }
     const publishesDirectly = !staff && dto.publishNow === true;
     const item = await this.prisma.$transaction(async (transaction) => {
+      await lockResearchIdentities(transaction, [
+        { canonicalUrl, doi: dto.doi },
+      ]);
+      const existing = await transaction.researchItem.findFirst({
+        where: researchIdentityWhere(canonicalUrl, dto.doi),
+        select: { id: true },
+      });
+      if (existing)
+        throw new ConflictException(
+          'This work is already registered. Use the existing record rather than creating another entry.',
+        );
       const created = await transaction.researchItem.create({
         data: {
           canonicalUrl,
@@ -702,7 +855,7 @@ export class ResearchService {
         await transaction.paper.create({
           data: {
             citation: dto.citation,
-            doi: dto.doi,
+            doi: normalizeDoi(dto.doi ?? null) ?? dto.doi,
             publicationType: publicationCategory(
               dto.publicationType,
               dto.citation,
@@ -1445,14 +1598,26 @@ export class ResearchService {
       contributorsChanged ||
       (item.type === ResearchItemType.PAPER &&
         (dto.doi?.trim() || null) !== item.paper?.doi);
-    const duplicate = await this.prisma.researchItem.findFirst({
-      where: { canonicalUrl, id: { not: id } },
-      select: { id: true },
-    });
-    if (duplicate)
-      throw new ConflictException('This URL is already registered');
-
     await this.prisma.$transaction(async (transaction) => {
+      await lockResearchIdentities(transaction, [
+        {
+          canonicalUrl: item.canonicalUrl,
+          doi: item.paper?.doi,
+          openAlexWorkId: item.openAlexWorkId,
+        },
+        { canonicalUrl, doi: dto.doi },
+      ]);
+      const duplicate = await transaction.researchItem.findFirst({
+        where: {
+          ...researchIdentityWhere(canonicalUrl, dto.doi),
+          id: { not: id },
+        },
+        select: { id: true },
+      });
+      if (duplicate)
+        throw new ConflictException(
+          'This work is already registered. Use the existing record rather than creating another entry.',
+        );
       const claimed = await transaction.researchItem.updateMany({
         where: {
           automationVersion: item.automationVersion,
@@ -1524,7 +1689,7 @@ export class ResearchService {
           where: { researchItemId: id },
           data: {
             citation: dto.citation ?? null,
-            doi: dto.doi ?? null,
+            doi: normalizeDoi(dto.doi ?? null) ?? dto.doi ?? null,
             publicationType: publicationCategory(
               dto.publicationType,
               dto.citation,
@@ -1874,6 +2039,14 @@ function emptyToNull(value?: string): string | null {
   return value?.trim() || null;
 }
 
+function publicSourceSnapshot<
+  T extends { failureReason: string | null; observationVersion?: bigint },
+>(snapshot: T) {
+  const visible = { ...snapshot, failureReason: null };
+  Reflect.deleteProperty(visible, 'observationVersion');
+  return visible;
+}
+
 function publicPerson<
   T extends {
     appointedRank: Parameters<typeof effectiveRank>[0];
@@ -1890,17 +2063,17 @@ function comparePeople(
   left: ReturnType<typeof publicPerson> & {
     fullName: string;
     isAlumni: boolean;
+    openAlexProfile?: { citationCount: number | null } | null;
     metrics?: {
       publishedPaperCount: number;
-      scholarCitationCount: number | null;
     } | null;
   },
   right: ReturnType<typeof publicPerson> & {
     fullName: string;
     isAlumni: boolean;
+    openAlexProfile?: { citationCount: number | null } | null;
     metrics?: {
       publishedPaperCount: number;
-      scholarCitationCount: number | null;
     } | null;
   },
 ): number {
@@ -1918,8 +2091,8 @@ function comparePeople(
     rankOrder.indexOf(right.rank ?? '') - rankOrder.indexOf(left.rank ?? '');
   if (rankDifference) return rankDifference;
   const citationDifference =
-    (right.metrics?.scholarCitationCount ?? -1) -
-    (left.metrics?.scholarCitationCount ?? -1);
+    (right.openAlexProfile?.citationCount ?? -1) -
+    (left.openAlexProfile?.citationCount ?? -1);
   if (citationDifference) return citationDifference;
   const paperDifference =
     (right.metrics?.publishedPaperCount ?? 0) -

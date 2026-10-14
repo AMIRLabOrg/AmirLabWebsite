@@ -30,6 +30,10 @@ import { apiRequest } from "@/lib/client-api";
 import { StatePanel } from "@/components/state-panel";
 import { cn } from "@/lib/cn";
 import { WorkspaceCollection } from "@/components/ui/workspace-surface";
+import { ToolbarSearchField } from "@/components/ui/toolbar-search-field";
+import { FormField } from "@/components/ui/form-field";
+import { PaginationControls } from "@/components/pagination-controls";
+import type { PaginatedResponse } from "@/lib/types";
 
 interface WorkspaceProject {
   researchItemId: string;
@@ -38,7 +42,23 @@ interface WorkspaceProject {
   startsAt: string | null;
   endsAt: string | null;
   publicPageEnabled: boolean;
-  progress: number;
+  progress: number | null;
+  version: number;
+  closingNote: string | null;
+  _count?: {
+    milestones?: number;
+    memberships?: number;
+    tasks: number;
+    updates: number;
+    changeRequests: number;
+  };
+  taskSummary?: {
+    openTasks: number;
+    completedTasks: number;
+    overdueTasks: number;
+    dueSoonTasks: number;
+    blockedTasks: number;
+  };
   researchItem: {
     id: string;
     slug: string;
@@ -49,6 +69,12 @@ interface WorkspaceProject {
       output: { id: string; title: string | null; type: string };
     }>;
   };
+  outputReferences: Array<{
+    id: string;
+    label: string;
+    doi: string | null;
+    url: string | null;
+  }>;
   objectives: Array<{ id: string; title: string; description: string | null }>;
   milestones: Array<{
     id: string;
@@ -69,6 +95,7 @@ interface WorkspaceProject {
     dueAt: string | null;
     ownerId: string | null;
     owner: { id: string; fullName: string } | null;
+    updatedAt: string;
   }>;
   updates: Array<{
     id: string;
@@ -106,29 +133,73 @@ interface LinkablePerson {
   slug: string;
 }
 
-interface OutputSearchResult {
-  id: string;
-  title: string | null;
-  type: string;
-  canonicalUrl: string | null;
-}
-
 export function ProjectIndex() {
+  const [page, setPage] = useState(1);
+  const [view, setView] = useState("active");
+  const [search, setSearch] = useState("");
+  const [draftSearch, setDraftSearch] = useState("");
+  const [result, setResult] = useState<PaginatedResponse<WorkspaceProject>>();
   const [projects, setProjects] = useState<WorkspaceProject[]>([]);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
   const [reload, setReload] = useState(0);
   useEffect(() => {
-    apiRequest<WorkspaceProject[]>("/projects/mine", { method: "GET" })
+    let active = true;
+    const params = new URLSearchParams({ page: String(page), view, search });
+    apiRequest<PaginatedResponse<WorkspaceProject>>(
+      `/projects/mine?${params}`,
+      { method: "GET" },
+    )
       .then((nextProjects) => {
-        setProjects(nextProjects);
+        if (!active) return;
+        setResult(nextProjects);
+        setProjects(nextProjects.items);
         setError("");
       })
-      .catch((value: Error) => setError(value.message))
-      .finally(() => setLoading(false));
-  }, [reload]);
+      .catch((value: Error) => {
+        if (active) setError(value.message);
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, [reload, page, view, search]);
   return (
     <div className="grid min-w-0">
+      <div className="grid grid-cols-[minmax(0,1fr)_minmax(160px,.3fr)] items-end gap-4 border-b border-line py-4 max-[640px]:grid-cols-1">
+        <ToolbarSearchField
+          id="project-search"
+          label="Search projects"
+          placeholder="Search projects"
+          value={draftSearch}
+          onValueChange={setDraftSearch}
+          onSearch={(value) => {
+            setLoading(true);
+            setSearch(value.trim());
+            setReload((value) => value + 1);
+            setPage(1);
+          }}
+        />
+        <FormField label="Status">
+          <SelectControl
+            ariaLabel="Project status"
+            value={view}
+            onValueChange={(value) => {
+              setLoading(true);
+              setView(value);
+              setPage(1);
+            }}
+            options={["active", "completed", "archived", "all"].map(
+              (value) => ({
+                value,
+                label: value[0].toUpperCase() + value.slice(1),
+              }),
+            )}
+          />
+        </FormField>
+      </div>
       <WorkspaceCollection>
         {error && !projects.length && !loading ? (
           <StatePanel
@@ -210,7 +281,9 @@ export function ProjectIndex() {
                     )}
                     data-placeholder={loading ? "value" : undefined}
                   >
-                    {project.progress}%
+                    {project.progress === null
+                      ? "Not weighted"
+                      : `${project.progress}%`}
                   </strong>
                   <svg
                     aria-hidden="true"
@@ -222,7 +295,7 @@ export function ProjectIndex() {
                     <rect
                       className="fill-brand"
                       height="3"
-                      width={loading ? 40 : project.progress}
+                      width={loading ? 40 : (project.progress ?? 0)}
                     />
                   </svg>
                   <small
@@ -233,8 +306,10 @@ export function ProjectIndex() {
                     data-placeholder={loading ? "label" : undefined}
                     data-placeholder-width="long"
                   >
-                    {project.milestones.length} milestones ·{" "}
-                    {project.memberships.length} members
+                    {project._count?.milestones ?? project.milestones.length}{" "}
+                    milestones ·{" "}
+                    {project._count?.memberships ?? project.memberships.length}{" "}
+                    members
                   </small>
                 </div>
                 <ArrowUpRight
@@ -253,6 +328,17 @@ export function ProjectIndex() {
           />
         ) : null}
       </WorkspaceCollection>
+      <PaginationControls
+        page={page}
+        pageSize={20}
+        total={result?.total}
+        totalPages={result?.totalPages}
+        onPageChange={(value) => {
+          setLoading(true);
+          setPage(value);
+        }}
+        loading={loading}
+      />
     </div>
   );
 }
@@ -301,17 +387,27 @@ const taskPriorityOptions = [
 ];
 
 export function ProjectManager({ id }: { id: string }) {
+  const [page, setPage] = useState(1);
   const { showToast } = useNotifications();
   const [project, setProject] = useState<WorkspaceProject | null>(null);
   const [tab, setTab] = useState<Tab>("overview");
+  const section =
+    tab === "updates"
+      ? "updates"
+      : tab === "overview"
+        ? "changeRequests"
+        : "tasks";
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [busyAction, setBusyAction] = useState<string>();
   const load = useCallback(
     () =>
-      apiRequest<WorkspaceProject>(`/projects/${id}/workspace`, {
-        method: "GET",
-      })
+      apiRequest<WorkspaceProject>(
+        `/projects/${id}/workspace?page=${page}&section=${section}`,
+        {
+          method: "GET",
+        },
+      )
         .then((nextProject) => {
           setProject(nextProject);
           setError("");
@@ -321,7 +417,7 @@ export function ProjectManager({ id }: { id: string }) {
           setError(value.message);
           return false;
         }),
-    [id],
+    [id, page, section],
   );
   useEffect(() => {
     void load();
@@ -571,7 +667,10 @@ export function ProjectManager({ id }: { id: string }) {
             )}
             disabled={loadingProject}
             key={value}
-            onClick={() => setTab(value)}
+            onClick={() => {
+              setTab(value);
+              setPage(1);
+            }}
             type="button"
           >
             {value}
@@ -601,10 +700,16 @@ export function ProjectManager({ id }: { id: string }) {
             data-placeholder={loadingProject ? "text" : undefined}
             data-placeholder-width="medium"
           >
-            {currentProject.progress}% complete
+            {currentProject.progress === null
+              ? "No milestones"
+              : `${currentProject.progress}% complete`}
           </h2>
           <svg
-            aria-label={`${currentProject.progress}% complete`}
+            aria-label={
+              currentProject.progress === null
+                ? "No weighted milestones"
+                : `${currentProject.progress}% complete`
+            }
             className="h-[3px] w-full"
             preserveAspectRatio="none"
             role="img"
@@ -614,7 +719,7 @@ export function ProjectManager({ id }: { id: string }) {
             <rect
               className="fill-brand"
               height="3"
-              width={currentProject.progress}
+              width={currentProject.progress ?? 0}
             />
           </svg>
           <dl className="grid gap-3">
@@ -627,11 +732,10 @@ export function ProjectManager({ id }: { id: string }) {
                 )}
                 data-placeholder={loadingProject ? "value" : undefined}
               >
-                {
+                {currentProject.taskSummary?.completedTasks ??
                   currentProject.tasks.filter((item) => item.status === "DONE")
-                    .length
-                }{" "}
-                / {currentProject.tasks.length}
+                    .length}{" "}
+                / {currentProject._count?.tasks ?? currentProject.tasks.length}
               </dd>
             </div>
             <div className="flex justify-between border-t border-line pt-3">
@@ -721,7 +825,15 @@ export function ProjectManager({ id }: { id: string }) {
                 busy={busyAction === "timeline"}
                 save={(milestones) =>
                   submit("timeline", `/projects/${id}/milestones`, "PUT", {
-                    milestones,
+                    expectedVersion: currentProject.version,
+                    milestones: milestones.map((milestone) => ({
+                      ...milestone,
+                      id: currentProject.milestones.some(
+                        ({ id }) => id === milestone.id,
+                      )
+                        ? milestone.id
+                        : undefined,
+                    })),
                   })
                 }
               />
@@ -757,6 +869,14 @@ export function ProjectManager({ id }: { id: string }) {
                     ...body,
                   })
                 }
+                removeOutput={(referenceId) =>
+                  submit(
+                    "output",
+                    `/projects/${id}/outputs/${referenceId}`,
+                    "DELETE",
+                    {},
+                  )
+                }
                 resource={(body) =>
                   submit("resource", `/projects/${id}/resources`, "POST", {
                     ...body,
@@ -779,6 +899,16 @@ export function ProjectManager({ id }: { id: string }) {
               />
             ) : null}
           </fieldset>
+          {["overview", "tasks", "updates"].includes(tab) ? (
+            <PaginationControls
+              page={page}
+              pageSize={20}
+              total={project?._count?.[section]}
+              totalPages={Math.ceil((project?._count?.[section] ?? 0) / 20)}
+              onPageChange={setPage}
+              loading={loadingProject}
+            />
+          ) : null}
         </main>
       </div>
     </div>
@@ -958,7 +1088,9 @@ function Tasks({
           </h2>
         </div>
         <span className="font-mono text-[.65rem] text-ink-muted uppercase">
-          {project.tasks.filter((task) => task.status !== "DONE").length} open
+          {project.taskSummary?.openTasks ??
+            project.tasks.filter((task) => task.status !== "DONE").length}{" "}
+          open
         </span>
       </header>
       <form
@@ -1016,7 +1148,7 @@ function Tasks({
         </label>
         <ButtonControl
           disabled={busy || !title.trim()}
-          loading={busy}
+          busy={busy}
           type="submit"
           variant="primary"
         >
@@ -1069,6 +1201,7 @@ function Tasks({
                     ownerId: task.ownerId ?? undefined,
                     priority: task.priority,
                     dueAt: task.dueAt ?? undefined,
+                    expectedUpdatedAt: task.updatedAt,
                     status,
                   })
                 }
@@ -1241,7 +1374,7 @@ function Timeline({
       <ButtonControl
         className="justify-self-end max-[640px]:w-full"
         disabled={busy}
-        loading={busy}
+        busy={busy}
         onClick={() => save(items)}
         variant="primary"
       >
@@ -1286,14 +1419,14 @@ function Updates({
         <div className="flex justify-end gap-[.6rem] max-[640px]:col-span-full">
           <ButtonControl
             disabled={busy}
-            loading={busy}
+            busy={busy}
             onClick={() => save({ title, body, status: "DRAFT" })}
           >
             Save draft
           </ButtonControl>
           <ButtonControl
             disabled={busy}
-            loading={busy}
+            busy={busy}
             onClick={() => save({ title, body, status: "PUBLISHED" })}
             variant="primary"
           >
@@ -1389,7 +1522,7 @@ function People({
         ))}
       </div>
       <form
-        className="grid grid-cols-[minmax(200px,1fr)_minmax(130px,.35fr)_auto] items-end gap-[.8rem] border-y border-line-strong bg-transparent p-4 max-[640px]:grid-cols-1"
+        className="grid grid-cols-[minmax(180px,1fr)_minmax(150px,.6fr)_minmax(180px,1fr)_auto] items-end gap-[.8rem] border-y border-line-strong bg-transparent p-4 max-[900px]:grid-cols-2 max-[640px]:grid-cols-1"
         onSubmit={(event) => {
           event.preventDefault();
           save({
@@ -1420,11 +1553,7 @@ function People({
             value={access}
           />
         </label>
-        <ButtonControl
-          disabled={busy || !personId}
-          loading={busy}
-          type="submit"
-        >
+        <ButtonControl disabled={busy || !personId} busy={busy} type="submit">
           Add member
         </ButtonControl>
       </form>
@@ -1436,47 +1565,20 @@ function Outputs({
   project,
   busy,
   output,
+  removeOutput,
   resource,
 }: {
   project: WorkspaceProject;
   busy: boolean;
   output: (body: object) => void;
+  removeOutput: (referenceId: string) => void;
   resource: (body: object) => void;
 }) {
-  const [outputId, setOutputId] = useState("");
-  const [outputQuery, setOutputQuery] = useState("");
-  const [outputOptions, setOutputOptions] = useState<OutputSearchResult[]>([]);
-  const [searchingOutputs, setSearchingOutputs] = useState(false);
+  const [outputLabel, setOutputLabel] = useState("");
+  const [doi, setDoi] = useState("");
+  const [outputUrl, setOutputUrl] = useState("");
   const [label, setLabel] = useState("");
   const [url, setUrl] = useState("");
-  useEffect(() => {
-    const query = outputQuery.trim();
-    if (query.length < 2) {
-      return;
-    }
-    let active = true;
-    const timeout = window.setTimeout(() => {
-      setSearchingOutputs(true);
-      void apiRequest<OutputSearchResult[]>(
-        `/research-connections/search?query=${encodeURIComponent(query)}`,
-        { method: "GET" },
-      )
-        .then((items) => {
-          if (!active) return;
-          setOutputOptions(items.filter((item) => item.type !== "PROJECT"));
-        })
-        .catch(() => {
-          if (active) setOutputOptions([]);
-        })
-        .finally(() => {
-          if (active) setSearchingOutputs(false);
-        });
-    }, 250);
-    return () => {
-      active = false;
-      window.clearTimeout(timeout);
-    };
-  }, [outputQuery]);
   return (
     <div className="grid min-w-0 gap-5">
       <header className="flex items-end justify-between gap-4">
@@ -1488,6 +1590,36 @@ function Outputs({
         </h2>
       </header>
       <div className="grid border-t border-line">
+        {project.outputReferences.map((reference) => (
+          <article
+            className="grid grid-cols-[90px_1fr_auto] items-center gap-4 border-b border-line py-4"
+            key={reference.id}
+          >
+            <span className="font-mono text-[.58rem] text-ink-faint uppercase">
+              {reference.doi ? "DOI" : "Source"}
+            </span>
+            <a
+              className="font-semibold text-ink"
+              href={
+                reference.doi
+                  ? `https://doi.org/${reference.doi}`
+                  : (reference.url ?? "#")
+              }
+              rel="noreferrer"
+              target="_blank"
+            >
+              {reference.label} <ArrowUpRight className="inline" size={14} />
+            </a>
+            <ButtonControl
+              aria-label={`Remove ${reference.label}`}
+              className="min-h-9 w-9 p-0"
+              onClick={() => removeOutput(reference.id)}
+              type="button"
+            >
+              <Trash2 size={15} />
+            </ButtonControl>
+          </article>
+        ))}
         {project.researchItem.projectOutputs.map(({ output: item }) => (
           <article
             className="grid grid-cols-[90px_1fr_auto] items-center gap-4 border-b border-line py-4"
@@ -1519,44 +1651,41 @@ function Outputs({
         className="grid grid-cols-[minmax(200px,1fr)_minmax(130px,.35fr)_auto] items-end gap-[.8rem] border-y border-line-strong bg-transparent p-4 max-[640px]:grid-cols-1"
         onSubmit={(event) => {
           event.preventDefault();
-          output({ outputId });
+          output({
+            label: outputLabel,
+            doi: doi || undefined,
+            url: outputUrl || undefined,
+          });
         }}
       >
-        <label className="grid gap-[.35rem] text-[.64rem] font-semibold">
-          Published paper or dataset
-          <SearchableSelect
-            ariaLabel="Published paper or dataset"
-            emptyMessage={
-              outputQuery.trim().length < 2
-                ? "Type at least two characters."
-                : "No matching papers or datasets."
-            }
-            filterOptions={false}
-            loading={searchingOutputs}
-            onQueryChange={(query) => {
-              setOutputQuery(query);
-              if (query.trim().length < 2) {
-                setOutputOptions([]);
-                setSearchingOutputs(false);
-              }
-            }}
-            onValueChange={setOutputId}
-            options={outputOptions.map((item) => ({
-              description: item.type.toLowerCase(),
-              label: item.title ?? "Untitled output",
-              value: item.id,
-            }))}
-            placeholder="Search published output…"
-            searchPlaceholder="Search title, URL, or contributor…"
-            value={outputId}
-          />
-        </label>
+        <InputControl
+          aria-label="Output label"
+          onChange={(event) => setOutputLabel(event.target.value)}
+          placeholder="Published output label"
+          required
+          value={outputLabel}
+        />
+        <InputControl
+          aria-label="DOI"
+          onChange={(event) => setDoi(event.target.value)}
+          placeholder="10.xxxx/..."
+          value={doi}
+        />
+        <InputControl
+          aria-label="Source URL"
+          onChange={(event) => setOutputUrl(event.target.value)}
+          placeholder="https://..."
+          type="url"
+          value={outputUrl}
+        />
         <ButtonControl
-          disabled={busy || !outputId}
-          loading={busy}
+          disabled={
+            busy || !outputLabel.trim() || (!doi.trim() && !outputUrl.trim())
+          }
+          busy={busy}
           type="submit"
         >
-          Link output
+          Add reference
         </ButtonControl>
       </form>
       <form
@@ -1585,7 +1714,7 @@ function Outputs({
         </label>
         <ButtonControl
           disabled={busy}
-          loading={busy}
+          busy={busy}
           type="submit"
           variant="primary"
         >
@@ -1611,6 +1740,8 @@ function Settings({
   const [summary, setSummary] = useState(project.researchItem.summary ?? "");
   const [objective, setObjective] = useState(project.objective ?? "");
   const [status, setStatus] = useState(project.status ?? "ACTIVE");
+  const [closingNote, setClosingNote] = useState(project.closingNote ?? "");
+  const [acknowledgeOpenTasks, setAcknowledgeOpenTasks] = useState(false);
   const [publicPageEnabled, setPublic] = useState(project.publicPageEnabled);
   return (
     <div className="grid min-w-0 gap-5">
@@ -1627,6 +1758,9 @@ function Settings({
         onSubmit={(event) => {
           event.preventDefault();
           save({
+            acknowledgeOpenTasks,
+            closingNote: status === "COMPLETED" ? closingNote : null,
+            expectedVersion: project.version,
             title,
             summary,
             objective,
@@ -1666,6 +1800,30 @@ function Settings({
             onChange={(event) => setSummary(event.target.value)}
           />
         </label>
+        {status === "COMPLETED" ? (
+          <>
+            <label className="col-span-full grid gap-[.35rem] text-[.64rem] font-semibold max-[640px]:col-auto">
+              Closing note
+              <TextareaControl
+                maxLength={2_000}
+                required
+                value={closingNote}
+                onChange={(event) => setClosingNote(event.target.value)}
+              />
+            </label>
+            {(project.taskSummary?.openTasks ??
+              project.tasks.filter((task) => task.status !== "DONE").length) >
+            0 ? (
+              <CheckboxControl
+                checked={acknowledgeOpenTasks}
+                id="project-open-task-acknowledgement"
+                onCheckedChange={setAcknowledgeOpenTasks}
+              >
+                Complete this project with open tasks remaining
+              </CheckboxControl>
+            ) : null}
+          </>
+        ) : null}
         <label className="col-span-full grid gap-[.35rem] text-[.64rem] font-semibold max-[640px]:col-auto">
           Main objective
           <TextareaControl
@@ -1720,9 +1878,15 @@ function projectDeadlineSummary(project: WorkspaceProject) {
   const dueSoon = (value: string | null) =>
     Boolean(value && new Date(value) >= now && new Date(value) <= soon);
   return {
-    overdueTasks: openTasks.filter((item) => overdue(item.dueAt)).length,
-    dueSoonTasks: openTasks.filter((item) => dueSoon(item.dueAt)).length,
-    blockedTasks: openTasks.filter((item) => item.status === "BLOCKED").length,
+    overdueTasks:
+      project.taskSummary?.overdueTasks ??
+      openTasks.filter((item) => overdue(item.dueAt)).length,
+    dueSoonTasks:
+      project.taskSummary?.dueSoonTasks ??
+      openTasks.filter((item) => dueSoon(item.dueAt)).length,
+    blockedTasks:
+      project.taskSummary?.blockedTasks ??
+      openTasks.filter((item) => item.status === "BLOCKED").length,
     overdueMilestones: openMilestones.filter((item) => overdue(item.dueAt))
       .length,
     dueSoonMilestones: openMilestones.filter((item) => dueSoon(item.dueAt))
@@ -1736,6 +1900,7 @@ function projectDeadlineSummary(project: WorkspaceProject) {
 function emptyProject(id: string): WorkspaceProject {
   return {
     changeRequests: [],
+    closingNote: null,
     endsAt: null,
     invitations: [],
     memberships: [],
@@ -1753,10 +1918,12 @@ function emptyProject(id: string): WorkspaceProject {
       summary: null,
       title: null,
     },
+    outputReferences: [],
     researchItemId: id,
     resources: [],
     startsAt: null,
     status: null,
     updates: [],
+    version: 1,
   };
 }

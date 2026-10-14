@@ -1,9 +1,9 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import nodemailer, { Transporter } from 'nodemailer';
+import nodemailer from 'nodemailer';
 import type { Prisma } from '../../generated/prisma/client';
-import type { Environment } from '../config/environment';
+import { PrismaService } from '../database/prisma.service';
 import { JobsService } from '../jobs/jobs.service';
+import { MailSettingsService } from './mail-settings.service';
 
 export interface MailMessage {
   to: string;
@@ -20,31 +20,15 @@ export interface MailMessage {
 @Injectable()
 export class MailService implements OnModuleInit {
   private readonly logger = new Logger(MailService.name);
-  private readonly transporter?: Transporter;
 
   constructor(
-    private readonly config: ConfigService<Environment, true>,
     private readonly jobs: JobsService,
-  ) {
-    const host = config.get('smtpHost', { infer: true });
-    this.transporter = host
-      ? nodemailer.createTransport({
-          host,
-          port: config.get('smtpPort', { infer: true }),
-          secure: config.get('smtpSecure', { infer: true }),
-          requireTLS: config.get('smtpRequireTls', { infer: true }),
-          auth: {
-            user: config.get('smtpUser', { infer: true }),
-            pass: config.get('smtpPassword', { infer: true }),
-          },
-        })
-      : undefined;
-  }
+    private readonly settings: MailSettingsService,
+    private readonly prisma: PrismaService,
+  ) {}
 
   onModuleInit(): void {
-    this.jobs.register('SEND_EMAIL', async (payload) =>
-      this.deliver(payload, false),
-    );
+    this.jobs.register('SEND_EMAIL', (payload) => this.deliver(payload));
   }
 
   async queue(message: MailMessage, uniqueKey?: string): Promise<void> {
@@ -55,22 +39,21 @@ export class MailService implements OnModuleInit {
     );
   }
 
-  /** Send immediately when a one-time secret must never be persisted in the job payload. */
   async sendNow(message: MailMessage): Promise<void> {
-    if (!this.transporter) throw new Error('SMTP is not configured');
-    await this.transporter.sendMail({
-      from: this.config.get('smtpFrom', { infer: true }),
-      ...message,
+    await this.send(message);
+  }
+
+  async sendTest(to: string): Promise<void> {
+    await this.send({
+      to,
+      subject: 'AMIR Lab email configuration test',
+      text: 'This message confirms that the AMIR Lab email provider is configured.',
     });
   }
 
-  private async deliver(
-    payload: unknown,
-    requireTransport: boolean,
-  ): Promise<void> {
-    if (!isRecord(payload)) {
+  private async deliver(payload: unknown): Promise<void> {
+    if (!isRecord(payload))
       throw new Error('Email job payload must be an object');
-    }
     const { to, subject, text, html } = payload;
     if (
       typeof to !== 'string' ||
@@ -80,24 +63,93 @@ export class MailService implements OnModuleInit {
     ) {
       throw new Error('Email job payload is invalid');
     }
-
-    if (!this.transporter) {
-      if (requireTransport) {
-        throw new Error('SMTP is not configured');
-      }
-      this.logger.warn(
-        `SMTP is not configured; skipped email to ${to}: ${subject}`,
-      );
-      return;
-    }
-
-    await this.transporter.sendMail({
-      from: this.config.get('smtpFrom', { infer: true }),
+    await this.send({
       to,
       subject,
       text,
-      html: html ?? undefined,
+      html: typeof html === 'string' ? html : undefined,
     });
+  }
+
+  private async send(message: MailMessage): Promise<void> {
+    const config = await this.settings.getConfig();
+    if (!config) throw new Error('Email provider is not configured');
+    try {
+      if (config.settings.provider === 'RESEND') {
+        if (!config.secret) throw new Error('Resend API key is not configured');
+        const attachments = message.attachments?.map(
+          ({ filename, content, contentType }) => ({
+            filename,
+            content: content.toString('base64'),
+            content_type: contentType,
+          }),
+        );
+        const response = await fetch('https://api.resend.com/emails', {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${config.secret}`,
+            'content-type': 'application/json',
+          },
+          body: JSON.stringify({
+            from: config.settings.from,
+            to: [message.to],
+            subject: message.subject,
+            text: message.text,
+            html: message.html,
+            attachments,
+          }),
+          signal: AbortSignal.timeout(20_000),
+          redirect: 'error',
+        });
+        if (!response.ok) {
+          await response.body?.cancel();
+          throw new Error(
+            `Resend rejected email delivery (${response.status})`,
+          );
+        }
+        await response.body?.cancel();
+      } else {
+        const transport = nodemailer.createTransport({
+          host: config.settings.host,
+          port: config.settings.port,
+          secure: config.settings.secure,
+          requireTLS: config.settings.requireTls,
+          ...(config.settings.user && config.secret
+            ? { auth: { user: config.settings.user, pass: config.secret } }
+            : {}),
+        });
+        try {
+          await transport.sendMail({ from: config.settings.from, ...message });
+        } finally {
+          transport.close();
+        }
+      }
+    } catch (error) {
+      await this.recordMailUsage('mail.failed', config.settings.provider);
+      throw error;
+    }
+    await this.recordMailUsage('mail.delivered', config.settings.provider);
+  }
+
+  private async recordMailUsage(
+    action: 'mail.delivered' | 'mail.failed',
+    provider: string,
+  ) {
+    try {
+      await this.prisma.auditRecord.create({
+        data: {
+          action,
+          entityType: 'Mail',
+          entityId:
+            action === 'mail.delivered' ? 'delivery' : 'failed-delivery',
+          details: { provider },
+        },
+      });
+    } catch (error) {
+      this.logger.warn(
+        `Email usage could not be recorded: ${error instanceof Error ? error.message : String(error)}`,
+      );
+    }
   }
 }
 
@@ -111,5 +163,5 @@ function mailMessageToJson(message: MailMessage): Prisma.InputJsonObject {
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
-  return !!value && !Array.isArray(value) && typeof value === 'object';
+  return Boolean(value) && !Array.isArray(value) && typeof value === 'object';
 }

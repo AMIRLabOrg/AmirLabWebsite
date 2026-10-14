@@ -38,6 +38,12 @@ export interface ResearchProgram {
     department: { id: string; name: string; abbreviation: string | null };
   }>;
   items: ResearchProgramItem[];
+  outputReferences: Array<{
+    id: string;
+    label: string;
+    doi: string | null;
+    url: string | null;
+  }>;
 }
 
 export interface ResearchProgramOption {
@@ -56,7 +62,6 @@ export interface ResearchProgramOptions {
     roleTitle: string | null;
   }>;
   projects: ResearchProgramOption[];
-  outputs: ResearchProgramOption[];
 }
 
 export function researchProgramStatusLabel(status: ResearchProgramStatus) {

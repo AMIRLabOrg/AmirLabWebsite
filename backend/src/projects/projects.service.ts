@@ -21,6 +21,7 @@ import {
   ProjectMemberRole,
   ProjectMembershipStatus,
   ProjectMilestoneStatus,
+  ProjectTaskStatus,
   ProjectUpdateStatus,
   ResearchItemType,
   ReviewStatus,
@@ -48,6 +49,27 @@ import type {
   UpdateProjectTaskDto,
 } from './dto/project.dto';
 import { accessibleProjectWhere } from './project-access';
+import { normalizeOutputReference } from '../research/research-identity';
+import { ProjectQueryDto } from './dto/project-query.dto';
+
+const PROJECT_USER_SELECT = {
+  email: true,
+  id: true,
+  role: true,
+  status: true,
+} as const;
+
+const PROJECT_PERSON_SELECT = {
+  avatar: { select: { id: true } },
+  fullName: true,
+  id: true,
+  slug: true,
+} as const;
+
+const PROJECT_PERSON_WITH_USER_SELECT = {
+  ...PROJECT_PERSON_SELECT,
+  user: { select: PROJECT_USER_SELECT },
+} as const;
 
 const PROJECT_INCLUDE = {
   researchItem: {
@@ -55,7 +77,7 @@ const PROJECT_INCLUDE = {
       departments: { include: { department: true } },
       contributors: {
         orderBy: { sortOrder: 'asc' as const },
-        include: { person: true },
+        include: { person: { select: PROJECT_PERSON_SELECT } },
       },
       projectOutputs: {
         include: {
@@ -64,22 +86,37 @@ const PROJECT_INCLUDE = {
       },
     },
   },
+  outputReferences: { orderBy: { createdAt: 'desc' as const } },
   objectives: { orderBy: { sortOrder: 'asc' as const } },
   milestones: {
     orderBy: { sortOrder: 'asc' as const },
-    include: { owner: true },
+    include: { owner: { select: PROJECT_PERSON_SELECT } },
   },
   tasks: {
     orderBy: { sortOrder: 'asc' as const },
-    include: { owner: true },
+    include: { owner: { select: PROJECT_PERSON_SELECT } },
   },
   updates: {
     orderBy: { createdAt: 'desc' as const },
-    include: { author: { include: { person: true } } },
+    include: {
+      author: {
+        select: {
+          ...PROJECT_USER_SELECT,
+          person: { select: PROJECT_PERSON_SELECT },
+        },
+      },
+    },
   },
   memberships: {
     orderBy: { createdAt: 'asc' as const },
-    include: { person: { include: { avatar: true, user: true } } },
+    include: {
+      person: {
+        select: {
+          ...PROJECT_PERSON_SELECT,
+          user: { select: PROJECT_USER_SELECT },
+        },
+      },
+    },
   },
   invitations: { orderBy: { createdAt: 'desc' as const } },
   resources: { orderBy: { sortOrder: 'asc' as const } },
@@ -97,7 +134,12 @@ const PROJECT_ACCOUNT_STATUSES: AccountStatus[] = [
 type BulkProjectChangeRequest = Prisma.ProjectChangeRequestGetPayload<{
   include: {
     project: { include: { researchItem: true } };
-    submittedBy: { include: { person: true } };
+    submittedBy: {
+      select: {
+        id: true;
+        person: { select: { fullName: true } };
+      };
+    };
   };
 }>;
 
@@ -305,22 +347,165 @@ export class ProjectsService {
     return withProgress(await this.project(created));
   }
 
-  async mine(user: AuthenticatedUser) {
-    const projects = await this.prisma.project.findMany({
-      where: accessibleProjectWhere(user),
-      include: PROJECT_INCLUDE,
-      orderBy: { researchItem: { updatedAt: 'desc' } },
-    });
-    return projects.map(withProgress);
+  async mine(user: AuthenticatedUser, query = new ProjectQueryDto()) {
+    const access = accessibleProjectWhere(user);
+    const where: Prisma.ProjectWhereInput = {
+      ...access,
+      researchItem: {
+        is: {
+          ...(query.view === 'all'
+            ? {}
+            : {
+                reviewStatus:
+                  query.view === 'archived'
+                    ? ReviewStatus.ARCHIVED
+                    : { not: ReviewStatus.ARCHIVED },
+              }),
+          ...(query.search
+            ? { title: { contains: query.search, mode: 'insensitive' } }
+            : {}),
+        },
+      },
+      ...(query.view === 'completed'
+        ? { status: ProjectStatus.COMPLETED }
+        : {}),
+      ...(query.view === 'active'
+        ? { status: { not: ProjectStatus.COMPLETED } }
+        : {}),
+    };
+    const [projects, total] = await this.prisma.$transaction(
+      async (transaction) => {
+        const projects = await transaction.project.findMany({
+          where,
+          include: {
+            researchItem: true,
+            milestones: { select: { progress: true, weight: true } },
+            _count: { select: { memberships: true, milestones: true } },
+          },
+          orderBy: [
+            { researchItem: { updatedAt: 'desc' } },
+            { researchItemId: 'asc' },
+          ],
+          skip: (query.page - 1) * query.pageSize,
+          take: query.pageSize,
+        });
+        const total = await transaction.project.count({ where });
+        return [projects, total] as const;
+      },
+    );
+    return {
+      items: projects.map(withProgress),
+      total,
+      page: query.page,
+      pageSize: query.pageSize,
+      totalPages: Math.ceil(total / query.pageSize),
+    };
   }
 
-  async workspace(id: string, user: AuthenticatedUser) {
+  async workspace(
+    id: string,
+    user: AuthenticatedUser,
+    query = new ProjectQueryDto(),
+  ) {
     await this.authorize(id, user, ProjectAccess.VIEW, true);
-    return withProgress(await this.project(id));
+    const project = await this.prisma.project.findUnique({
+      where: { researchItemId: id },
+      include: {
+        ...PROJECT_INCLUDE,
+        tasks: {
+          ...PROJECT_INCLUDE.tasks,
+          take: query.pageSize,
+          skip:
+            query.section === 'tasks' ? (query.page - 1) * query.pageSize : 0,
+        },
+        updates: {
+          ...PROJECT_INCLUDE.updates,
+          take: query.pageSize,
+          skip:
+            query.section === 'updates' ? (query.page - 1) * query.pageSize : 0,
+        },
+        changeRequests: {
+          ...PROJECT_INCLUDE.changeRequests,
+          take: query.pageSize,
+          skip:
+            query.section === 'changeRequests'
+              ? (query.page - 1) * query.pageSize
+              : 0,
+        },
+        _count: {
+          select: {
+            tasks: true,
+            updates: true,
+            changeRequests: {
+              where: { status: ProjectChangeStatus.NEEDS_REVIEW },
+            },
+          },
+        },
+      },
+    });
+    if (!project) throw new NotFoundException('Project not found');
+    const now = new Date();
+    const soon = new Date(now.getTime() + 7 * DAY);
+    const open = { projectId: id, status: { not: ProjectTaskStatus.DONE } };
+    const [openTasks, overdueTasks, dueSoonTasks, blockedTasks] =
+      await Promise.all([
+        this.prisma.projectTask.count({ where: open }),
+        this.prisma.projectTask.count({
+          where: { ...open, dueAt: { lt: now } },
+        }),
+        this.prisma.projectTask.count({
+          where: { ...open, dueAt: { gte: now, lte: soon } },
+        }),
+        this.prisma.projectTask.count({
+          where: { projectId: id, status: ProjectTaskStatus.BLOCKED },
+        }),
+      ]);
+    return {
+      ...withProgress(project),
+      taskSummary: {
+        openTasks,
+        completedTasks: project._count.tasks - openTasks,
+        overdueTasks,
+        dueSoonTasks,
+        blockedTasks,
+      },
+    };
+  }
+
+  async collection(
+    id: string,
+    user: AuthenticatedUser,
+    query: ProjectQueryDto,
+  ) {
+    const project = await this.workspace(id, user, query);
+    const total = project._count[query.section];
+    return {
+      items: project[query.section],
+      total,
+      page: query.page,
+      pageSize: query.pageSize,
+      totalPages: Math.ceil(total / query.pageSize),
+    };
   }
 
   async update(id: string, dto: UpdateProjectDto, user: AuthenticatedUser) {
     await this.authorize(id, user, ProjectAccess.MANAGE);
+    validateProjectDates(dto.startsAt, dto.endsAt);
+    if (dto.status === ProjectStatus.COMPLETED) {
+      if (!dto.closingNote?.trim()) {
+        throw new BadRequestException(
+          'Completed projects require a closing note',
+        );
+      }
+      const openTasks = await this.prisma.projectTask.count({
+        where: { projectId: id, status: { not: ProjectTaskStatus.DONE } },
+      });
+      if (openTasks && !dto.acknowledgeOpenTasks) {
+        throw new BadRequestException(
+          'Acknowledge the remaining open tasks before completing this project',
+        );
+      }
+    }
     return this.applyOrQueue(id, ProjectChangeKind.DETAILS, dto, user);
   }
 
@@ -334,10 +519,9 @@ export class ProjectsService {
       (sum, milestone) => sum + milestone.weight,
       0,
     );
-    const project = await this.project(id);
-    if (project.publicPageEnabled && total !== 100) {
+    if (dto.milestones.length && total !== 100) {
       throw new BadRequestException(
-        'Public projects must allocate exactly 100% milestone weight',
+        'Milestones must allocate exactly 100% weight',
       );
     }
     return this.applyOrQueue(id, ProjectChangeKind.MILESTONES, dto, user);
@@ -350,22 +534,42 @@ export class ProjectsService {
   ) {
     await this.authorize(id, user, ProjectAccess.POST_UPDATES);
     await this.assertTaskOwner(id, dto.ownerId);
-    const sortOrder = await this.prisma.projectTask.count({
-      where: { projectId: id },
-    });
-    const task = await this.prisma.projectTask.create({
-      data: {
-        createdById: user.id,
-        description: dto.description?.trim() || null,
-        dueAt: dto.dueAt ? new Date(dto.dueAt) : null,
-        ownerId: dto.ownerId || null,
-        priority: dto.priority,
-        projectId: id,
-        sortOrder,
-        status: dto.status ?? 'TODO',
-        title: dto.title.trim(),
-      },
-      include: { owner: { include: { user: true } } },
+    const task = await this.prisma.$transaction(async (transaction) => {
+      const [project] = await transaction.$queryRaw<
+        Array<{ status: ProjectStatus }>
+      >`
+        SELECT "status" FROM "Project" WHERE "researchItemId" = ${id}::uuid FOR UPDATE
+      `;
+      if (project?.status === ProjectStatus.COMPLETED)
+        throw new ConflictException(
+          'Completed projects cannot accept new tasks',
+        );
+      await transaction.$queryRaw(
+        Prisma.sql`SELECT pg_advisory_xact_lock(hashtextextended(${`project-task:${id}`}, 0))::text`,
+      );
+      const last = await transaction.projectTask.aggregate({
+        where: { projectId: id },
+        _max: { sortOrder: true },
+      });
+      const created = await transaction.projectTask.create({
+        data: {
+          createdById: user.id,
+          description: dto.description?.trim() || null,
+          dueAt: dto.dueAt ? new Date(dto.dueAt) : null,
+          ownerId: dto.ownerId || null,
+          priority: dto.priority,
+          projectId: id,
+          sortOrder: (last._max.sortOrder ?? -1) + 1,
+          status: dto.status ?? 'TODO',
+          title: dto.title.trim(),
+        },
+        include: { owner: { select: PROJECT_PERSON_WITH_USER_SELECT } },
+      });
+      await transaction.project.update({
+        where: { researchItemId: id },
+        data: { version: { increment: 1 } },
+      });
+      return created;
     });
     await this.recordActivityText(id, user.id, `created task “${task.title}”`);
     const policy = await this.settings.notificationPolicy();
@@ -388,18 +592,45 @@ export class ProjectsService {
     await this.authorize(id, user, ProjectAccess.POST_UPDATES);
     const previous = await this.assertTask(id, taskId);
     await this.assertTaskOwner(id, dto.ownerId);
-    const task = await this.prisma.projectTask.update({
-      where: { id: taskId },
-      data: {
-        completedAt: dto.status === 'DONE' ? new Date() : null,
-        description: dto.description?.trim() || null,
-        dueAt: dto.dueAt ? new Date(dto.dueAt) : null,
-        ownerId: dto.ownerId || null,
-        priority: dto.priority,
-        status: dto.status,
-        title: dto.title.trim(),
-      },
-      include: { owner: { include: { user: true } } },
+    const completedAt =
+      dto.status === ProjectTaskStatus.DONE
+        ? previous.status === ProjectTaskStatus.DONE
+          ? previous.completedAt
+          : new Date()
+        : null;
+    const task = await this.prisma.$transaction(async (transaction) => {
+      await transaction.$queryRaw`
+        SELECT "researchItemId" FROM "Project" WHERE "researchItemId" = ${id}::uuid FOR UPDATE
+      `;
+      const updated = await transaction.projectTask.updateMany({
+        where: {
+          id: taskId,
+          projectId: id,
+          updatedAt: new Date(dto.expectedUpdatedAt),
+        },
+        data: {
+          completedAt,
+          description: dto.description?.trim() || null,
+          dueAt: dto.dueAt ? new Date(dto.dueAt) : null,
+          ownerId: dto.ownerId || null,
+          priority: dto.priority,
+          status: dto.status,
+          title: dto.title.trim(),
+        },
+      });
+      if (!updated.count) {
+        throw new ConflictException(
+          'This task changed after you opened it. Reload and try again.',
+        );
+      }
+      await transaction.project.update({
+        where: { researchItemId: id },
+        data: { version: { increment: 1 } },
+      });
+      return transaction.projectTask.findUniqueOrThrow({
+        where: { id: taskId },
+        include: { owner: { select: PROJECT_PERSON_WITH_USER_SELECT } },
+      });
     });
     await this.recordActivityText(id, user.id, `updated task “${task.title}”`);
     const policy = await this.settings.notificationPolicy();
@@ -417,7 +648,16 @@ export class ProjectsService {
   async deleteTask(id: string, taskId: string, user: AuthenticatedUser) {
     await this.authorize(id, user, ProjectAccess.POST_UPDATES);
     const task = await this.assertTask(id, taskId);
-    await this.prisma.projectTask.delete({ where: { id: taskId } });
+    await this.prisma.$transaction(async (transaction) => {
+      await transaction.$queryRaw`
+        SELECT "researchItemId" FROM "Project" WHERE "researchItemId" = ${id}::uuid FOR UPDATE
+      `;
+      await transaction.projectTask.delete({ where: { id: taskId } });
+      await transaction.project.update({
+        where: { researchItemId: id },
+        data: { version: { increment: 1 } },
+      });
+    });
     await this.recordActivityText(id, user.id, `removed task “${task.title}”`);
     return { deleted: true };
   }
@@ -494,18 +734,33 @@ export class ProjectsService {
 
   async linkOutput(id: string, dto: ProjectOutputDto, user: AuthenticatedUser) {
     await this.authorize(id, user, ProjectAccess.MANAGE);
-    const output = await this.prisma.researchItem.findFirst({
-      where: {
-        id: dto.outputId,
-        reviewStatus: ReviewStatus.PUBLISHED,
-        type: { not: ResearchItemType.PROJECT },
-      },
+    return this.applyOrQueue(
+      id,
+      ProjectChangeKind.OUTPUT,
+      { ...dto, ...normalizeOutputReference(dto) },
+      user,
+    );
+  }
+
+  async removeOutputReference(
+    id: string,
+    referenceId: string,
+    user: AuthenticatedUser,
+  ) {
+    await this.authorize(id, user, ProjectAccess.MANAGE);
+    await this.prisma.$transaction(async (transaction) => {
+      const removed = await transaction.projectOutputReference.deleteMany({
+        where: { id: referenceId, projectId: id },
+      });
+      if (!removed.count) {
+        throw new NotFoundException('Output reference not found');
+      }
+      await transaction.project.update({
+        where: { researchItemId: id },
+        data: { version: { increment: 1 } },
+      });
     });
-    if (!output)
-      throw new BadRequestException(
-        'Only published papers or datasets can be linked',
-      );
-    return this.applyOrQueue(id, ProjectChangeKind.OUTPUT, dto, user);
+    return { removed: true };
   }
 
   async addResource(
@@ -564,7 +819,12 @@ export class ProjectsService {
       where: { status: ProjectChangeStatus.NEEDS_REVIEW },
       include: {
         project: { include: { researchItem: true } },
-        submittedBy: { include: { person: true } },
+        submittedBy: {
+          select: {
+            id: true,
+            person: { select: { fullName: true } },
+          },
+        },
       },
       orderBy: { submittedAt: 'asc' },
     });
@@ -613,7 +873,12 @@ export class ProjectsService {
       where: { id: { in: ids } },
       include: {
         project: { include: { researchItem: true } },
-        submittedBy: { include: { person: true } },
+        submittedBy: {
+          select: {
+            id: true,
+            person: { select: { fullName: true } },
+          },
+        },
       },
     });
     if (requests.length !== ids.length) {
@@ -858,8 +1123,17 @@ export class ProjectsService {
       kind === ProjectChangeKind.ARCHIVE
         ? policy.archiveProject
         : policy.updateProject;
+    const visibilityChange =
+      kind === ProjectChangeKind.DETAILS &&
+      (
+        await this.prisma.project.findUniqueOrThrow({
+          where: { researchItemId: projectId },
+          select: { publicPageEnabled: true },
+        })
+      ).publicPageEnabled !== Boolean(asRecord(payload).publicPageEnabled);
     const appliesDirectly =
       user.role === PlatformRole.ADMIN ||
+      (kind !== ProjectChangeKind.ARCHIVE && !visibilityChange) ||
       reviewMode === 'AUTOMATIC' ||
       input.publishNow;
     if (appliesDirectly) {
@@ -877,16 +1151,30 @@ export class ProjectsService {
       }
       return { outcome: 'APPLIED' as const, direct: true, result };
     }
-    const project = await this.project(projectId);
-    const request = await this.prisma.projectChangeRequest.create({
-      data: {
-        baseVersion: project.version,
-        kind,
-        payload,
-        projectId,
-        submittedById: user.id,
+    const submittedVersion = asRecord(payload).expectedVersion;
+    const expectedVersion =
+      typeof submittedVersion === 'number' ? submittedVersion : null;
+    const { project, request } = await this.prisma.$transaction(
+      async (transaction) => {
+        await transaction.$queryRaw`SELECT "researchItemId" FROM "Project" WHERE "researchItemId" = ${projectId}::uuid FOR UPDATE`;
+        const project = await transaction.project.findUniqueOrThrow({
+          where: { researchItemId: projectId },
+          include: { researchItem: { select: { title: true } } },
+        });
+        if (expectedVersion !== null && project.version !== expectedVersion)
+          throw projectVersionConflict();
+        const request = await transaction.projectChangeRequest.create({
+          data: {
+            baseVersion: expectedVersion ?? project.version,
+            kind,
+            payload,
+            projectId,
+            submittedById: user.id,
+          },
+        });
+        return { project, request };
       },
-    });
+    );
     await this.notifications.notifyReviewers({
       type: NotificationType.PROJECT_REVIEW_NEEDED,
       title: 'Project change needs review',
@@ -907,6 +1195,12 @@ export class ProjectsService {
 
     const details = byKind(ProjectChangeKind.DETAILS);
     if (details.length) {
+      for (const request of details)
+        await assertProjectCompletion(
+          transaction,
+          request.projectId,
+          asRecord(request.payload),
+        );
       const detailRows = details.map((request) => {
         const payload = asRecord(request.payload);
         return Prisma.sql`(
@@ -917,7 +1211,8 @@ export class ProjectsService {
           ${requiredString(payload.status)}::"ProjectStatus",
           ${optionalDate(payload.startsAt)},
           ${optionalDate(payload.endsAt)},
-          ${Boolean(payload.publicPageEnabled)}::boolean
+          ${Boolean(payload.publicPageEnabled)}::boolean,
+          ${optionalString(payload.closingNote)}
         )`;
       });
       await transaction.$executeRaw(
@@ -943,7 +1238,8 @@ export class ProjectsService {
             status,
             starts_at,
             ends_at,
-            public_page_enabled
+            public_page_enabled,
+            closing_note
           )
           WHERE item."id" = selected.project_id
         `,
@@ -953,6 +1249,7 @@ export class ProjectsService {
           UPDATE "Project" AS project
           SET
             "endsAt" = selected.ends_at,
+            "closingNote" = selected.closing_note,
             "objective" = selected.objective,
             "publicPageEnabled" = selected.public_page_enabled,
             "startsAt" = selected.starts_at,
@@ -966,7 +1263,8 @@ export class ProjectsService {
             status,
             starts_at,
             ends_at,
-            public_page_enabled
+            public_page_enabled,
+            closing_note
           )
           WHERE project."researchItemId" = selected.project_id
         `,
@@ -1009,48 +1307,72 @@ export class ProjectsService {
 
     const milestoneRequests = byKind(ProjectChangeKind.MILESTONES);
     if (milestoneRequests.length) {
-      const projectIds = milestoneRequests.map(({ projectId }) => projectId);
-      await transaction.projectMilestone.deleteMany({
-        where: { projectId: { in: projectIds } },
-      });
-      const milestones = milestoneRequests.flatMap((request) => {
+      for (const request of milestoneRequests) {
         const payload = asRecord(request.payload);
-        return (
+        const milestones = (
           Array.isArray(payload.milestones) ? payload.milestones : []
-        ).map((value, sortOrder) => {
-          const milestone = asRecord(value);
+        ).map(asRecord);
+        const existing = await transaction.projectMilestone.findMany({
+          where: { projectId: request.projectId },
+        });
+        const byId = new Map(
+          existing.map((milestone) => [milestone.id, milestone]),
+        );
+        const suppliedIds = milestones.flatMap((milestone) =>
+          typeof milestone.id === 'string' ? [milestone.id] : [],
+        );
+        if (suppliedIds.some((id) => !byId.has(id))) {
+          throw new BadRequestException(
+            'Every milestone ID must belong to this project',
+          );
+        }
+        await transaction.projectMilestone.updateMany({
+          where: { projectId: request.projectId },
+          data: { sortOrder: { increment: 10_000 } },
+        });
+        await transaction.projectMilestone.deleteMany({
+          where: { projectId: request.projectId, id: { notIn: suppliedIds } },
+        });
+        for (const [sortOrder, milestone] of milestones.entries()) {
           const status = requiredEnumValue<ProjectMilestoneStatus>(
             milestone.status,
             Object.values(ProjectMilestoneStatus),
           );
-          return {
+          const prior =
+            typeof milestone.id === 'string' ? byId.get(milestone.id) : null;
+          const data = {
             completedAt:
-              status === ProjectMilestoneStatus.COMPLETE ? now : null,
+              status === ProjectMilestoneStatus.COMPLETE
+                ? (prior?.completedAt ?? now)
+                : null,
             description: optionalString(milestone.description),
             dueAt: optionalDate(milestone.dueAt),
             ownerId: optionalString(milestone.ownerId),
             progress:
               status === ProjectMilestoneStatus.COMPLETE
                 ? 100
-                : status === ProjectMilestoneStatus.PLANNED ||
-                    status === ProjectMilestoneStatus.BLOCKED
-                  ? 0
-                  : Number(milestone.progress),
-            projectId: request.projectId,
+                : requiredNumber(milestone.progress),
             sortOrder,
             status,
             title: requiredString(milestone.title),
-            weight: Number(milestone.weight),
+            weight: requiredNumber(milestone.weight),
           };
+          if (prior) {
+            await transaction.projectMilestone.update({
+              where: { id: prior.id },
+              data,
+            });
+          } else {
+            await transaction.projectMilestone.create({
+              data: { ...data, projectId: request.projectId },
+            });
+          }
+        }
+        await transaction.project.update({
+          where: { researchItemId: request.projectId },
+          data: { version: { increment: 1 } },
         });
-      });
-      if (milestones.length) {
-        await transaction.projectMilestone.createMany({ data: milestones });
       }
-      await transaction.project.updateMany({
-        where: { researchItemId: { in: projectIds } },
-        data: { version: { increment: 1 } },
-      });
     }
 
     const updateRequests = byKind(ProjectChangeKind.UPDATE);
@@ -1110,7 +1432,10 @@ export class ProjectsService {
           where: {
             id: { in: memberRequests.map(({ personId }) => personId) },
           },
-          include: { user: true },
+          select: {
+            id: true,
+            user: { select: PROJECT_USER_SELECT },
+          },
         });
         const userIdByPersonId = new Map<string, string>();
         for (const { personId } of memberRequests) {
@@ -1313,11 +1638,18 @@ export class ProjectsService {
 
     const outputRequests = byKind(ProjectChangeKind.OUTPUT);
     if (outputRequests.length) {
-      await transaction.projectOutput.createMany({
-        data: outputRequests.map((request) => ({
-          outputId: requiredString(asRecord(request.payload).outputId),
-          projectId: request.projectId,
-        })),
+      await transaction.projectOutputReference.createMany({
+        data: outputRequests.map((request) => {
+          const payload = asRecord(request.payload);
+          return {
+            id: randomUUID(),
+            doi: optionalString(payload.doi),
+            identityKey: requiredString(payload.identityKey),
+            label: requiredString(payload.label),
+            projectId: request.projectId,
+            url: optionalString(payload.url),
+          };
+        }),
         skipDuplicates: true,
       });
       await transaction.project.updateMany({
@@ -1454,6 +1786,26 @@ export class ProjectsService {
         : [];
       const publicPageEnabled = Boolean(payload.publicPageEnabled);
       result = await this.prisma.$transaction(async (transaction) => {
+        const updated = await transaction.project.updateMany({
+          where: {
+            researchItemId: projectId,
+            version: requiredNumber(payload.expectedVersion),
+          },
+          data: {
+            closingNote: optionalString(payload.closingNote),
+            endsAt: optionalDate(payload.endsAt),
+            objective: optionalString(payload.objective),
+            publicPageEnabled,
+            startsAt: optionalDate(payload.startsAt),
+            status: requiredEnumValue<ProjectStatus>(
+              payload.status,
+              Object.values(ProjectStatus),
+            ),
+            version: { increment: 1 },
+          },
+        });
+        if (!updated.count) throw projectVersionConflict();
+        await assertProjectCompletion(transaction, projectId, payload);
         await transaction.researchItem.update({
           where: { id: projectId },
           data: {
@@ -1465,69 +1817,97 @@ export class ProjectsService {
             title: requiredString(payload.title),
           },
         });
-        const project = await transaction.project.update({
-          where: { researchItemId: projectId },
-          data: {
-            endsAt: optionalDate(payload.endsAt),
-            objective: optionalString(payload.objective),
-            publicPageEnabled,
-            startsAt: optionalDate(payload.startsAt),
-            status: requiredEnumValue<ProjectStatus>(
-              payload.status,
-              Object.values(ProjectStatus),
-            ),
-            version: { increment: 1 },
-            objectives: {
-              deleteMany: {},
-              create: objectives.map((objective, sortOrder) => ({
-                description: optionalString(objective.description),
-                sortOrder,
-                title: requiredString(objective.title),
-              })),
-            },
-          },
+        await transaction.projectObjective.deleteMany({
+          where: { projectId },
+        });
+        await transaction.projectObjective.createMany({
+          data: objectives.map((objective, sortOrder) => ({
+            description: optionalString(objective.description),
+            projectId,
+            sortOrder,
+            title: requiredString(objective.title),
+          })),
         });
         await transaction.conversation.updateMany({
           where: { kind: ConversationKind.PROJECT, projectId },
           data: { title: requiredString(payload.title) },
         });
-        return project;
+        return transaction.project.findUniqueOrThrow({
+          where: { researchItemId: projectId },
+        });
       });
     } else if (kind === ProjectChangeKind.MILESTONES) {
       const milestones = Array.isArray(payload.milestones)
         ? payload.milestones.map(asRecord)
         : [];
-      result = await this.prisma.project.update({
-        where: { researchItemId: projectId },
-        data: {
-          version: { increment: 1 },
-          milestones: {
-            deleteMany: {},
-            create: milestones.map((milestone, sortOrder) => ({
-              completedAt:
-                milestone.status === ProjectMilestoneStatus.COMPLETE
-                  ? new Date()
-                  : null,
-              description: optionalString(milestone.description),
-              dueAt: optionalDate(milestone.dueAt),
-              ownerId: optionalString(milestone.ownerId),
-              progress:
-                milestone.status === ProjectMilestoneStatus.COMPLETE
-                  ? 100
-                  : milestone.status === ProjectMilestoneStatus.PLANNED ||
-                      milestone.status === ProjectMilestoneStatus.BLOCKED
-                    ? 0
-                    : Number(milestone.progress),
-              sortOrder,
-              status: requiredEnumValue<ProjectMilestoneStatus>(
-                milestone.status,
-                Object.values(ProjectMilestoneStatus),
-              ),
-              title: requiredString(milestone.title),
-              weight: Number(milestone.weight),
-            })),
+      result = await this.prisma.$transaction(async (transaction) => {
+        const updated = await transaction.project.updateMany({
+          where: {
+            researchItemId: projectId,
+            version: requiredNumber(payload.expectedVersion),
           },
-        },
+          data: { version: { increment: 1 } },
+        });
+        if (!updated.count) throw projectVersionConflict();
+        const existing = await transaction.projectMilestone.findMany({
+          where: { projectId },
+        });
+        const byId = new Map(
+          existing.map((milestone) => [milestone.id, milestone]),
+        );
+        const suppliedIds = milestones.flatMap((milestone) =>
+          typeof milestone.id === 'string' ? [milestone.id] : [],
+        );
+        if (suppliedIds.some((id) => !byId.has(id))) {
+          throw new BadRequestException(
+            'Every milestone ID must belong to this project',
+          );
+        }
+        await transaction.projectMilestone.updateMany({
+          where: { projectId },
+          data: { sortOrder: { increment: 10_000 } },
+        });
+        await transaction.projectMilestone.deleteMany({
+          where: { projectId, id: { notIn: suppliedIds } },
+        });
+        for (const [sortOrder, milestone] of milestones.entries()) {
+          const status = requiredEnumValue<ProjectMilestoneStatus>(
+            milestone.status,
+            Object.values(ProjectMilestoneStatus),
+          );
+          const prior =
+            typeof milestone.id === 'string' ? byId.get(milestone.id) : null;
+          const data = {
+            completedAt:
+              status === ProjectMilestoneStatus.COMPLETE
+                ? (prior?.completedAt ?? new Date())
+                : null,
+            description: optionalString(milestone.description),
+            dueAt: optionalDate(milestone.dueAt),
+            ownerId: optionalString(milestone.ownerId),
+            progress:
+              status === ProjectMilestoneStatus.COMPLETE
+                ? 100
+                : requiredNumber(milestone.progress),
+            sortOrder,
+            status,
+            title: requiredString(milestone.title),
+            weight: requiredNumber(milestone.weight),
+          };
+          if (prior) {
+            await transaction.projectMilestone.update({
+              where: { id: prior.id },
+              data,
+            });
+          } else {
+            await transaction.projectMilestone.create({
+              data: { ...data, projectId },
+            });
+          }
+        }
+        return transaction.project.findUniqueOrThrow({
+          where: { researchItemId: projectId },
+        });
       });
     } else if (kind === ProjectChangeKind.UPDATE) {
       const status = requiredEnumValue<ProjectUpdateStatus>(
@@ -1552,14 +1932,20 @@ export class ProjectsService {
       result = await this.createInvitation(projectId, payload, actorId);
       shouldIncrementVersion = true;
     } else if (kind === ProjectChangeKind.OUTPUT) {
-      result = await this.prisma.projectOutput.upsert({
+      result = await this.prisma.projectOutputReference.upsert({
         where: {
-          projectId_outputId: {
+          projectId_identityKey: {
             projectId,
-            outputId: requiredString(payload.outputId),
+            identityKey: requiredString(payload.identityKey),
           },
         },
-        create: { projectId, outputId: requiredString(payload.outputId) },
+        create: {
+          doi: optionalString(payload.doi),
+          identityKey: requiredString(payload.identityKey),
+          label: requiredString(payload.label),
+          projectId,
+          url: optionalString(payload.url),
+        },
         update: {},
       });
       shouldIncrementVersion = true;
@@ -1652,7 +2038,9 @@ export class ProjectsService {
         researchItem: { select: { title: true } },
         memberships: {
           where: { status: ProjectMembershipStatus.ACTIVE },
-          include: { person: { include: { user: true } } },
+          include: {
+            person: { select: PROJECT_PERSON_WITH_USER_SELECT },
+          },
         },
       },
     });
@@ -1783,7 +2171,7 @@ export class ProjectsService {
     const invitedPerson = personId
       ? await this.prisma.person.findUnique({
           where: { id: personId },
-          include: { user: true },
+          select: PROJECT_PERSON_WITH_USER_SELECT,
         })
       : null;
     if (personId) {
@@ -1955,6 +2343,7 @@ const DAY = 86_400_000;
 function withProgress<
   T extends { milestones: Array<{ progress: number; weight: number }> },
 >(project: T) {
+  if (!project.milestones.length) return { ...project, progress: null };
   const progress = Math.round(
     project.milestones.reduce(
       (total, milestone) =>
@@ -1990,6 +2379,49 @@ function requiredString(value: unknown): string {
 
 function optionalString(value: unknown): string | null {
   return typeof value === 'string' && value.trim() ? value.trim() : null;
+}
+
+function requiredNumber(value: unknown): number {
+  if (typeof value !== 'number' || !Number.isFinite(value)) {
+    throw new BadRequestException(
+      'Project change is missing a required number',
+    );
+  }
+  return value;
+}
+
+async function assertProjectCompletion(
+  transaction: Prisma.TransactionClient,
+  projectId: string,
+  payload: Record<string, unknown>,
+) {
+  if (payload.status !== ProjectStatus.COMPLETED) return;
+  if (!optionalString(payload.closingNote))
+    throw new BadRequestException('Completed projects require a closing note');
+  const openTasks = await transaction.projectTask.count({
+    where: { projectId, status: { not: ProjectTaskStatus.DONE } },
+  });
+  if (openTasks && !payload.acknowledgeOpenTasks)
+    throw new BadRequestException(
+      'Acknowledge the remaining open tasks before completing this project',
+    );
+}
+
+function projectVersionConflict() {
+  return new ConflictException(
+    'This project changed after you opened it. Reload and try again.',
+  );
+}
+
+function validateProjectDates(
+  startsAt?: string | null,
+  endsAt?: string | null,
+) {
+  if (startsAt && endsAt && new Date(endsAt) < new Date(startsAt)) {
+    throw new BadRequestException(
+      'Project end date must follow its start date',
+    );
+  }
 }
 
 function requiredEnumValue<T extends string>(

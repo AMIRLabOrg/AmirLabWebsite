@@ -101,7 +101,7 @@ export function RevertEmailForm() {
       <div>
         <ButtonControl
           disabled={!token || saving}
-          loading={saving}
+          busy={saving}
           onClick={revert}
           type="button"
           variant="primary"

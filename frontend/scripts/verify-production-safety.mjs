@@ -22,7 +22,7 @@ if (failures.length) {
 console.log("Frontend production-safety source checks passed.");
 
 function inspect(file) {
-  const productionSource = file.includes(`${path.sep}src${path.sep}`);
+  const productionSource = file.includes(`${path.sep}src${path.sep}`) && !/\.(?:test|spec)\.tsx?$/.test(file);
   const text = fs.readFileSync(file, "utf8");
   const scriptKind = file.endsWith(".tsx")
     ? ts.ScriptKind.TSX

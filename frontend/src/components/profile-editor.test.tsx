@@ -82,6 +82,7 @@ describe("ProfileEditor staff profiles", () => {
       refreshUnreadCount: vi.fn(async () => {}),
       showToast: vi.fn(),
       subscribeResearchEvents: vi.fn(() => () => {}),
+      subscribeJobEvents: vi.fn(() => () => {}),
       unreadCount: 0,
     });
     request.mockReset();
@@ -90,6 +91,36 @@ describe("ProfileEditor staff profiles", () => {
 
   afterEach(() => {
     cleanup();
+  });
+
+  it("blocks saving when managed account metadata fails", async () => {
+    auth.mockReturnValue({
+      ...auth(),
+      user: {
+        email: "admin@amirlab.org",
+        id: "admin-1",
+        person: null,
+        role: "ADMIN",
+        status: "ACTIVE",
+      },
+    });
+    request.mockImplementation(async (path) => {
+      if (path.endsWith("/profile")) return profile("MODERATOR");
+      throw new Error("Account metadata unavailable");
+    });
+    const { container } = render(<ProfileEditor userId="user-1" />);
+    await screen.findByText("Account metadata unavailable");
+    expect(
+      (
+        screen.getByRole("button", {
+          name: "Save and publish",
+        }) as HTMLButtonElement
+      ).disabled,
+    ).toBe(true);
+    fireEvent.submit(container.querySelector("form")!);
+    expect(
+      request.mock.calls.some(([, options]) => options?.method === "PATCH"),
+    ).toBe(false);
   });
 
   it("keeps managed account email and role control for an admin", async () => {

@@ -17,6 +17,7 @@ import {
   UserSort,
 } from './dto/user-query.dto';
 import { buildPersonSlug } from './person-slug';
+import { lockAdministratorChange } from './admin-change-lock';
 import { effectiveRank } from '../settings/settings.service';
 
 @Injectable()
@@ -45,7 +46,7 @@ export class UsersService {
       await transaction.person.create({
         data: {
           fullName,
-          isPublished: false,
+          isPublished: true,
           appointedRank: dto.rank ?? null,
           slug: buildPersonSlug(fullName, account.id),
           userId: account.id,
@@ -100,10 +101,12 @@ export class UsersService {
       deletedAt: true,
       person: {
         select: {
+          id: true,
           fullName: true,
           appointedRank: true,
           earnedRank: true,
           slug: true,
+          isPublished: true,
         },
       },
     } satisfies Prisma.UserSelect;
@@ -137,10 +140,12 @@ export class UsersService {
         setupEmailQueuedAt: true,
         person: {
           select: {
+            id: true,
             fullName: true,
             appointedRank: true,
             earnedRank: true,
             slug: true,
+            isPublished: true,
           },
         },
       },
@@ -167,6 +172,11 @@ export class UsersService {
       }
     }
     const updated = await this.prisma.$transaction(async (transaction) => {
+      await lockAdministratorChange(
+        transaction,
+        id,
+        dto.role !== PlatformRole.ADMIN,
+      );
       const account = await transaction.user.update({
         where: { id },
         data: { email, role: dto.role },
@@ -181,7 +191,7 @@ export class UsersService {
         await transaction.person.create({
           data: {
             fullName,
-            isPublished: false,
+            isPublished: true,
             appointedRank: dto.rank,
             slug: buildPersonSlug(fullName, id),
             userId: id,
@@ -226,21 +236,9 @@ export class UsersService {
     if (user.isDeleted)
       throw new ConflictException('Account is already in trash');
 
-    if (user.role === PlatformRole.ADMIN) {
-      const adminCount = await this.prisma.user.count({
-        where: {
-          isDeleted: false,
-          role: PlatformRole.ADMIN,
-          status: { not: AccountStatus.ARCHIVED },
-        },
-      });
-      if (adminCount <= 1) {
-        throw new ConflictException('The last administrator cannot be deleted');
-      }
-    }
-
     try {
       await this.prisma.$transaction(async (transaction) => {
+        await lockAdministratorChange(transaction, id);
         await transaction.auditRecord.create({
           data: {
             action: 'account.deleted',

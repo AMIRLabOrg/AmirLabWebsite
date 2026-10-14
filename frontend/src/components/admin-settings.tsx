@@ -2,6 +2,7 @@
 
 import { cn } from "@/lib/cn";
 import { OpenAlexApiSettings } from "@/components/openalex-api-settings";
+import { MailProviderSettings } from "@/components/mail-provider-settings";
 import { loadingPlaceholder } from "@/lib/loading-style";
 import { useEffect, useState } from "react";
 import { Save, ShieldCheck } from "lucide-react";
@@ -72,16 +73,16 @@ const NOTIFICATION_LABELS: Record<
   deadlineOverdue: ["Overdue", "Notify owners once after a deadline passes."],
 };
 
-const LABELS: Record<keyof VerificationPolicy, [string, string]> = {
+type VisibleVerificationKey = Exclude<
+  keyof VerificationPolicy,
+  "newPaper" | "newDataset"
+>;
+
+const LABELS: Record<VisibleVerificationKey, [string, string]> = {
   profileEdit: [
     "Profile changes",
     "Updates to names, biography, links, and public profile data.",
   ],
-  newPaper: [
-    "New papers",
-    "First publication of a paper record and contributor evidence.",
-  ],
-  newDataset: ["New datasets", "First publication of a dataset record."],
   newProject: [
     "New projects",
     "Creation and first publication of a project workspace.",
@@ -162,9 +163,6 @@ export function AdminSettings() {
             ? failed.reason
             : new Error("Unable to save settings");
         }
-        setVerification(null);
-        setRanking(null);
-        setNotificationPolicy(null);
         setLoading(true);
         setReload((value) => value + 1);
         const message =
@@ -226,6 +224,8 @@ export function AdminSettings() {
     deadlineOverdue: true,
     reminderDays: 3,
   };
+  const initialLoading =
+    loading && (!verification || !ranking || !notificationPolicy);
   const loadFailed = Boolean(
     error && (!verification || !ranking || !notificationPolicy) && !loading,
   );
@@ -234,7 +234,7 @@ export function AdminSettings() {
     <AdminOnly>
       <div
         className="grid w-full gap-8"
-        data-loading={loading || undefined}
+        data-loading={initialLoading || undefined}
       >
         {message ? (
           <p className="m-0 border-l-[3px] border-success bg-success-soft px-4 py-[.8rem] text-[.78rem]">
@@ -282,7 +282,7 @@ export function AdminSettings() {
               </header>
 
               <div className="ml-[calc(42px+1.2rem)] grid overflow-hidden border-y border-line-strong bg-transparent max-[640px]:ml-0">
-                {(Object.keys(LABELS) as Array<keyof VerificationPolicy>).map(
+                {(Object.keys(LABELS) as VisibleVerificationKey[]).map(
                   (key) => {
                     const manual = displayedVerification[key] === "MANUAL";
                     return (
@@ -301,17 +301,23 @@ export function AdminSettings() {
                         <span
                           className={cn(
                             "font-mono text-[.72rem] uppercase text-ink-muted",
-                            loadingPlaceholder(loading, "label", "medium"),
+                            loadingPlaceholder(
+                              initialLoading,
+                              "label",
+                              "medium",
+                            ),
                           )}
-                          data-placeholder={loading ? "label" : undefined}
+                          data-placeholder={
+                            initialLoading ? "label" : undefined
+                          }
                           data-placeholder-width="medium"
                         >
                           {manual ? "Moderator queue" : "Publishes directly"}
                         </span>
                         <SegmentedControl
                           ariaLabel={`${LABELS[key][0]} verification mode`}
-                          disabled={loading}
-                          loading={loading}
+                          disabled={initialLoading}
+                          loading={initialLoading}
                           onValueChange={(mode) =>
                             updateVerification(key, mode)
                           }
@@ -354,7 +360,7 @@ export function AdminSettings() {
                     <strong>Earned and appointed ranks stay separate.</strong>
                     <p className="mt-[.3rem] text-[.72rem] leading-[1.5] text-ink-muted">
                       Public profiles use the higher of the appointed rank and
-                      the publication-earned rank. Without a Scholar link, only
+                      the publication-earned rank. Without an OpenAlex ID, only
                       the paper threshold is required.
                     </p>
                   </div>
@@ -367,9 +373,9 @@ export function AdminSettings() {
                   <label className="grid grid-cols-[minmax(0,1fr)_160px] items-center gap-4 border-t border-line py-[.7rem] text-[.8rem] font-semibold text-ink-muted max-[640px]:grid-cols-1">
                     Published papers
                     <InputControl
-                      className={loadingPlaceholder(loading, "control")}
-                      data-placeholder={loading ? "control" : undefined}
-                      disabled={loading}
+                      className={loadingPlaceholder(initialLoading, "control")}
+                      data-placeholder={initialLoading ? "control" : undefined}
+                      disabled={initialLoading}
                       min="0"
                       onChange={(event) =>
                         ranking &&
@@ -383,11 +389,11 @@ export function AdminSettings() {
                     />
                   </label>
                   <label className="grid grid-cols-[minmax(0,1fr)_160px] items-center gap-4 border-t border-line py-[.7rem] text-[.8rem] font-semibold text-ink-muted max-[640px]:grid-cols-1">
-                    Scholar citations
+                    OpenAlex citations
                     <InputControl
-                      className={loadingPlaceholder(loading, "control")}
-                      data-placeholder={loading ? "control" : undefined}
-                      disabled={loading}
+                      className={loadingPlaceholder(initialLoading, "control")}
+                      data-placeholder={initialLoading ? "control" : undefined}
+                      disabled={initialLoading}
                       min="0"
                       onChange={(event) =>
                         ranking &&
@@ -407,9 +413,9 @@ export function AdminSettings() {
                   <label className="grid grid-cols-[minmax(0,1fr)_160px] items-center gap-4 border-t border-line py-[.7rem] text-[.8rem] font-semibold text-ink-muted max-[640px]:grid-cols-1">
                     Published papers
                     <InputControl
-                      className={loadingPlaceholder(loading, "control")}
-                      data-placeholder={loading ? "control" : undefined}
-                      disabled={loading}
+                      className={loadingPlaceholder(initialLoading, "control")}
+                      data-placeholder={initialLoading ? "control" : undefined}
+                      disabled={initialLoading}
                       min="0"
                       onChange={(event) =>
                         ranking &&
@@ -423,11 +429,11 @@ export function AdminSettings() {
                     />
                   </label>
                   <label className="grid grid-cols-[minmax(0,1fr)_160px] items-center gap-4 border-t border-line py-[.7rem] text-[.8rem] font-semibold text-ink-muted max-[640px]:grid-cols-1">
-                    Scholar citations
+                    OpenAlex citations
                     <InputControl
-                      className={loadingPlaceholder(loading, "control")}
-                      data-placeholder={loading ? "control" : undefined}
-                      disabled={loading}
+                      className={loadingPlaceholder(initialLoading, "control")}
+                      data-placeholder={initialLoading ? "control" : undefined}
+                      disabled={initialLoading}
                       min="0"
                       onChange={(event) =>
                         ranking &&
@@ -482,8 +488,8 @@ export function AdminSettings() {
                     </div>
                     <SegmentedControl
                       ariaLabel={`${NOTIFICATION_LABELS[key][0]} delivery`}
-                      disabled={loading}
-                      loading={loading}
+                      disabled={initialLoading}
+                      loading={initialLoading}
                       onValueChange={(value) =>
                         notificationPolicy &&
                         setNotificationPolicy({
@@ -507,7 +513,7 @@ export function AdminSettings() {
                     </small>
                   </span>
                   <InputControl
-                    disabled={loading}
+                    disabled={initialLoading}
                     max="30"
                     min="0"
                     onChange={(event) =>
@@ -525,17 +531,19 @@ export function AdminSettings() {
             </section>
 
             <OpenAlexApiSettings />
+            <MailProviderSettings />
 
             <footer className="frame-rail-section flex items-center justify-between gap-4 py-5 max-[640px]:flex-col max-[640px]:items-stretch">
               <p className="m-0 text-[.72rem] leading-[1.5] text-ink-muted">
-                Scholar profiles sync daily with gradual scheduling, backoff,
-                and last-known citation totals.
+                OpenAlex author profiles sync papers, datasets, and citation
+                totals daily.
               </p>
               <ButtonControl
-                className={loadingPlaceholder(loading, "control")}
-                data-placeholder={loading ? "control" : undefined}
+                className={loadingPlaceholder(initialLoading, "control")}
+                data-placeholder={initialLoading ? "control" : undefined}
                 disabled={loading || saving}
-                loading={loading || saving}
+                loading={initialLoading}
+                busy={saving}
                 onClick={save}
                 type="button"
               >

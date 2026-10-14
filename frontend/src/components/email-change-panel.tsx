@@ -172,7 +172,8 @@ export function EmailChangePanel() {
         <div>
           <ButtonControl
             disabled={saving || loading}
-            loading={saving || loading}
+            loading={loading}
+            busy={saving}
             type="submit"
             variant="secondary"
           >
@@ -207,7 +208,7 @@ export function EmailChangePanel() {
           <div>
             <ButtonControl
               disabled={saving || otp.length !== 6}
-              loading={saving}
+              busy={saving}
               type="submit"
               variant="primary"
             >

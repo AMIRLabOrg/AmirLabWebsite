@@ -1,0 +1,3 @@
+ALTER TYPE "JobStatus" ADD VALUE 'CANCELLED';
+
+ALTER TABLE "Job" ADD COLUMN "cancelRequestedAt" TIMESTAMP(3);

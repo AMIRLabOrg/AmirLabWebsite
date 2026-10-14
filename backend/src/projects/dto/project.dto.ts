@@ -93,6 +93,10 @@ export class ProjectObjectiveDto {
 }
 
 export class UpdateProjectDto extends OverrideDto {
+  @IsInt()
+  @Min(1)
+  expectedVersion!: number;
+
   @IsString()
   @MinLength(3)
   @MaxLength(300)
@@ -126,6 +130,15 @@ export class UpdateProjectDto extends OverrideDto {
   @ValidateNested({ each: true })
   @Type(() => ProjectObjectiveDto)
   objectives!: ProjectObjectiveDto[];
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(2_000)
+  closingNote?: string | null;
+
+  @IsOptional()
+  @IsBoolean()
+  acknowledgeOpenTasks?: boolean;
 }
 
 export class ProjectMilestoneDto {
@@ -195,9 +208,16 @@ export class CreateProjectTaskDto {
 export class UpdateProjectTaskDto extends CreateProjectTaskDto {
   @IsEnum(ProjectTaskStatus)
   declare status: ProjectTaskStatus;
+
+  @IsDateString()
+  expectedUpdatedAt!: string;
 }
 
 export class ReplaceMilestonesDto extends OverrideDto {
+  @IsInt()
+  @Min(1)
+  expectedVersion!: number;
+
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => ProjectMilestoneDto)
@@ -251,8 +271,20 @@ export class AcceptProjectInvitationDto {
 }
 
 export class ProjectOutputDto extends OverrideDto {
-  @IsUUID()
-  outputId!: string;
+  @IsString()
+  @MinLength(1)
+  @MaxLength(300)
+  label!: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(500)
+  doi?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(2_000)
+  url?: string;
 }
 
 export class ProjectResourceDto extends OverrideDto {

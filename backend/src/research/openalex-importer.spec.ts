@@ -1,4 +1,4 @@
-import { importIssue, sourceUpdate } from './openalex-importer';
+import { importIssue } from './openalex-importer';
 import type { OpenAlexWork } from './openalex-client';
 const work: OpenAlexWork = {
   id: 'W123',
@@ -36,10 +36,5 @@ describe('OpenAlex publication policy', () => {
         '0000-0000-0000-2222',
       ),
     ).toContain('ORCID');
-  });
-  it('refreshes source-owned fields but retains local corrections', () => {
-    expect(sourceUpdate('Original', 'Original', 'New')).toBe('New');
-    expect(sourceUpdate('Curated', 'Original', 'New')).toBe('Curated');
-    expect(sourceUpdate(null, null, 'New')).toBe('New');
   });
 });

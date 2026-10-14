@@ -79,6 +79,7 @@ export class BulkReviewProfileEditsDto {
 }
 
 export interface ProfileEditPayload {
+  openAlexAuthorId?: string | null;
   fullName: string;
   headline: string | null;
   biography: string | null;

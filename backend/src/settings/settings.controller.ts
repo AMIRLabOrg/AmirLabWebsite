@@ -24,6 +24,11 @@ export class SettingsController {
     return this.settings.openAlexStatus();
   }
 
+  @Get('openalex/usage')
+  openAlexUsage() {
+    return this.settings.openAlexUsage();
+  }
+
   @Put('openalex')
   updateOpenAlex(
     @Body() body: OpenAlexApiKeyDto,

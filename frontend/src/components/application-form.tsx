@@ -215,6 +215,7 @@ export function ApplicationForm({
         ) : null}
       </FormField>
       <CheckboxControl
+        disabled={loading || !positions.length}
         id="application-consent"
         loading={loading}
         name="consent"

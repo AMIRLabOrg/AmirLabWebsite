@@ -1,10 +1,5 @@
-import { WorkspacePageShell } from "@/components/workspace-page-shell";
-import { ResearchSubmissionForm } from "@/components/research-submission-form";
+import { redirect } from "next/navigation";
 
 export default function NewResearchOutputPage() {
-  return (
-    <WorkspacePageShell>
-      <ResearchSubmissionForm />
-    </WorkspacePageShell>
-  );
+  redirect("/workspace/submissions");
 }

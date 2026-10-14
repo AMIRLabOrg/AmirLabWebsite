@@ -9,6 +9,7 @@ import { ProjectsService } from '../projects/projects.service';
 import { ResearchController } from '../research/research.controller';
 import { ResearchRelationshipsService } from '../research/research-relationships.service';
 import { ResearchService } from '../research/research.service';
+import { ResearchRetentionService } from '../research/research-retention.service';
 import { SiteContentController } from '../site-content/site-content.controller';
 import { DEFAULT_HOME_CONTENT } from '../site-content/site-content.defaults';
 import { SiteContentService } from '../site-content/site-content.service';
@@ -27,7 +28,7 @@ describe('request validation', () => {
     create: jest.fn((body: unknown) => body),
   };
   const research = {
-    reviewItem: jest.fn(),
+    libraryItem: jest.fn(),
     submit: jest.fn((body: unknown) => body),
   };
   const users = {
@@ -51,6 +52,7 @@ describe('request validation', () => {
         { provide: ApplicationsService, useValue: applications },
         { provide: ProjectsService, useValue: projects },
         { provide: ResearchRelationshipsService, useValue: relationships },
+        { provide: ResearchRetentionService, useValue: {} },
         { provide: ResearchService, useValue: research },
         { provide: SiteContentService, useValue: siteContent },
         { provide: UsersService, useValue: users },
@@ -75,40 +77,12 @@ describe('request validation', () => {
     jest.clearAllMocks();
   });
 
-  it('rejects research fields that do not belong to the selected type', async () => {
-    const response = await request(app.getHttpServer())
-      .post('/research')
-      .send({
-        canonicalUrl: 'https://example.org/paper',
-        contributors: ['Jane Researcher'],
-        license: 'MIT',
-        title: 'A verified paper',
-        type: 'PAPER',
-      })
-      .expect(400);
-
-    expect(responseMessages(response)).toContain(
-      'license is only allowed for dataset submissions',
-    );
-    expect(research.submit).not.toHaveBeenCalled();
-  });
-
-  it('normalizes contributors and accepts fields for the selected type', async () => {
+  it('does not expose manual research entry', async () => {
     await request(app.getHttpServer())
       .post('/research')
-      .send({
-        canonicalUrl: 'https://example.org/dataset',
-        contributors: ['  Jane Researcher  '],
-        license: 'CC BY 4.0',
-        title: 'A verified dataset',
-        type: 'DATASET',
-      })
-      .expect(201);
-
-    expect(research.submit).toHaveBeenCalledWith(
-      expect.objectContaining({ contributors: ['Jane Researcher'] }),
-      undefined,
-    );
+      .send({ title: 'Manual paper', type: 'PAPER' })
+      .expect(404);
+    expect(research.submit).not.toHaveBeenCalled();
   });
 
   it('routes internal projects through the dedicated project contract', async () => {
@@ -129,7 +103,7 @@ describe('request validation', () => {
       undefined,
     );
 
-    const response = await request(app.getHttpServer())
+    await request(app.getHttpServer())
       .post('/research')
       .send({
         canonicalUrl: 'https://example.org/project',
@@ -137,11 +111,7 @@ describe('request validation', () => {
         title: 'An internal project through the wrong endpoint',
         type: 'PROJECT',
       })
-      .expect(400);
-
-    expect(responseMessages(response)).toContain(
-      'type must be one of the following values: PAPER, DATASET',
-    );
+      .expect(404);
   });
 
   it('does not accept browser-parsed resume JSON', async () => {
@@ -199,7 +169,7 @@ describe('request validation', () => {
 
   it.each([
     ['/applications/not-a-uuid', applications.get],
-    ['/research-review/not-a-uuid', research.reviewItem],
+    ['/research-library/not-a-uuid', research.libraryItem],
     ['/users/not-a-uuid', users.get],
   ])('rejects an invalid database ID at %s', async (path, handler) => {
     await request(app.getHttpServer()).get(path).expect(400);

@@ -2,7 +2,7 @@
 
 import { cn } from "@/lib/cn";
 import { loadingPlaceholder } from "@/lib/loading-style";
-import { useDeferredValue, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { PaginationControls } from "./pagination-controls";
 import { StatePanel } from "./state-panel";
 import { ToolbarSearchField } from "./ui/toolbar-search-field";
@@ -51,7 +51,7 @@ export function ApplicationReviewQueue() {
   const [result, setResult] = useState<PaginatedResponse<ApplicationSummary>>();
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
-  const deferredSearch = useDeferredValue(search);
+  const [draftSearch, setDraftSearch] = useState("");
   const [status, setStatus] = useState("ALL");
   const [sort, setSort] = useState("NEWEST");
   const [from, setFrom] = useState("");
@@ -67,7 +67,7 @@ export function ApplicationReviewQueue() {
       pageSize: "20",
       sort,
     });
-    if (deferredSearch.trim()) params.set("search", deferredSearch.trim());
+    if (search.trim()) params.set("search", search.trim());
     if (status !== "ALL") params.set("status", status);
     if (from) params.set("from", from);
     if (to) params.set("to", to);
@@ -94,14 +94,14 @@ export function ApplicationReviewQueue() {
     return () => {
       active = false;
     };
-  }, [deferredSearch, from, page, reload, sort, status, to]);
+  }, [search, from, page, reload, sort, status, to]);
 
   const items = result?.items ?? [];
   const initialLoading = loading && !result;
   const { selectedId, select } = useReviewSelection("/workspace/applications", {
     firstId: items[0]?.id,
     ready: !loading,
-    viewKey: `${page}|${deferredSearch}|${status}|${sort}|${from}|${to}`,
+    viewKey: `${page}|${search}|${status}|${sort}|${from}|${to}`,
   });
   const outsideQueue = Boolean(
     selectedId && result && !items.some(({ id }) => id === selectedId),
@@ -120,6 +120,7 @@ export function ApplicationReviewQueue() {
   const clear = () => {
     setLoading(true);
     setSearch("");
+    setDraftSearch("");
     setStatus("ALL");
     setFrom("");
     setTo("");
@@ -132,13 +133,15 @@ export function ApplicationReviewQueue() {
         <ToolbarSearchField
           id="application-search"
           label="Search"
-          onChange={(event) => {
+          onValueChange={setDraftSearch}
+          onSearch={(value) => {
+            if (search === value.trim() && page === 1) return;
             setLoading(true);
-            setSearch(event.target.value);
+            setSearch(value.trim());
             setPage(1);
           }}
           placeholder="Name, email, or position"
-          value={search}
+          value={draftSearch}
         />
         <FormField htmlFor="application-status" label="Status">
           <SelectControl
@@ -188,6 +191,17 @@ export function ApplicationReviewQueue() {
         </ButtonControl>
       </WorkspaceRuleBand>
 
+      <PaginationControls
+        loading={loading}
+        onPageChange={(nextPage) => {
+          setLoading(true);
+          setPage(nextPage);
+        }}
+        page={page}
+        pageSize={result?.pageSize ?? 20}
+        total={result?.total}
+        totalPages={result?.totalPages ?? 1}
+      />
       {error && result ? (
         <p className="m-0 flex items-center gap-[.45rem] text-[.82rem] leading-[1.5] text-ink-muted rounded-panel bg-danger-soft p-[.8rem] text-danger">
           {error}
@@ -231,17 +245,6 @@ export function ApplicationReviewQueue() {
                 <p className="m-0 font-[var(--font-sans)] text-[.75rem] font-extrabold tracking-[.12em] text-brand uppercase">
                   Applications
                 </p>
-                <PaginationControls
-                  loading={loading}
-                  onPageChange={(nextPage) => {
-                    setLoading(true);
-                    setPage(nextPage);
-                  }}
-                  page={page}
-                  pageSize={result?.pageSize ?? 20}
-                  total={result?.total}
-                  totalPages={result?.totalPages ?? 1}
-                />
               </div>
               <div data-loading={initialLoading || undefined}>
                 {(initialLoading
@@ -262,23 +265,25 @@ export function ApplicationReviewQueue() {
           }
         />
       ) : (
-        <StatePanel
-          frame="workspace"
-          action={
-            filtered ? { label: "Clear filters", onClick: clear } : undefined
-          }
-          body={
-            filtered
-              ? "Try a broader date range or remove an active filter."
-              : "New applications will appear here after resume processing."
-          }
-          title={
-            filtered
-              ? "No matching applications"
-              : "The application queue is clear"
-          }
-          variant={filtered ? "filtered" : "empty"}
-        />
+        <>
+          <StatePanel
+            frame="workspace"
+            action={
+              filtered ? { label: "Clear filters", onClick: clear } : undefined
+            }
+            body={
+              filtered
+                ? "Try a broader date range or remove an active filter."
+                : "New applications will appear here after resume processing."
+            }
+            title={
+              filtered
+                ? "No matching applications"
+                : "The application queue is clear"
+            }
+            variant={filtered ? "filtered" : "empty"}
+          />
+        </>
       )}
     </DataTableShell>
   );

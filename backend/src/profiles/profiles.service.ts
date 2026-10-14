@@ -1,4 +1,3 @@
-import { isOutputSection } from '../research/research-profile-sync.service';
 import { OpenAlexService } from '../research/openalex.service';
 import { randomUUID } from 'node:crypto';
 import {
@@ -16,7 +15,6 @@ import { AssetsService } from '../assets/assets.service';
 import type { AuthenticatedUser } from '../auth/auth.types';
 import { PrismaService } from '../database/prisma.service';
 import { NotificationsService } from '../notifications/notifications.service';
-import { ResearchProfileSyncService } from '../research/research-profile-sync.service';
 import {
   reviewBadRequest,
   reviewConflict,
@@ -35,11 +33,22 @@ import {
 import {
   parseProfilePayload,
   profilePayloadToJson,
+  profileUpdateData,
   type ProfileEditScope,
 } from './profile-payload';
 
 const PROFILE_INCLUDE = {
   avatar: true,
+  openAlexProfile: {
+    select: {
+      authorId: true,
+      attemptedAt: true,
+      citationCount: true,
+      failureReason: true,
+      status: true,
+      syncedAt: true,
+    },
+  },
   links: { orderBy: { sortOrder: 'asc' as const } },
   profileSections: {
     orderBy: { sortOrder: 'asc' as const },
@@ -58,7 +67,6 @@ export class ProfilesService {
     private readonly assets: AssetsService,
     private readonly notifications: NotificationsService,
     private readonly prisma: PrismaService,
-    private readonly profileSync: ResearchProfileSyncService,
     private readonly settings: SettingsService,
     private readonly openAlex: OpenAlexService,
   ) {}
@@ -249,16 +257,11 @@ export class ProfilesService {
 
     try {
       await this.prisma.$transaction(async (transaction) => {
-        if (
-          scope === 'RESEARCH' &&
-          (await this.openAlex.applyLinks(
+        if (scope === 'RESEARCH')
+          await this.openAlex.applyAuthorId(
             person.id,
-            payload.links,
+            payload.openAlexAuthorId,
             transaction,
-          ))
-        )
-          payload.sections = payload.sections.filter(
-            ({ type, title }) => !isOutputSection(type, title, 'DATASET'),
           );
         await transaction.person.update({
           where: { id: person.id },
@@ -498,16 +501,11 @@ export class ProfilesService {
       for (const { request, payload, scope } of [...approved].sort((a, b) =>
         a.request.personId.localeCompare(b.request.personId),
       )) {
-        if (
-          scope === 'RESEARCH' &&
-          (await this.openAlex.applyLinks(
+        if (scope === 'RESEARCH')
+          await this.openAlex.applyAuthorId(
             request.personId,
-            payload.links,
+            payload.openAlexAuthorId,
             transaction,
-          ))
-        )
-          payload.sections = payload.sections.filter(
-            ({ type, title }) => !isOutputSection(type, title, 'DATASET'),
           );
       }
       const claimRows = dto.items.map(
@@ -664,14 +662,6 @@ export class ProfilesService {
         }
       }
 
-      if (dto.status === ProfileReviewStatus.APPROVED) {
-        await this.profileSync.normalizePublishedOutputsForPeople(
-          approved.map(({ request }) => request.personId),
-          reviewer.id,
-          transaction,
-        );
-      }
-
       await transaction.auditRecord.createMany({
         data: requests.map((request) => ({
           action:
@@ -798,17 +788,11 @@ export class ProfilesService {
       throw new BadRequestException('A reviewer note is required');
     }
     await this.prisma.$transaction(async (transaction) => {
-      if (
-        payload &&
-        scope === 'RESEARCH' &&
-        (await this.openAlex.applyLinks(
+      if (payload && scope === 'RESEARCH')
+        await this.openAlex.applyAuthorId(
           request.personId,
-          payload.links,
+          payload.openAlexAuthorId,
           transaction,
-        ))
-      )
-        payload.sections = payload.sections.filter(
-          ({ type, title }) => !isOutputSection(type, title, 'DATASET'),
         );
       const claimed = await transaction.profileEditRequest.updateMany({
         where: {
@@ -846,11 +830,6 @@ export class ProfilesService {
             isPublished: true,
           },
         });
-        await this.profileSync.normalizePublishedOutputsForPeople(
-          [request.personId],
-          reviewer.id,
-          transaction,
-        );
       }
       await transaction.auditRecord.create({
         data: {
@@ -891,60 +870,6 @@ function sqlTextArray(values: readonly string[]): Prisma.Sql {
   return values.length
     ? Prisma.sql`ARRAY[${Prisma.join(values)}]::text[]`
     : Prisma.sql`ARRAY[]::text[]`;
-}
-
-function profileUpdateData(
-  payload: ReturnType<typeof parseProfilePayload>,
-  avatarId: string | null | undefined,
-  scope: ProfileEditScope,
-): Prisma.PersonUncheckedUpdateInput {
-  if (scope === 'MODERATOR' || scope === 'ADMIN') {
-    return {
-      avatarId,
-      contactAddress: payload.contactAddress,
-      fullName: payload.fullName,
-      phone: payload.phone,
-      roleTitle: payload.roleTitle,
-    };
-  }
-  return {
-    avatarId,
-    biography: payload.biography,
-    contactAddress: payload.contactAddress,
-    expertise: payload.expertise,
-    fullName: payload.fullName,
-    headline: payload.headline,
-    links: {
-      deleteMany: {},
-      create: payload.links.map((link, sortOrder) => ({ ...link, sortOrder })),
-    },
-    phone: payload.phone,
-    profileSections: {
-      deleteMany: {},
-      create: payload.sections.map((section, sortOrder) => ({
-        type: section.type,
-        title: section.title,
-        sortOrder,
-        subsections: {
-          create: section.subsections.map(
-            (subsection, subsectionSortOrder) => ({
-              heading: subsection.heading,
-              sortOrder: subsectionSortOrder,
-              entries: {
-                create: subsection.entries.map((entry, entrySortOrder) => ({
-                  ...entry,
-                  sortOrder: entrySortOrder,
-                })),
-              },
-            }),
-          ),
-        },
-      })),
-    },
-    ...(payload.roleTitle !== undefined
-      ? { roleTitle: payload.roleTitle }
-      : {}),
-  };
 }
 
 function profileReviewView<

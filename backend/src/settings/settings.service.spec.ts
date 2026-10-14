@@ -53,7 +53,7 @@ describe('project verification policy compatibility', () => {
 });
 
 describe('research ranking policy', () => {
-  it('requires papers and citations when Scholar data exists', () => {
+  it('requires papers and citations when OpenAlex citation data exists', () => {
     expect(earnedRank(20, 499, DEFAULT_RANK_POLICY)).toBe(
       AcademicRank.SENIOR_RESEARCHER,
     );
@@ -62,7 +62,7 @@ describe('research ranking policy', () => {
     );
   });
 
-  it('uses the paper threshold when no Scholar profile is available', () => {
+  it('uses the paper threshold when no OpenAlex profile is available', () => {
     expect(earnedRank(3, null, DEFAULT_RANK_POLICY)).toBe(
       AcademicRank.SENIOR_RESEARCHER,
     );

@@ -1,8 +1,9 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, OnModuleInit } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
 import { Observable, Subscriber } from 'rxjs';
 import {
   ApplicationStatus,
+  JobStatus,
   NotificationType,
   PlatformRole,
   Prisma,
@@ -14,6 +15,7 @@ import {
 import type { AuthenticatedUser } from '../auth/auth.types';
 import { PushService } from '../collaboration/push.service';
 import { PrismaService } from '../database/prisma.service';
+import { JobsService, type JobChangeKind } from '../jobs/jobs.service';
 import {
   NotificationQueryDto,
   NotificationReadFilter,
@@ -46,20 +48,44 @@ export interface ResearchLiveEvent {
   sourceStatus?: SourceFetchStatus;
 }
 
+export interface JobLiveEvent {
+  scope: 'jobs';
+  kind: JobChangeKind;
+  jobId: string;
+  type: string;
+  status: JobStatus;
+}
+
 type NotificationStreamEvent =
-  { data: NotificationEvent } | { type: 'research'; data: ResearchLiveEvent };
+  | { data: NotificationEvent }
+  | { type: 'research'; data: ResearchLiveEvent }
+  | { type: 'job'; data: JobLiveEvent };
 
 type NotificationSubscriber = Subscriber<NotificationStreamEvent>;
 
 @Injectable()
-export class NotificationsService {
+export class NotificationsService implements OnModuleInit {
   private readonly subscribers = new Map<string, Set<NotificationSubscriber>>();
   private readonly researchSubscribers = new Set<NotificationSubscriber>();
+  private readonly jobSubscribers = new Set<NotificationSubscriber>();
 
   constructor(
     private readonly prisma: PrismaService,
     private readonly push: PushService,
+    private readonly jobs: JobsService,
   ) {}
+
+  onModuleInit(): void {
+    this.jobs.onChange((change) => {
+      this.publishJobEvent({
+        scope: 'jobs',
+        kind: change.kind,
+        jobId: change.jobId,
+        type: change.type,
+        status: change.status,
+      });
+    });
+  }
 
   async list(recipientId: string, query: NotificationQueryDto) {
     const createdAt: Prisma.DateTimeFilter = {};
@@ -185,16 +211,19 @@ export class NotificationsService {
   stream(
     userId: string,
     receiveResearchEvents = false,
+    receiveJobEvents = false,
   ): Observable<NotificationStreamEvent> {
     return new Observable((subscriber) => {
       const userSubscribers = this.subscribers.get(userId) ?? new Set();
       userSubscribers.add(subscriber);
       this.subscribers.set(userId, userSubscribers);
       if (receiveResearchEvents) this.researchSubscribers.add(subscriber);
+      if (receiveJobEvents) this.jobSubscribers.add(subscriber);
 
       return () => {
         userSubscribers.delete(subscriber);
         this.researchSubscribers.delete(subscriber);
+        this.jobSubscribers.delete(subscriber);
         if (userSubscribers.size === 0) {
           this.subscribers.delete(userId);
         }
@@ -205,6 +234,12 @@ export class NotificationsService {
   publishResearchEvent(event: ResearchLiveEvent): void {
     for (const subscriber of this.researchSubscribers) {
       subscriber.next({ data: event, type: 'research' });
+    }
+  }
+
+  publishJobEvent(event: JobLiveEvent): void {
+    for (const subscriber of this.jobSubscribers) {
+      subscriber.next({ data: event, type: 'job' });
     }
   }
 
@@ -225,7 +260,10 @@ export class NotificationsService {
     await Promise.all(reviewers.map(({ id }) => this.create(id, input)));
   }
 
-  async createMany(inputs: readonly NotificationCreateInput[]): Promise<void> {
+  async createMany(
+    inputs: readonly NotificationCreateInput[],
+    db?: Prisma.TransactionClient,
+  ): Promise<void> {
     if (!inputs.length) return;
     const createdAt = new Date();
     const rows = inputs.map((input) => ({
@@ -234,7 +272,7 @@ export class NotificationsService {
       createdAt,
       id: randomUUID(),
     }));
-    await this.prisma.$transaction(async (tx) => {
+    const persist = async (tx: Prisma.TransactionClient) => {
       await tx.notification.createMany({ data: rows });
       for (const notification of rows) {
         await this.push.enqueueNotification(
@@ -243,7 +281,10 @@ export class NotificationsService {
           notification.recipientId,
         );
       }
-    });
+    };
+    if (db) await persist(db);
+    else await this.prisma.$transaction(persist);
+    if (db) return;
     for (const notification of rows) {
       const event: NotificationEvent = {
         actionUrl: notification.actionUrl,

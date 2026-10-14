@@ -38,11 +38,6 @@ export interface WeeklyReportContext {
     title: string;
     tasks: { completed: number; due: number; open: number };
   }>;
-  outputs: Array<{
-    id: string;
-    title: string;
-    type: "DATASET" | "PAPER";
-  }>;
 }
 
 export function reportStatusLabel(status: WeeklyReportStatus): string {

@@ -1,5 +1,6 @@
 /* eslint-disable no-control-regex -- Reject control characters in external DOI identifiers. */
 import { BadRequestException, Injectable } from '@nestjs/common';
+import { withJobSignal } from '../jobs/job-context';
 import { SettingsService } from '../settings/settings.service';
 
 const API = 'https://api.openalex.org';
@@ -16,6 +17,12 @@ export interface OpenAlexWork {
   venue: string | null;
   isRetracted: boolean;
   authors: { id: string | null; name: string; orcid: string | null }[];
+}
+export interface OpenAlexAuthorSnapshot {
+  works: OpenAlexWork[];
+  presentWorkIds: string[];
+  declaredCount: number;
+  warnings: { workId: string; reason: string }[];
 }
 export class OpenAlexRequestError extends Error {
   constructor(
@@ -68,10 +75,17 @@ function identifier(value: unknown, prefix: 'A' | 'W'): string | null {
   return new RegExp(`^${prefix}[1-9]\\d{0,19}$`).test(id) ? id : null;
 }
 export function normalizeDoi(value: string | null): string | null {
-  const doi = value
-    ?.replace(/^https?:\/\/(?:dx\.)?doi\.org\//i, '')
-    .trim()
+  let doi = value
+    ?.trim()
+    .replace(/^doi:\s*/i, '')
     .toLowerCase();
+  if (doi && /^https?:\/\/(?:dx\.)?doi\.org\//i.test(doi)) {
+    try {
+      doi = decodeURIComponent(new URL(doi).pathname.slice(1));
+    } catch {
+      return null;
+    }
+  }
   return doi && /^10\.\d{4,9}\/[^\s\x00-\x1f]+$/.test(doi) && doi.length <= 500
     ? doi
     : null;
@@ -119,21 +133,37 @@ export class OpenAlexClient {
     path: string,
     params: Record<string, string> = {},
   ): Promise<Record<string, unknown>> {
+    const key = await this.settings.openAlexApiKey();
+    const pause = await this.settings.openAlexPause(key);
+    if (pause) {
+      throw new OpenAlexRequestError(
+        pause.reason,
+        Math.max(60_000, pause.resumeAt.getTime() - Date.now()),
+      );
+    }
     const url = new URL(path, API);
     for (const [key, value] of Object.entries(params))
       url.searchParams.set(key, value);
-    const key = await this.settings.openAlexApiKey();
     let response: Response;
     try {
       response = await fetch(url, {
         headers: key ? { Authorization: `Bearer ${key}` } : {},
-        signal: AbortSignal.timeout(20_000),
+        signal: withJobSignal(AbortSignal.timeout(20_000)),
         redirect: 'error',
       });
     } catch {
       throw new OpenAlexRequestError(
         'OpenAlex is unavailable. Existing publications were kept.',
       );
+    }
+    try {
+      await this.settings.recordOpenAlexUsage(
+        response.headers,
+        Boolean(key),
+        key,
+      );
+    } catch {
+      // Usage telemetry must not interrupt an otherwise valid author sync.
     }
     if (response.status === 404)
       throw new OpenAlexRequestError(
@@ -148,14 +178,18 @@ export class OpenAlexClient {
           ? seconds * 1000
           : retry
             ? Date.parse(retry) - Date.now()
-            : 60_000;
-      throw new OpenAlexRequestError(
-        'OpenAlex usage limit reached. Sync will retry later.',
-        Math.min(
-          86_400_000,
-          Math.max(60_000, Number.isFinite(wait) ? wait : 60_000),
-        ),
+            : 3_600_000;
+      const retryAfterMs = Math.min(
+        86_400_000,
+        Math.max(60_000, Number.isFinite(wait) ? wait : 3_600_000),
       );
+      const reason = 'OpenAlex usage limit reached. Sync will retry later.';
+      try {
+        await this.settings.pauseOpenAlex(key, retryAfterMs, reason);
+      } catch {
+        // A telemetry write must not hide the provider's rate-limit response.
+      }
+      throw new OpenAlexRequestError(reason, retryAfterMs);
     }
     if (!response.ok)
       throw new OpenAlexRequestError(
@@ -187,13 +221,17 @@ export class OpenAlexClient {
       throw new OpenAlexRequestError('OpenAlex returned invalid metadata.');
     }
   }
-  async fetchAuthorWorks(value: string): Promise<OpenAlexWork[]> {
+  async fetchAuthorWorks(value: string): Promise<OpenAlexAuthorSnapshot> {
     const id = normalizeAuthorId(value);
     const works = new Map<string, OpenAlexWork>();
+    const presentWorkIds: string[] = [];
+    const presentWorkIdSet = new Set<string>();
+    const warnings: { workId: string; reason: string }[] = [];
     const seen = new Set<string>();
+    let declaredCount: number | null = null;
     let cursor: string | null = '*';
     while (cursor !== null) {
-      if (seen.has(cursor) || seen.size >= 1000)
+      if (seen.has(cursor) || seen.size >= 50)
         throw new OpenAlexRequestError(
           'OpenAlex cursor loop or sync limit reached.',
         );
@@ -207,24 +245,85 @@ export class OpenAlexClient {
       if (!Array.isArray(page.results))
         throw new OpenAlexRequestError('OpenAlex returned invalid metadata.');
       const meta = record(page.meta);
+      if (
+        !Number.isSafeInteger(meta.count) ||
+        Number(meta.count) < 0 ||
+        Number(meta.count) > 5000 ||
+        (declaredCount !== null && declaredCount !== Number(meta.count))
+      )
+        throw new OpenAlexRequestError(
+          'OpenAlex returned an inconsistent or excessive work count.',
+        );
+      declaredCount = Number(meta.count);
       if (meta.next_cursor !== null && typeof meta.next_cursor !== 'string')
         throw new OpenAlexRequestError(
           'OpenAlex returned invalid cursor metadata.',
         );
       for (const value of page.results) {
-        const item = work(value);
-        works.set(item.id, item);
+        const row = record(value);
+        const workId = identifier(row.id, 'W');
+        if (!workId)
+          throw new OpenAlexRequestError(
+            'OpenAlex returned an unidentifiable work.',
+          );
+        if (presentWorkIdSet.has(workId))
+          throw new OpenAlexRequestError(
+            'OpenAlex returned duplicate work identifiers.',
+          );
+        presentWorkIds.push(workId);
+        presentWorkIdSet.add(workId);
+        try {
+          works.set(workId, work(row));
+        } catch (error) {
+          warnings.push({
+            workId,
+            reason:
+              error instanceof Error
+                ? error.message
+                : 'OpenAlex returned invalid work metadata.',
+          });
+        }
       }
       cursor = meta.next_cursor;
     }
-    if (!works.size) {
-      const author = await this.read(`/authors/${id}`, { select: 'id' });
-      if (identifier(author.id, 'A') !== id)
+    if (declaredCount === null || presentWorkIds.length !== declaredCount)
+      throw new OpenAlexRequestError(
+        'OpenAlex returned an incomplete work listing.',
+      );
+    if (!presentWorkIds.length) {
+      const author = await this.read(`/authors/${id}`, {
+        select: 'id,works_count',
+      });
+      if (identifier(author.id, 'A') !== id || author.works_count !== 0)
         throw new OpenAlexRequestError(
-          'OpenAlex author disappeared. Existing publications were kept.',
+          'OpenAlex returned an inconsistent empty author listing.',
           86_400_000,
         );
     }
-    return [...works.values()];
+    return {
+      works: [...works.values()],
+      presentWorkIds,
+      declaredCount,
+      warnings,
+    };
+  }
+
+  async fetchAuthorCitationCount(value: string): Promise<number> {
+    const id = normalizeAuthorId(value);
+    const author = await this.read(`/authors/${id}`, {
+      select: 'id,cited_by_count',
+    });
+    const count = author.cited_by_count;
+    if (
+      identifier(author.id, 'A') !== id ||
+      typeof count !== 'number' ||
+      !Number.isSafeInteger(count) ||
+      count < 0 ||
+      count > 2147483647
+    )
+      throw new OpenAlexRequestError(
+        'OpenAlex returned invalid author citation metadata.',
+      );
+    return count;
   }
 }

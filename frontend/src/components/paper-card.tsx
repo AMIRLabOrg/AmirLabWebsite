@@ -9,10 +9,14 @@ export function PaperCard({
   frame = false,
   item,
   loading = false,
+  workspace = false,
+  notice,
 }: {
   frame?: boolean;
   item?: ResearchItem;
   loading?: boolean;
+  workspace?: boolean;
+  notice?: string;
 }) {
   const dataset = item?.type === "DATASET";
   const source = item?.canonicalUrl ?? item?.legacyUrl ?? undefined;
@@ -47,12 +51,15 @@ export function PaperCard({
       as="article"
       aria-busy={loading || undefined}
       bleed={frame}
-      className={cn("bg-transparent")}
+      className={cn("bg-transparent", workspace && "last:border-b-0")}
       data-loading={loading || undefined}
     >
       <Row
         className={cn(
-          "group block w-full bg-transparent px-1 py-3 text-left text-inherit no-underline",
+          "group block w-full bg-transparent text-left text-inherit no-underline",
+          workspace
+            ? "px-[var(--workspace-gutter)] py-4 hover:bg-surface-subtle"
+            : "px-1 py-3",
           clickable && "cursor-pointer focus-visible:bg-surface-subtle",
           frame && "px-[var(--public-gutter)]",
         )}
@@ -131,6 +138,11 @@ export function PaperCard({
                 ? `doi.org/${doi}`
                 : "DOI not available"}
           </span>
+          {notice ? (
+            <span className="text-xs leading-relaxed text-danger">
+              {notice}
+            </span>
+          ) : null}
         </span>
       </Row>
     </FramedRow>

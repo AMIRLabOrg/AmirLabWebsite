@@ -28,8 +28,8 @@ expect(
 );
 expect("staff navigation is separate", navigation.includes("const STAFF_WORK"));
 expect(
-  "review label is Papers & datasets review",
-  navigation.includes('label: "Papers & datasets review"'),
+  "research library replaces the manual review navigation",
+  navigation.includes('href: "/workspace/submissions"') && !navigation.includes('href: "/workspace/research"'),
 );
 expect(
   "staff review contains Weekly report reviews",
@@ -49,50 +49,25 @@ for (const route of [
   expect(`${route} uses MemberOnly`, routeSource.includes("MemberOnly"));
 }
 
-const researchReview = await source("backend/src/research/research.service.ts");
-expect(
-  "research publish blocks proposed contributor matches",
-  researchReview.includes("ContributorMatchStatus.PROPOSED"),
-);
-const relationships = await source(
-  "backend/src/research/research-relationships.service.ts",
-);
-expect(
-  "contributor verification explicitly handles VERIFIED",
-  relationships.includes("ContributorMatchStatus.VERIFIED"),
-);
-const discovery = await source(
-  "backend/src/research/research-discovery.service.ts",
-);
-expect(
-  "discovered contributor candidates remain PROPOSED",
-  discovery.includes("ContributorMatchStatus.PROPOSED"),
-);
+const controller = await source("backend/src/research/research.controller.ts");
+expect("manual research entry and review routes are retired",
+  !/@(?:Post|Patch)\(['"](?:research|research-review)/.test(controller));
+const sync = await source("backend/src/research/openalex.service.ts");
+expect("author sync commits atomically", sync.includes("this.prisma.$transaction"));
+const library = await source("frontend/src/components/research-library.tsx");
+expect("research library is source-read-only", library.includes("source metadata is read-only") && !library.includes("ResearchEditor"));
+const publication = await source("frontend/src/components/publication-explorer.tsx");
+expect("publication search uses the shared submission policy", publication.includes("ToolbarSearchField") && publication.includes("onSearch="));
 
 const projectDto = await source("backend/src/projects/dto/project.dto.ts");
 expect(
   "project DTO supports ownerPersonId",
   projectDto.includes("ownerPersonId"),
 );
-const researchDto = await source("backend/src/research/dto/research.dto.ts");
-expect(
-  "research DTO supports submitterPersonId",
-  researchDto.includes("submitterPersonId"),
-);
-
 const rebuild = await source("backend/scripts/rebuild-db.ts");
-expect(
-  "imported people are not auto-published",
-  rebuild.includes("isPublished: false"),
-);
-expect(
-  "imported papers enter NEEDS_REVIEW",
-  rebuild.includes("ReviewStatus.NEEDS_REVIEW"),
-);
-expect(
-  "imported contributor matches are PROPOSED",
-  rebuild.includes("ContributorMatchStatus.PROPOSED"),
-);
+expect("seeded initial profiles publish directly", rebuild.includes("profileUpdateData(") && rebuild.includes("isPublished: true"));
+expect("seed does not create profile review requests", !rebuild.includes("profileEditRequest.create("));
+expect("seed excludes manually entered papers", !rebuild.includes("for (const paper of data.papers)"));
 expect(
   "imported project public page disabled",
   rebuild.includes("publicPageEnabled: false"),

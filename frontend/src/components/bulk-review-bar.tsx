@@ -68,7 +68,7 @@ export function BulkReviewBar<Status extends string>({
           <ReviewActions
             actions={actions}
             className="compact min-w-0"
-            loading={loading}
+            disabled={loading}
             onError={onError}
             onSubmit={onSubmit}
             onSuccess={onSuccess}

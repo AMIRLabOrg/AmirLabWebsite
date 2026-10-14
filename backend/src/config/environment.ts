@@ -16,6 +16,7 @@ export interface Environment {
   sessionCookieName: string;
   sessionDays: number;
   passwordResetMinutes: number;
+  jobConcurrency: number;
   smtpFrom: string;
   smtpHost?: string;
   smtpPort: number;
@@ -77,6 +78,13 @@ export function validateEnvironment(
     source.PUBLIC_SITE_EMAIL,
     'admin@example.test',
   );
+  const jobConcurrency = boundedInteger(
+    source.JOB_CONCURRENCY,
+    8,
+    1,
+    32,
+    'JOB_CONCURRENCY',
+  );
 
   if (!['development', 'test', 'production'].includes(nodeEnv)) {
     throw new Error('NODE_ENV must be development, test, or production');
@@ -105,11 +113,10 @@ export function validateEnvironment(
       'SMTP_HOST, SMTP_USER, and SMTP_PASSWORD must be configured together',
     );
   }
-  if (nodeEnv === 'production' && !smtpConfigured) {
-    throw new Error('SMTP configuration is required in production');
-  }
-  if (nodeEnv === 'production' && !smtpFromValue) {
-    throw new Error('SMTP_FROM is required in production');
+  if (nodeEnv === 'production' && smtpConfigured && !smtpFromValue) {
+    throw new Error(
+      'SMTP_FROM is required when SMTP environment settings are configured',
+    );
   }
   if (nodeEnv === 'production' && !uploadRoot && storageProvider === 'local') {
     throw new Error('UPLOAD_ROOT is required for local storage in production');
@@ -183,6 +190,7 @@ export function validateEnvironment(
       10,
       'PASSWORD_RESET_MINUTES',
     ),
+    jobConcurrency,
     smtpFrom: smtpFromValue ?? `Application <${publicSiteEmail}>`,
     smtpHost,
     smtpPort: positiveInteger(source.SMTP_PORT, 2525, 'SMTP_PORT'),
@@ -247,6 +255,21 @@ function positiveInteger(
   const parsed = Number(value);
   if (!Number.isInteger(parsed) || parsed <= 0) {
     throw new Error(`${key} must be a positive integer`);
+  }
+  return parsed;
+}
+
+function boundedInteger(
+  value: unknown,
+  fallback: number,
+  minimum: number,
+  maximum: number,
+  key: string,
+): number {
+  if (value === undefined || value === '') return fallback;
+  const parsed = Number(value);
+  if (!Number.isInteger(parsed) || parsed < minimum || parsed > maximum) {
+    throw new Error(`${key} must be between ${minimum} and ${maximum}`);
   }
   return parsed;
 }

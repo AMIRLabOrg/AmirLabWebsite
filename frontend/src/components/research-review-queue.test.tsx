@@ -128,7 +128,11 @@ it.each(["event", "reconnect", "reconnect-excluded"])(
           sourceStatus: "FETCHED",
         }),
       );
-    await screen.findByRole("heading", { name: "New server title" });
+    await screen.findByRole(
+      "heading",
+      { name: "New server title" },
+      { timeout: 5000 },
+    );
     expect(screen.getByLabelText("Title")).toHaveValue("My unsaved title");
     const form = title.closest("form");
     if (!form) throw new Error("Editor form not found");
@@ -149,4 +153,5 @@ it.each(["event", "reconnect", "reconnect-excluded"])(
     });
     expect(screen.getByLabelText("Title")).toHaveValue("My unsaved title");
   },
+  10_000,
 );

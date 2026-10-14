@@ -16,3 +16,4 @@
 # Local agent tooling artifacts (not referenced by application code)
 /.commandcode/
 /__agent__/
+/.env.local

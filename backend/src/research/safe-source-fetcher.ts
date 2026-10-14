@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { lookup } from 'node:dns/promises';
 import { isIP } from 'node:net';
 import type { Environment } from '../config/environment';
+import { withJobSignal } from '../jobs/job-context';
 
 const MAX_SOURCE_BYTES = 2_500_000;
 const MAX_REDIRECTS = 3;
@@ -34,7 +35,7 @@ export class SafeSourceFetcher {
           })`,
         },
         redirect: 'manual',
-        signal: AbortSignal.timeout(12_000),
+        signal: withJobSignal(AbortSignal.timeout(12_000)),
       });
 
       if (response.status >= 300 && response.status < 400) {

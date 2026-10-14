@@ -29,6 +29,7 @@ export function ReviewActions<Status extends string>({
   errorTitle = "Review was not saved",
   noteLabel = "Reviewer note",
   loading = false,
+  disabled: submissionDisabled = false,
   onError,
   onSubmit,
   onSuccess,
@@ -40,6 +41,7 @@ export function ReviewActions<Status extends string>({
   errorTitle?: string;
   noteLabel?: string;
   loading?: boolean;
+  disabled?: boolean;
   onError?: (error: ApiRequestError) => void;
   onSubmit: (decision: { note?: string; status: Status }) => Promise<void>;
   onSuccess?: (status: Status) => void;
@@ -68,6 +70,7 @@ export function ReviewActions<Status extends string>({
   }
 
   async function submit(action: ReviewAction<Status>) {
+    if (loading || submissionDisabled) return;
     setBusy(true);
     setNoteError(undefined);
     try {
@@ -132,6 +135,7 @@ export function ReviewActions<Status extends string>({
             action.requiresNote && active?.status === action.status;
           const disabled =
             loading ||
+            submissionDisabled ||
             busy ||
             action.disabled ||
             Boolean(awaitingNote && !note.trim());

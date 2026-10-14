@@ -1,7 +1,13 @@
 import { cn } from "@/lib/cn";
 import { loadingPlaceholder } from "@/lib/loading-style";
 
-export type SegmentTone = "brand" | "danger" | "gold" | "neutral" | "success";
+export type SegmentTone =
+  | "brand"
+  | "caution"
+  | "danger"
+  | "gold"
+  | "neutral"
+  | "success";
 
 export interface SegmentOption {
   label: string;
@@ -11,6 +17,8 @@ export interface SegmentOption {
 
 const activeToneClass: Record<SegmentTone, string> = {
   brand: "bg-brand text-on-accent",
+  caution:
+    "bg-[color-mix(in_srgb,var(--danger)_55%,var(--gold))] text-on-accent",
   danger: "bg-danger text-on-accent",
   gold: "bg-gold text-on-accent",
   neutral: "bg-ink-muted text-on-accent",

@@ -13,6 +13,10 @@ import type { ResearchDiscoveryService } from './research-discovery.service';
 import type { ResearchProfileSyncService } from './research-profile-sync.service';
 import { ResearchService } from './research.service';
 import type { SubmitResearchDto } from './dto/research.dto';
+import {
+  ResearchLibraryQueryDto,
+  ResearchLibraryView,
+} from './dto/research-library-query.dto';
 
 function createResearchService({
   discovery,
@@ -28,7 +32,18 @@ function createResearchService({
   const prismaValue = Object.assign(
     {
       $transaction: (callback: (transaction: object) => unknown) =>
-        Promise.resolve(callback(prisma)),
+        Promise.resolve(
+          callback({
+            ...prisma,
+            $queryRaw: jest.fn().mockResolvedValue([]),
+            researchItem: {
+              findFirst: jest.fn().mockResolvedValue(null),
+              ...('researchItem' in prisma
+                ? (prisma.researchItem as object)
+                : {}),
+            },
+          }),
+        ),
     },
     prisma,
   );
@@ -207,7 +222,7 @@ describe('ResearchService.submit provenance and verification', () => {
     expect(prisma.person.findFirst).not.toHaveBeenCalled();
   });
 
-  it('includes published submissions in the accountable person profile outputs', async () => {
+  it('lists only current exact source associations on a person profile', async () => {
     const findFirst = jest.fn().mockResolvedValue({
       id: 'accountable-person',
       appointedRank: null,
@@ -240,17 +255,186 @@ describe('ResearchService.submit provenance and verification', () => {
           AND: expect.arrayContaining([
             expect.objectContaining({ reviewStatus: 'PUBLISHED' }),
             {
-              OR: [
-                { contributors: { some: { personId: 'accountable-person' } } },
-                {
-                  submittedBy: {
-                    is: { person: { is: { id: 'accountable-person' } } },
-                  },
-                },
-              ],
+              people: {
+                some: { isCurrent: true, personId: 'accountable-person' },
+              },
             },
           ]),
         },
+      }),
+    );
+  });
+});
+
+describe('ResearchService API serialization', () => {
+  it('omits internal observation versions from review responses', async () => {
+    const service = createResearchService({
+      discovery: {},
+      notifications: {},
+      prisma: {
+        researchItem: {
+          findFirst: jest.fn().mockResolvedValue({
+            automationState: 'IDLE',
+            automationVersion: 1,
+            contributors: [],
+            id: 'paper-id',
+            reviewStatus: ReviewStatus.NEEDS_REVIEW,
+            sourceSnapshot: {
+              failureReason: null,
+              metadata: null,
+              observationVersion: 42n,
+              status: 'FETCHED',
+            },
+            submittedBy: null,
+            title: 'Paper',
+            type: ResearchItemType.PAPER,
+          }),
+        },
+      },
+      settings: {},
+    });
+
+    const response = await service.reviewItem('paper-id');
+
+    expect(() => JSON.stringify(response)).not.toThrow();
+    expect(response.sourceSnapshot).not.toHaveProperty('observationVersion');
+  });
+});
+
+describe('ResearchService readonly library', () => {
+  it('scopes member results to their current exact associations', async () => {
+    const findMany = jest.fn().mockResolvedValue([]);
+    const count = jest.fn().mockResolvedValue(0);
+    const service = createResearchService({
+      discovery: {},
+      notifications: {},
+      prisma: { researchItem: { count, findMany } },
+      settings: {},
+    });
+    const member = user({
+      person: {
+        avatar: null,
+        fullName: 'Member',
+        id: 'person-id',
+        isPublished: true,
+        rank: null,
+        slug: 'member',
+      },
+      role: PlatformRole.MEMBER,
+    });
+
+    await service.library(new ResearchLibraryQueryDto(), member);
+
+    expect(findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        // Jest asymmetric matchers are intentionally untyped.
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+        where: expect.objectContaining({
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+          AND: expect.arrayContaining([
+            expect.objectContaining({
+              people: {
+                some: { isCurrent: true, personId: 'person-id' },
+              },
+            }),
+          ]),
+        }),
+      }),
+    );
+  });
+
+  it('keeps retracted works out of link history and includes them in source issues', async () => {
+    const queries: Array<{ where: unknown }> = [];
+    const service = createResearchService({
+      discovery: {},
+      notifications: {},
+      settings: {},
+      prisma: {
+        researchItem: {
+          count: jest.fn().mockResolvedValue(0),
+          findMany: (query: { where: unknown }) => {
+            queries.push(query);
+            return Promise.resolve([]);
+          },
+        },
+      },
+    });
+    const admin = user({ role: PlatformRole.ADMIN });
+    await service.library(
+      { ...new ResearchLibraryQueryDto(), view: ResearchLibraryView.RETAINED },
+      admin,
+    );
+    await service.library(
+      { ...new ResearchLibraryQueryDto(), view: ResearchLibraryView.ISSUES },
+      admin,
+    );
+    expect(JSON.stringify(queries[0].where)).toContain(
+      '"reviewStatus":"PUBLISHED"',
+    );
+    expect(JSON.stringify(queries[1].where)).toContain(
+      '"reviewStatus":"ARCHIVED"',
+    );
+  });
+
+  it('rejects retained and issue views for members', async () => {
+    const service = createResearchService({
+      discovery: {},
+      notifications: {},
+      prisma: {},
+      settings: {},
+    });
+    const member = user({
+      person: {
+        avatar: null,
+        fullName: 'Member',
+        id: 'person-id',
+        isPublished: true,
+        rank: null,
+        slug: 'member',
+      },
+      role: PlatformRole.MEMBER,
+    });
+
+    await expect(
+      service.library(
+        Object.assign(new ResearchLibraryQueryDto(), {
+          view: ResearchLibraryView.RETAINED,
+        }),
+        member,
+      ),
+    ).rejects.toThrow('restricted to staff');
+  });
+
+  it('denies a member detail without a current association', async () => {
+    const findFirst = jest.fn().mockResolvedValue(null);
+    const service = createResearchService({
+      discovery: {},
+      notifications: {},
+      prisma: { researchItem: { findFirst } },
+      settings: {},
+    });
+    const member = user({
+      person: {
+        avatar: null,
+        fullName: 'Member',
+        id: 'person-id',
+        isPublished: true,
+        rank: null,
+        slug: 'member',
+      },
+      role: PlatformRole.MEMBER,
+    });
+
+    await expect(service.libraryItem('item-id', member)).rejects.toThrow(
+      'Research output not found',
+    );
+    expect(findFirst).toHaveBeenCalledWith(
+      expect.objectContaining({
+        // Jest asymmetric matchers are intentionally untyped.
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+        where: expect.objectContaining({
+          people: { some: { isCurrent: true, personId: 'person-id' } },
+        }),
       }),
     );
   });

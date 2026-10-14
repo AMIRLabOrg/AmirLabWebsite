@@ -9,7 +9,6 @@ import {
   NotificationType,
   PlatformRole,
   ProjectTaskStatus,
-  ResearchItemType,
   WeeklyReportStatus,
 } from '../../generated/prisma/client';
 import type { AuthenticatedUser } from '../auth/auth.types';
@@ -53,7 +52,7 @@ export class WeeklyReportsService {
     this.requireMember(user);
     const weekStart = currentWeekStart();
     const weekEnd = addDays(weekStart, 7);
-    const [report, projects, outputs] = await Promise.all([
+    const [report, projects] = await Promise.all([
       this.prisma.weeklyReport.findUnique({
         where: { authorId_weekStart: { authorId: user.id, weekStart } },
         include: REPORT_INCLUDE,
@@ -70,18 +69,8 @@ export class WeeklyReportsService {
         },
         orderBy: { researchItem: { title: 'asc' } },
       }),
-      this.prisma.researchItem.findMany({
-        where: reportOutputWhere(user),
-        select: { id: true, title: true, type: true },
-        orderBy: { title: 'asc' },
-      }),
     ]);
     return {
-      outputs: outputs.map((output) => ({
-        id: output.id,
-        title: output.title ?? 'Untitled output',
-        type: output.type,
-      })),
       projects: projects.map((project) => ({
         id: project.researchItemId,
         title: project.researchItem.title ?? 'Untitled project',
@@ -121,34 +110,18 @@ export class WeeklyReportsService {
       );
     }
     const projectIds = [...new Set(dto.projectIds)];
-    const outputIds = [...new Set(dto.outputIds ?? [])];
     if (projectIds.length !== dto.projectIds.length) {
       throw new BadRequestException('A project can only be selected once');
     }
-    if (outputIds.length !== (dto.outputIds?.length ?? 0)) {
-      throw new BadRequestException('An output can only be selected once');
-    }
-    const [accessibleProjects, accessibleOutputs] = await Promise.all([
-      this.prisma.project.count({
-        where: {
-          ...accessibleProjectWhere(user),
-          researchItemId: { in: projectIds },
-        },
-      }),
-      outputIds.length
-        ? this.prisma.researchItem.count({
-            where: { ...reportOutputWhere(user), id: { in: outputIds } },
-          })
-        : Promise.resolve(0),
-    ]);
+    const accessibleProjects = await this.prisma.project.count({
+      where: {
+        ...accessibleProjectWhere(user),
+        researchItemId: { in: projectIds },
+      },
+    });
     if (accessibleProjects !== projectIds.length) {
       throw new BadRequestException(
         'Every selected project must be available to the report author',
-      );
-    }
-    if (accessibleOutputs !== outputIds.length) {
-      throw new BadRequestException(
-        'Every selected output must belong to the report author',
       );
     }
 
@@ -174,9 +147,6 @@ export class WeeklyReportsService {
           authorId: user.id,
           blockers: dto.blockers?.trim() || null,
           nextWeekPlan: dto.nextWeekPlan.trim(),
-          outputs: {
-            create: outputIds.map((outputId) => ({ outputId })),
-          },
           projects: {
             create: projectIds.map((projectId) => ({ projectId })),
           },
@@ -201,17 +171,6 @@ export class WeeklyReportsService {
             reportId: saved.id,
           })),
         });
-        await transaction.weeklyReportOutput.deleteMany({
-          where: { reportId: saved.id },
-        });
-        if (outputIds.length) {
-          await transaction.weeklyReportOutput.createMany({
-            data: outputIds.map((outputId) => ({
-              outputId,
-              reportId: saved.id,
-            })),
-          });
-        }
       }
       await transaction.auditRecord.create({
         data: {
@@ -220,7 +179,6 @@ export class WeeklyReportsService {
           entityId: saved.id,
           entityType: 'WeeklyReport',
           details: {
-            outputIds,
             projectIds,
             weekStart: weekStart.toISOString(),
           },
@@ -477,20 +435,6 @@ function assertNoSelfAuthoredWeeklyReport(
       })),
     );
   }
-}
-
-function reportOutputWhere(user: AuthenticatedUser) {
-  return {
-    type: { in: [ResearchItemType.PAPER, ResearchItemType.DATASET] },
-    ...(user.role === PlatformRole.ADMIN
-      ? {}
-      : {
-          OR: [
-            { submittedById: user.id },
-            { contributors: { some: { personId: user.person?.id ?? '' } } },
-          ],
-        }),
-  };
 }
 
 export function currentWeekStart(now = new Date()) {

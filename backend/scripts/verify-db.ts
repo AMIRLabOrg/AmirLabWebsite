@@ -11,10 +11,7 @@ import {
   ReviewStatus,
 } from '../generated/prisma/client';
 import { createCliPrisma } from './prisma';
-import {
-  firstKnownContributorSourceIdForSeed,
-  readSeedData,
-} from './seed-data';
+import { readSeedData } from './seed-data';
 
 const uploadRoot = resolve(process.env.UPLOAD_ROOT ?? './storage');
 
@@ -25,10 +22,6 @@ async function main() {
     const expectedProjects = seed.projects.filter((item) => item.title).length;
     const expectedMemberships = seed.departments.reduce(
       (sum, item) => sum + item.memberships.length,
-      0,
-    );
-    const expectedProposedMatches = seed.papers.reduce(
-      (sum, paper) => sum + paper.contributorSourceIds.length,
       0,
     );
     const expectedAvatars = seed.people.filter(
@@ -127,34 +120,26 @@ async function main() {
       importedAccounts,
       seed.people.length,
     );
+    expect('initial profile requests awaiting review', pendingProfiles, 0);
     expect(
-      'profile requests awaiting manual review',
-      pendingProfiles,
-      seed.people.length,
-    );
-    expect(
-      'imported people published before review',
+      'published imported people',
       publishedImportedPeople,
-      0,
+      seed.people.length,
     );
     expect(
       'published departments',
       departments,
       seed.departments.filter((department) => department.isPublished).length,
     );
-    expect('papers', papers, seed.papers.length);
-    expect('papers awaiting manual review', pendingPapers, seed.papers.length);
+    expect('papers before author sync', papers, 0);
+    expect('manual paper review entries', pendingPapers, 0);
     expect('papers published before review', publishedPapers, 0);
     expect(
       'contributors directly linked before verification',
       directContributorLinks,
       0,
     );
-    expect(
-      'proposed contributor identity matches',
-      proposedMatches,
-      expectedProposedMatches,
-    );
+    expect('proposed contributor identity matches', proposedMatches, 0);
     expect('projects', projects, expectedProjects);
     expect(
       'project imports awaiting review',
@@ -172,49 +157,23 @@ async function main() {
       departmentMemberships,
       expectedMemberships,
     );
-    expect(
-      'avatar assets staged for profile review',
-      avatars.length,
-      expectedAvatars,
-    );
+    expect('imported avatar assets', avatars.length, expectedAvatars);
     expect(
       'source checks staged without a discovery job',
       seededSourceSnapshots,
       0,
     );
 
-    const knownContributorSourceIds = new Set(
-      seed.people.map((person) => person.sourceId),
-    );
-    const paperProvenanceBySourceId = new Map(
-      seededPaperProvenance.flatMap((paper) =>
-        paper.legacySourceId ? [[paper.legacySourceId, paper] as const] : [],
-      ),
-    );
-    for (const paper of seed.papers) {
-      const actual = paperProvenanceBySourceId.get(paper.sourceId);
-      if (!actual) {
-        throw new Error(`Missing seeded paper ${paper.sourceId}`);
-      }
-      const expectedSourceId = firstKnownContributorSourceIdForSeed(
-        paper.contributorSourceIds,
-        knownContributorSourceIds,
-      );
-      const actualSourceId = actual.submittedBy?.person?.legacySourceId ?? null;
-      if (
-        expectedSourceId === null
-          ? actual.submittedById !== null
-          : actualSourceId !== expectedSourceId
-      ) {
-        throw new Error(
-          `Seeded paper ${paper.sourceId} has invalid submitter provenance`,
-        );
-      }
-    }
+    expect('legacy manual paper provenance', seededPaperProvenance.length, 0);
     expect(
-      'seed paper submitter provenance',
-      seed.papers.length,
-      seed.papers.length,
+      'known OpenAlex bindings',
+      await prisma.openAlexProfile.count(),
+      seed.people.filter((person) => person.openAlexAuthorId).length,
+    );
+    expect(
+      'OpenAlex duplicated as profile links',
+      await prisma.personLink.count({ where: { type: 'OPENALEX' } }),
+      0,
     );
 
     const badAvatarKeys = avatars.filter(
@@ -237,11 +196,7 @@ async function main() {
     const liveAvatarLinks = await prisma.person.count({
       where: { legacySourceId: { not: null }, avatarId: { not: null } },
     });
-    expect(
-      'imported avatars published before profile approval',
-      liveAvatarLinks,
-      0,
-    );
+    expect('published imported avatars', liveAvatarLinks, expectedAvatars);
 
     const stagedAvatarLinks = await prisma.profileEditRequest.count({
       where: {
@@ -249,11 +204,7 @@ async function main() {
         avatarAssetId: { not: null },
       },
     });
-    expect(
-      'profile requests with staged avatar',
-      stagedAvatarLinks,
-      expectedAvatars,
-    );
+    expect('initial profile requests with staged avatar', stagedAvatarLinks, 0);
 
     const requiredSettings = [
       'page.home',
@@ -273,12 +224,14 @@ async function main() {
       throw new Error(`Missing site settings: ${missingSettings.join(', ')}`);
     }
 
-    console.log('[verify] Canonical import is staged for manual review.');
+    console.log(
+      '[verify] Initial member profiles are published automatically; later edits use profile review.',
+    );
     console.log(
       '[verify] Registered people are available to internal workflows.',
     );
     console.log(
-      '[verify] Paper contributor relationships remain proposed until reviewed.',
+      '[verify] Papers and datasets enter only through OpenAlex author sync.',
     );
     console.log(
       '[verify] All imported avatar files exist under storage/peoples.',

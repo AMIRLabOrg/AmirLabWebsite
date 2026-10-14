@@ -8,6 +8,7 @@ import {
   Patch,
   Post,
   Put,
+  Query,
 } from '@nestjs/common';
 import { PlatformRole } from '../../generated/prisma/client';
 import { CurrentUser, RequireRole } from '../auth/auth.decorators';
@@ -28,6 +29,7 @@ import {
   UpdateProjectTaskDto,
 } from './dto/project.dto';
 import { ProjectsService } from './projects.service';
+import { ProjectQueryDto } from './dto/project-query.dto';
 
 @Controller('projects')
 export class ProjectsController {
@@ -39,8 +41,11 @@ export class ProjectsController {
   }
 
   @Get('mine')
-  mine(@CurrentUser() user: AuthenticatedUser) {
-    return this.projects.mine(user);
+  mine(
+    @CurrentUser() user: AuthenticatedUser,
+    @Query() query: ProjectQueryDto,
+  ) {
+    return this.projects.mine(user, query);
   }
 
   @Post()
@@ -63,8 +68,39 @@ export class ProjectsController {
   workspace(
     @Param('id', ParseUUIDPipe) id: string,
     @CurrentUser() user: AuthenticatedUser,
+    @Query() query: ProjectQueryDto,
   ) {
-    return this.projects.workspace(id, user);
+    return this.projects.workspace(id, user, query);
+  }
+
+  @Get(':id/tasks')
+  tasks(
+    @Param('id', ParseUUIDPipe) id: string,
+    @CurrentUser() user: AuthenticatedUser,
+    @Query() query: ProjectQueryDto,
+  ) {
+    return this.projects.collection(id, user, { ...query, section: 'tasks' });
+  }
+
+  @Get(':id/updates')
+  updates(
+    @Param('id', ParseUUIDPipe) id: string,
+    @CurrentUser() user: AuthenticatedUser,
+    @Query() query: ProjectQueryDto,
+  ) {
+    return this.projects.collection(id, user, { ...query, section: 'updates' });
+  }
+
+  @Get(':id/change-requests')
+  changes(
+    @Param('id', ParseUUIDPipe) id: string,
+    @CurrentUser() user: AuthenticatedUser,
+    @Query() query: ProjectQueryDto,
+  ) {
+    return this.projects.collection(id, user, {
+      ...query,
+      section: 'changeRequests',
+    });
   }
 
   @Patch(':id')
@@ -138,6 +174,15 @@ export class ProjectsController {
     @CurrentUser() user: AuthenticatedUser,
   ) {
     return this.projects.linkOutput(id, body, user);
+  }
+
+  @Delete(':id/outputs/:referenceId')
+  removeOutput(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Param('referenceId', ParseUUIDPipe) referenceId: string,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    return this.projects.removeOutputReference(id, referenceId, user);
   }
 
   @Post(':id/resources')

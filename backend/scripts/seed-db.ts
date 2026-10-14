@@ -1,12 +1,13 @@
 import {
+  parseProfilePayload,
+  profileUpdateData,
+} from '../src/profiles/profile-payload';
+import {
   AcademicRank,
   AccountStatus,
-  ContributorMatchSource,
-  ContributorMatchStatus,
   DepartmentRole,
   EngagementType,
   PlatformRole,
-  ProfileReviewStatus,
   ProjectChangeKind,
   PositionStatus,
   PositionType,
@@ -22,15 +23,12 @@ import {
   ensureOpenAlexArtifacts,
   enumValue,
   getAdminCredentials,
-  openAlexLinkFor,
-  paperSlug,
   required,
   seedDocuments,
   seedSiteSettings,
   stableSlug,
 } from './seed-writers';
 import {
-  firstKnownContributorSourceIdForSeed,
   missingSeedAvatarFiles,
   missingSeedUniversityLogoFiles,
   readSeedData,
@@ -173,8 +171,6 @@ async function seedDatabase() {
     );
 
     const personIdBySource = new Map<string, string>();
-    const personNameBySource = new Map<string, string>();
-    const userIdBySource = new Map<string, string>();
 
     for (const person of data.people) {
       const existing = await prisma.person.findUnique({
@@ -186,10 +182,6 @@ async function seedDatabase() {
         }
         await ensurePersonMetric(prisma, existing.id);
         personIdBySource.set(person.sourceId, existing.id);
-        personNameBySource.set(person.sourceId, person.fullName);
-        if (existing.userId) {
-          userIdBySource.set(person.sourceId, existing.userId);
-        }
         skipped(`person ${person.slug}`);
         continue;
       }
@@ -232,47 +224,49 @@ async function seedDatabase() {
         },
       });
 
-      const openAlexLink = openAlexLinkFor(person);
-      if (openAlexLink) {
+      if (person.openAlexAuthorId) {
         await ensureOpenAlexArtifacts(prisma, createdPerson.id, person);
       }
 
-      await prisma.profileEditRequest.create({
+      await prisma.person.update({
+        where: { id: createdPerson.id },
         data: {
-          avatarAssetId,
-          personId: createdPerson.id,
-          status: ProfileReviewStatus.NEEDS_REVIEW,
-          payload: {
-            fullName: person.fullName,
-            headline: person.headline,
-            biography: person.biography,
-            phone: person.phone,
-            contactAddress: person.contactAddress,
-            expertise: person.expertise,
-            links: [
-              ...person.links,
-              ...(openAlexLink ? [openAlexLink] : []),
-            ].map(({ label, type, url }) => ({ label, type, url })),
-            sections: person.profileSections.map((section) => ({
-              type: section.type,
-              title: section.title,
-              subsections: section.subsections.map((subsection) => ({
-                heading: subsection.heading,
-                entries: subsection.entries.map((entry) => ({
-                  label: entry.label,
-                  content: entry.content,
+          ...profileUpdateData(
+            parseProfilePayload({
+              fullName: person.fullName,
+              headline: person.headline,
+              biography: person.biography,
+              phone: person.phone,
+              contactAddress: person.contactAddress,
+              expertise: person.expertise,
+              openAlexAuthorId: person.openAlexAuthorId ?? null,
+              links: person.links
+                .filter(({ type }) => type !== 'OPENALEX')
+                .map(({ label, type, url }) => ({ label, type, url })),
+              sections: person.profileSections
+                .filter((section) => section.type !== 'PUBLICATIONS')
+                .map((section) => ({
+                  type: section.type,
+                  title: section.title,
+                  subsections: section.subsections.map((subsection) => ({
+                    heading: subsection.heading,
+                    entries: subsection.entries.map((entry) => ({
+                      label: entry.label,
+                      content: entry.content,
+                    })),
+                  })),
                 })),
-              })),
-            })),
-            removeAvatar: false,
-          },
+              removeAvatar: false,
+            }),
+            avatarAssetId,
+            'RESEARCH',
+          ),
+          isPublished: true,
         },
       });
 
       await ensurePersonMetric(prisma, createdPerson.id);
       personIdBySource.set(person.sourceId, createdPerson.id);
-      personNameBySource.set(person.sourceId, person.fullName);
-      userIdBySource.set(person.sourceId, account.id);
       created(`person ${person.slug}`);
     }
 
@@ -346,88 +340,6 @@ async function seedDatabase() {
           },
         });
       }
-    }
-
-    const knownContributorSourceIds = new Set(userIdBySource.keys());
-    for (const paper of data.papers) {
-      const existing = await prisma.researchItem.findUnique({
-        where: { legacySourceId: paper.sourceId },
-      });
-      if (existing) {
-        skipped(`paper ${paper.sourceId}`);
-        continue;
-      }
-      const firstKnownContributorSourceId =
-        firstKnownContributorSourceIdForSeed(
-          paper.contributorSourceIds,
-          knownContributorSourceIds,
-        );
-      const firstKnownSubmitterId = firstKnownContributorSourceId
-        ? (userIdBySource.get(firstKnownContributorSourceId) ?? null)
-        : null;
-      const researchItem = await prisma.researchItem.create({
-        data: {
-          canonicalUrl: paper.canonicalUrl,
-          legacySourceId: paper.sourceId,
-          legacyUrl: paper.sourceUrl,
-          reviewStatus: ReviewStatus.NEEDS_REVIEW,
-          slug: paperSlug(paper),
-          submittedById: firstKnownSubmitterId,
-          title: paper.title,
-          type: ResearchItemType.PAPER,
-          paper: {
-            create: {
-              citation: paper.citation,
-              doi: paper.doi,
-              publicationType: paper.publicationType,
-              venue: paper.venue,
-              year: paper.year,
-            },
-          },
-        },
-      });
-      await prisma.auditRecord.create({
-        data: {
-          action: 'research.imported',
-          actorId: admin.userId,
-          entityId: researchItem.id,
-          entityType: 'ResearchItem',
-          details: {
-            sourceId: paper.sourceId,
-            ownerSourceId: firstKnownContributorSourceId,
-          },
-        },
-      });
-      for (const [
-        sortOrder,
-        sourceId,
-      ] of paper.contributorSourceIds.entries()) {
-        const personId = personIdBySource.get(sourceId);
-        const displayName = personNameBySource.get(sourceId);
-        if (!personId || !displayName) continue;
-        await prisma.researchContributor.create({
-          data: {
-            displayName,
-            researchItemId: researchItem.id,
-            sortOrder,
-            matches: {
-              create: {
-                confidence: 1,
-                evidence: {
-                  matchReason: 'Imported identity',
-                  personSourceId: sourceId,
-                  researchSourceId: paper.sourceId,
-                },
-                personId,
-                requestedById: admin.userId,
-                source: ContributorMatchSource.SOURCE_METADATA,
-                status: ContributorMatchStatus.PROPOSED,
-              },
-            },
-          },
-        });
-      }
-      created(`paper ${paper.sourceId}`);
     }
 
     for (const project of data.projects) {

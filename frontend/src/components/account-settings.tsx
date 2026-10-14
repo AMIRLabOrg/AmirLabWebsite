@@ -214,7 +214,7 @@ export function AccountSettings() {
               busy !== null ||
               !sessions.some((item) => !item.current)
             }
-            loading={busy === "others"}
+            busy={busy === "others"}
             onClick={() => void revokeOthers()}
           >
             Sign out other devices
@@ -298,7 +298,7 @@ export function AccountSettings() {
                           <ButtonControl
                             variant="danger-ghost"
                             disabled={busy !== null}
-                            loading={busy === item.id}
+                            busy={busy === item.id}
                             onClick={() => void revoke(item)}
                           >
                             Sign out
@@ -321,7 +321,8 @@ export function AccountSettings() {
                 {!session || !session.current ? (
                   <ButtonControl
                     variant="danger-ghost"
-                    loading={!session || busy === session.id}
+                    loading={!session}
+                    busy={busy === session?.id}
                     disabled={busy !== null}
                     onClick={() => {
                       if (session) void revoke(session);

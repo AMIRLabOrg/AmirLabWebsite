@@ -2,7 +2,7 @@
 
 import { cn } from "@/lib/cn";
 import { loadingPlaceholder } from "@/lib/loading-style";
-import { useDeferredValue, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { ApiRequestError, apiRequest } from "@/lib/client-api";
 import type { PaginatedResponse, ProfileEditRequest } from "@/lib/types";
 import { profileValuesEqual } from "@/lib/profile-changes";
@@ -36,7 +36,7 @@ export function ProfileReviewQueue() {
   const [result, setResult] = useState<PaginatedResponse<ProfileEditRequest>>();
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
-  const deferredSearch = useDeferredValue(search);
+  const [draftSearch, setDraftSearch] = useState("");
   const [sort, setSort] = useState("OLDEST");
   const [error, setError] = useState<string>();
   const [loading, setLoading] = useState(true);
@@ -52,7 +52,7 @@ export function ProfileReviewQueue() {
       pageSize: "10",
       sort,
     });
-    if (deferredSearch.trim()) params.set("search", deferredSearch.trim());
+    if (search.trim()) params.set("search", search.trim());
     void apiRequest<PaginatedResponse<ProfileEditRequest>>(
       `/profile-reviews?${params}`,
       { method: "GET" },
@@ -76,7 +76,7 @@ export function ProfileReviewQueue() {
     return () => {
       active = false;
     };
-  }, [deferredSearch, page, reload, sort]);
+  }, [search, page, reload, sort]);
 
   const items = result?.items ?? [];
   const blockedIds = new Set(
@@ -94,7 +94,7 @@ export function ProfileReviewQueue() {
     {
       firstId: items[0]?.id,
       ready: !loading,
-      viewKey: `${page}|${deferredSearch}|${sort}`,
+      viewKey: `${page}|${search}|${sort}`,
     },
   );
   const outsideQueue = Boolean(
@@ -202,6 +202,7 @@ export function ProfileReviewQueue() {
   const clear = () => {
     setLoading(true);
     setSearch("");
+    setDraftSearch("");
     setPage(1);
   };
 
@@ -211,13 +212,15 @@ export function ProfileReviewQueue() {
         <ToolbarSearchField
           id="profile-review-search"
           label="Search"
-          onChange={(event) => {
+          onValueChange={setDraftSearch}
+          onSearch={(value) => {
+            if (search === value.trim() && page === 1) return;
             setLoading(true);
-            setSearch(event.target.value);
+            setSearch(value.trim());
             setPage(1);
           }}
           placeholder="Name"
-          value={search}
+          value={draftSearch}
         />
         <FormField htmlFor="profile-review-sort" label="Sort">
           <SelectControl
@@ -260,6 +263,17 @@ export function ProfileReviewQueue() {
         />
       ) : null}
 
+      <PaginationControls
+        loading={loading}
+        onPageChange={(nextPage) => {
+          setLoading(true);
+          setPage(nextPage);
+        }}
+        page={page}
+        pageSize={result?.pageSize ?? 10}
+        total={result?.total}
+        totalPages={result?.totalPages ?? 1}
+      />
       {error && result ? (
         <p className="m-0 flex items-center gap-[.45rem] text-[.82rem] leading-[1.5] text-ink-muted rounded-panel bg-danger-soft p-[.8rem] text-danger">
           {error}
@@ -302,17 +316,6 @@ export function ProfileReviewQueue() {
                 <p className="m-0 font-[var(--font-sans)] text-[.75rem] font-extrabold tracking-[.12em] text-brand uppercase">
                   Review queue
                 </p>
-                <PaginationControls
-                  loading={loading}
-                  onPageChange={(nextPage) => {
-                    setLoading(true);
-                    setPage(nextPage);
-                  }}
-                  page={page}
-                  pageSize={result?.pageSize ?? 10}
-                  total={result?.total}
-                  totalPages={result?.totalPages ?? 1}
-                />
               </div>
               <div data-loading={initialLoading || undefined}>
                 {(initialLoading
@@ -337,23 +340,25 @@ export function ProfileReviewQueue() {
           }
         />
       ) : (
-        <StatePanel
-          frame="workspace"
-          action={
-            filtered ? { label: "Clear search", onClick: clear } : undefined
-          }
-          body={
-            filtered
-              ? "Try another name or clear the search."
-              : "New member profile changes will appear here when submitted."
-          }
-          title={
-            filtered
-              ? "No matching profile edits"
-              : "The profile review queue is clear"
-          }
-          variant={filtered ? "filtered" : "empty"}
-        />
+        <>
+          <StatePanel
+            frame="workspace"
+            action={
+              filtered ? { label: "Clear search", onClick: clear } : undefined
+            }
+            body={
+              filtered
+                ? "Try another name or clear the search."
+                : "New member profile changes will appear here when submitted."
+            }
+            title={
+              filtered
+                ? "No matching profile edits"
+                : "The profile review queue is clear"
+            }
+            variant={filtered ? "filtered" : "empty"}
+          />
+        </>
       )}
     </DataTableShell>
   );

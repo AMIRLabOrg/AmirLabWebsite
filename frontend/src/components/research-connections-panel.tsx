@@ -2,8 +2,8 @@
 
 import { cn } from "@/lib/cn";
 import { loadingPlaceholder } from "@/lib/loading-style";
-import { SyntheticEvent, useCallback, useEffect, useState } from "react";
-import { ExternalLink, Link2, Search } from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { ExternalLink, Link2 } from "lucide-react";
 import { ApiRequestError, apiRequest } from "@/lib/client-api";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -11,6 +11,7 @@ import {
   SemanticStatus,
 } from "@/components/ui/semantic-status";
 import { useReviewIssues } from "@/lib/use-review-issues";
+import { ToolbarSearchField } from "@/components/ui/toolbar-search-field";
 import { InputControl } from "@/components/ui/form-controls";
 import { FormField } from "@/components/ui/form-field";
 import { ButtonControl, ButtonLink } from "@/components/ui/button-control";
@@ -68,9 +69,12 @@ export function ResearchConnectionsPanel() {
   const [overview, setOverview] = useState<ConnectionOverview>();
   const [results, setResults] = useState<SearchResult[]>([]);
   const [query, setQuery] = useState("");
+  const [draftQuery, setDraftQuery] = useState("");
   const [evidenceUrl, setEvidenceUrl] = useState("");
   const [claiming, setClaiming] = useState<string>();
   const [searching, setSearching] = useState(false);
+  const searchForm = useRef<HTMLFormElement>(null);
+  const searchVersion = useRef(0);
   const [error, setError] = useState<string>();
   const claimIssues = useReviewIssues();
 
@@ -115,21 +119,32 @@ export function ResearchConnectionsPanel() {
     };
   }, [staff]);
 
-  async function search(event: SyntheticEvent<HTMLFormElement, SubmitEvent>) {
-    event.preventDefault();
+  async function search(value: string) {
+    const nextQuery = value.trim();
+    if (!nextQuery) {
+      searchVersion.current += 1;
+      setSearching(false);
+      setQuery("");
+      setResults([]);
+      setError(undefined);
+      return;
+    }
+    if (nextQuery.length < 2 || loading || searching) return;
+    const version = ++searchVersion.current;
+    setQuery(nextQuery);
     setError(undefined);
     setSearching(true);
     try {
-      setResults(
-        await apiRequest<SearchResult[]>(
-          `/research-connections/search?query=${encodeURIComponent(query)}`,
-          { method: "GET" },
-        ),
+      const nextResults = await apiRequest<SearchResult[]>(
+        `/research-connections/search?query=${encodeURIComponent(nextQuery)}`,
+        { method: "GET" },
       );
+      if (version === searchVersion.current) setResults(nextResults);
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : "Search failed.");
+      if (version === searchVersion.current)
+        setError(caught instanceof Error ? caught.message : "Search failed.");
     } finally {
-      setSearching(false);
+      if (version === searchVersion.current) setSearching(false);
     }
   }
 
@@ -155,10 +170,12 @@ export function ResearchConnectionsPanel() {
         title: "Connection request sent",
       });
       await load();
-      setResults(await apiRequest<SearchResult[]>(
-        `/research-connections/search?query=${encodeURIComponent(query)}`,
-        { method: "GET" },
-      ));
+      setResults(
+        await apiRequest<SearchResult[]>(
+          `/research-connections/search?query=${encodeURIComponent(query)}`,
+          { method: "GET" },
+        ),
+      );
     } catch (caught) {
       const message =
         caught instanceof ApiRequestError
@@ -341,31 +358,24 @@ export function ResearchConnectionsPanel() {
 
       <form
         className="grid grid-cols-[minmax(220px,1fr)_minmax(220px,1fr)_auto] items-end gap-[.8rem] border-t border-line pt-5 max-[640px]:grid-cols-1"
-        onSubmit={search}
+        ref={searchForm}
+        onSubmit={(event) => {
+          event.preventDefault();
+          void search(draftQuery);
+        }}
       >
-        <FormField
-          htmlFor="connection-search"
+        <ToolbarSearchField
+          id="connection-search"
           label="Find a published output to claim"
-        >
-          <div className="relative grid items-center">
-            <Search
-              aria-hidden="true"
-              className="pointer-events-none absolute left-3 z-[1] text-ink-muted"
-              size={17}
-            />
-            <InputControl
-              data-placeholder={loading ? "control" : undefined}
-              disabled={loading}
-              className={cn("pl-10", loadingPlaceholder(loading, "control"))}
-              id="connection-search"
-              minLength={2}
-              onChange={(event) => setQuery(event.target.value)}
-              placeholder="Title, canonical URL, or contributor"
-              required
-              value={query}
-            />
-          </div>
-        </FormField>
+          loading={loading}
+          onValueChange={setDraftQuery}
+          onSearch={(value) => {
+            if (!value || searchForm.current?.reportValidity())
+              void search(value);
+          }}
+          placeholder="Title, canonical URL, or contributor"
+          value={draftQuery}
+        />
         <FormField
           htmlFor="connection-evidence"
           label="Supporting URL (recommended)"
@@ -381,7 +391,11 @@ export function ResearchConnectionsPanel() {
             value={evidenceUrl}
           />
         </FormField>
-        <ButtonControl loading={loading} disabled={searching} type="submit">
+        <ButtonControl
+          loading={loading}
+          disabled={searching || draftQuery.trim().length < 2}
+          type="submit"
+        >
           {searching ? "Searching…" : "Search outputs"}
         </ButtonControl>
       </form>
@@ -427,7 +441,11 @@ export function ResearchConnectionsPanel() {
                       ) : (
                         <ButtonControl
                           compact
-                          disabled={claiming === key || item.automationState === "QUEUED" || item.automationState === "RUNNING"}
+                          disabled={
+                            claiming === key ||
+                            item.automationState === "QUEUED" ||
+                            item.automationState === "RUNNING"
+                          }
                           onClick={() =>
                             void claim(
                               item.id,

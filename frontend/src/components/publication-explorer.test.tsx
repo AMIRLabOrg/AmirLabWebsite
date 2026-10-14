@@ -68,7 +68,7 @@ test("server fallback renders cached publications when URL hooks suspend", () =>
 test("initial cached result is visible without a client request and refresh props update it", async () => {
   const view = render(<PublicationExplorer initialData={seed} />);
   expect(screen.getByText("Cached publication")).toBeTruthy();
-  await waitFor(() => expect(mocks.replace).toHaveBeenCalled());
+  await waitFor(() => expect(window.location.search).toContain("pageSize=12"));
   expect(mocks.request).not.toHaveBeenCalled();
   view.rerender(
     <PublicationExplorer
@@ -88,10 +88,15 @@ test("filter requests retain pending UI then display their result", async () => 
     items: [{ ...seed.items[0], title: "Search result" }],
   });
   render(<PublicationExplorer initialData={seed} />);
-  fireEvent.change(
-    screen.getByPlaceholderText("Search title, author, venue, or DOI"),
-    { target: { value: "query" } },
+  const input = screen.getByPlaceholderText(
+    "Search title, author, venue, or DOI",
   );
+  input.focus();
+  fireEvent.change(input, { target: { value: "query" } });
+  expect(mocks.request).not.toHaveBeenCalled();
+  fireEvent.keyDown(input, { key: "Enter" });
+  expect(document.activeElement).toBe(input);
+  expect(input.hasAttribute("disabled")).toBe(false);
   expect(
     screen
       .getByRole("region", { name: "Publication archive" })
@@ -99,13 +104,13 @@ test("filter requests retain pending UI then display their result", async () => 
   ).toBe("true");
   await waitFor(() => expect(screen.getByText("Search result")).toBeTruthy());
   expect(mocks.request.mock.calls[0][0]).toContain("search=query");
-  fireEvent.click(screen.getByRole("button", { name: /Clear/ }));
+  expect(screen.queryByRole("button", { name: "Clear" })).toBeNull();
+  fireEvent.click(
+    screen.getByRole("button", { name: "Clear search publications" }),
+  );
   expect(screen.getByText("Cached publication")).toBeTruthy();
   await waitFor(() =>
-    expect(mocks.replace).toHaveBeenLastCalledWith(
-      "/papers?page=1&pageSize=12&sort=NEWEST",
-      { scroll: false },
-    ),
+    expect(window.location.search).toBe("?page=1&pageSize=12&sort=NEWEST"),
   );
   expect(mocks.request).toHaveBeenCalledTimes(1);
 });
@@ -126,4 +131,32 @@ test("fresh server props do not replace an already matching papers URL", async (
   expect(mocks.replace).not.toHaveBeenCalled();
   expect(mocks.request).not.toHaveBeenCalled();
   expect(screen.getByText("Fresh cached result")).toBeTruthy();
+});
+
+test("failed refresh retains loaded controls, focus, counts and previous publications", async () => {
+  mocks.request.mockRejectedValue(new Error("Network unavailable"));
+  render(<PublicationExplorer initialData={seed} />);
+  const input = screen.getByRole("searchbox");
+  input.focus();
+  fireEvent.change(input, { target: { value: "new search" } });
+  fireEvent.keyDown(input, { key: "Enter" });
+  await screen.findByRole("alert");
+  expect(screen.getByText("Cached publication")).toBeTruthy();
+  expect(document.activeElement).toBe(input);
+  expect(input.hasAttribute("disabled")).toBe(false);
+  expect(screen.getByText("1 results")).toBeTruthy();
+});
+
+test("retry after an initial failure preserves the now-visible search field", async () => {
+  mocks.request.mockRejectedValueOnce(new Error("Initial connection failed"));
+  render(<PublicationExplorer />);
+  await screen.findByText("Initial connection failed");
+  mocks.request.mockReturnValue(new Promise(() => {}));
+  const input = screen.getByRole("searchbox");
+  input.focus();
+  fireEvent.change(input, { target: { value: "retry" } });
+  fireEvent.keyDown(input, { key: "Enter" });
+  expect(input.hasAttribute("disabled")).toBe(false);
+  expect(document.activeElement).toBe(input);
+  expect(screen.getByText("Results unavailable")).toBeTruthy();
 });

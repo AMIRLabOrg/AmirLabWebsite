@@ -9,17 +9,17 @@ import {
   Mail,
   Pencil,
   Plus,
-  Search,
   Trash2,
+  UserMinus,
 } from "lucide-react";
 import { ApiRequestError, apiRequest } from "@/lib/client-api";
 import { ConfirmDialog } from "@/components/confirm-dialog";
+import { ToolbarSearchField } from "@/components/ui/toolbar-search-field";
 import { PaginationControls } from "@/components/pagination-controls";
 import { StatePanel } from "@/components/state-panel";
 import { Badge, type BadgeTone } from "@/components/ui/badge";
 import { ButtonLink } from "@/components/ui/button-control";
 import { SelectControl } from "@/components/ui/select-control";
-import { InputControl } from "@/components/ui/form-controls";
 import {
   RowActionMenu,
   RowActionMenuItem,
@@ -58,7 +58,13 @@ interface Account {
   setupEmailQueuedAt: string | null;
   isDeleted: boolean;
   deletedAt: string | null;
-  person: { fullName: string; rank: string | null; slug: string } | null;
+  person: {
+    id: string;
+    fullName: string;
+    rank: string | null;
+    slug: string;
+    isPublished: boolean;
+  } | null;
 }
 
 function readable(value: string): string {
@@ -97,10 +103,12 @@ export function UserManagement() {
   const [activeId, setActiveId] = useState<string>();
   const [pendingAccess, setPendingAccess] = useState<Account>();
   const [deletePending, setDeletePending] = useState<string>();
+  const [removeProfilePending, setRemoveProfilePending] = useState<Account>();
   const [loading, setLoading] = useState(true);
   const [result, setResult] = useState<PaginatedResponse<Account>>();
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
+  const [draftSearch, setDraftSearch] = useState("");
   const [role, setRole] = useState("ALL");
   const [status, setStatus] = useState("ALL");
   const [rank, setRank] = useState("ALL");
@@ -114,7 +122,8 @@ export function UserManagement() {
 
   useEffect(() => {
     let active = true;
-    const timeout = window.setTimeout(() => {
+    queueMicrotask(() => {
+      if (!active) return;
       const params = new URLSearchParams({
         page: String(page),
         pageSize: "20",
@@ -149,10 +158,9 @@ export function UserManagement() {
         .finally(() => {
           if (active) setLoading(false);
         });
-    }, 250);
+    });
     return () => {
       active = false;
-      window.clearTimeout(timeout);
     };
   }, [page, rank, reload, role, search, sort, status]);
 
@@ -222,6 +230,33 @@ export function UserManagement() {
     }
   }
 
+  async function removeProfile(account: Account) {
+    if (!account.person) return;
+    setError(undefined);
+    setActiveId(account.id);
+    try {
+      await apiRequest(`/people/${account.person.id}`, { method: "DELETE" });
+      showToast({
+        body: "The public person record was removed. Unshared source outputs will be cleaned up in the background.",
+        title: "Person removed",
+      });
+      setRemoveProfilePending(undefined);
+      setReload((value) => value + 1);
+    } catch (caught) {
+      const requestError =
+        caught instanceof ApiRequestError ? caught : undefined;
+      showToast({
+        body:
+          requestError?.message ??
+          "Unable to remove this person. Reassign active ownership first.",
+        title: "Person was not removed",
+        tone: "error",
+      });
+    } finally {
+      setActiveId(undefined);
+    }
+  }
+
   async function restoreAccount(id: string) {
     setError(undefined);
     setActiveId(id);
@@ -246,15 +281,16 @@ export function UserManagement() {
     }
   }
 
+  const initialLoading = loading && !result;
   return (
     <div className="grid gap-4">
       <div
         className="flex items-center justify-between gap-4 max-[640px]:flex-col max-[640px]:items-stretch"
-        data-loading={loading || undefined}
+        data-loading={initialLoading || undefined}
       >
         <p
-          className={loadingPlaceholder(loading, "label", "medium")}
-          data-placeholder={loading ? "label" : undefined}
+          className={loadingPlaceholder(initialLoading, "label", "medium")}
+          data-placeholder={initialLoading ? "label" : undefined}
           data-placeholder-width="medium"
         >
           {result
@@ -271,30 +307,19 @@ export function UserManagement() {
       {error && result ? <FormMessage>{error}</FormMessage> : null}
 
       <WorkspaceRuleBand contentClassName="grid min-w-0 grid-cols-[minmax(210px,1.5fr)_repeat(4,minmax(120px,.65fr))] items-end gap-[.8rem] px-[var(--workspace-gutter)] py-3.5 max-[980px]:grid-cols-2 max-[640px]:grid-cols-1 max-[640px]:px-4">
-        <FormField
-          className="min-w-0"
-          htmlFor="account-search"
+        <ToolbarSearchField
+          id="account-search"
           label="Search accounts"
-        >
-          <div className="relative grid items-center">
-            <Search
-              aria-hidden="true"
-              className="pointer-events-none absolute left-3 z-[1] text-ink-muted"
-              size={17}
-            />
-            <InputControl
-              className="pl-10"
-              id="account-search"
-              onChange={(event) => {
-                beginRefresh();
-                setSearch(event.target.value);
-                setPage(1);
-              }}
-              placeholder="Name or email"
-              value={search}
-            />
-          </div>
-        </FormField>
+          onValueChange={setDraftSearch}
+          onSearch={(value) => {
+            if (search === value.trim() && page === 1) return;
+            beginRefresh();
+            setSearch(value.trim());
+            setPage(1);
+          }}
+          placeholder="Name or email"
+          value={draftSearch}
+        />
         <FormField htmlFor="account-role" label="Role">
           <SelectControl
             id="account-role"
@@ -382,21 +407,21 @@ export function UserManagement() {
           title="Could not load accounts"
           variant="error"
         />
-      ) : !loading && !accounts.length ? (
+      ) : !initialLoading && !accounts.length ? (
         <StatePanel
           frame="workspace"
           body="Create the first member account from the page action above."
           title="No accounts yet"
         />
       ) : (
-        <WorkspaceCollection data-loading={loading || undefined}>
+        <WorkspaceCollection data-loading={initialLoading || undefined}>
           <div className="hidden grid-cols-[minmax(190px,1.05fr)_minmax(220px,1fr)_minmax(260px,1.05fr)_40px] items-center gap-4 border-b border-line px-[var(--workspace-gutter)] py-[.62rem] font-mono text-[.56rem] tracking-[.06em] text-ink-muted uppercase min-[701px]:grid">
             <span>Name</span>
             <span>Email</span>
             <span>Access</span>
             <span className="sr-only">Actions</span>
           </div>
-          {(loading && !accounts.length
+          {(initialLoading
             ? Array.from({ length: 5 }, () => undefined)
             : accounts
           ).map((account, index) => {
@@ -413,20 +438,22 @@ export function UserManagement() {
                   <strong
                     className={cn(
                       "truncate text-[.82rem] font-medium leading-[1.35]",
-                      loadingPlaceholder(loading, "text", "long"),
+                      loadingPlaceholder(initialLoading, "text", "long"),
                     )}
                     data-placeholder="text"
                     data-placeholder-width="long"
                   >
                     {account?.person?.fullName ??
-                      (loading ? "Loading account" : "Account without profile")}
+                      (initialLoading
+                        ? "Loading account"
+                        : "Account without profile")}
                   </strong>
                   <span
                     className={cn(
                       "hidden truncate font-mono text-[.56rem] text-ink-faint max-[700px]:block",
-                      loadingPlaceholder(loading, "label", "medium"),
+                      loadingPlaceholder(initialLoading, "label", "medium"),
                     )}
-                    data-placeholder={loading ? "label" : undefined}
+                    data-placeholder={initialLoading ? "label" : undefined}
                   >
                     {account?.person?.rank
                       ? readable(account.person.rank)
@@ -435,7 +462,7 @@ export function UserManagement() {
                 </div>
 
                 <div className="min-w-0 max-[700px]:col-start-1 max-[700px]:row-start-2">
-                  {loading ? (
+                  {initialLoading ? (
                     <span
                       className={cn(
                         "block text-[.76rem]",
@@ -451,19 +478,19 @@ export function UserManagement() {
                       {account.email}
                     </span>
                   ) : (
-                    <SemanticStatus loading={loading} tone="warning">
+                    <SemanticStatus loading={initialLoading} tone="warning">
                       Email not provided
                     </SemanticStatus>
                   )}
                 </div>
 
                 <div className="flex min-w-0 flex-wrap items-center gap-[.32rem] max-[700px]:col-start-1 max-[700px]:row-start-3">
-                  <Badge loading={loading}>
+                  <Badge loading={initialLoading}>
                     {account ? readable(account.role) : "member"}
                   </Badge>
                   <Badge
                     dot
-                    loading={loading}
+                    loading={initialLoading}
                     tone={
                       account
                         ? accountStatusTone(account.status, account.isDeleted)
@@ -474,9 +501,18 @@ export function UserManagement() {
                       ? accountStatusLabel(account.status, account.isDeleted)
                       : "loading"}
                   </Badge>
-                  {loading || account?.person?.rank ? (
+                  {account?.person ? (
+                    <Badge
+                      tone={account.person.isPublished ? "success" : "warning"}
+                    >
+                      {account.person.isPublished
+                        ? "Public profile"
+                        : "Profile hidden"}
+                    </Badge>
+                  ) : null}
+                  {initialLoading || account?.person?.rank ? (
                     <span className="max-[700px]:hidden">
-                      <Badge loading={loading} tone="info">
+                      <Badge loading={initialLoading} tone="info">
                         {account?.person?.rank
                           ? readable(account.person.rank)
                           : "rank"}
@@ -490,13 +526,13 @@ export function UserManagement() {
                   ) : null}
                   {issue ? (
                     <SemanticStatus
-                      loading={loading}
+                      loading={initialLoading}
                       tone={issue.tone ?? "error"}
                     >
                       {issue.message}
                     </SemanticStatus>
                   ) : null}
-                  {!loading &&
+                  {!initialLoading &&
                   account?.status === "PENDING_SETUP" &&
                   account.setupEmailQueuedAt ? (
                     <span className="basis-full font-mono text-[.54rem] text-ink-faint">
@@ -556,6 +592,15 @@ export function UserManagement() {
                           <Trash2 aria-hidden="true" size={15} />
                           Delete account
                         </RowActionMenuItem>
+                        {account?.person ? (
+                          <RowActionMenuItem
+                            danger
+                            onSelect={() => setRemoveProfilePending(account)}
+                          >
+                            <UserMinus aria-hidden="true" size={15} />
+                            Remove person and source links
+                          </RowActionMenuItem>
+                        ) : null}
                       </>
                     )}
                   </RowActionMenu>
@@ -607,6 +652,18 @@ export function UserManagement() {
         }}
         open={Boolean(deletePending)}
         title="Delete this account?"
+        tone="danger"
+      />
+      <ConfirmDialog
+        busy={activeId === removeProfilePending?.id}
+        confirmLabel="Remove person"
+        description="This permanently removes the person profile and its OpenAlex associations. The account moves to trash. Outputs shared with another person remain; outputs linked to nobody are cleaned up."
+        onCancel={() => setRemoveProfilePending(undefined)}
+        onConfirm={() => {
+          if (removeProfilePending) void removeProfile(removeProfilePending);
+        }}
+        open={Boolean(removeProfilePending)}
+        title={`Remove ${removeProfilePending?.person?.fullName ?? "this person"}?`}
         tone="danger"
       />
     </div>

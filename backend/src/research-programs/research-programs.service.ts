@@ -10,6 +10,7 @@ import {
 } from '../../generated/prisma/client';
 import type { AuthenticatedUser } from '../auth/auth.types';
 import { PrismaService } from '../database/prisma.service';
+import { normalizeOutputReference } from '../research/research-identity';
 import type { SaveResearchProgramDto } from './dto/research-program.dto';
 
 const PROGRAM_INCLUDE = {
@@ -47,6 +48,7 @@ const PROGRAM_INCLUDE = {
     },
     orderBy: { researchItem: { title: 'asc' as const } },
   },
+  outputReferences: { orderBy: { createdAt: 'asc' as const } },
 } as const;
 
 const AVAILABLE_ACCOUNT_STATUSES: AccountStatus[] = [
@@ -98,12 +100,11 @@ export class ResearchProgramsService {
       departments,
       people,
       projects: items.filter(({ type }) => type === ResearchItemType.PROJECT),
-      outputs: items.filter(({ type }) => type !== ResearchItemType.PROJECT),
     };
   }
 
   async create(dto: SaveResearchProgramDto, user: AuthenticatedUser) {
-    await this.validate(dto);
+    const outputReferences = await this.validate(dto);
     const program = await this.prisma.$transaction(async (transaction) => {
       const created = await transaction.researchProgram.create({
         data: {
@@ -116,10 +117,11 @@ export class ResearchProgramsService {
             })),
           },
           items: {
-            create: unique([...dto.projectIds, ...dto.outputIds]).map(
-              (researchItemId) => ({ researchItemId }),
-            ),
+            create: unique(dto.projectIds).map((researchItemId) => ({
+              researchItemId,
+            })),
           },
+          outputReferences: { create: outputReferences },
         },
       });
       await transaction.auditRecord.create({
@@ -142,7 +144,7 @@ export class ResearchProgramsService {
     user: AuthenticatedUser,
   ) {
     await this.get(id);
-    await this.validate(dto);
+    const outputReferences = await this.validate(dto);
     await this.prisma.$transaction(async (transaction) => {
       await transaction.researchProgram.update({
         where: { id },
@@ -157,9 +159,13 @@ export class ResearchProgramsService {
           },
           items: {
             deleteMany: {},
-            create: unique([...dto.projectIds, ...dto.outputIds]).map(
-              (researchItemId) => ({ researchItemId }),
-            ),
+            create: unique(dto.projectIds).map((researchItemId) => ({
+              researchItemId,
+            })),
+          },
+          outputReferences: {
+            deleteMany: {},
+            create: outputReferences,
           },
         },
       });
@@ -184,24 +190,19 @@ export class ResearchProgramsService {
     }
     const departmentIds = unique(dto.departmentIds);
     const projectIds = unique(dto.projectIds);
-    const outputIds = unique(dto.outputIds);
+    const outputReferences = dto.outputReferences.map(normalizeOutputReference);
     if (
       departmentIds.length !== dto.departmentIds.length ||
       projectIds.length !== dto.projectIds.length ||
-      outputIds.length !== dto.outputIds.length
+      new Set(outputReferences.map(({ identityKey }) => identityKey)).size !==
+        outputReferences.length
     ) {
       throw new BadRequestException('Program relationships cannot repeat');
     }
-    const [departments, projects, outputs, lead] = await Promise.all([
+    const [departments, projects, lead] = await Promise.all([
       this.prisma.department.count({ where: { id: { in: departmentIds } } }),
       this.prisma.researchItem.count({
         where: { id: { in: projectIds }, type: ResearchItemType.PROJECT },
-      }),
-      this.prisma.researchItem.count({
-        where: {
-          id: { in: outputIds },
-          type: { in: [ResearchItemType.PAPER, ResearchItemType.DATASET] },
-        },
       }),
       dto.leadPersonId
         ? this.prisma.person.findFirst({
@@ -219,16 +220,12 @@ export class ResearchProgramsService {
     if (projects !== projectIds.length) {
       throw new BadRequestException('Every linked project must be a project');
     }
-    if (outputs !== outputIds.length) {
-      throw new BadRequestException(
-        'Every linked output must be a paper or dataset',
-      );
-    }
     if (dto.leadPersonId && !lead) {
       throw new BadRequestException(
         'Program lead must have an available registered account',
       );
     }
+    return outputReferences;
   }
 
   private async availableSlug(name: string, programId?: string) {
@@ -268,7 +265,7 @@ function relationships(dto: SaveResearchProgramDto) {
   return {
     departmentIds: dto.departmentIds,
     leadPersonId: dto.leadPersonId ?? null,
-    outputIds: dto.outputIds,
+    outputReferences: dto.outputReferences.map(normalizeOutputReference),
     projectIds: dto.projectIds,
   };
 }

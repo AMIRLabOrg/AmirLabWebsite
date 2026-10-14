@@ -17,14 +17,6 @@ const domains = [
     route: "profile-reviews/bulk-review",
   },
   {
-    name: "research",
-    component: "frontend/src/components/research-review-queue.tsx",
-    controller: "backend/src/research/research.controller.ts",
-    service: "backend/src/research/research.service.ts",
-    endpoint: "/research-review/bulk-review",
-    route: "research-review/bulk-review",
-  },
-  {
     name: "project",
     component: "frontend/src/components/project-review-queue.tsx",
     controller: "backend/src/projects/projects.controller.ts",
@@ -63,8 +55,8 @@ const projectUi = read("frontend/src/components/project-review-queue.tsx");
 
 expect("profile bulk review claims exact revisions set-wise", profile.includes('FROM (VALUES ${Prisma.join(claimRows)})'));
 expect("profile bulk approval updates people set-wise", profile.includes('UPDATE "Person" AS person'));
-expect("research bulk review updates selected rows set-wise", research.includes('UPDATE "ResearchItem" AS item'));
-expect("research publish rechecks source and contributor guards in SQL", research.includes("ResearchSourceSnapshot") && research.includes("ContributorMatch"));
+expect("manual research review routes remain retired", !/@(?:Post|Patch)\(['"]research-review/.test(read("backend/src/research/research.controller.ts")));
+expect("source-only library uses person associations", research.includes("isCurrent: true") && research.includes("ResearchLibraryQueryDto"));
 expect("project bulk approval locks project versions", project.includes("FOR UPDATE"));
 expect("project bulk application is grouped/set-based", project.includes("private async applyBulkChanges") && project.includes("createMany"));
 expect("weekly reports use one guarded updateMany", weekly.includes("transaction.weeklyReport.updateMany"));

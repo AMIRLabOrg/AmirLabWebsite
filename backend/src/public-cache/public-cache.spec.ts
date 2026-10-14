@@ -5,7 +5,7 @@ import { lastValueFrom, of, throwError } from 'rxjs';
 import type { ExecutionContext } from '@nestjs/common';
 import { resolveService } from '../../test/resolve-service';
 import { JobsService } from '../jobs/jobs.service';
-import { PublicCacheService, PUBLIC_CACHE_JOB } from './public-cache.service';
+import { PublicCacheService } from './public-cache.service';
 import { PublicCacheInterceptor } from './public-cache.interceptor';
 
 const secret = 'a'.repeat(32);
@@ -30,15 +30,33 @@ async function service(configured = true) {
     ),
   };
   const jobs = {
-    register: jest.fn<void, [string, () => Promise<void>]>(),
+    register: jest.fn<void, [string, (payload: unknown) => Promise<void>]>(),
     onSettled: jest.fn<void, [(type: string) => Promise<void>]>(),
     enqueue: jest.fn().mockResolvedValue('retry'),
   };
   const prisma = {
+    job: {
+      deleteMany: jest.fn().mockResolvedValue({ count: 1 }),
+      upsert: jest.fn().mockResolvedValue({}),
+    },
     siteSetting: {
       upsert: jest.fn().mockResolvedValue({}),
       findUnique: jest.fn().mockResolvedValue(null),
     },
+    $transaction: jest.fn((run: (transaction: unknown) => Promise<unknown>) =>
+      run({
+        job: {
+          // Jest mocks expose variadic calls as any.
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+          upsert: (...args: unknown[]) => prisma.job.upsert(...args),
+        },
+        siteSetting: {
+          // Jest mocks expose variadic calls as any.
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+          upsert: (...args: unknown[]) => prisma.siteSetting.upsert(...args),
+        },
+      }),
+    ),
   };
   const cache = await resolveService(PublicCacheService, [
     { provide: ConfigService, useValue: config },
@@ -64,31 +82,49 @@ it('delivers immediately to the existing first frontend origin, without queueing
   expect(jobs.enqueue).not.toHaveBeenCalled();
 });
 
-it('queues durable retry on failed delivery and preserves a committed save if queueing also fails', async () => {
+it('keeps the durable delivery queued when immediate delivery fails', async () => {
   global.fetch = jest.fn().mockResolvedValue({ ok: false, status: 503 });
-  const { cache, jobs } = await service();
+  const { cache, jobs, prisma } = await service();
   await cache.invalidate();
-  expect(jobs.enqueue).toHaveBeenCalledWith(PUBLIC_CACHE_JOB, {});
-  jobs.enqueue.mockRejectedValueOnce(new Error('queue down'));
-  await expect(cache.invalidate()).resolves.toBeUndefined();
+  expect(prisma.job.upsert).toHaveBeenCalled();
+  expect(prisma.job.deleteMany).not.toHaveBeenCalled();
   const retry = jobs.register.mock.calls[0][1];
-  await expect(retry()).rejects.toThrow('503');
+  await expect(retry({ revision: 'queued' })).rejects.toThrow('503');
 });
 
 it('invalidates after public background work, including failed work, but not unrelated or revalidation jobs', async () => {
-  global.fetch = jest.fn().mockResolvedValue({ ok: true });
   const { jobs } = await service();
-  const settled = jobs.onSettled.mock.calls[0][0];
-  for (const type of [
-    'DISCOVER_RESEARCH_SOURCE',
-    'SYNC_SCHOLAR_PROFILE',
-    'SYNC_OPENALEX_AUTHOR',
-    'RECALCULATE_ALL_RANKS',
-  ])
-    await settled(type);
-  await settled('MAIL');
-  await settled(PUBLIC_CACHE_JOB);
-  expect(global.fetch).toHaveBeenCalledTimes(4);
+  expect(jobs.onSettled).not.toHaveBeenCalled();
+});
+
+it('commits revision and durable delivery in the caller transaction', async () => {
+  const { cache } = await service(false);
+  const transaction = {
+    job: { upsert: jest.fn().mockResolvedValue({}) },
+    siteSetting: { upsert: jest.fn().mockResolvedValue({}) },
+  };
+
+  await cache.invalidateInTransaction(transaction as never, 'openalex:job-1');
+
+  expect(transaction.siteSetting.upsert).toHaveBeenCalledWith(
+    expect.objectContaining({ where: { key: 'cache.public.revision' } }),
+  );
+  expect(transaction.job.upsert).toHaveBeenCalledWith(
+    expect.objectContaining({
+      where: { uniqueKey: 'public-cache:openalex:job-1' },
+    }),
+  );
+});
+
+it('delivery does not replace a newer stored revision', async () => {
+  global.fetch = jest.fn().mockResolvedValue({ ok: true });
+  const { jobs, prisma } = await service();
+  const deliver = jobs.register.mock.calls[0][1];
+
+  await deliver({ revision: 'older-revision' });
+
+  expect(global.fetch).toHaveBeenCalledTimes(1);
+  expect(prisma.siteSetting.upsert).not.toHaveBeenCalled();
 });
 
 it('records a shared revision even when webhook delivery is not configured', async () => {
@@ -224,7 +260,7 @@ it('validates an optional revalidation secret and the existing frontend origin',
 it('worker notifies settled listeners after a partially failed background handler', async () => {
   const job = {
     id: 'research-job',
-    type: 'DISCOVER_RESEARCH_SOURCE',
+    type: 'TEST_COMMITTED_SOURCE',
     payload: {},
     attempts: 0,
     maxAttempts: 5,
@@ -233,9 +269,6 @@ it('worker notifies settled listeners after a partially failed background handle
     job: {
       findFirst: jest.fn().mockResolvedValue(job),
       updateMany: jest.fn().mockResolvedValue({ count: 1 }),
-      update: jest
-        .fn<Promise<unknown>, [{ data: { status: string } }]>()
-        .mockResolvedValue({}),
     },
   };
   const worker = await resolveService(JobsService, [
@@ -250,7 +283,12 @@ it('worker notifies settled listeners after a partially failed background handle
   );
   await (worker as unknown as { runNext(): Promise<void> }).runNext();
   expect(settled).toHaveBeenCalledWith(job.type);
-  expect(prisma.job.update.mock.calls[0][0].data.status).toBe('PENDING');
+  const updateCalls = prisma.job.updateMany.mock.calls as Array<
+    [{ data: { status: string } }]
+  >;
+  expect(updateCalls.some(([input]) => input.data.status === 'PENDING')).toBe(
+    true,
+  );
 });
 
 it('expires public account email changes without invalidating logins or password changes', async () => {

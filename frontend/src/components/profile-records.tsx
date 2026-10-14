@@ -1,8 +1,8 @@
 "use client";
 
-import { ArrowDown, ArrowUp, Search } from "lucide-react";
+import { ArrowDown, ArrowUp } from "lucide-react";
 import { useMemo, useState } from "react";
-import { InputControl } from "@/components/ui/form-controls";
+import { ToolbarSearchField } from "@/components/ui/toolbar-search-field";
 import {
   PublicShell,
   publicShellWidthClass,
@@ -121,6 +121,7 @@ function ProfileRecord({
   loading?: boolean;
 }) {
   const [query, setQuery] = useState("");
+  const [draftQuery, setDraftQuery] = useState("");
   const searchable = !loading && record.entryCount > 12;
   const normalizedQuery = query.trim().toLowerCase();
   const blocks = useMemo(
@@ -179,17 +180,14 @@ function ProfileRecord({
       </header>
       <div className="grid min-w-0 gap-8">
         {searchable ? (
-          <label className="grid grid-cols-[18px_minmax(0,1fr)] items-center gap-2 border-b border-line pb-3 text-ink-muted">
-            <Search aria-hidden="true" size={17} />
-            <span className="sr-only">Search {record.title}</span>
-            <InputControl
-              className="border-0 bg-transparent p-0 shadow-none! focus-visible:border-0 focus-visible:shadow-none!"
-              onChange={(event) => setQuery(event.target.value)}
-              placeholder={`Search ${record.title.toLowerCase()}`}
-              type="search"
-              value={query}
-            />
-          </label>
+          <ToolbarSearchField
+            id={`profile-record-search-${record.id}`}
+            label={`Search ${record.title}`}
+            onValueChange={setDraftQuery}
+            onSearch={setQuery}
+            placeholder={`Search ${record.title.toLowerCase()}`}
+            value={draftQuery}
+          />
         ) : null}
         <div className="grid min-w-0 gap-12">
           {blocks.length ? (

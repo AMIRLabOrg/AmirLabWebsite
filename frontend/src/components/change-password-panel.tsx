@@ -107,7 +107,7 @@ export function ChangePasswordPanel() {
         <div className="mt-2">
           <ButtonControl
             disabled={saving}
-            loading={saving}
+            busy={saving}
             type="submit"
             variant="secondary"
           >

@@ -72,6 +72,7 @@ export const ButtonControl = forwardRef<
     compact?: boolean;
     externalIcon?: boolean;
     loading?: boolean;
+    busy?: boolean;
     variant?: ActionVariant;
   }
 >(function ButtonControl(
@@ -82,6 +83,7 @@ export const ButtonControl = forwardRef<
     disabled,
     externalIcon = false,
     loading = false,
+    busy = false,
     type = "button",
     variant = "secondary",
     ...props
@@ -92,10 +94,10 @@ export const ButtonControl = forwardRef<
     <button
       ref={ref}
       className={actionClassName({ className, compact, loading, variant })}
-      aria-busy={loading || undefined}
+      aria-busy={loading || busy || undefined}
       data-loading={loading || undefined}
       data-placeholder={loading ? "control" : undefined}
-      disabled={disabled || loading}
+      disabled={disabled || loading || busy}
       type={type}
       {...props}
     >

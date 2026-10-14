@@ -135,8 +135,14 @@ export interface Person {
   earnedRank?: string | null;
   metrics?: {
     publishedPaperCount: number;
-    scholarCitationCount: number | null;
-    scholarSyncedAt: string | null;
+  } | null;
+  openAlexProfile?: {
+    authorId?: string | null;
+    attemptedAt?: string | null;
+    citationCount: number | null;
+    failureReason?: string | null;
+    status?: string;
+    syncedAt: string | null;
   } | null;
   roleTitle: string | null;
   expertise: string[];
@@ -215,6 +221,7 @@ export interface CollaborationMessage {
 }
 
 export interface ProfileEditPayload {
+  openAlexAuthorId?: string | null;
   fullName: string;
   headline: string | null;
   biography: string | null;

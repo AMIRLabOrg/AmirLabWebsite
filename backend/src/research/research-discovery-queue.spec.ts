@@ -176,6 +176,7 @@ async function runDiscovery({
     }),
   };
   const jobs = {
+    registerCancelHandler: jest.fn(),
     register: jest.fn(
       (_type: string, handler: (payload: unknown) => Promise<void>) => {
         jobHandler = handler;
@@ -406,6 +407,7 @@ describe('research source discovery queue', () => {
       const service = await createDiscoveryService({
         fetcher: { fetch },
         jobs: {
+          registerCancelHandler: jest.fn(),
           register: (_type: string, callback: typeof handler) => {
             handler = callback;
           },

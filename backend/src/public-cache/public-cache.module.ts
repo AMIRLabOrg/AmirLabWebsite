@@ -12,5 +12,6 @@ import { PublicCacheInterceptor } from './public-cache.interceptor';
     PublicCacheService,
     { provide: APP_INTERCEPTOR, useClass: PublicCacheInterceptor },
   ],
+  exports: [PublicCacheService],
 })
 export class PublicCacheModule {}

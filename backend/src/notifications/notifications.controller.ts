@@ -40,13 +40,17 @@ export class NotificationsController {
     @CurrentUser() user: AuthenticatedUser,
     @CurrentSession() sessionId: string,
   ): Observable<MessageEvent> {
-    return this.notifications.stream(user.id, user.role !== 'MEMBER').pipe(
-      concatMap(async (event) =>
-        (await this.sessions.isActive(user.id, sessionId)) ? event : null,
-      ),
-      takeWhile((event): event is NonNullable<typeof event> => event !== null),
-      takeUntil(this.sessions.invalidations(user.id, sessionId)),
-    );
+    return this.notifications
+      .stream(user.id, user.role !== 'MEMBER', user.role === 'ADMIN')
+      .pipe(
+        concatMap(async (event) =>
+          (await this.sessions.isActive(user.id, sessionId)) ? event : null,
+        ),
+        takeWhile(
+          (event): event is NonNullable<typeof event> => event !== null,
+        ),
+        takeUntil(this.sessions.invalidations(user.id, sessionId)),
+      );
   }
 
   @Patch(':id/read')

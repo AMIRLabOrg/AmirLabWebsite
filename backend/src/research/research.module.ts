@@ -9,9 +9,11 @@ import { ResearchService } from './research.service';
 import { SafeSourceFetcher } from './safe-source-fetcher';
 import { RankingsService } from './rankings.service';
 import { SettingsModule } from '../settings/settings.module';
+import { PublicCacheModule } from '../public-cache/public-cache.module';
+import { ResearchRetentionService } from './research-retention.service';
 
 @Module({
-  imports: [SettingsModule],
+  imports: [PublicCacheModule, SettingsModule],
   controllers: [ResearchController],
   providers: [
     OpenAlexClient,
@@ -19,6 +21,7 @@ import { SettingsModule } from '../settings/settings.module';
     ResearchService,
     ResearchDiscoveryService,
     ResearchRelationshipsService,
+    ResearchRetentionService,
     ResearchProfileSyncService,
     SafeSourceFetcher,
     RankingsService,

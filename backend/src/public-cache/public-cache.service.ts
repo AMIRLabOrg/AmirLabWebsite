@@ -3,19 +3,13 @@ import { randomUUID } from 'node:crypto';
 import { PrismaService } from '../database/prisma.service';
 import { ConfigService } from '@nestjs/config';
 import type { Environment } from '../config/environment';
+import { withJobSignal } from '../jobs/job-context';
 import { JobsService } from '../jobs/jobs.service';
+import { Prisma } from '../../generated/prisma/client';
 
 const REVISION_KEY = 'cache.public.revision';
 
 export const PUBLIC_CACHE_JOB = 'REVALIDATE_PUBLIC_CACHE';
-const PUBLIC_JOBS = new Set([
-  'DISCOVER_RESEARCH_SOURCE',
-  'SYNC_SCHOLAR_PROFILE',
-  'SYNC_OPENALEX_AUTHOR',
-  'RECALCULATE_ALL_RANKS',
-  'PURGE_DELETED_USERS',
-]);
-
 @Injectable()
 export class PublicCacheService implements OnModuleInit {
   private readonly logger = new Logger(PublicCacheService.name);
@@ -27,20 +21,17 @@ export class PublicCacheService implements OnModuleInit {
   ) {}
 
   onModuleInit(): void {
-    this.jobs.register(PUBLIC_CACHE_JOB, () => this.deliver());
-    this.jobs.onSettled(async (type) => {
-      if (PUBLIC_JOBS.has(type)) await this.invalidate();
-    });
+    this.jobs.register(PUBLIC_CACHE_JOB, (payload) => this.deliver(payload));
   }
 
-  private async deliver(): Promise<void> {
-    // Shared by every backend using this DB, including deployments without a webhook.
-    const revision = randomUUID();
-    await this.prisma.siteSetting.upsert({
-      where: { key: REVISION_KEY },
-      create: { key: REVISION_KEY, value: revision },
-      update: { value: revision },
-    });
+  private async deliver(payload: Prisma.JsonValue): Promise<void> {
+    if (
+      !payload ||
+      typeof payload !== 'object' ||
+      Array.isArray(payload) ||
+      typeof payload.revision !== 'string'
+    )
+      throw new Error('Invalid public cache delivery job');
     const secret = this.config.get('publicCacheRevalidationSecret', {
       infer: true,
     });
@@ -50,7 +41,7 @@ export class PublicCacheService implements OnModuleInit {
     const response = await fetch(url, {
       method: 'POST',
       headers: { authorization: `Bearer ${secret}` },
-      signal: AbortSignal.timeout(3000),
+      signal: withJobSignal(AbortSignal.timeout(3000)),
       redirect: 'error',
     });
     if (!response.ok)
@@ -70,21 +61,52 @@ export class PublicCacheService implements OnModuleInit {
   }
 
   async invalidate(): Promise<void> {
+    const changeKey = randomUUID();
+    const revision = randomUUID();
+    await this.prisma.$transaction((transaction) =>
+      this.writeInvalidation(transaction, changeKey, revision),
+    );
     try {
-      // Try immediately even when discovery jobs occupy the durable worker.
-      await this.deliver();
+      await this.deliver({ revision });
+      await this.prisma.job.deleteMany({
+        where: {
+          status: 'PENDING',
+          uniqueKey: `public-cache:${changeKey}`,
+        },
+      });
     } catch (error) {
       this.logger.warn(
         `Public cache delivery deferred: ${error instanceof Error ? error.message : String(error)}`,
       );
-      try {
-        await this.jobs.enqueue(PUBLIC_CACHE_JOB, {});
-      } catch (queueError) {
-        // Delivery failure cannot turn an already committed editor save into a failure.
-        this.logger.error(
-          `Unable to enqueue public cache revalidation: ${queueError instanceof Error ? queueError.message : String(queueError)}`,
-        );
-      }
     }
+  }
+
+  async invalidateInTransaction(
+    transaction: Prisma.TransactionClient,
+    changeKey: string,
+  ): Promise<void> {
+    await this.writeInvalidation(transaction, changeKey, randomUUID());
+  }
+
+  private async writeInvalidation(
+    transaction: Prisma.TransactionClient,
+    changeKey: string,
+    revision: string,
+  ): Promise<void> {
+    await transaction.siteSetting.upsert({
+      where: { key: REVISION_KEY },
+      create: { key: REVISION_KEY, value: revision },
+      update: { value: revision },
+    });
+    const uniqueKey = `public-cache:${changeKey}`;
+    await transaction.job.upsert({
+      where: { uniqueKey },
+      update: {},
+      create: {
+        payload: { revision },
+        type: PUBLIC_CACHE_JOB,
+        uniqueKey,
+      },
+    });
   }
 }

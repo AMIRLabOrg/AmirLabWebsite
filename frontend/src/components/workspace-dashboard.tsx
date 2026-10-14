@@ -117,7 +117,6 @@ export function WorkspaceDashboard() {
   const pendingReviews =
     queueCounts.profileReviews +
     queueCounts.projectReviews +
-    queueCounts.researchReviews +
     queueCounts.weeklyReportReviews +
     (user?.role === "ADMIN" ? queueCounts.applications : 0);
   const operationalRisk =
@@ -258,7 +257,7 @@ export function WorkspaceDashboard() {
         ) : (
           <Link
             className="flex items-center gap-[.4rem] border-l border-line p-4 text-[.72rem] font-semibold whitespace-nowrap text-brand hover:bg-brand-faint max-[1050px]:hidden"
-            href={staff ? "/workspace/research" : "/workspace/tasks"}
+            href={staff ? "/workspace/profile-reviews" : "/workspace/tasks"}
           >
             {staff ? "Open review queue" : "Open due work"}{" "}
             <ArrowRight aria-hidden="true" size={15} />
@@ -275,10 +274,10 @@ export function WorkspaceDashboard() {
             value={queueCounts.profileReviews}
           />
           <WorkspaceMetric
-            detail="Papers and datasets waiting for verification"
-            label="Research reviews"
-            tone={queueCounts.researchReviews ? "attention" : "neutral"}
-            value={queueCounts.researchReviews}
+            detail="Weekly progress waiting for review"
+            label="Weekly report reviews"
+            tone={queueCounts.weeklyReportReviews ? "attention" : "neutral"}
+            value={queueCounts.weeklyReportReviews}
           />
           <WorkspaceMetric
             detail="Project changes waiting for approval"
@@ -542,10 +541,10 @@ export function WorkspaceDashboard() {
                 />
               ) : null}
               <QuickAction
-                body="Resolve paper and dataset identity and publication checks."
-                href="/workspace/research"
+                body="Browse source-synced papers, datasets, and source issues."
+                href="/workspace/submissions"
                 icon={ClipboardCheck}
-                title="Papers & datasets review"
+                title="Research library"
               />
               <QuickAction
                 body="Review public profile changes and imported member records."
@@ -709,14 +708,14 @@ export function WorkspaceDashboard() {
                 label="Profile reviews"
               />
               <QueueLink
-                count={queueCounts.researchReviews}
-                href="/workspace/research"
-                label="Papers & datasets review"
-              />
-              <QueueLink
                 count={queueCounts.projectReviews}
                 href="/workspace/project-reviews"
                 label="Project reviews"
+              />
+              <QueueLink
+                count={queueCounts.weeklyReportReviews}
+                href="/workspace/weekly-reports/review"
+                label="Weekly report reviews"
               />
               {user.role === "ADMIN" ? (
                 <QueueLink

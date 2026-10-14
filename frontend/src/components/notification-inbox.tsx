@@ -271,6 +271,17 @@ export function NotificationInbox() {
         </ButtonControl>
       </WorkspaceRuleBand>
 
+      <PaginationControls
+        loading={loading}
+        onPageChange={(nextPage) => {
+          beginReload();
+          setPage(nextPage);
+        }}
+        page={page}
+        pageSize={result?.pageSize ?? 20}
+        total={result?.total}
+        totalPages={result?.totalPages ?? 1}
+      />
       {error && !result ? (
         <StatePanel
           frame="workspace"
@@ -393,17 +404,6 @@ export function NotificationInbox() {
               </WorkspaceRow>
             ))}
           </WorkspaceCollection>
-          <PaginationControls
-            loading={loading}
-            onPageChange={(nextPage) => {
-              beginReload();
-              setPage(nextPage);
-            }}
-            page={page}
-            pageSize={result?.pageSize ?? 20}
-            total={result?.total}
-            totalPages={result?.totalPages ?? 1}
-          />
         </>
       ) : (
         <StatePanel

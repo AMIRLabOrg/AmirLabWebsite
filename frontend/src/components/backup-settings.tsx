@@ -445,7 +445,8 @@ export function BackupSettings() {
             </p>
             <ButtonControl
               type="submit"
-              loading={!status || busy}
+              loading={!status}
+              busy={busy}
               disabled={disabled || status?.reason === "LOCAL_TEST_ONLY"}
             >
               Save backup settings

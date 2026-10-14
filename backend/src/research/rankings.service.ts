@@ -1,21 +1,11 @@
+import { Injectable, OnModuleInit } from '@nestjs/common';
 import {
-  Injectable,
-  Logger,
-  OnModuleDestroy,
-  OnModuleInit,
-} from '@nestjs/common';
-import * as cheerio from 'cheerio';
-import {
+  JobStatus,
   NotificationType,
-  PersonLinkType,
   Prisma,
   ReviewStatus,
-  SourceFetchStatus,
 } from '../../generated/prisma/client';
-import {
-  RECALCULATE_ALL_RANKS_JOB,
-  SYNC_SCHOLAR_PROFILE_JOB,
-} from '../jobs/job-types';
+import { RECALCULATE_ALL_RANKS_JOB } from '../jobs/job-types';
 import { JobsService } from '../jobs/jobs.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import {
@@ -24,55 +14,45 @@ import {
   effectiveRank,
 } from '../settings/settings.service';
 import { PrismaService } from '../database/prisma.service';
-import {
-  SafeSourceFetcher,
-  SourceUnavailableError,
-} from './safe-source-fetcher';
-
-const DAY = 86_400_000;
-const MAX_BACKOFF = 7 * DAY;
 
 @Injectable()
-export class RankingsService implements OnModuleInit, OnModuleDestroy {
-  private readonly logger = new Logger(RankingsService.name);
-  private timer?: NodeJS.Timeout;
-
+export class RankingsService implements OnModuleInit {
   constructor(
-    private readonly fetcher: SafeSourceFetcher,
     private readonly jobs: JobsService,
     private readonly notifications: NotificationsService,
     private readonly prisma: PrismaService,
     private readonly settings: SettingsService,
   ) {}
 
-  onModuleInit(): void {
-    this.jobs.register(SYNC_SCHOLAR_PROFILE_JOB, async (payload) => {
-      const personId = recordString(payload, 'personId');
-      await this.syncScholar(personId);
-    });
+  async onModuleInit(): Promise<void> {
     this.jobs.register(RECALCULATE_ALL_RANKS_JOB, async () => {
       await this.recalculateAll();
     });
-    void this.scheduleDueScholarProfiles();
-    this.timer = setInterval(
-      () => void this.scheduleDueScholarProfiles(),
-      60 * 60_000,
-    );
-  }
-
-  onModuleDestroy(): void {
-    if (this.timer) clearInterval(this.timer);
+    // Retire queued jobs from the previous scraper without fetching Scholar again.
+    await this.prisma.job.updateMany({
+      where: {
+        type: 'SYNC_SCHOLAR_PROFILE',
+        status: { in: [JobStatus.PENDING, JobStatus.RUNNING] },
+      },
+      data: {
+        status: JobStatus.CANCELLED,
+        completedAt: new Date(),
+        lockedAt: null,
+        lockedBy: null,
+        uniqueKey: null,
+      },
+    });
   }
 
   async recalculate(personId: string, actorId?: string): Promise<void> {
     const person = await this.prisma.person.findUnique({
       where: { id: personId },
-      include: { metrics: true },
+      include: { openAlexProfile: true },
     });
     if (!person) return;
     const paperCount = await this.prisma.researchItem.count({
       where: {
-        contributors: { some: { personId } },
+        people: { some: { personId, isCurrent: true } },
         reviewStatus: ReviewStatus.PUBLISHED,
         type: 'PAPER',
       },
@@ -80,7 +60,9 @@ export class RankingsService implements OnModuleInit, OnModuleDestroy {
     const policy = await this.settings.ranking();
     const nextEarned = earnedRank(
       paperCount,
-      person.metrics?.scholarCitationCount ?? null,
+      person.openAlexProfile?.authorId
+        ? (person.openAlexProfile.citationCount ?? 0)
+        : null,
       policy,
     );
     const previousEffective = effectiveRank(
@@ -107,7 +89,9 @@ export class RankingsService implements OnModuleInit, OnModuleDestroy {
           entityType: 'Person',
           details: {
             appointedRank: person.appointedRank,
-            citationCount: person.metrics?.scholarCitationCount ?? null,
+            citationCount: person.openAlexProfile?.authorId
+              ? (person.openAlexProfile.citationCount ?? 0)
+              : null,
             earnedRank: { from: person.earnedRank, to: nextEarned },
             paperCount,
           },
@@ -129,53 +113,55 @@ export class RankingsService implements OnModuleInit, OnModuleDestroy {
   async recalculateMany(
     personIds: readonly string[],
     actorId?: string,
+    db?: Prisma.TransactionClient,
   ): Promise<void> {
     const ids = [...new Set(personIds)];
     if (!ids.length) return;
-    const people = await this.prisma.person.findMany({
-      where: { id: { in: ids } },
-      include: { metrics: true },
-    });
-    if (!people.length) return;
-
-    const countRows = await this.prisma.$queryRaw<
-      Array<{ personId: string; paperCount: number }>
-    >(
-      Prisma.sql`
-        SELECT
-          contributor."personId" AS "personId",
-          COUNT(DISTINCT contributor."researchItemId")::integer AS "paperCount"
-        FROM "ResearchContributor" AS contributor
-        INNER JOIN "ResearchItem" AS item
-          ON item."id" = contributor."researchItemId"
-        WHERE contributor."personId" IN (${Prisma.join(people.map(({ id }) => id))})
-          AND item."reviewStatus" = 'PUBLISHED'::"ReviewStatus"
-          AND item."type" = 'PAPER'::"ResearchItemType"
-        GROUP BY contributor."personId"
-      `,
-    );
-    const counts = new Map(
-      countRows.map(({ paperCount, personId }) => [personId, paperCount]),
-    );
     const policy = await this.settings.ranking();
-    const changes = people.map((person) => {
-      const paperCount = counts.get(person.id) ?? 0;
-      const citationCount = person.metrics?.scholarCitationCount ?? null;
-      const nextEarned = earnedRank(paperCount, citationCount, policy);
-      return {
-        citationCount,
-        nextEarned,
-        nextEffective: effectiveRank(person.appointedRank, nextEarned),
-        paperCount,
-        person,
-        previousEffective: effectiveRank(
-          person.appointedRank,
-          person.earnedRank,
-        ),
-      };
-    });
-
-    await this.prisma.$transaction(async (transaction) => {
+    const recalculate = async (transaction: Prisma.TransactionClient) => {
+      const people = await transaction.person.findMany({
+        where: { id: { in: ids } },
+        include: { openAlexProfile: true },
+      });
+      if (!people.length) return;
+      const countRows = await transaction.$queryRaw<
+        Array<{ personId: string; paperCount: number }>
+      >(
+        Prisma.sql`
+          SELECT
+            association."personId" AS "personId",
+            COUNT(DISTINCT association."researchItemId")::integer AS "paperCount"
+          FROM "PersonResearchItem" AS association
+          INNER JOIN "ResearchItem" AS item
+            ON item."id" = association."researchItemId"
+          WHERE association."personId" IN (${Prisma.join(people.map(({ id }) => id))})
+            AND association."isCurrent" = true
+            AND item."reviewStatus" = 'PUBLISHED'::"ReviewStatus"
+            AND item."type" = 'PAPER'::"ResearchItemType"
+          GROUP BY association."personId"
+        `,
+      );
+      const counts = new Map(
+        countRows.map(({ paperCount, personId }) => [personId, paperCount]),
+      );
+      const changes = people.map((person) => {
+        const paperCount = counts.get(person.id) ?? 0;
+        const citationCount = person.openAlexProfile?.authorId
+          ? (person.openAlexProfile.citationCount ?? 0)
+          : null;
+        const nextEarned = earnedRank(paperCount, citationCount, policy);
+        return {
+          citationCount,
+          nextEarned,
+          nextEffective: effectiveRank(person.appointedRank, nextEarned),
+          paperCount,
+          person,
+          previousEffective: effectiveRank(
+            person.appointedRank,
+            person.earnedRank,
+          ),
+        };
+      });
       const metricRows = changes.map(
         ({ paperCount, person }) =>
           Prisma.sql`(${person.id}::uuid, ${paperCount}::integer, NOW(), NOW())`,
@@ -228,203 +214,32 @@ export class RankingsService implements OnModuleInit, OnModuleDestroy {
           }),
         ),
       });
-    });
-
-    await this.notifications.createMany(
-      changes.flatMap(({ nextEffective, person, previousEffective }) =>
-        person.userId && previousEffective !== nextEffective
-          ? [
-              {
-                actionUrl: '/workspace/profile',
-                body: nextEffective
-                  ? `Your publication record now qualifies for ${nextEffective.replaceAll('_', ' ').toLowerCase()}.`
-                  : 'Your research rank was recalculated.',
-                payload: { personId: person.id },
-                recipientId: person.userId,
-                title: 'Research rank updated',
-                type: NotificationType.RANK_CHANGED,
-              },
-            ]
-          : [],
-      ),
-    );
+      await this.notifications.createMany(
+        changes.flatMap(({ nextEffective, person, previousEffective }) =>
+          person.userId && previousEffective !== nextEffective
+            ? [
+                {
+                  actionUrl: '/workspace/profile',
+                  body: nextEffective
+                    ? `Your publication record now qualifies for ${nextEffective.replaceAll('_', ' ').toLowerCase()}.`
+                    : 'Your research rank was recalculated.',
+                  payload: { personId: person.id },
+                  recipientId: person.userId,
+                  title: 'Research rank updated',
+                  type: NotificationType.RANK_CHANGED,
+                },
+              ]
+            : [],
+        ),
+        transaction,
+      );
+    };
+    if (db) await recalculate(db);
+    else await this.prisma.$transaction(recalculate);
   }
 
   async recalculateAll(): Promise<void> {
     const people = await this.prisma.person.findMany({ select: { id: true } });
     for (const { id } of people) await this.recalculate(id);
   }
-
-  private async scheduleDueScholarProfiles(): Promise<void> {
-    try {
-      const now = new Date();
-      const staleAt = new Date(now.getTime() - DAY);
-      const people = await this.prisma.person.findMany({
-        where: {
-          isPublished: true,
-          links: { some: { type: PersonLinkType.GOOGLE_SCHOLAR } },
-          OR: [
-            { metrics: null },
-            { metrics: { scholarSyncedAt: null, scholarNextAttemptAt: null } },
-            {
-              metrics: {
-                scholarSyncedAt: { lt: staleAt },
-                scholarNextAttemptAt: { lte: now },
-              },
-            },
-            {
-              metrics: {
-                scholarSyncedAt: { lt: staleAt },
-                scholarNextAttemptAt: null,
-              },
-            },
-          ],
-        },
-        select: { id: true },
-        orderBy: { updatedAt: 'asc' },
-      });
-      for (const [index, person] of people.entries()) {
-        await this.jobs.enqueueWhileActive(
-          SYNC_SCHOLAR_PROFILE_JOB,
-          { personId: person.id },
-          `scholar-sync:${person.id}`,
-          new Date(now.getTime() + index * 60_000),
-        );
-      }
-    } catch (error) {
-      this.logger.error(
-        `Unable to schedule Scholar profiles: ${error instanceof Error ? error.message : String(error)}`,
-      );
-    }
-  }
-
-  private async syncScholar(personId: string): Promise<void> {
-    const person = await this.prisma.person.findUnique({
-      where: { id: personId },
-      include: {
-        metrics: true,
-        links: {
-          where: { type: PersonLinkType.GOOGLE_SCHOLAR },
-          orderBy: { sortOrder: 'asc' },
-          take: 1,
-        },
-      },
-    });
-    const scholarUrl = person?.links[0]?.url;
-    if (!person || !scholarUrl) return;
-    const scholarUserId = new URL(scholarUrl).searchParams.get('user');
-    if (!scholarUserId) {
-      await this.recordScholarFailure(
-        personId,
-        scholarUrl,
-        null,
-        'Scholar link does not contain a profile user ID',
-        SourceFetchStatus.UNAVAILABLE,
-      );
-      return;
-    }
-
-    try {
-      const url = new URL('https://scholar.google.com/citations');
-      url.searchParams.set('user', scholarUserId);
-      url.searchParams.set('hl', 'en');
-      const response = await this.fetcher.fetch(url.toString(), 'text/html');
-      const html = response.body.toString('utf8');
-      if (/unusual traffic|recaptcha|not a robot/i.test(html)) {
-        throw new SourceUnavailableError('Google Scholar requested a CAPTCHA');
-      }
-      const $ = cheerio.load(html);
-      const citationText = $('#gsc_rsb_st .gsc_rsb_std').first().text().trim();
-      const citationCount = Number(citationText.replace(/[^0-9]/g, ''));
-      if (!citationText || !Number.isSafeInteger(citationCount)) {
-        throw new SourceUnavailableError(
-          'Google Scholar citation total was not present',
-        );
-      }
-      const now = new Date();
-      await this.prisma.personMetric.upsert({
-        where: { personId },
-        create: {
-          personId,
-          scholarAttemptedAt: now,
-          scholarCitationCount: citationCount,
-          scholarFailureCount: 0,
-          scholarStatus: SourceFetchStatus.FETCHED,
-          scholarSyncedAt: now,
-          scholarUrl,
-          scholarUserId,
-        },
-        update: {
-          scholarAttemptedAt: now,
-          scholarCitationCount: citationCount,
-          scholarFailureCount: 0,
-          scholarFailureReason: null,
-          scholarNextAttemptAt: null,
-          scholarStatus: SourceFetchStatus.FETCHED,
-          scholarSyncedAt: now,
-          scholarUrl,
-          scholarUserId,
-        },
-      });
-      await this.recalculate(personId);
-    } catch (error) {
-      await this.recordScholarFailure(
-        personId,
-        scholarUrl,
-        scholarUserId,
-        error instanceof Error ? error.message : String(error),
-        error instanceof SourceUnavailableError
-          ? SourceFetchStatus.UNAVAILABLE
-          : SourceFetchStatus.FAILED,
-      );
-    }
-  }
-
-  private async recordScholarFailure(
-    personId: string,
-    scholarUrl: string,
-    scholarUserId: string | null,
-    reason: string,
-    status: SourceFetchStatus,
-  ): Promise<void> {
-    const metric = await this.prisma.personMetric.findUnique({
-      where: { personId },
-    });
-    const failures = (metric?.scholarFailureCount ?? 0) + 1;
-    const nextAttempt = new Date(
-      Date.now() + Math.min(MAX_BACKOFF, 2 ** Math.min(failures - 1, 6) * DAY),
-    );
-    await this.prisma.personMetric.upsert({
-      where: { personId },
-      create: {
-        personId,
-        scholarAttemptedAt: new Date(),
-        scholarFailureCount: failures,
-        scholarFailureReason: reason,
-        scholarNextAttemptAt: nextAttempt,
-        scholarStatus: status,
-        scholarUrl,
-        scholarUserId,
-      },
-      update: {
-        scholarAttemptedAt: new Date(),
-        scholarFailureCount: failures,
-        scholarFailureReason: reason,
-        scholarNextAttemptAt: nextAttempt,
-        scholarStatus: status,
-        scholarUrl,
-        scholarUserId,
-      },
-    });
-  }
-}
-
-function recordString(value: Prisma.JsonValue, key: string): string {
-  if (!value || Array.isArray(value) || typeof value !== 'object') {
-    throw new Error(`Job payload requires ${key}`);
-  }
-  const candidate = value[key];
-  if (typeof candidate !== 'string')
-    throw new Error(`Job payload requires ${key}`);
-  return candidate;
 }

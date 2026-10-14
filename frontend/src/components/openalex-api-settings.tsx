@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
+import { RefreshCw } from "lucide-react";
 import { apiRequest } from "@/lib/client-api";
 import { FormField } from "@/components/ui/form-field";
 import { InputControl } from "@/components/ui/form-controls";
@@ -11,19 +12,47 @@ type KeyStatus = {
   source: "admin" | "environment" | "none";
 };
 
+type Usage = {
+  mode: "key" | "anonymous_shared";
+  limit: number | null;
+  remaining: number | null;
+  resetAt: string | null;
+  observedAt: string | null;
+  unavailable: boolean;
+};
+
 export function OpenAlexApiSettings() {
   const [status, setStatus] = useState<KeyStatus>();
+  const [usage, setUsage] = useState<Usage>();
   const [apiKey, setApiKey] = useState("");
   const [message, setMessage] = useState("");
   const [error, setError] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
+  const loadUsage = useCallback(async () => {
+    try {
+      setUsage(
+        await apiRequest<Usage>("/settings/openalex/usage", { method: "GET" }),
+      );
+    } catch {
+      setUsage(undefined);
+    }
+  }, []);
+
   useEffect(() => {
     let active = true;
-    void apiRequest<KeyStatus>("/settings/openalex", { method: "GET" })
-      .then((value) => {
-        if (active) setStatus(value);
+    void Promise.all([
+      apiRequest<KeyStatus>("/settings/openalex", { method: "GET" }),
+      apiRequest<Usage>("/settings/openalex/usage", { method: "GET" }).catch(
+        () => undefined,
+      ),
+    ])
+      .then(([value, nextUsage]) => {
+        if (active) {
+          setStatus(value);
+          setUsage(nextUsage);
+        }
       })
       .catch(() => {
         if (active) {
@@ -37,7 +66,7 @@ export function OpenAlexApiSettings() {
     return () => {
       active = false;
     };
-  }, []);
+  }, [loadUsage]);
 
   async function save(value: string) {
     setSaving(true);
@@ -50,6 +79,7 @@ export function OpenAlexApiSettings() {
         body: JSON.stringify({ apiKey: value }),
       });
       setStatus(next);
+      await loadUsage();
       setApiKey("");
       setError(false);
       setMessage(next.configured ? "API key saved." : "API key removed.");
@@ -102,7 +132,8 @@ export function OpenAlexApiSettings() {
       </FormField>
       <div className="flex flex-wrap items-center gap-3">
         <ButtonControl
-          loading={loading || saving}
+          loading={loading}
+          busy={saving}
           disabled={!apiKey.trim()}
           onClick={() => void save(apiKey.trim())}
         >
@@ -123,6 +154,54 @@ export function OpenAlexApiSettings() {
             : "Using the anonymous allowance."}
         </span>
       </div>
+      <section
+        aria-label="OpenAlex daily allowance"
+        className="grid gap-2 border-t border-line pt-4"
+      >
+        <div className="flex items-center justify-between gap-3">
+          <strong className="text-sm font-semibold">Daily API allowance</strong>
+          <ButtonControl
+            disabled={loading}
+            onClick={() => void loadUsage()}
+            variant="secondary"
+          >
+            <RefreshCw aria-hidden="true" size={14} /> Refresh usage
+          </ButtonControl>
+        </div>
+        {usage && usage.remaining !== null && usage.limit !== null ? (
+          <>
+            <progress
+              aria-label="OpenAlex credits remaining"
+              className="w-full accent-brand"
+              max={usage.limit}
+              value={usage.remaining}
+            />
+            <p className="m-0 text-xs text-ink-muted">
+              {usage.remaining.toLocaleString()} of{" "}
+              {usage.limit.toLocaleString()} credits remain.{" "}
+              {usage.mode === "key"
+                ? "Key allowance"
+                : "Shared anonymous network allowance; approximate and last observed"}
+              .
+              {usage.resetAt
+                ? ` Resets ${new Date(usage.resetAt).toLocaleString()}.`
+                : ""}
+              {usage.observedAt
+                ? ` Updated ${new Date(usage.observedAt).toLocaleString()}.`
+                : ""}
+              {usage.unavailable
+                ? " Live refresh failed; showing the last saved reading."
+                : ""}
+            </p>
+          </>
+        ) : (
+          <p className="m-0 text-xs text-ink-muted">
+            {usage?.unavailable
+              ? "Could not read current usage; no recent reading is available."
+              : "No usage reading yet. It will appear after an OpenAlex request."}
+          </p>
+        )}
+      </section>
     </section>
   );
 }

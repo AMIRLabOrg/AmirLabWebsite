@@ -98,6 +98,31 @@ describe('validateEnvironment', () => {
         SMTP_PASSWORD: 'real-password',
         SMTP_USER: 'real-user',
       }),
-    ).toThrow('SMTP_FROM is required in production');
+    ).toThrow(
+      'SMTP_FROM is required when SMTP environment settings are configured',
+    );
+  });
+
+  it('allows production mail to be configured from the admin panel', () => {
+    expect(() =>
+      validateEnvironment({
+        ...baseEnvironment,
+        NODE_ENV: 'production',
+        UPLOAD_ROOT: '/var/lib/amirlab/uploads',
+        PUBLIC_SITE_EMAIL: 'admin@amirlab.org',
+      }),
+    ).not.toThrow();
+  });
+
+  it('validates bounded worker concurrency', () => {
+    expect(
+      validateEnvironment({ ...baseEnvironment, JOB_CONCURRENCY: '12' }),
+    ).toMatchObject({ jobConcurrency: 12 });
+    expect(() =>
+      validateEnvironment({ ...baseEnvironment, JOB_CONCURRENCY: '0' }),
+    ).toThrow('JOB_CONCURRENCY must be between 1 and 32');
+    expect(() =>
+      validateEnvironment({ ...baseEnvironment, JOB_CONCURRENCY: '33' }),
+    ).toThrow('JOB_CONCURRENCY must be between 1 and 32');
   });
 });

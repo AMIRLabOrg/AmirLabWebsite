@@ -155,7 +155,8 @@ export function DocumentsWorkspace() {
     };
   }, [reload]);
 
-  if (error && !templates.length && !loading) {
+  const initialLoading = loading && !approval;
+  if (error && !approval && !loading) {
     return (
       <AdminOnly>
         <StatePanel
@@ -173,7 +174,7 @@ export function DocumentsWorkspace() {
 
   return (
     <AdminOnly>
-      <div className="grid gap-6" data-loading={loading || undefined}>
+      <div className="grid gap-6" data-loading={initialLoading || undefined}>
         <header className="frame-rail-section grid grid-cols-[42px_minmax(0,1fr)] items-start gap-5 py-5 max-[640px]:grid-cols-1">
           <FileText aria-hidden="true" className="mt-1 text-brand" size={26} />
           <div className="flex items-end justify-between gap-5 max-[720px]:items-start max-[720px]:flex-col">
@@ -192,7 +193,7 @@ export function DocumentsWorkspace() {
             </div>
             <SegmentedControl
               ariaLabel="Document workspace view"
-              disabled={loading}
+              disabled={initialLoading}
               onValueChange={(value) => setView(value as WorkspaceView)}
               options={[
                 { label: "Issue", value: "issue" },
@@ -208,7 +209,7 @@ export function DocumentsWorkspace() {
         {error ? <FormMessage>{error}</FormMessage> : null}
         {view === "issue" ? (
           <IssueDocumentPanel
-            loading={loading}
+            loading={initialLoading}
             onIssued={(document) => {
               setIssued((current) => [document, ...current]);
               setView("issued");
@@ -219,21 +220,21 @@ export function DocumentsWorkspace() {
         ) : view === "templates" ? (
           <TemplatesPanel
             key={templates.length ? "loaded" : "loading"}
-            loading={loading}
+            loading={initialLoading}
             onChanged={refresh}
             templates={templates}
           />
         ) : view === "issued" ? (
           <IssuedPanel
             documents={issued}
-            loading={loading}
+            loading={initialLoading}
             onChanged={refresh}
           />
         ) : (
           <ApprovalPanel
             approval={approval}
             key={approval?.approverPersonId ?? "loading"}
-            loading={loading}
+            loading={initialLoading}
             onSaved={(nextApproval) => setApproval(nextApproval)}
             people={recipients}
           />
@@ -455,7 +456,7 @@ function IssueDocumentPanel({
       <footer className="flex justify-end border-b border-line-strong px-[clamp(1rem,3vw,1.7rem)] py-5">
         <ButtonControl
           disabled={!templateId}
-          loading={saving}
+          busy={saving}
           type="submit"
           variant="primary"
         >
@@ -753,10 +754,7 @@ function TemplatesPanel({
         ))}
       </aside>
 
-      <form
-        className="grid gap-5 p-[clamp(1rem,3vw,1.7rem)]"
-        onSubmit={save}
-      >
+      <form className="grid gap-5 p-[clamp(1rem,3vw,1.7rem)]" onSubmit={save}>
         <div className="grid grid-cols-2 gap-4 max-[640px]:grid-cols-1">
           <FormField htmlFor="template-name" label="Template name">
             <InputControl
@@ -858,13 +856,13 @@ function TemplatesPanel({
           {selected?.kind === "OFFER" && !selected.isDefaultOffer ? (
             <ButtonControl
               disabled={saving || defaultSaving || !draft.isActive}
-              loading={defaultSaving}
+              busy={defaultSaving}
               onClick={() => void setDefault()}
             >
               <Star aria-hidden="true" size={15} /> Make default offer
             </ButtonControl>
           ) : null}
-          <ButtonControl loading={saving} type="submit" variant="primary">
+          <ButtonControl busy={saving} type="submit" variant="primary">
             <Save aria-hidden="true" size={15} /> Save template
           </ButtonControl>
         </footer>
@@ -965,7 +963,7 @@ function IssuedPanel({
             {document.recipientEmail && !document.emailSentAt ? (
               <ButtonControl
                 compact
-                loading={sendingIds.has(document.id)}
+                busy={sendingIds.has(document.id)}
                 disabled={sendingIds.has(document.id)}
                 onClick={() => void email(document)}
                 variant="primary"
@@ -1242,7 +1240,7 @@ function ApprovalPanel({
       <footer className="flex justify-end border-t border-line pt-5">
         <ButtonControl
           disabled={!personId}
-          loading={saving}
+          busy={saving}
           type="submit"
           variant="primary"
         >

@@ -20,8 +20,11 @@ const work = {
   ],
   primary_location: { source: { display_name: 'Journal' } },
 };
-const page = (results: unknown[], cursor: string | null) =>
-  Response.json({ meta: { next_cursor: cursor }, results });
+const page = (
+  results: unknown[],
+  cursor: string | null,
+  count = results.length,
+) => Response.json({ meta: { count, next_cursor: cursor }, results });
 describe('OpenAlex fixed-host client', () => {
   const request = jest.spyOn(globalThis, 'fetch');
   beforeEach(() => request.mockReset());
@@ -30,7 +33,12 @@ describe('OpenAlex fixed-host client', () => {
     resolveService(OpenAlexClient, [
       {
         provide: SettingsService,
-        useValue: { openAlexApiKey: () => Promise.resolve('test-api-key') },
+        useValue: {
+          openAlexApiKey: () => Promise.resolve('test-api-key'),
+          openAlexPause: () => Promise.resolve(null),
+          pauseOpenAlex: jest.fn(),
+          recordOpenAlexUsage: jest.fn(),
+        },
       },
     ]);
   it('uses the current admin key on each request without adding it to the URL', async () => {
@@ -39,6 +47,9 @@ describe('OpenAlex fixed-host client', () => {
         .fn()
         .mockResolvedValueOnce('first-token')
         .mockResolvedValueOnce('rotated-token'),
+      openAlexPause: jest.fn().mockResolvedValue(null),
+      pauseOpenAlex: jest.fn(),
+      recordOpenAlexUsage: jest.fn(),
     };
     const service = await resolveService(OpenAlexClient, [
       { provide: SettingsService, useValue: settings },
@@ -73,10 +84,10 @@ describe('OpenAlex fixed-host client', () => {
   });
   it('reads every cursor page and sends the key only in an authorization header', async () => {
     request
-      .mockResolvedValueOnce(page([work], 'next'))
-      .mockResolvedValueOnce(page([], null));
+      .mockResolvedValueOnce(page([work], 'next', 1))
+      .mockResolvedValueOnce(page([], null, 1));
     const result = await (await client()).fetchAuthorWorks(author);
-    expect(result[0]).toMatchObject({
+    expect(result.works[0]).toMatchObject({
       id: 'W4401050363',
       doi: '10.1000/test',
       title: 'A paper',
@@ -98,18 +109,20 @@ describe('OpenAlex fixed-host client', () => {
     ).toContain('cursor=next');
   });
   it('rejects repeated cursors and malformed records rather than returning partial success', async () => {
-    request.mockImplementation(() => Promise.resolve(page([work], 'repeat')));
+    request
+      .mockResolvedValueOnce(page([work], 'repeat', 1))
+      .mockResolvedValueOnce(page([], 'repeat', 1));
     await expect((await client()).fetchAuthorWorks(author)).rejects.toThrow(
       'cursor',
     );
     request.mockReset().mockResolvedValue(page([{ id: 'bad' }], null));
     await expect((await client()).fetchAuthorWorks(author)).rejects.toThrow(
-      'metadata',
+      'unidentifiable',
     );
   });
   it('reports quota backoff and aborts partial-page fetches', async () => {
     request
-      .mockResolvedValueOnce(page([work], 'next'))
+      .mockResolvedValueOnce(page([work], 'next', 1))
       .mockResolvedValueOnce(
         new Response('', { status: 429, headers: { 'Retry-After': '120' } }),
       );
@@ -125,10 +138,59 @@ describe('OpenAlex fixed-host client', () => {
       'large',
     );
     request
-      .mockResolvedValueOnce(page([], null))
+      .mockResolvedValueOnce(page([], null, 0))
       .mockResolvedValueOnce(new Response('', { status: 404 }));
     await expect((await client()).fetchAuthorWorks(author)).rejects.toThrow(
       'not found',
+    );
+  });
+  it('keeps valid IDs with unusable rows present but rejects incomplete envelopes', async () => {
+    request.mockResolvedValueOnce(
+      page([{ id: 'https://openalex.org/W123' }], null, 1),
+    );
+    await expect((await client()).fetchAuthorWorks(author)).resolves.toEqual({
+      declaredCount: 1,
+      presentWorkIds: ['W123'],
+      warnings: [expect.objectContaining({ workId: 'W123' })],
+      works: [],
+    });
+    request.mockResolvedValueOnce(page([work], null, 2));
+    await expect((await client()).fetchAuthorWorks(author)).rejects.toThrow(
+      'incomplete',
+    );
+  });
+  it('reads author citation totals including zero and rejects malformed counts', async () => {
+    const service = await client();
+    request.mockResolvedValueOnce(
+      Response.json({
+        id: `https://openalex.org/${author}`,
+        cited_by_count: 120,
+      }),
+    );
+    await expect(service.fetchAuthorCitationCount(author)).resolves.toBe(120);
+    request.mockResolvedValueOnce(
+      Response.json({
+        id: `https://openalex.org/${author}`,
+        cited_by_count: 0,
+      }),
+    );
+    await expect(service.fetchAuthorCitationCount(author)).resolves.toBe(0);
+    for (const count of [-1, 1.5, '120', null, 2147483648]) {
+      request.mockResolvedValueOnce(
+        Response.json({
+          id: `https://openalex.org/${author}`,
+          cited_by_count: count,
+        }),
+      );
+      await expect(service.fetchAuthorCitationCount(author)).rejects.toThrow(
+        'citation metadata',
+      );
+    }
+    request.mockResolvedValueOnce(
+      Response.json({ id: 'https://openalex.org/A123', cited_by_count: 120 }),
+    );
+    await expect(service.fetchAuthorCitationCount(author)).rejects.toThrow(
+      'citation metadata',
     );
   });
 });

@@ -65,6 +65,24 @@ export class ResearchDiscoveryService implements OnModuleInit {
       }
       await this.discover(researchItemId);
     });
+    this.jobs.registerCancelHandler(DISCOVERY_JOB, async (payload) => {
+      const researchItemId =
+        payload &&
+        typeof payload === 'object' &&
+        !Array.isArray(payload) &&
+        typeof payload.researchItemId === 'string'
+          ? payload.researchItemId
+          : null;
+      if (!researchItemId) return;
+      await this.prisma.researchItem.updateMany({
+        where: { id: researchItemId },
+        data: {
+          automationClaimedAt: null,
+          automationOwner: null,
+          automationState: ResearchAutomationState.IDLE,
+        },
+      });
+    });
   }
 
   async enqueue(

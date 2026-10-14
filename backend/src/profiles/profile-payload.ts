@@ -17,6 +17,7 @@ const PROFILE_FIELDS = new Set([
   'links',
   'sections',
   'removeAvatar',
+  'openAlexAuthorId',
 ]);
 const ADMIN_PROFILE_FIELDS = new Set([...PROFILE_FIELDS, 'roleTitle']);
 const STAFF_PROFILE_FIELDS = new Set([
@@ -99,7 +100,21 @@ export function parseProfilePayload(
     };
   }
 
+  const parsedLinks = links(source.links);
+  const legacyOpenAlex = parsedLinks.find(
+    ({ type }) => type === PersonLinkType.OPENALEX,
+  );
+  const hasOpenAlexField = Object.prototype.hasOwnProperty.call(
+    source,
+    'openAlexAuthorId',
+  );
+  const openAlexAuthorId = hasOpenAlexField
+    ? openAlexId(source.openAlexAuthorId)
+    : legacyOpenAlex
+      ? normalizeAuthorId(legacyOpenAlex.url)
+      : undefined;
   return {
+    ...(openAlexAuthorId !== undefined ? { openAlexAuthorId } : {}),
     fullName: requiredText(source.fullName, 'fullName', 2, 120),
     headline: optionalText(source.headline, 'headline', 300),
     biography: optionalText(source.biography, 'biography', 8_000),
@@ -113,7 +128,7 @@ export function parseProfilePayload(
       ? { roleTitle: optionalText(source.roleTitle, 'roleTitle', 200) }
       : {}),
     expertise: stringArray(source.expertise, 'expertise', 20, 120),
-    links: links(source.links),
+    links: parsedLinks.filter(({ type }) => type !== PersonLinkType.OPENALEX),
     sections: sections(source.sections),
     removeAvatar:
       typeof raw === 'string' ? removeAvatar : source.removeAvatar === true,
@@ -124,6 +139,9 @@ export function profilePayloadToJson(
   payload: ProfileEditPayload,
 ): Prisma.InputJsonObject {
   return {
+    ...(payload.openAlexAuthorId !== undefined
+      ? { openAlexAuthorId: payload.openAlexAuthorId }
+      : {}),
     fullName: payload.fullName,
     headline: payload.headline,
     biography: payload.biography,
@@ -245,6 +263,15 @@ function links(value: unknown): ProfileEditPayload['links'] {
   });
 }
 
+function openAlexId(value: unknown): string | null {
+  if (value === null || value === '') return null;
+  if (typeof value !== 'string')
+    throw new BadRequestException(
+      'profile.openAlexAuthorId must be an OpenAlex author ID or null',
+    );
+  return normalizeAuthorId(value);
+}
+
 function sections(value: unknown): ProfileEditPayload['sections'] {
   if (value === undefined) return [];
   if (!Array.isArray(value) || value.length > 30) {
@@ -266,9 +293,23 @@ function sections(value: unknown): ProfileEditPayload['sections'] {
         `profile.sections[${index}].type is invalid`,
       );
     }
+    const type = source.type as PersonSectionType;
+    const title = requiredText(
+      source.title,
+      `sections[${index}].title`,
+      1,
+      160,
+    );
+    if (
+      type === PersonSectionType.PUBLICATIONS ||
+      /\b(publications?|papers?|datasets?|research outputs?)\b/i.test(title)
+    )
+      throw new BadRequestException(
+        'Published papers and datasets come from OpenAlex and cannot be entered manually.',
+      );
     return {
-      type: source.type as PersonSectionType,
-      title: requiredText(source.title, `sections[${index}].title`, 1, 160),
+      type,
+      title,
       subsections: subsections(
         source.subsections,
         `sections[${index}].subsections`,
@@ -333,4 +374,58 @@ function subsections(
       entries,
     };
   });
+}
+
+export function profileUpdateData(
+  payload: ReturnType<typeof parseProfilePayload>,
+  avatarId: string | null | undefined,
+  scope: ProfileEditScope,
+): Prisma.PersonUncheckedUpdateInput {
+  if (scope === 'MODERATOR' || scope === 'ADMIN') {
+    return {
+      avatarId,
+      contactAddress: payload.contactAddress,
+      fullName: payload.fullName,
+      phone: payload.phone,
+      roleTitle: payload.roleTitle,
+    };
+  }
+  return {
+    avatarId,
+    biography: payload.biography,
+    contactAddress: payload.contactAddress,
+    expertise: payload.expertise,
+    fullName: payload.fullName,
+    headline: payload.headline,
+    links: {
+      deleteMany: {},
+      create: payload.links.map((link, sortOrder) => ({ ...link, sortOrder })),
+    },
+    phone: payload.phone,
+    profileSections: {
+      deleteMany: {},
+      create: payload.sections.map((section, sortOrder) => ({
+        type: section.type,
+        title: section.title,
+        sortOrder,
+        subsections: {
+          create: section.subsections.map(
+            (subsection, subsectionSortOrder) => ({
+              heading: subsection.heading,
+              sortOrder: subsectionSortOrder,
+              entries: {
+                create: subsection.entries.map((entry, entrySortOrder) => ({
+                  ...entry,
+                  sortOrder: entrySortOrder,
+                })),
+              },
+            }),
+          ),
+        },
+      })),
+    },
+    ...(payload.roleTitle !== undefined
+      ? { roleTitle: payload.roleTitle }
+      : {}),
+  };
 }

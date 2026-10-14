@@ -1,13 +1,14 @@
+import {
+  parseProfilePayload,
+  profileUpdateData,
+} from '../src/profiles/profile-payload';
 import { mkdir, rm } from 'node:fs/promises';
 import {
   AcademicRank,
   AccountStatus,
-  ContributorMatchSource,
-  ContributorMatchStatus,
   DepartmentRole,
   EngagementType,
   PlatformRole,
-  ProfileReviewStatus,
   ProjectChangeKind,
   PositionStatus,
   PositionType,
@@ -23,8 +24,6 @@ import {
   ensureOpenAlexArtifacts,
   enumValue,
   getAdminCredentials,
-  openAlexLinkFor,
-  paperSlug,
   peopleStorageRoot,
   required,
   seedDocuments,
@@ -34,7 +33,6 @@ import {
   watermarkStorageRoot,
 } from './seed-writers';
 import {
-  firstKnownContributorSourceIdForSeed,
   missingSeedAvatarFiles,
   missingSeedUniversityLogoFiles,
   readSeedData,
@@ -121,8 +119,6 @@ export async function rebuildDatabase() {
     }
 
     const personIdBySource = new Map<string, string>();
-    const personNameBySource = new Map<string, string>();
-    const userIdBySource = new Map<string, string>();
     const usedAccountEmails = new Set<string>([adminEmail]);
     let importedAvatars = 0;
 
@@ -152,9 +148,6 @@ export async function rebuildDatabase() {
         : null;
       if (avatarAssetId) importedAvatars += 1;
 
-      // The person record is the identity anchor used by departments and
-      // contributor matching. Public profile content stays unpublished until
-      // the imported profile review request is explicitly approved.
       const created = await prisma.person.create({
         data: {
           appointedRank: enumValue(AcademicRank, person.appointedRank),
@@ -169,46 +162,48 @@ export async function rebuildDatabase() {
         },
       });
 
-      const openAlexLink = openAlexLinkFor(person);
-      if (openAlexLink) {
+      if (person.openAlexAuthorId) {
         await ensureOpenAlexArtifacts(prisma, created.id, person);
       }
 
-      await prisma.profileEditRequest.create({
+      await prisma.person.update({
+        where: { id: created.id },
         data: {
-          avatarAssetId,
-          personId: created.id,
-          status: ProfileReviewStatus.NEEDS_REVIEW,
-          payload: {
-            fullName: person.fullName,
-            headline: person.headline,
-            biography: person.biography,
-            phone: person.phone,
-            contactAddress: person.contactAddress,
-            expertise: person.expertise,
-            links: [
-              ...person.links,
-              ...(openAlexLink ? [openAlexLink] : []),
-            ].map(({ label, type, url }) => ({ label, type, url })),
-            sections: person.profileSections.map((section) => ({
-              type: section.type,
-              title: section.title,
-              subsections: section.subsections.map((subsection) => ({
-                heading: subsection.heading,
-                entries: subsection.entries.map((entry) => ({
-                  label: entry.label,
-                  content: entry.content,
+          ...profileUpdateData(
+            parseProfilePayload({
+              fullName: person.fullName,
+              headline: person.headline,
+              biography: person.biography,
+              phone: person.phone,
+              contactAddress: person.contactAddress,
+              expertise: person.expertise,
+              openAlexAuthorId: person.openAlexAuthorId ?? null,
+              links: person.links
+                .filter(({ type }) => type !== 'OPENALEX')
+                .map(({ label, type, url }) => ({ label, type, url })),
+              sections: person.profileSections
+                .filter((section) => section.type !== 'PUBLICATIONS')
+                .map((section) => ({
+                  type: section.type,
+                  title: section.title,
+                  subsections: section.subsections.map((subsection) => ({
+                    heading: subsection.heading,
+                    entries: subsection.entries.map((entry) => ({
+                      label: entry.label,
+                      content: entry.content,
+                    })),
+                  })),
                 })),
-              })),
-            })),
-            removeAvatar: false,
-          },
+              removeAvatar: false,
+            }),
+            avatarAssetId,
+            'RESEARCH',
+          ),
+          isPublished: true,
         },
       });
 
       personIdBySource.set(person.sourceId, created.id);
-      personNameBySource.set(person.sourceId, person.fullName);
-      userIdBySource.set(person.sourceId, account.id);
     }
 
     const defaultApprover = data.people.find((person) =>
@@ -258,81 +253,6 @@ export async function rebuildDatabase() {
               enumValue(DepartmentRole, membership.role) ??
               DepartmentRole.MEMBER,
             sortOrder: membership.sortOrder,
-          },
-        });
-      }
-    }
-
-    const knownContributorSourceIds = new Set(userIdBySource.keys());
-    for (const paper of data.papers) {
-      const firstKnownContributorSourceId =
-        firstKnownContributorSourceIdForSeed(
-          paper.contributorSourceIds,
-          knownContributorSourceIds,
-        );
-      const firstKnownSubmitterId = firstKnownContributorSourceId
-        ? (userIdBySource.get(firstKnownContributorSourceId) ?? null)
-        : null;
-      const researchItem = await prisma.researchItem.create({
-        data: {
-          canonicalUrl: paper.canonicalUrl,
-          legacySourceId: paper.sourceId,
-          legacyUrl: paper.sourceUrl,
-          reviewStatus: ReviewStatus.NEEDS_REVIEW,
-          slug: paperSlug(paper),
-          submittedById: firstKnownSubmitterId,
-          title: paper.title,
-          type: ResearchItemType.PAPER,
-          paper: {
-            create: {
-              citation: paper.citation,
-              doi: paper.doi,
-              publicationType: paper.publicationType,
-              venue: paper.venue,
-              year: paper.year,
-            },
-          },
-        },
-      });
-      await prisma.auditRecord.create({
-        data: {
-          action: 'research.imported',
-          actorId: admin.id,
-          entityId: researchItem.id,
-          entityType: 'ResearchItem',
-          details: {
-            sourceId: paper.sourceId,
-            ownerSourceId: firstKnownContributorSourceId,
-          },
-        },
-      });
-
-      for (const [
-        sortOrder,
-        sourceId,
-      ] of paper.contributorSourceIds.entries()) {
-        const personId = personIdBySource.get(sourceId);
-        const displayName = personNameBySource.get(sourceId);
-        if (!personId || !displayName) continue;
-        await prisma.researchContributor.create({
-          data: {
-            displayName,
-            researchItemId: researchItem.id,
-            sortOrder,
-            matches: {
-              create: {
-                confidence: 1,
-                evidence: {
-                  matchReason: 'Imported identity',
-                  personSourceId: sourceId,
-                  researchSourceId: paper.sourceId,
-                },
-                personId,
-                requestedById: admin.id,
-                source: ContributorMatchSource.SOURCE_METADATA,
-                status: ContributorMatchStatus.PROPOSED,
-              },
-            },
           },
         });
       }
@@ -417,7 +337,7 @@ export async function rebuildDatabase() {
     console.log(`[db] People images imported: ${importedAvatars}`);
     console.log(`[db] Departments: ${data.departments.length}`);
     console.log(`[db] Academic partners: ${data.universities.length}`);
-    console.log(`[db] Papers: ${data.papers.length}`);
+    console.log('[db] Papers and datasets: imported by OpenAlex author sync.');
     console.log(`[db] Projects: ${data.projects.length}`);
     console.log(`[db] Positions: ${data.positions.length}`);
     console.log(`[db] Admin login: ${adminEmail}`);

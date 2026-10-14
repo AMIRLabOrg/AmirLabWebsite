@@ -10,6 +10,7 @@ import { PrismaService } from '../database/prisma.service';
 import { RECALCULATE_ALL_RANKS_JOB } from '../jobs/job-types';
 import { JobsService } from '../jobs/jobs.service';
 import { resolve } from 'node:path';
+import { createHash } from 'node:crypto';
 import { EncryptedCredentials } from '../common/encrypted-credentials';
 
 export type VerificationMode = 'AUTOMATIC' | 'MANUAL';
@@ -136,6 +137,8 @@ const RANK_KEY = 'rank-policy';
 const APPOINTMENT_LETTER_KEY = 'appointment-letter-template';
 const NOTIFICATION_POLICY_KEY = 'notification-policy';
 const OPENALEX_CREDENTIALS_KEY = 'openalex.credentials';
+const OPENALEX_USAGE_KEY = 'openalex.usage';
+const OPENALEX_PAUSE_KEY = 'openalex.pause';
 
 @Injectable()
 export class SettingsService {
@@ -192,6 +195,69 @@ export class SettingsService {
     return secret.apiKey;
   }
 
+  async openAlexPause(key: string | null) {
+    const fingerprint = this.openAlexFingerprint(key);
+    const pauseKey = `${OPENALEX_PAUSE_KEY}:${fingerprint}`;
+    const row = await this.prisma.siteSetting.findUnique({
+      where: { key: pauseKey },
+    });
+    const value = row?.value;
+    if (!value || typeof value !== 'object' || Array.isArray(value))
+      return null;
+    if (
+      value.credentialFingerprint !== fingerprint ||
+      typeof value.resumeAt !== 'string' ||
+      typeof value.reason !== 'string'
+    ) {
+      return null;
+    }
+    const resumeAt = new Date(value.resumeAt);
+    return resumeAt > new Date() ? { reason: value.reason, resumeAt } : null;
+  }
+
+  async pauseOpenAlex(
+    key: string | null,
+    retryAfterMs: number,
+    reason: string,
+  ) {
+    const fingerprint = this.openAlexFingerprint(key);
+    const pauseKey = `${OPENALEX_PAUSE_KEY}:${fingerprint}`;
+    const jitter = Number.parseInt(fingerprint.slice(0, 6), 16) % 300_000;
+    const resumeAt = new Date(Date.now() + retryAfterMs + jitter);
+    await this.prisma.$transaction(async (transaction) => {
+      await transaction.$queryRaw`SELECT pg_advisory_xact_lock(hashtextextended(${pauseKey}, 0))::text`;
+      const current = await transaction.siteSetting.findUnique({
+        where: { key: pauseKey },
+      });
+      const currentValue = current?.value as {
+        credentialFingerprint?: string;
+        resumeAt?: string;
+      } | null;
+      if (
+        currentValue?.credentialFingerprint === fingerprint &&
+        currentValue.resumeAt &&
+        new Date(currentValue.resumeAt) > resumeAt
+      )
+        return;
+      const value: Prisma.InputJsonObject = {
+        credentialFingerprint: fingerprint,
+        reason,
+        resumeAt: resumeAt.toISOString(),
+      };
+      await transaction.siteSetting.upsert({
+        where: { key: pauseKey },
+        create: { key: pauseKey, value },
+        update: { value },
+      });
+    });
+  }
+
+  private openAlexFingerprint(key: string | null) {
+    return createHash('sha256')
+      .update(key ?? 'anonymous')
+      .digest('hex');
+  }
+
   async openAlexStatus() {
     const row = await this.prisma.siteSetting.findUnique({
       where: { key: OPENALEX_CREDENTIALS_KEY },
@@ -209,6 +275,137 @@ export class SettingsService {
       row.value.credentials,
     );
     return { configured, source: configured ? 'admin' : 'none' };
+  }
+
+  async recordOpenAlexUsage(
+    headers: Headers,
+    authenticated: boolean,
+    requestKey?: string | null,
+  ) {
+    const raw = [
+      headers.get('X-RateLimit-Limit'),
+      headers.get('X-RateLimit-Remaining'),
+      headers.get('X-RateLimit-Reset'),
+    ];
+    if (raw.some((value) => value === null)) return;
+    const [limit, remaining, resetSeconds] = raw.map(Number);
+    if (
+      ![limit, remaining, resetSeconds].every(Number.isFinite) ||
+      limit < 0 ||
+      remaining < 0 ||
+      resetSeconds < 0
+    )
+      return;
+    const observedAt = new Date();
+    const value: Prisma.InputJsonObject = {
+      mode: authenticated ? 'key' : 'anonymous_shared',
+      limit,
+      remaining,
+      resetAt: new Date(
+        observedAt.getTime() + resetSeconds * 1000,
+      ).toISOString(),
+      observedAt: observedAt.toISOString(),
+    };
+    await this.saveOpenAlexUsage(
+      value,
+      authenticated ? (requestKey ?? (await this.openAlexApiKey())) : null,
+    );
+  }
+
+  async openAlexUsage() {
+    const status = await this.openAlexStatus();
+    const key = await this.openAlexApiKey();
+    if (key) {
+      try {
+        const response = await fetch('https://api.openalex.org/rate-limit', {
+          headers: { Authorization: `Bearer ${key}` },
+          signal: AbortSignal.timeout(10_000),
+          redirect: 'error',
+        });
+        if (!response.ok) {
+          await response.body?.cancel();
+          return {
+            ...(await this.cachedOpenAlexUsage('key', key)),
+            source: status.source,
+            unavailable: true,
+          };
+        }
+        const body: unknown = await response.json();
+        const rate =
+          body && typeof body === 'object' && 'rate_limit' in body
+            ? body.rate_limit
+            : null;
+        if (!rate || typeof rate !== 'object')
+          throw new Error('Invalid OpenAlex usage response');
+        const value = rate as Record<string, unknown>;
+        const result = {
+          mode: 'key',
+          limit: numeric(value.credits_limit),
+          remaining: numeric(value.credits_remaining),
+          resetAt: typeof value.resets_at === 'string' ? value.resets_at : null,
+          observedAt: new Date().toISOString(),
+        };
+        if (result.limit === null || result.remaining === null)
+          throw new Error('Invalid OpenAlex usage response');
+        await this.saveOpenAlexUsage(result, key);
+        return { ...result, source: status.source, unavailable: false };
+      } catch {
+        return {
+          ...(await this.cachedOpenAlexUsage('key', key)),
+          source: status.source,
+          unavailable: true,
+        };
+      }
+    }
+    return {
+      ...(await this.cachedOpenAlexUsage('anonymous_shared', null)),
+      source: 'none',
+      unavailable: false,
+    };
+  }
+
+  private async cachedOpenAlexUsage(
+    mode: 'key' | 'anonymous_shared',
+    requestKey: string | null,
+  ) {
+    const usageKey = `${OPENALEX_USAGE_KEY}:${this.openAlexFingerprint(requestKey)}`;
+    const row = await this.prisma.siteSetting.findUnique({
+      where: { key: usageKey },
+    });
+    const value = row?.value;
+    if (
+      !value ||
+      typeof value !== 'object' ||
+      Array.isArray(value) ||
+      value.mode !== mode
+    ) {
+      return {
+        mode,
+        limit: null,
+        remaining: null,
+        resetAt: null,
+        observedAt: null,
+      };
+    }
+    return value as {
+      mode: string;
+      limit: number | null;
+      remaining: number | null;
+      resetAt: string | null;
+      observedAt: string | null;
+    };
+  }
+
+  private async saveOpenAlexUsage(
+    value: Prisma.InputJsonObject,
+    requestKey: string | null,
+  ) {
+    const usageKey = `${OPENALEX_USAGE_KEY}:${this.openAlexFingerprint(requestKey)}`;
+    await this.prisma.siteSetting.upsert({
+      where: { key: usageKey },
+      create: { key: usageKey, value },
+      update: { value },
+    });
   }
 
   async updateOpenAlexApiKey(value: string, actorId: string) {
@@ -694,6 +891,10 @@ function parseNotificationPolicy(value: unknown): NotificationPolicy {
 
 function objectToJson<T extends object>(value: T): Prisma.InputJsonObject {
   return { ...value };
+}
+
+function numeric(value: unknown): number | null {
+  return typeof value === 'number' && Number.isFinite(value) ? value : null;
 }
 
 function integer(value: unknown, fallback: number): number {

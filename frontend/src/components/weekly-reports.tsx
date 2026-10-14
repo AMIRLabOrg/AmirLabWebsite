@@ -33,7 +33,6 @@ export function WeeklyReports() {
   const [blockers, setBlockers] = useState("");
   const [nextWeekPlan, setNextWeekPlan] = useState("");
   const [projectIds, setProjectIds] = useState<string[]>([]);
-  const [outputIds, setOutputIds] = useState<string[]>([]);
   const [error, setError] = useState("");
   const [working, setWorking] = useState<"save" | "submit">();
   const [reload, setReload] = useState(0);
@@ -55,9 +54,6 @@ export function WeeklyReports() {
         setNextWeekPlan(current.report?.nextWeekPlan ?? "");
         setProjectIds(
           current.report?.projects.map(({ projectId }) => projectId) ?? [],
-        );
-        setOutputIds(
-          current.report?.outputs.map(({ outputId }) => outputId) ?? [],
         );
         setError("");
       })
@@ -91,7 +87,6 @@ export function WeeklyReports() {
         accomplishments,
         blockers,
         nextWeekPlan,
-        outputIds,
         projectIds,
       }),
       headers: { "content-type": "application/json" },
@@ -323,72 +318,6 @@ export function WeeklyReports() {
               ) : (
                 <WorkspaceEmpty>
                   No active project membership is available for reporting.
-                </WorkspaceEmpty>
-              )}
-            </fieldset>
-
-            <fieldset
-              className="m-0 grid min-w-0 gap-3 border-0 p-0"
-              disabled={!editable}
-            >
-              <legend>Papers and datasets used as evidence</legend>
-              {!context || context.outputs.length ? (
-                (
-                  context?.outputs ?? Array.from({ length: 2 }, () => undefined)
-                ).map((output, index) => (
-                  <CheckboxControl
-                    checked={output ? outputIds.includes(output.id) : false}
-                    disabled={!context}
-                    id={
-                      output
-                        ? `weekly-output-${output.id}`
-                        : `weekly-output-loading-${index}`
-                    }
-                    key={output?.id ?? `weekly-output-loading-${index}`}
-                    loading={!output}
-                    onCheckedChange={(checked) => {
-                      if (!output) return;
-                      setOutputIds((current) =>
-                        checked
-                          ? [...current, output.id]
-                          : current.filter((id) => id !== output.id),
-                      );
-                    }}
-                  >
-                    <span
-                      className="grid gap-1"
-                      data-loading={!output || undefined}
-                    >
-                      <strong
-                        className={cn(
-                          "text-[.86rem]",
-                          loadingPlaceholder(!output, "text", "long"),
-                        )}
-                        data-placeholder={!output ? "text" : undefined}
-                        data-placeholder-width="long"
-                      >
-                        {output?.title ?? "Research output title"}
-                      </strong>
-                      <small
-                        className={cn(
-                          "text-[.72rem] text-ink-muted",
-                          loadingPlaceholder(!output, "label", "short"),
-                        )}
-                        data-placeholder={!output ? "label" : undefined}
-                        data-placeholder-width="short"
-                      >
-                        {output
-                          ? output.type === "PAPER"
-                            ? "Paper"
-                            : "Dataset"
-                          : "Paper or dataset"}
-                      </small>
-                    </span>
-                  </CheckboxControl>
-                ))
-              ) : (
-                <WorkspaceEmpty>
-                  No authored or contributed paper or dataset is available yet.
                 </WorkspaceEmpty>
               )}
             </fieldset>

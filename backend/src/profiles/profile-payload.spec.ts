@@ -229,15 +229,16 @@ describe('parseProfilePayload', () => {
       ),
     ).toThrow('must use HTTP or HTTPS');
   });
-  it('uses one normalized OpenAlex author link in the existing profile payload', () => {
+  it('converts a legacy OpenAlex link into the dedicated author ID field', () => {
     const link = {
       type: PersonLinkType.OPENALEX,
       label: 'OpenAlex',
       url: 'https://openalex.org/authors/a123',
     };
-    expect(
-      parseProfilePayload({ ...profile, links: [link] }).links[0].url,
-    ).toBe('https://openalex.org/authors/A123');
+    expect(parseProfilePayload({ ...profile, links: [link] })).toMatchObject({
+      links: [],
+      openAlexAuthorId: 'A123',
+    });
     expect(() =>
       parseProfilePayload({ ...profile, links: [link, link] }),
     ).toThrow('one OpenAlex');
@@ -247,5 +248,30 @@ describe('parseProfilePayload', () => {
         links: [{ ...link, url: 'https://evil.test/A123' }],
       }),
     ).toThrow('OpenAlex');
+  });
+  it('distinguishes an omitted OpenAlex ID from an explicit clear', () => {
+    expect(parseProfilePayload(profile).openAlexAuthorId).toBeUndefined();
+    expect(
+      parseProfilePayload({ ...profile, openAlexAuthorId: null })
+        .openAlexAuthorId,
+    ).toBeNull();
+    expect(
+      parseProfilePayload({ ...profile, openAlexAuthorId: 'a123' })
+        .openAlexAuthorId,
+    ).toBe('A123');
+  });
+  it('rejects manual paper and dataset profile sections', () => {
+    expect(() =>
+      parseProfilePayload({
+        ...profile,
+        sections: [
+          {
+            ...profile.sections[0],
+            type: PersonSectionType.PUBLICATIONS,
+            title: 'Publications',
+          },
+        ],
+      }),
+    ).toThrow('come from OpenAlex');
   });
 });

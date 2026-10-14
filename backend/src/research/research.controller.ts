@@ -4,7 +4,6 @@ import {
   Delete,
   Get,
   Param,
-  ParseIntPipe,
   ParseUUIDPipe,
   Patch,
   Post,
@@ -13,28 +12,16 @@ import {
 import { PlatformRole, ResearchItemType } from '../../generated/prisma/client';
 import { CurrentUser, Public, RequireRole } from '../auth/auth.decorators';
 import type { AuthenticatedUser } from '../auth/auth.types';
-import {
-  ClaimContributorDto,
-  LinkContributorDto,
-  ReviewContributorMatchDto,
-} from './dto/contributor-match.dto';
 import { CreatePositionDto, UpdatePositionDto } from './dto/position.dto';
+import { ResearchLibraryQueryDto } from './dto/research-library-query.dto';
 import { PublicationQueryDto } from './dto/publication-query.dto';
-import {
-  BulkReviewResearchDto,
-  ReviewResearchDto,
-  SubmitResearchDto,
-  UpdateResearchDto,
-  VerifyResearchSourceDto,
-} from './dto/research.dto';
-import { ResearchReviewQueryDto } from './dto/research-review-query.dto';
-import { ResearchRelationshipsService } from './research-relationships.service';
+import { ResearchRetentionService } from './research-retention.service';
 import { ResearchService } from './research.service';
 
 @Controller()
 export class ResearchController {
   constructor(
-    private readonly relationships: ResearchRelationshipsService,
+    private readonly retention: ResearchRetentionService,
     private readonly researchService: ResearchService,
   ) {}
 
@@ -50,6 +37,15 @@ export class ResearchController {
     return this.researchService.personBySlug(slug);
   }
 
+  @Delete('people/:id')
+  @RequireRole(PlatformRole.ADMIN)
+  removePerson(
+    @Param('id', ParseUUIDPipe) id: string,
+    @CurrentUser() actor: AuthenticatedUser,
+  ) {
+    return this.retention.removePerson(id, actor.id);
+  }
+
   @Public()
   @Get('research')
   research(@Query('type') type?: ResearchItemType) {
@@ -62,57 +58,20 @@ export class ResearchController {
     return this.researchService.publications(query);
   }
 
-  @Get('research-connections/mine')
-  myResearchConnections(@CurrentUser() user: AuthenticatedUser) {
-    return this.relationships.mine(user);
-  }
-
-  @Get('research-connections/search')
-  searchResearchConnections(@Query('query') query = '') {
-    return this.relationships.search(query);
-  }
-
-  @Get('research-connections/people')
-  @RequireRole(PlatformRole.MODERATOR)
-  researchConnectionPeople(@Query('query') query = '') {
-    return this.relationships.people(query);
-  }
-
-  @Post('research/:id/contributors/:sortOrder/claim')
-  claimContributor(
-    @Param('id', ParseUUIDPipe) id: string,
-    @Param('sortOrder', ParseIntPipe) sortOrder: number,
-    @Body() body: ClaimContributorDto,
+  @Get('research-library')
+  researchLibrary(
+    @Query() query: ResearchLibraryQueryDto,
     @CurrentUser() user: AuthenticatedUser,
   ) {
-    return this.relationships.claim(id, sortOrder, body, user);
+    return this.researchService.library(query, user);
   }
 
-  @Post('research/:id/contributors/:sortOrder/link')
-  @RequireRole(PlatformRole.MODERATOR)
-  linkContributor(
+  @Get('research-library/:id')
+  researchLibraryItem(
     @Param('id', ParseUUIDPipe) id: string,
-    @Param('sortOrder', ParseIntPipe) sortOrder: number,
-    @Body() body: LinkContributorDto,
-    @CurrentUser() reviewer: AuthenticatedUser,
+    @CurrentUser() user: AuthenticatedUser,
   ) {
-    return this.relationships.link(id, sortOrder, body, reviewer);
-  }
-
-  @Post('contributor-matches/:id/review')
-  @RequireRole(PlatformRole.MODERATOR)
-  reviewContributorMatch(
-    @Param('id', ParseUUIDPipe) id: string,
-    @Body() body: ReviewContributorMatchDto,
-    @CurrentUser() reviewer: AuthenticatedUser,
-  ) {
-    return this.relationships.review(id, body, reviewer);
-  }
-
-  @Post('research/:id/discover')
-  @RequireRole(PlatformRole.MODERATOR)
-  rediscoverResearch(@Param('id', ParseUUIDPipe) id: string) {
-    return this.researchService.rediscover(id);
+    return this.researchService.libraryItem(id, user);
   }
 
   @Public()
@@ -121,75 +80,10 @@ export class ResearchController {
     return this.researchService.publicStats();
   }
 
-  @Get('research/submitters')
-  @RequireRole(PlatformRole.MODERATOR)
-  submitters() {
-    return this.researchService.submitters();
-  }
-
-  @Post('research/:id/verify-source')
-  @RequireRole(PlatformRole.MODERATOR)
-  verifySource(
-    @Param('id', ParseUUIDPipe) id: string,
-    @Body() body: VerifyResearchSourceDto,
-    @CurrentUser() reviewer: AuthenticatedUser,
-  ) {
-    return this.researchService.verifySource(id, body, reviewer);
-  }
-
   @Public()
   @Get('research/:slug')
   researchBySlug(@Param('slug') slug: string) {
     return this.researchService.researchBySlug(slug);
-  }
-
-  @Post('research')
-  submitResearch(
-    @Body() body: SubmitResearchDto,
-    @CurrentUser() user: AuthenticatedUser,
-  ) {
-    return this.researchService.submit(body, user);
-  }
-
-  @Patch('research/:id')
-  @RequireRole(PlatformRole.MODERATOR)
-  updateReviewRecord(
-    @Param('id', ParseUUIDPipe) id: string,
-    @Body() body: UpdateResearchDto,
-    @CurrentUser() reviewer: AuthenticatedUser,
-  ) {
-    return this.researchService.updateReviewRecord(id, body, reviewer);
-  }
-
-  @Get('research-review')
-  @RequireRole(PlatformRole.MODERATOR)
-  reviewQueue(@Query() query: ResearchReviewQueryDto) {
-    return this.researchService.reviewQueue(query);
-  }
-
-  @Post('research-review/bulk-review')
-  @RequireRole(PlatformRole.MODERATOR)
-  bulkReviewResearch(
-    @Body() body: BulkReviewResearchDto,
-    @CurrentUser() reviewer: AuthenticatedUser,
-  ) {
-    return this.researchService.bulkReview(body, reviewer);
-  }
-
-  @Get('research-review/:id')
-  @RequireRole(PlatformRole.MODERATOR)
-  reviewItem(@Param('id', ParseUUIDPipe) id: string) {
-    return this.researchService.reviewItem(id);
-  }
-
-  @Post('research/:id/review')
-  @RequireRole(PlatformRole.MODERATOR)
-  reviewResearch(
-    @Param('id', ParseUUIDPipe) id: string,
-    @Body() body: ReviewResearchDto,
-    @CurrentUser() reviewer: AuthenticatedUser,
-  ) {
-    return this.researchService.review(id, body, reviewer);
   }
 
   @Public()

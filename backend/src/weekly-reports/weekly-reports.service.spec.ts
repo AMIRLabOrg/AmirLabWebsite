@@ -70,7 +70,6 @@ describe('WeeklyReportsService', () => {
 
   it('builds current-week evidence only from accessible project tasks', async () => {
     prisma.weeklyReport.findUnique.mockResolvedValue(null);
-    prisma.researchItem.findMany.mockResolvedValue([]);
     prisma.project.findMany.mockResolvedValue([
       {
         researchItemId: '33333333-3333-4333-8333-333333333333',
@@ -103,7 +102,6 @@ describe('WeeklyReportsService', () => {
       }),
     );
     expect(result.projects[0].tasks).toEqual({ completed: 1, due: 1, open: 1 });
-    expect(result.outputs).toEqual([]);
   });
 
   it('rejects personal weekly-report access for staff accounts', async () => {

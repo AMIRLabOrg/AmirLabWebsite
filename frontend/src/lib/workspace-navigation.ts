@@ -1,4 +1,5 @@
 import {
+  Activity,
   Bell,
   BookOpenText,
   BriefcaseBusiness,
@@ -97,12 +98,6 @@ const REVIEW: readonly WorkspaceNavigationItem[] = [
     label: "Profile reviews",
   },
   {
-    href: "/workspace/research",
-    icon: BookOpenText,
-    indicator: "researchReviews",
-    label: "Papers & datasets review",
-  },
-  {
     href: "/workspace/project-reviews",
     icon: FolderKanban,
     indicator: "projectReviews",
@@ -130,6 +125,11 @@ const ORGANIZATION: readonly WorkspaceNavigationItem[] = [
 ];
 
 const GOVERNANCE: readonly WorkspaceNavigationItem[] = [
+  {
+    href: "/workspace/settings/workers",
+    icon: Activity,
+    label: "Workers & tasks",
+  },
   {
     href: "/workspace/settings/backups",
     icon: Settings,

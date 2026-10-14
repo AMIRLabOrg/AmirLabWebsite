@@ -15,15 +15,22 @@ describe('admin OpenAlex credentials', () => {
     await rm(root, { recursive: true, force: true });
   });
   function setup() {
+    const rows = new Map<string, { value: unknown }>();
     let row: { value: unknown } | null = null;
     const audit = jest.fn().mockResolvedValue({});
     const db = {
+      $queryRaw: jest.fn().mockResolvedValue([]),
       siteSetting: {
-        findUnique: jest.fn(() => Promise.resolve(row)),
-        upsert: jest.fn((input: { create: { value: unknown } }) => {
-          row = { value: input.create.value };
-          return Promise.resolve(row);
-        }),
+        findUnique: jest.fn((input: { where: { key: string } }) =>
+          Promise.resolve(rows.get(input.where.key) ?? null),
+        ),
+        upsert: jest.fn(
+          (input: { where: { key: string }; create: { value: unknown } }) => {
+            row = { value: input.create.value };
+            rows.set(input.where.key, row);
+            return Promise.resolve(row);
+          },
+        ),
       },
       auditRecord: { create: audit },
     };
@@ -44,6 +51,18 @@ describe('admin OpenAlex credentials', () => {
     }) as SettingsService;
     return { service, audit, row: () => row };
   }
+  it('keeps the longest pause for the same credential and isolates rotated keys', async () => {
+    const { service } = setup();
+    await service.pauseOpenAlex('key-one', 86_400_000, 'quota');
+    const first = await service.openAlexPause('key-one');
+    await service.pauseOpenAlex('key-one', 60_000, 'short retry');
+    expect(await service.openAlexPause('key-one')).toEqual(first);
+    expect(await service.openAlexPause('key-two')).toBeNull();
+    await service.pauseOpenAlex('key-two', 3_600_000, 'new key quota');
+    const second = await service.openAlexPause('key-two');
+    await service.pauseOpenAlex('key-one', 172_800_000, 'late old key quota');
+    expect(await service.openAlexPause('key-two')).toEqual(second);
+  });
   it('encrypts stored keys and returns only status, including audit details', async () => {
     const { service, audit, row } = setup();
     expect(await service.openAlexStatus()).toEqual({
@@ -96,5 +115,38 @@ describe('admin OpenAlex credentials', () => {
       response: { code: 'OPENALEX_KEY_CHECK_UNAVAILABLE' },
     });
     expect(row()).toBe(previous);
+  });
+
+  it('does not display an old credential budget after rotation or late responses', async () => {
+    const { service } = setup();
+    await service.updateOpenAlexApiKey('first-token', 'admin');
+    const headers = new Headers({
+      'X-RateLimit-Limit': '100',
+      'X-RateLimit-Remaining': '90',
+      'X-RateLimit-Reset': '3600',
+    });
+    await service.recordOpenAlexUsage(headers, true, 'first-token');
+    await service.updateOpenAlexApiKey('rotated-token', 'admin');
+    request.mockRejectedValue(new Error('network failure'));
+    expect(await service.openAlexUsage()).toMatchObject({
+      limit: null,
+      remaining: null,
+    });
+    await service.recordOpenAlexUsage(headers, true, 'first-token');
+    expect(await service.openAlexUsage()).toMatchObject({
+      limit: null,
+      remaining: null,
+    });
+    await service.recordOpenAlexUsage(headers, true, 'rotated-token');
+    expect(await service.openAlexUsage()).toMatchObject({
+      limit: 100,
+      remaining: 90,
+    });
+  });
+
+  it('ignores missing rate-limit headers instead of recording zero credits', async () => {
+    const { service, row } = setup();
+    await service.recordOpenAlexUsage(new Headers(), false);
+    expect(row()).toBeNull();
   });
 });

@@ -46,8 +46,19 @@ describe('ProjectsService project review policy', () => {
   let service: ServiceHarness;
 
   beforeEach(() => {
+    const createChangeRequest = jest
+      .fn()
+      .mockResolvedValue({ id: 'request-1' });
     const transactionClient = {
-      project: { update: jest.fn().mockResolvedValue({ version: 4 }) },
+      $queryRaw: jest.fn().mockResolvedValue([]),
+      project: {
+        findUniqueOrThrow: jest.fn().mockResolvedValue({
+          version: 3,
+          researchItem: { title: 'Test project' },
+        }),
+        update: jest.fn().mockResolvedValue({ version: 4 }),
+      },
+      projectChangeRequest: { create: createChangeRequest },
       researchItem: {
         update: jest.fn().mockResolvedValue({
           reviewStatus: ReviewStatus.VERIFIED,
@@ -63,12 +74,15 @@ describe('ProjectsService project review policy', () => {
       },
       prisma: {
         project: {
+          findUniqueOrThrow: jest
+            .fn()
+            .mockResolvedValue({ publicPageEnabled: false }),
           findUnique: jest.fn().mockResolvedValue({
             researchItem: { reviewStatus: ReviewStatus.ARCHIVED },
           }),
         },
         projectChangeRequest: {
-          create: jest.fn().mockResolvedValue({ id: 'request-1' }),
+          create: createChangeRequest,
         },
         auditRecord: { create: jest.fn().mockResolvedValue({}) },
         $transaction: jest.fn(
@@ -145,6 +159,23 @@ describe('ProjectsService project review policy', () => {
       },
     });
     expect(service.notifications.notifyReviewers).toHaveBeenCalledTimes(1);
+  });
+
+  it('rejects a stale project edit instead of rebasing its review request', async () => {
+    const member = {
+      id: 'member-1',
+      role: PlatformRole.MEMBER,
+    } as AuthenticatedUser;
+
+    await expect(
+      service.applyOrQueue(
+        'project-1',
+        ProjectChangeKind.DETAILS,
+        { expectedVersion: 2, publicPageEnabled: true },
+        member,
+      ),
+    ).rejects.toThrow('changed after you opened');
+    expect(service.prisma.projectChangeRequest.create).not.toHaveBeenCalled();
   });
 
   it('queues non-admin archive when edits are automatic but archive is manual', async () => {
@@ -314,5 +345,34 @@ describe('ProjectsService project review policy', () => {
     ).rejects.toThrow(
       'This project is archived and read-only. Unarchive it before editing.',
     );
+  });
+});
+
+describe('ProjectsService response boundaries', () => {
+  it('paginated summaries avoid credentials and unbounded history', async () => {
+    const findMany = jest.fn().mockResolvedValue([]);
+    const count = jest.fn().mockResolvedValue(0);
+    const service = Object.assign(Object.create(ProjectsService.prototype), {
+      prisma: {
+        project: { findMany, count },
+        $transaction: (
+          callback: (transaction: {
+            project: { findMany: typeof findMany; count: typeof count };
+          }) => Promise<unknown>,
+        ) => callback({ project: { findMany, count } }),
+      },
+    }) as ProjectsService;
+    const result = await service.mine({
+      id: 'admin-id',
+      role: PlatformRole.ADMIN,
+    } as AuthenticatedUser);
+    expect(result.total).toBe(0);
+    expect(findMany).toHaveBeenCalledWith(
+      expect.objectContaining({ take: 20, skip: 0 }),
+    );
+    const query = findMany.mock.calls[0] as unknown[];
+    expect(JSON.stringify(query)).not.toContain('passwordHash');
+    expect(JSON.stringify(query)).not.toContain('updates');
+    expect(JSON.stringify(query)).not.toContain('invitationTokenHash');
   });
 });

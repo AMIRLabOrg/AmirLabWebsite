@@ -66,7 +66,11 @@ interface ReviewResearch {
     status: "PENDING" | "FETCHED" | "UNAVAILABLE" | "FAILED";
     failureReason: string | null;
     fetchedAt: string | null;
-    metadata: { authors?: Array<{ name: string; orcid?: string }>; manuallyVerified?: boolean; note?: string } | null;
+    metadata: {
+      authors?: Array<{ name: string; orcid?: string }>;
+      manuallyVerified?: boolean;
+      note?: string;
+    } | null;
     updatedAt?: string;
   } | null;
   reviewIssues?: ReviewIssue[];
@@ -169,6 +173,7 @@ export function ResearchReviewQueue() {
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
+  const [draftSearch, setDraftSearch] = useState("");
   const [type, setType] = useState("ALL");
   const [status, setStatus] = useState("ALL");
   const [sort, setSort] = useState("OLDEST");
@@ -218,7 +223,9 @@ export function ResearchReviewQueue() {
   useEffect(() => {
     void apiRequest<LinkablePerson[]>("/research/submitters", { method: "GET" })
       .then(setSubmitters)
-      .catch(() => setError("Research owners could not be loaded. Refresh to retry."));
+      .catch(() =>
+        setError("Research owners could not be loaded. Refresh to retry."),
+      );
     void apiRequest<LinkablePerson[]>("/research-connections/people", {
       method: "GET",
     })
@@ -228,7 +235,8 @@ export function ResearchReviewQueue() {
 
   useEffect(() => {
     let active = true;
-    const timeout = window.setTimeout(() => {
+    queueMicrotask(() => {
+      if (!active) return;
       const params = new URLSearchParams({
         page: String(page),
         pageSize: "10",
@@ -262,10 +270,9 @@ export function ResearchReviewQueue() {
         .finally(() => {
           if (active) setLoading(false);
         });
-    }, 250);
+    });
     return () => {
       active = false;
-      window.clearTimeout(timeout);
     };
   }, [page, reload, researchRefreshVersion, search, sort, status, type]);
 
@@ -344,7 +351,10 @@ export function ResearchReviewQueue() {
 
   useEffect(() => {
     if (!researchRefreshVersion || !selected) return;
-    const timeout = window.setTimeout(() => void refreshResearchItem(selected), 0);
+    const timeout = window.setTimeout(
+      () => void refreshResearchItem(selected),
+      0,
+    );
     return () => window.clearTimeout(timeout);
   }, [researchRefreshVersion, selected, refreshResearchItem]);
 
@@ -368,7 +378,11 @@ export function ResearchReviewQueue() {
     if (!selected || !item) return;
     setError(undefined);
     await apiRequest(`/research/${selected}/review`, {
-      body: JSON.stringify({ ...(note ? { note } : {}), status, expectedAutomationVersion: item.automationVersion }),
+      body: JSON.stringify({
+        ...(note ? { note } : {}),
+        status,
+        expectedAutomationVersion: item.automationVersion,
+      }),
       headers: { "content-type": "application/json" },
       method: "POST",
     });
@@ -390,7 +404,8 @@ export function ResearchReviewQueue() {
     event: SyntheticEvent<HTMLFormElement, SubmitEvent>,
   ) {
     event.preventDefault();
-    if (!item || !editSnapshot || editSnapshot.id !== item.id || loadingDetail) return;
+    if (!item || !editSnapshot || editSnapshot.id !== item.id || loadingDetail)
+      return;
     const form = new FormData(event.currentTarget);
     const contributors = String(form.get("contributors") ?? "")
       .split("\n")
@@ -440,9 +455,10 @@ export function ResearchReviewQueue() {
       setEditDirty(false);
       setReload((current) => current + 1);
       showToast({
-        body: updated.sourceSnapshot?.status === "PENDING"
-          ? "Changes saved. Source verification is in progress."
-          : "Changes saved. Existing verification and publication status were preserved.",
+        body:
+          updated.sourceSnapshot?.status === "PENDING"
+            ? "Changes saved. Source verification is in progress."
+            : "Changes saved. Existing verification and publication status were preserved.",
         title: "Research record updated",
       });
     } catch (caught) {
@@ -645,7 +661,9 @@ export function ResearchReviewQueue() {
 
   const selectableItems = items;
   const bulk = useBulkSelection(selectableItems.map(({ id }) => id));
-  const selectedResearchItems = selectableItems.filter(({ id }) => bulk.isSelected(id));
+  const selectedResearchItems = selectableItems.filter(({ id }) =>
+    bulk.isSelected(id),
+  );
   const issuesFor = (candidate: ReviewResearch): ReviewIssue[] => [
     ...(candidate.reviewIssues ?? []),
     ...actionIssues.forItem(candidate.id),
@@ -672,11 +690,15 @@ export function ResearchReviewQueue() {
     !items.some((candidate) => candidate.id === item.id),
   );
   const editing = Boolean(item && editingId === item.id);
-  const ownerMissing = Boolean(item && (!item.submittedBy?.person || item.submittedBy.isSystemAccount));
+  const ownerMissing = Boolean(
+    item && (!item.submittedBy?.person || item.submittedBy.isSystemAccount),
+  );
   const sourcePending =
-    item?.automationState === "QUEUED" || item?.automationState === "RUNNING" ||
+    item?.automationState === "QUEUED" ||
+    item?.automationState === "RUNNING" ||
     item?.sourceSnapshot?.status === "PENDING" ||
-    relationBusy.has(`discover:${item?.id}`) || editDirty;
+    relationBusy.has(`discover:${item?.id}`) ||
+    editDirty;
   const hasProposedMatches = Boolean(
     item?.contributors.some((contributor) =>
       contributor.matches.some((match) => match.status === "PROPOSED"),
@@ -693,7 +715,9 @@ export function ResearchReviewQueue() {
     await apiRequest("/research-review/bulk-review", {
       body: JSON.stringify({
         ids: selectedResearchItems.map(({ id }) => id),
-        expectedAutomationVersions: selectedResearchItems.map(({ automationVersion }) => automationVersion),
+        expectedAutomationVersions: selectedResearchItems.map(
+          ({ automationVersion }) => automationVersion,
+        ),
         ...(note ? { note } : {}),
         status: decisionStatus,
       }),
@@ -732,19 +756,25 @@ export function ResearchReviewQueue() {
         tone="danger"
         busy={editSaving}
         onCancel={() => setDiscardEditor(false)}
-        onConfirm={() => { setDiscardEditor(false); setEditingId(undefined); setEditDirty(false); }}
+        onConfirm={() => {
+          setDiscardEditor(false);
+          setEditingId(undefined);
+          setEditDirty(false);
+        }}
       />
       <WorkspaceRuleBand contentClassName="grid min-w-0 grid-cols-[minmax(220px,1.5fr)_repeat(3,minmax(140px,.7fr))] items-end gap-[.8rem] px-[var(--workspace-gutter)] py-3.5 max-[980px]:grid-cols-2 max-[640px]:grid-cols-1 max-[640px]:px-4">
         <ToolbarSearchField
           id="research-review-search"
           label="Search queue"
-          onChange={(event) => {
+          onValueChange={setDraftSearch}
+          onSearch={(value) => {
+            if (search === value.trim() && page === 1) return;
             beginRefresh();
-            setSearch(event.target.value);
+            setSearch(value.trim());
             setPage(1);
           }}
           placeholder="Title, author, citation, or URL"
-          value={search}
+          value={draftSearch}
         />
         <FormField htmlFor="research-review-type" label="Type">
           <SelectControl
@@ -891,7 +921,10 @@ export function ResearchReviewQueue() {
                           disabled={loadingRows}
                           onClick={() => {
                             if (editDirty || editSaving) {
-                              showToast({ title: "Unsaved changes", body: "Save or cancel your edits before selecting another record." });
+                              showToast({
+                                title: "Unsaved changes",
+                                body: "Save or cancel your edits before selecting another record.",
+                              });
                               return;
                             }
                             select(candidate.id);
@@ -1012,7 +1045,10 @@ export function ResearchReviewQueue() {
                         disabled={loadingDetail || editSaving}
                         loading={loadingDetail}
                         onClick={() => {
-                          if (editing && editDirty) { setDiscardEditor(true); return; }
+                          if (editing && editDirty) {
+                            setDiscardEditor(true);
+                            return;
+                          }
                           setEditDirty(false);
                           // Keep an open draft mounted if live refresh removes its queue row.
                           setFocusedItem(item);
@@ -1077,7 +1113,7 @@ export function ResearchReviewQueue() {
                         {!item.canonicalUrl
                           ? "No source URL"
                           : sourcePending
-                             ? "Retry source check"
+                            ? "Retry source check"
                             : item.sourceSnapshot
                               ? "Check source again"
                               : "Check source"}
@@ -1085,26 +1121,56 @@ export function ResearchReviewQueue() {
                     </div>
                     {!loadingDetail && item.canonicalUrl ? (
                       <ReviewActions
-                        actions={[{
-                          status: "VERIFIED", label: "Verify source manually", tone: "secondary",
-                          disabled: editDirty,
-                          requiresNote: true, notePlaceholder: "Describe the source and authors you checked.",
-                          confirmTitle: "Complete source verification?", confirmLabel: "Mark source verified",
-                          confirmDescription: "This records your verification and supersedes any pending automated source check. Contributor matches and publication are reviewed separately.",
-                        }]}
+                        actions={[
+                          {
+                            status: "VERIFIED",
+                            label: "Verify source manually",
+                            tone: "secondary",
+                            disabled: editDirty,
+                            requiresNote: true,
+                            notePlaceholder:
+                              "Describe the source and authors you checked.",
+                            confirmTitle: "Complete source verification?",
+                            confirmLabel: "Mark source verified",
+                            confirmDescription:
+                              "This records your verification and supersedes any pending automated source check. Contributor matches and publication are reviewed separately.",
+                          },
+                        ]}
                         noteLabel="Source evidence"
                         onSubmit={async ({ note }) => {
-                          await apiRequest(`/research/${item.id}/verify-source`, {
-                            method: "POST", headers: { "content-type": "application/json" },
-                            body: JSON.stringify({ note, expectedAutomationVersion: item.automationVersion }),
-                          });
+                          await apiRequest(
+                            `/research/${item.id}/verify-source`,
+                            {
+                              method: "POST",
+                              headers: { "content-type": "application/json" },
+                              body: JSON.stringify({
+                                note,
+                                expectedAutomationVersion:
+                                  item.automationVersion,
+                              }),
+                            },
+                          );
                           await refreshResearchItem(item.id);
                         }}
-                        successTitle="Source verified" successBody={() => "Your source verification was recorded. You can now resolve authors and publish."}
+                        successTitle="Source verified"
+                        successBody={() =>
+                          "Your source verification was recorded. You can now resolve authors and publish."
+                        }
                       />
                     ) : null}
-                    {item.sourceSnapshot?.updatedAt ? <p className="m-0 text-xs text-ink-muted">Last source activity: {new Date(item.sourceSnapshot.updatedAt).toLocaleString()}</p> : null}
-                    {item.sourceSnapshot?.metadata?.manuallyVerified ? <SemanticStatus tone="success">Manually verified: {item.sourceSnapshot.metadata.note}</SemanticStatus> : null}
+                    {item.sourceSnapshot?.updatedAt ? (
+                      <p className="m-0 text-xs text-ink-muted">
+                        Last source activity:{" "}
+                        {new Date(
+                          item.sourceSnapshot.updatedAt,
+                        ).toLocaleString()}
+                      </p>
+                    ) : null}
+                    {item.sourceSnapshot?.metadata?.manuallyVerified ? (
+                      <SemanticStatus tone="success">
+                        Manually verified: {item.sourceSnapshot.metadata.note}
+                      </SemanticStatus>
+                    ) : null}
                     {loadingDetail ? (
                       <span
                         className={loadingPlaceholder(true, "label", "long")}
@@ -1329,9 +1395,9 @@ export function ResearchReviewQueue() {
                                       confirmLabel: "Reject suggestion",
                                       confirmTitle:
                                         "Reject this contributor match?",
-                                      disabled: sourcePending || relationBusy.has(
-                                        rejectMatch.id,
-                                      ),
+                                      disabled:
+                                        sourcePending ||
+                                        relationBusy.has(rejectMatch.id),
                                       label: "Reject",
                                       notePlaceholder:
                                         "Optional note about why this suggested contributor match is incorrect.",
@@ -1465,14 +1531,21 @@ export function ResearchReviewQueue() {
                             "The record becomes public and a verified paper may trigger rank promotion.",
                           confirmLabel: "Publish verified record",
                           confirmTitle: "Publish this research record?",
-                          disabled: editDirty || ownerMissing || !item.contributors.length || sourcePending || hasProposedMatches,
+                          disabled:
+                            editDirty ||
+                            ownerMissing ||
+                            !item.contributors.length ||
+                            sourcePending ||
+                            hasProposedMatches,
                           label: ownerMissing
                             ? "Select Submitted by before publishing"
-                            : !item.contributors.length ? "Add authors before publishing" : sourcePending
-                            ? "Source check in progress"
-                            : hasProposedMatches
-                              ? "Resolve contributor matches"
-                              : "Publish",
+                            : !item.contributors.length
+                              ? "Add authors before publishing"
+                              : sourcePending
+                                ? "Source check in progress"
+                                : hasProposedMatches
+                                  ? "Resolve contributor matches"
+                                  : "Publish",
                           status: "PUBLISHED",
                           tone: "primary",
                         },
@@ -1546,7 +1619,11 @@ function ResearchRecordEditor({
   onSubmit: (event: SyntheticEvent<HTMLFormElement, SubmitEvent>) => void;
   saving: boolean;
 }) {
-  const [ownerId, setOwnerId] = useState(item.submittedBy?.isSystemAccount ? "" : item.submittedBy?.person?.id ?? "");
+  const [ownerId, setOwnerId] = useState(
+    item.submittedBy?.isSystemAccount
+      ? ""
+      : (item.submittedBy?.person?.id ?? ""),
+  );
   const [dirty, setDirty] = useState(false);
   const [sourceChanged, setSourceChanged] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
@@ -1561,15 +1638,25 @@ function ResearchRecordEditor({
     onDirtyChange(changed);
     setSourceChanged(
       String(form.get("title") ?? "").trim() !== (item.title ?? "") ||
-      form.get("canonicalUrl") !== (item.canonicalUrl ?? "") ||
-      String(form.get("doi") ?? "").trim() !== (item.paper?.doi ?? "") ||
-      String(form.get("contributors") ?? "").split("\n").map((name) => name.trim()).filter(Boolean).join("\n") !== item.contributors.map(({ displayName }) => displayName).join("\n"),
+        form.get("canonicalUrl") !== (item.canonicalUrl ?? "") ||
+        String(form.get("doi") ?? "").trim() !== (item.paper?.doi ?? "") ||
+        String(form.get("contributors") ?? "")
+          .split("\n")
+          .map((name) => name.trim())
+          .filter(Boolean)
+          .join("\n") !==
+          item.contributors.map(({ displayName }) => displayName).join("\n"),
     );
   }, [item, onDirtyChange]);
-  useEffect(() => { checkChanges(); }, [ownerId, checkChanges]);
+  useEffect(() => {
+    checkChanges();
+  }, [ownerId, checkChanges]);
   useEffect(() => {
     if (!dirty) return;
-    const warn = (event: BeforeUnloadEvent) => { event.preventDefault(); event.returnValue = ""; };
+    const warn = (event: BeforeUnloadEvent) => {
+      event.preventDefault();
+      event.returnValue = "";
+    };
     window.addEventListener("beforeunload", warn);
     return () => window.removeEventListener("beforeunload", warn);
   }, [dirty]);
@@ -1581,183 +1668,208 @@ function ResearchRecordEditor({
       onSubmit={onSubmit}
     >
       <fieldset disabled={saving} className="contents">
-      <div className="grid gap-1">
-        <span className="font-mono text-[.62rem] uppercase tracking-[.08em] text-brand">
-          Record editor
-        </span>
-        <strong className="font-sans text-[1.2rem] font-normal">
-          Edit research record
-        </strong>
-        <p className="m-0 text-[.78rem] leading-[1.5] text-ink-muted">
-          Save corrections without repeating completed checks. Changing the title, source URL, DOI or authors restarts verification.
-        </p>
-        {dirty ? <SemanticStatus tone="warning">Unsaved changes</SemanticStatus> : null}
-        {sourceChanged ? <SemanticStatus tone="warning">Saving these changes restarts source verification{item.reviewStatus === "PUBLISHED" ? " and returns this published record to review" : ""}.</SemanticStatus> : null}
-      </div>
-      <div className="grid grid-cols-2 gap-4 max-[700px]:grid-cols-1">
-        <FormField className="col-span-full" label="Submitted by">
-          <SearchableSelect
-            ariaLabel="Submitted by"
-            disabled={saving}
-            options={submitters.map(({ id, fullName }) => ({ label: fullName, value: id }))}
-            onValueChange={setOwnerId}
-            value={ownerId}
-            placeholder="Select the person this research belongs to…"
-          />
-          <InputControl
-            aria-hidden="true"
-            className="sr-only"
-            name="submitterPersonId"
-            readOnly
-            tabIndex={-1}
-            value={ownerId}
-          />
-          {!ownerId ? <SemanticStatus tone="warning">Select a registered person before saving.</SemanticStatus> : null}
-        </FormField>
-        <FormField
-          className="col-span-full"
-          htmlFor="review-edit-title"
-          label="Title"
-        >
-          <InputControl
-            defaultValue={item.title ?? ""}
-            id="review-edit-title"
-            name="title"
-            required
-          />
-        </FormField>
-        <FormField
-          className="col-span-full"
-          htmlFor="review-edit-url"
-          label="Canonical URL"
-        >
-          <InputControl
-            defaultValue={item.canonicalUrl ?? ""}
-            id="review-edit-url"
-            name="canonicalUrl"
-            required
-            type="url"
-          />
-        </FormField>
-        <FormField
-          className="col-span-full"
-          htmlFor="review-edit-contributors"
-          label="Authors"
-        >
-          <TextareaControl
-            defaultValue={item.contributors
-              .map(({ displayName }) => displayName)
-              .join("\n")}
-            id="review-edit-contributors"
-            name="contributors"
-            rows={2}
-          />
-          <p className="m-0 text-xs text-ink-muted">One author per line, in publication order. Incomplete records can be saved; authors are required before publication.</p>
-        </FormField>
-        <FormField
-          className="col-span-full"
-          htmlFor="review-edit-summary"
-          label="Summary"
-        >
-          <TextareaControl
-            defaultValue={item.summary ?? ""}
-            id="review-edit-summary"
-            name="summary"
-            rows={3}
-          />
-        </FormField>
-        {item.type === "PAPER" ? (
-          <>
-            <FormField htmlFor="review-edit-doi" label="DOI">
-              <InputControl
-                defaultValue={item.paper?.doi ?? ""}
-                id="review-edit-doi"
-                name="doi"
-              />
-            </FormField>
-            <FormField htmlFor="review-edit-year" label="Year">
-              <InputControl
-                defaultValue={item.paper?.year?.toString() ?? ""}
-                id="review-edit-year"
-                max="2200"
-                min="1900"
-                name="year"
-                type="number"
-              />
-            </FormField>
-            <FormField htmlFor="review-edit-venue" label="Venue">
-              <InputControl
-                defaultValue={item.paper?.venue ?? ""}
-                id="review-edit-venue"
-                name="venue"
-              />
-            </FormField>
-            <FormField
-              htmlFor="review-edit-publication-type"
-              label="Publication type"
-            >
-              <InputControl
-                defaultValue={item.paper?.publicationType ?? ""}
-                id="review-edit-publication-type"
-                name="publicationType"
-              />
-            </FormField>
-            <FormField
-              className="col-span-full"
-              htmlFor="review-edit-citation"
-              label="Citation"
-            >
-              <TextareaControl
-                defaultValue={item.paper?.citation ?? ""}
-                id="review-edit-citation"
-                name="citation"
-                rows={3}
-              />
-            </FormField>
-          </>
-        ) : (
-          <>
-            <FormField htmlFor="review-edit-version" label="Version">
-              <InputControl
-                defaultValue={item.dataset?.version ?? ""}
-                id="review-edit-version"
-                name="version"
-              />
-            </FormField>
-            <FormField htmlFor="review-edit-license" label="License">
-              <InputControl
-                defaultValue={item.dataset?.license ?? ""}
-                id="review-edit-license"
-                name="license"
-              />
-            </FormField>
-            <FormField htmlFor="review-edit-modality" label="Modality">
-              <InputControl
-                defaultValue={item.dataset?.modality ?? ""}
-                id="review-edit-modality"
-                name="modality"
-              />
-            </FormField>
-            <FormField
-              className="col-span-full"
-              htmlFor="review-edit-access"
-              label="Access notes"
-            >
-              <TextareaControl
-                defaultValue={item.dataset?.accessNotes ?? ""}
-                id="review-edit-access"
-                name="accessNotes"
-                rows={3}
-              />
-            </FormField>
-          </>
-        )}
-      </div>
-      <div className="flex justify-end">
-        <ButtonControl disabled={saving || !dirty || !ownerId} type="submit" variant="primary">
-          Save changes
-        </ButtonControl>
-      </div>
+        <div className="grid gap-1">
+          <span className="font-mono text-[.62rem] uppercase tracking-[.08em] text-brand">
+            Record editor
+          </span>
+          <strong className="font-sans text-[1.2rem] font-normal">
+            Edit research record
+          </strong>
+          <p className="m-0 text-[.78rem] leading-[1.5] text-ink-muted">
+            Save corrections without repeating completed checks. Changing the
+            title, source URL, DOI or authors restarts verification.
+          </p>
+          {dirty ? (
+            <SemanticStatus tone="warning">Unsaved changes</SemanticStatus>
+          ) : null}
+          {sourceChanged ? (
+            <SemanticStatus tone="warning">
+              Saving these changes restarts source verification
+              {item.reviewStatus === "PUBLISHED"
+                ? " and returns this published record to review"
+                : ""}
+              .
+            </SemanticStatus>
+          ) : null}
+        </div>
+        <div className="grid grid-cols-2 gap-4 max-[700px]:grid-cols-1">
+          <FormField className="col-span-full" label="Submitted by">
+            <SearchableSelect
+              ariaLabel="Submitted by"
+              disabled={saving}
+              options={submitters.map(({ id, fullName }) => ({
+                label: fullName,
+                value: id,
+              }))}
+              onValueChange={setOwnerId}
+              value={ownerId}
+              placeholder="Select the person this research belongs to…"
+            />
+            <InputControl
+              aria-hidden="true"
+              className="sr-only"
+              name="submitterPersonId"
+              readOnly
+              tabIndex={-1}
+              value={ownerId}
+            />
+            {!ownerId ? (
+              <SemanticStatus tone="warning">
+                Select a registered person before saving.
+              </SemanticStatus>
+            ) : null}
+          </FormField>
+          <FormField
+            className="col-span-full"
+            htmlFor="review-edit-title"
+            label="Title"
+          >
+            <InputControl
+              defaultValue={item.title ?? ""}
+              id="review-edit-title"
+              name="title"
+              required
+            />
+          </FormField>
+          <FormField
+            className="col-span-full"
+            htmlFor="review-edit-url"
+            label="Canonical URL"
+          >
+            <InputControl
+              defaultValue={item.canonicalUrl ?? ""}
+              id="review-edit-url"
+              name="canonicalUrl"
+              required
+              type="url"
+            />
+          </FormField>
+          <FormField
+            className="col-span-full"
+            htmlFor="review-edit-contributors"
+            label="Authors"
+          >
+            <TextareaControl
+              defaultValue={item.contributors
+                .map(({ displayName }) => displayName)
+                .join("\n")}
+              id="review-edit-contributors"
+              name="contributors"
+              rows={2}
+            />
+            <p className="m-0 text-xs text-ink-muted">
+              One author per line, in publication order. Incomplete records can
+              be saved; authors are required before publication.
+            </p>
+          </FormField>
+          <FormField
+            className="col-span-full"
+            htmlFor="review-edit-summary"
+            label="Summary"
+          >
+            <TextareaControl
+              defaultValue={item.summary ?? ""}
+              id="review-edit-summary"
+              name="summary"
+              rows={3}
+            />
+          </FormField>
+          {item.type === "PAPER" ? (
+            <>
+              <FormField htmlFor="review-edit-doi" label="DOI">
+                <InputControl
+                  defaultValue={item.paper?.doi ?? ""}
+                  id="review-edit-doi"
+                  name="doi"
+                />
+              </FormField>
+              <FormField htmlFor="review-edit-year" label="Year">
+                <InputControl
+                  defaultValue={item.paper?.year?.toString() ?? ""}
+                  id="review-edit-year"
+                  max="2200"
+                  min="1900"
+                  name="year"
+                  type="number"
+                />
+              </FormField>
+              <FormField htmlFor="review-edit-venue" label="Venue">
+                <InputControl
+                  defaultValue={item.paper?.venue ?? ""}
+                  id="review-edit-venue"
+                  name="venue"
+                />
+              </FormField>
+              <FormField
+                htmlFor="review-edit-publication-type"
+                label="Publication type"
+              >
+                <InputControl
+                  defaultValue={item.paper?.publicationType ?? ""}
+                  id="review-edit-publication-type"
+                  name="publicationType"
+                />
+              </FormField>
+              <FormField
+                className="col-span-full"
+                htmlFor="review-edit-citation"
+                label="Citation"
+              >
+                <TextareaControl
+                  defaultValue={item.paper?.citation ?? ""}
+                  id="review-edit-citation"
+                  name="citation"
+                  rows={3}
+                />
+              </FormField>
+            </>
+          ) : (
+            <>
+              <FormField htmlFor="review-edit-version" label="Version">
+                <InputControl
+                  defaultValue={item.dataset?.version ?? ""}
+                  id="review-edit-version"
+                  name="version"
+                />
+              </FormField>
+              <FormField htmlFor="review-edit-license" label="License">
+                <InputControl
+                  defaultValue={item.dataset?.license ?? ""}
+                  id="review-edit-license"
+                  name="license"
+                />
+              </FormField>
+              <FormField htmlFor="review-edit-modality" label="Modality">
+                <InputControl
+                  defaultValue={item.dataset?.modality ?? ""}
+                  id="review-edit-modality"
+                  name="modality"
+                />
+              </FormField>
+              <FormField
+                className="col-span-full"
+                htmlFor="review-edit-access"
+                label="Access notes"
+              >
+                <TextareaControl
+                  defaultValue={item.dataset?.accessNotes ?? ""}
+                  id="review-edit-access"
+                  name="accessNotes"
+                  rows={3}
+                />
+              </FormField>
+            </>
+          )}
+        </div>
+        <div className="flex justify-end">
+          <ButtonControl
+            disabled={saving || !dirty || !ownerId}
+            type="submit"
+            variant="primary"
+          >
+            Save changes
+          </ButtonControl>
+        </div>
       </fieldset>
     </form>
   );
@@ -1783,7 +1895,14 @@ function researchBulkStatuses(
   const hasProposedMatches = item.contributors.some((contributor) =>
     contributor.matches.some((match) => match.status === "PROPOSED"),
   );
-  if (!sourcePending && !hasProposedMatches && item.contributors.length && item.submittedBy?.person && !item.submittedBy.isSystemAccount) statuses.unshift("PUBLISHED");
+  if (
+    !sourcePending &&
+    !hasProposedMatches &&
+    item.contributors.length &&
+    item.submittedBy?.person &&
+    !item.submittedBy.isSystemAccount
+  )
+    statuses.unshift("PUBLISHED");
   return statuses;
 }
 

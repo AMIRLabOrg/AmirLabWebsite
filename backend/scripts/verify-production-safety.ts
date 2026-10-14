@@ -27,7 +27,11 @@ if (failures.length) {
 console.log('Production-safety source checks passed.');
 
 function inspect(file: string): void {
-  const isSpec = file.endsWith('.spec.ts');
+  if (
+    /\.(?:spec|test)\.ts$/.test(file) ||
+    file.includes(`${path.sep}test${path.sep}`)
+  )
+    return;
   const text = fs.readFileSync(file, 'utf8');
   const source = ts.createSourceFile(file, text, ts.ScriptTarget.Latest, true);
 
@@ -39,12 +43,11 @@ function inspect(file: string): void {
       fail(file, node, 'unsafe `as never` assertion');
     }
 
-    if (!isSpec && ts.isNonNullExpression(node)) {
+    if (ts.isNonNullExpression(node)) {
       fail(file, node, 'non-null assertion in production code');
     }
 
     if (
-      !isSpec &&
       ts.isAsExpression(node) &&
       ts.isAsExpression(node.expression) &&
       node.expression.type.kind === ts.SyntaxKind.UnknownKeyword

@@ -196,7 +196,7 @@ export function PositionAdminList() {
                     </span>
                     {issue ? (
                       <SemanticStatus
-                        loading={loading || updatingIds.has(position?.id ?? "")}
+                        loading={loading}
                         tone={issue.tone ?? "error"}
                       >
                         {issue.message}
@@ -229,7 +229,7 @@ export function PositionAdminList() {
                       !position ||
                       updatingIds.has(position?.id ?? "")
                     }
-                    loading={loading || updatingIds.has(position?.id ?? "")}
+                    loading={loading}
                     onValueChange={(value) => {
                       if (!position) return;
                       const nextEnabled = value === "OPEN";

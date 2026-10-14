@@ -1,11 +1,6 @@
-import { WorkspacePageShell } from "@/components/workspace-page-shell";
-import { ResearchReviewQueue } from "@/components/research-review-queue";
+import { redirect } from "next/navigation";
 
 /** `/workspace/research` and `/workspace/research/{id}` are one review page. */
 export default function ResearchReviewPage() {
-  return (
-    <WorkspacePageShell>
-      <ResearchReviewQueue />
-    </WorkspacePageShell>
-  );
+  redirect("/workspace/submissions");
 }

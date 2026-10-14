@@ -44,7 +44,8 @@ export function ProjectReviewQueue() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
   const reviewIssues = useReviewIssues();
-  const loaded = !loading && !error;
+  const [hasLoaded, setHasLoaded] = useState(false);
+  const initialLoading = loading && !hasLoaded;
 
   function load() {
     setLoading(true);
@@ -52,6 +53,7 @@ export function ProjectReviewQueue() {
       method: "GET",
     })
       .then((nextItems) => {
+        setHasLoaded(true);
         setItems(nextItems);
         reviewIssues.clear();
         setError("");
@@ -70,7 +72,10 @@ export function ProjectReviewQueue() {
       method: "GET",
     })
       .then((nextItems) => {
-        if (active) setItems(nextItems);
+        if (active) {
+          setHasLoaded(true);
+          setItems(nextItems);
+        }
       })
       .catch((value: Error) => {
         if (active) setError(value.message);
@@ -204,8 +209,8 @@ export function ProjectReviewQueue() {
     <section className="grid min-w-0 gap-4">
       <WorkspaceHero
         action={
-          <Badge loading={loading}>
-            {loading ? "Loading" : `${items.length} pending`}
+          <Badge loading={initialLoading}>
+            {initialLoading ? "Loading" : `${items.length} pending`}
           </Badge>
         }
         description="Review member-submitted changes to milestones, team records, outputs, resources, and project settings before they publish."
@@ -239,7 +244,7 @@ export function ProjectReviewQueue() {
         </p>
       ) : null}
 
-      <WorkspaceCollection data-loading={loading || undefined}>
+      <WorkspaceCollection data-loading={initialLoading || undefined}>
         {error && !items.length && !loading ? (
           <StatePanel
             action={{ label: "Retry", onClick: () => void load() }}
@@ -249,8 +254,8 @@ export function ProjectReviewQueue() {
           />
         ) : null}
 
-        {loading || loaded
-          ? (loading && !items.length
+        {loading || hasLoaded
+          ? (initialLoading
               ? Array.from({ length: 4 }, () => undefined)
               : items
             ).map((item, index) => (
@@ -282,7 +287,7 @@ export function ProjectReviewQueue() {
                   <span
                     className={cn(
                       "font-mono text-[.68rem] uppercase tracking-[.08em] text-brand",
-                      loadingPlaceholder(loading, "label", "medium"),
+                      loadingPlaceholder(initialLoading, "label", "medium"),
                     )}
                     data-placeholder="label"
                     data-placeholder-width="medium"
@@ -292,7 +297,7 @@ export function ProjectReviewQueue() {
                   <h2
                     className={cn(
                       "font-sans text-[clamp(1.35rem,2.4vw,2.1rem)] font-[430] leading-[1.08] [overflow-wrap:anywhere]",
-                      loadingPlaceholder(loading, "text", "long"),
+                      loadingPlaceholder(initialLoading, "text", "long"),
                     )}
                     data-placeholder="text"
                     data-placeholder-width="long"
@@ -303,7 +308,7 @@ export function ProjectReviewQueue() {
                   <p
                     className={cn(
                       "m-0 text-[.86rem] text-ink-muted",
-                      loadingPlaceholder(loading, "text", "full"),
+                      loadingPlaceholder(initialLoading, "text", "full"),
                     )}
                     data-placeholder="text"
                     data-placeholder-width="full"
@@ -326,7 +331,7 @@ export function ProjectReviewQueue() {
                     </SemanticStatus>
                   ) : item && issuesFor(item)[0] ? (
                     <SemanticStatus
-                      loading={loading}
+                      loading={initialLoading}
                       tone={issuesFor(item)[0].tone ?? "warning"}
                     >
                       {issuesFor(item)[0].message}
@@ -339,16 +344,16 @@ export function ProjectReviewQueue() {
                     <h3
                       className={cn(
                         "text-[.82rem] font-[750]",
-                        loadingPlaceholder(loading, "label"),
+                        loadingPlaceholder(initialLoading, "label"),
                       )}
-                      data-placeholder={loading ? "label" : undefined}
+                      data-placeholder={initialLoading ? "label" : undefined}
                     >
                       Proposed changes
                     </h3>
                     {item ? (
                       <ProjectChangePreview
                         kind={item.kind}
-                        loading={loading}
+                        loading={initialLoading}
                         payload={item.payload}
                       />
                     ) : (
@@ -364,7 +369,8 @@ export function ProjectReviewQueue() {
                 </div>
                 <ReviewActions
                   className="max-[720px]:col-span-2"
-                  loading={loading}
+                  loading={initialLoading}
+                  disabled={loading}
                   actions={[
                     {
                       confirmDescription:
@@ -416,7 +422,7 @@ export function ProjectReviewQueue() {
             ))
           : null}
 
-        {loaded && !items.length ? (
+        {hasLoaded && !loading && !error && !items.length ? (
           <StatePanel
             action={{ href: "/workspace/projects", label: "View projects" }}
             body="Project edits that require manual review will appear here. Automatic project changes continue to publish directly based on the current policy."

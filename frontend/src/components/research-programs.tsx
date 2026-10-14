@@ -60,7 +60,7 @@ interface ProgramForm {
   leadPersonId: string;
   departmentIds: string[];
   projectIds: string[];
-  outputIds: string[];
+  outputReferences: Array<{ label: string; doi: string; url: string }>;
 }
 
 const emptyForm: ProgramForm = {
@@ -74,7 +74,7 @@ const emptyForm: ProgramForm = {
   leadPersonId: "",
   departmentIds: [],
   projectIds: [],
-  outputIds: [],
+  outputReferences: [],
 };
 
 export function ResearchPrograms() {
@@ -128,7 +128,11 @@ export function ResearchPrograms() {
   const activeCount =
     programs?.filter(({ status }) => status === "ACTIVE").length ?? 0;
   const projectCount = uniqueProgramItems(programs, "PROJECT");
-  const outputCount = uniqueProgramItems(programs, "OUTPUT");
+  const outputCount =
+    programs?.reduce(
+      (total, program) => total + program.outputReferences.length,
+      0,
+    ) ?? 0;
   const departmentCount = new Set(
     programs?.flatMap((program) =>
       program.departments.map(({ departmentId }) => departmentId),
@@ -543,16 +547,105 @@ function ProgramEditor({
         placeholder="Add canonical project…"
         values={form.projectIds}
       />
-      <RelationshipPicker
-        disabled={disabled || loading}
-        loading={loading}
-        icon={<BookOpenText aria-hidden="true" size={16} />}
-        label="Papers and datasets"
-        onChange={(outputIds) => onChange({ ...form, outputIds })}
-        options={(options?.outputs ?? []).map(researchOption)}
-        placeholder="Add research output…"
-        values={form.outputIds}
-      />
+      <fieldset className="m-0 grid min-w-0 gap-3 border-0 p-0">
+        <legend className="mb-3 flex items-center gap-2 text-[.78rem] font-semibold tracking-[.03em]">
+          <BookOpenText aria-hidden="true" size={16} /> Published outputs
+        </legend>
+        {form.outputReferences.map((reference, index) => (
+          <div
+            className="grid grid-cols-2 gap-3 rounded-control border border-line p-3 max-[640px]:grid-cols-1"
+            key={index}
+          >
+            <InputControl
+              aria-label={`Output ${index + 1} label`}
+              disabled={disabled || loading}
+              maxLength={500}
+              onChange={(event) =>
+                onChange({
+                  ...form,
+                  outputReferences: form.outputReferences.map(
+                    (current, item) =>
+                      item === index
+                        ? { ...current, label: event.target.value }
+                        : current,
+                  ),
+                })
+              }
+              placeholder="Published output title"
+              required
+              value={reference.label}
+            />
+            <InputControl
+              aria-label={`Output ${index + 1} DOI`}
+              disabled={disabled || loading}
+              maxLength={300}
+              onChange={(event) =>
+                onChange({
+                  ...form,
+                  outputReferences: form.outputReferences.map(
+                    (current, item) =>
+                      item === index
+                        ? { ...current, doi: event.target.value }
+                        : current,
+                  ),
+                })
+              }
+              placeholder="DOI (preferred)"
+              value={reference.doi}
+            />
+            <InputControl
+              aria-label={`Output ${index + 1} source URL`}
+              className="col-span-2 max-[640px]:col-span-1"
+              disabled={disabled || loading}
+              maxLength={2_000}
+              onChange={(event) =>
+                onChange({
+                  ...form,
+                  outputReferences: form.outputReferences.map(
+                    (current, item) =>
+                      item === index
+                        ? { ...current, url: event.target.value }
+                        : current,
+                  ),
+                })
+              }
+              placeholder="HTTPS source URL"
+              value={reference.url}
+            />
+            <ButtonControl
+              compact
+              disabled={disabled || loading}
+              onClick={() =>
+                onChange({
+                  ...form,
+                  outputReferences: form.outputReferences.filter(
+                    (_, item) => item !== index,
+                  ),
+                })
+              }
+              variant="secondary"
+            >
+              Remove
+            </ButtonControl>
+          </div>
+        ))}
+        <ButtonControl
+          compact
+          disabled={disabled || loading}
+          onClick={() =>
+            onChange({
+              ...form,
+              outputReferences: [
+                ...form.outputReferences,
+                { label: "", doi: "", url: "" },
+              ],
+            })
+          }
+          variant="secondary"
+        >
+          <Plus aria-hidden="true" size={14} /> Add published output
+        </ButtonControl>
+      </fieldset>
 
       <CheckboxControl
         checked={form.publicPageEnabled}
@@ -577,7 +670,6 @@ function ProgramEditor({
       <div className="flex justify-end max-[640px]:grid max-[640px]:justify-stretch">
         <ButtonControl
           disabled={disabled || loading}
-          loading={loading}
           type="submit"
           variant="primary"
         >
@@ -691,7 +783,7 @@ function ProgramReadView({ program }: { program: ResearchProgram }) {
   const projects = program.items.filter(
     ({ researchItem }) => researchItem.type === "PROJECT",
   );
-  const outputs = program.items.filter(
+  const legacyOutputs = program.items.filter(
     ({ researchItem }) => researchItem.type !== "PROJECT",
   );
   return (
@@ -748,9 +840,9 @@ function ProgramReadView({ program }: { program: ResearchProgram }) {
       <ProgramRecords
         icon={<BookOpenText aria-hidden="true" size={16} />}
         label="Papers and datasets"
-        records={outputs.map(
-          ({ researchItem }) => researchItem.title ?? "Untitled output",
-        )}
+        records={legacyOutputs
+          .map(({ researchItem }) => researchItem.title ?? "Untitled output")
+          .concat(program.outputReferences.map(({ label }) => label))}
       />
     </div>
   );
@@ -796,9 +888,11 @@ function programForm(program: ResearchProgram): ProgramForm {
     leadPersonId: program.leadId ?? "",
     name: program.name,
     objective: program.objective,
-    outputIds: program.items
-      .filter(({ researchItem }) => researchItem.type !== "PROJECT")
-      .map(({ researchItemId }) => researchItemId),
+    outputReferences: program.outputReferences.map(({ label, doi, url }) => ({
+      label,
+      doi: doi ?? "",
+      url: url ?? "",
+    })),
     projectIds: program.items
       .filter(({ researchItem }) => researchItem.type === "PROJECT")
       .map(({ researchItemId }) => researchItemId),
@@ -826,7 +920,7 @@ function researchOption(
 
 function uniqueProgramItems(
   programs: ResearchProgram[] | undefined,
-  kind: "OUTPUT" | "PROJECT",
+  kind: "PROJECT",
 ) {
   return new Set(
     programs?.flatMap((program) =>

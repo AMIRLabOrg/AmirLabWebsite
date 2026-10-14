@@ -2,7 +2,7 @@
 
 import * as Popover from "@radix-ui/react-popover";
 import { Filter, X } from "lucide-react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { useEffect, useState, Suspense } from "react";
 import { PaginationControls } from "@/components/pagination-controls";
 import { PaperCard } from "@/components/paper-card";
@@ -67,9 +67,9 @@ function PublicationExplorerInner({
   initialData?: PublicationResponse;
   searchParams?: ReturnType<typeof useSearchParams>;
 }) {
-  const router = useRouter();
-  const currentQuery = searchParams?.toString() ?? "";
   const [query, setQuery] = useState(searchParams?.get("search") ?? "");
+  const [draftQuery, setDraftQuery] = useState(query);
+  const [reload, setReload] = useState(0);
   const [category, setCategory] = useState(
     searchParams?.get("category") ?? "ALL",
   );
@@ -85,8 +85,14 @@ function PublicationExplorerInner({
     page === 1;
   const [loading, setLoading] = useState(!initialData || !defaultQuery);
   const [error, setError] = useState<string>();
-  const result = initialData && defaultQuery ? initialData : filteredResult;
+  const [initialLoadComplete, setInitialLoadComplete] = useState(
+    Boolean(initialData),
+  );
+  const result =
+    initialData && defaultQuery ? initialData : (filteredResult ?? initialData);
   const busy = staticLoading || (!(initialData && defaultQuery) && loading);
+  const initialLoading =
+    staticLoading || (!initialData && !initialLoadComplete);
 
   useEffect(() => {
     if (staticLoading) return;
@@ -100,8 +106,8 @@ function PublicationExplorerInner({
       if (query.trim()) params.set("search", query.trim());
       if (category !== "ALL") params.set("category", category);
       if (year !== "ALL") params.set("year", year);
-      if (currentQuery !== params.toString()) {
-        router.replace(`/papers?${params}`, { scroll: false });
+      if (window.location.search.slice(1) !== params.toString()) {
+        window.history.replaceState(null, "", `/papers?${params}`);
       }
       if (initialData && defaultQuery) return;
       void apiRequest<PublicationResponse>(`/publications?${params}`, {
@@ -121,21 +127,23 @@ function PublicationExplorerInner({
             );
         })
         .finally(() => {
-          if (active) setLoading(false);
+          if (active) {
+            setLoading(false);
+            setInitialLoadComplete(true);
+          }
         });
-    }, 250);
+    }, 0);
     return () => {
       active = false;
       window.clearTimeout(timeout);
     };
   }, [
     category,
-    currentQuery,
     defaultQuery,
     initialData,
     page,
     query,
-    router,
+    reload,
     sort,
     staticLoading,
     year,
@@ -150,6 +158,7 @@ function PublicationExplorerInner({
   function clearFilters() {
     setLoading(true);
     setQuery("");
+    setDraftQuery("");
     setCategory("ALL");
     setYear("ALL");
     setSort("NEWEST");
@@ -181,7 +190,7 @@ function PublicationExplorerInner({
     })) ?? []),
   ];
   const activeFilters = Boolean(
-    query || category !== "ALL" || year !== "ALL" || sort !== "NEWEST",
+    category !== "ALL" || year !== "ALL" || sort !== "NEWEST",
   );
   const visibleRows: Array<ResearchItem | undefined> = busy
     ? Array.from(
@@ -200,26 +209,28 @@ function PublicationExplorerInner({
         <ToolbarSearchField
           id="publication-search"
           label="Search publications"
-          loading={busy}
-          onChange={(event) => {
+          loading={initialLoading}
+          onValueChange={setDraftQuery}
+          onSearch={(value) => {
             setLoading(true);
-            setQuery(event.target.value);
+            setQuery(value.trim());
             setPage(1);
+            setReload((value) => value + 1);
           }}
           placeholder="Search title, author, venue, or DOI"
-          value={query}
+          value={draftQuery}
         />
         <div className="grid grid-cols-2 gap-2 max-[640px]:hidden">
           <SelectControl
             ariaLabel="Publication year"
-            loading={busy}
+            loading={initialLoading}
             onValueChange={(value) => changeFilter(setYear, value)}
             options={yearOptions}
             value={year}
           />
           <SelectControl
             ariaLabel="Sort publications"
-            loading={busy}
+            loading={initialLoading}
             onValueChange={(value) => changeFilter(setSort, value)}
             options={SORT_OPTIONS}
             value={sort}
@@ -227,8 +238,8 @@ function PublicationExplorerInner({
         </div>
         <Popover.Root>
           <Popover.Trigger
-            className={`hidden min-h-[var(--control-height)] cursor-pointer items-center gap-[.35rem] rounded-control border border-line-strong px-[.7rem] py-[.55rem] text-[.72rem] max-[640px]:inline-flex ${busy ? "pointer-events-none border-transparent bg-surface-subtle text-transparent" : "bg-transparent text-ink"}`}
-            disabled={busy}
+            className={`hidden min-h-[var(--control-height)] cursor-pointer items-center gap-[.35rem] rounded-control border border-line-strong px-[.7rem] py-[.55rem] text-[.72rem] max-[640px]:inline-flex ${initialLoading ? "pointer-events-none border-transparent bg-surface-subtle text-transparent" : "bg-transparent text-ink"}`}
+            disabled={initialLoading}
           >
             <Filter aria-hidden="true" size={16} /> Filters
           </Popover.Trigger>
@@ -244,7 +255,7 @@ function PublicationExplorerInner({
               >
                 <SelectControl
                   ariaLabel="Publication year"
-                  loading={busy}
+                  loading={initialLoading}
                   onValueChange={(value) => changeFilter(setYear, value)}
                   options={yearOptions}
                   value={year}
@@ -256,7 +267,7 @@ function PublicationExplorerInner({
               >
                 <SelectControl
                   ariaLabel="Sort publications"
-                  loading={busy}
+                  loading={initialLoading}
                   onValueChange={(value) => changeFilter(setSort, value)}
                   options={SORT_OPTIONS}
                   value={sort}
@@ -273,32 +284,41 @@ function PublicationExplorerInner({
           ariaLabel="Publication categories"
           className="min-w-0 overflow-x-auto max-[640px]:order-2 max-[640px]:w-full"
           onValueChange={(value) => changeFilter(setCategory, value)}
-          loading={busy}
+          loading={initialLoading}
           options={visibleCategories}
           value={category}
         />
         <div
           className="flex min-h-10 shrink-0 items-center gap-[.65rem] font-mono text-[.58rem] text-ink-muted max-[640px]:order-1 max-[640px]:justify-between"
-          data-loading={busy || undefined}
+          data-loading={initialLoading || undefined}
         >
-          <Badge loading={busy}>
-            {busy ? "00 results" : `${result?.total ?? 0} results`}
+          <Badge loading={initialLoading}>
+            {initialLoading
+              ? "00 results"
+              : result
+                ? `${result.total} results`
+                : "Results unavailable"}
           </Badge>
           {activeFilters ? (
             <ButtonControl
               className="font-[inherit]"
               compact
-              loading={busy}
+              loading={initialLoading}
               onClick={clearFilters}
-              variant="ghost"
+              variant="secondary"
             >
-              Clear <X aria-hidden="true" size={13} />
+              Reset filters <X aria-hidden="true" size={13} />
             </ButtonControl>
           ) : null}
         </div>
       </div>
 
       <div className="min-w-0">
+        {error && result && !busy ? (
+          <p role="alert" className="mb-4 text-sm text-danger">
+            {error}
+          </p>
+        ) : null}
         {error && !result && !busy ? (
           <StatePanel
             body={error}
@@ -324,7 +344,7 @@ function PublicationExplorerInner({
         )}
         {busy || result ? (
           <PaginationControls
-            loading={busy}
+            loading={initialLoading}
             onPageChange={(next) => {
               setLoading(true);
               setPage(next);

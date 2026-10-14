@@ -46,44 +46,15 @@ export function getAdminCredentials() {
   return cachedAdminCredentials;
 }
 
-export interface OpenAlexLink {
-  label: string;
-  sortOrder: number;
-  type: 'OPENALEX';
-  url: string;
-}
-
-export function openAlexLinkFor(person: SeedPerson): OpenAlexLink | null {
-  if (!person.openAlexAuthorId) return null;
-  return {
-    label: 'OpenAlex',
-    sortOrder: Math.max(-1, ...person.links.map((link) => link.sortOrder)) + 1,
-    type: 'OPENALEX',
-    url: `https://openalex.org/authors/${person.openAlexAuthorId}`,
-  };
-}
-
 export async function ensureOpenAlexArtifacts(
   prisma: PrismaClient,
   personId: string,
   person: SeedPerson,
 ): Promise<boolean> {
-  const link = openAlexLinkFor(person);
-  if (!link || !person.openAlexAuthorId) return false;
-  const existingLink = await prisma.personLink.findUnique({
-    where: { personId_url: { personId, url: link.url } },
-  });
-  if (!existingLink) {
-    await prisma.personLink.create({
-      data: {
-        label: link.label,
-        personId,
-        sortOrder: link.sortOrder,
-        type: link.type,
-        url: link.url,
-      },
-    });
-  }
+  if (!person.openAlexAuthorId) return false;
+  await prisma.$executeRawUnsafe(
+    'CREATE SEQUENCE IF NOT EXISTS "OpenAlexObservationSequence"',
+  );
   const existingProfile = await prisma.openAlexProfile.findUnique({
     where: { personId },
   });
@@ -92,6 +63,7 @@ export async function ensureOpenAlexArtifacts(
       data: {
         authorId: person.openAlexAuthorId,
         bindingVersion: 1,
+        boundAt: new Date(),
         nextAttemptAt: new Date(),
         personId,
         status: 'QUEUED',
