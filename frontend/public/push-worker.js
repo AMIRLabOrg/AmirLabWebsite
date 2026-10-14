@@ -1,5 +1,5 @@
-const CACHE = "amirlab-offline-v2";
-const STATIC = ["/offline.html", "/icon-192.png", "/icon-512.png", "/apple-touch-icon.png"];
+const CACHE = "amirlab-offline-v3";
+const STATIC = ["/offline.html", "/icon-192.png", "/icon-512.png", "/apple-touch-icon.png", "/fonts/ibm-plex-sans-400.woff2", "/fonts/ibm-plex-mono-400.woff2", "/fonts/fraunces-400.woff2"];
 self.addEventListener("install", (event) => {
   event.waitUntil(caches.open(CACHE).then((cache) => cache.addAll(STATIC)));
 });

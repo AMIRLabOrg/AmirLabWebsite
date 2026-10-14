@@ -6,19 +6,22 @@
   <meta name="theme-color" content="#315bd6">
   <title>Offline · AmirLab</title>
   <style>
+    @font-face { font-family: "IBM Plex Sans"; src: url("/fonts/ibm-plex-sans-400.woff2") format("woff2"); font-weight: 400; font-display: swap; }
+    @font-face { font-family: "IBM Plex Mono"; src: url("/fonts/ibm-plex-mono-400.woff2") format("woff2"); font-weight: 400; font-display: swap; }
+    @font-face { font-family: "Fraunces"; src: url("/fonts/fraunces-400.woff2") format("woff2"); font-weight: 400; font-display: swap; }
     * { box-sizing: border-box; }
-    body { margin: 0; background: #f7f8f6; color: #1f2421; font: 14px/1.6 system-ui,sans-serif; }
-    .frame { max-width: 1240px; margin: 0 auto; border-inline: 1px dashed #b7c0ba; }
+    body { min-height: 100vh; min-height: 100svh; margin: 0; background: #f7f8f6; color: #1f2421; font: 14px/1.6 "IBM Plex Sans",sans-serif; }
+    .frame { display: flex; min-height: 100vh; min-height: 100svh; max-width: 1240px; margin: 0 auto; flex-direction: column; border-inline: 1px dashed #b7c0ba; }
     header { padding: 24px clamp(20px,4vw,48px); border-bottom: 1px solid #b7c0ba; }
     header a { display: inline-flex; align-items: center; gap: 12px; color: #315bd6; font-size: 20px; text-decoration: none; }
     img { width: 32px; height: 32px; }
-    main { min-height: 60vh; display: grid; align-content: center; justify-items: start; gap: 24px; padding: 80px clamp(20px,4vw,48px); border-bottom: 1px solid #b7c0ba; }
-    .label { color: #315bd6; font: 12px/1.5 monospace; letter-spacing: .12em; text-transform: uppercase; }
-    h1 { margin: 0; font: 400 clamp(40px,6vw,72px)/1.08 Georgia,serif; letter-spacing: -.025em; }
+    main { flex: 1; display: grid; align-content: center; justify-items: start; gap: 24px; padding: 80px clamp(20px,4vw,48px); border-bottom: 1px solid #b7c0ba; }
+    .label { color: #315bd6; font: 12px/1.5 "IBM Plex Mono",monospace; letter-spacing: .12em; text-transform: uppercase; }
+    h1 { margin: 0; font: 400 clamp(40px,6vw,72px)/1.08 "Fraunces",serif; letter-spacing: -.025em; }
     p { max-width: 520px; margin: 0; color: #66716b; }
     .button { display: inline-flex; min-height: 40px; align-items: center; padding: 0 14px; background: #315bd6; color: white; border: 1px solid #315bd6; border-radius: 3px; font-size: 12px; font-weight: 500; text-decoration: none; }
     a:focus-visible { outline: 3px solid #315bd6; outline-offset: 4px; }
-    footer { padding: 24px clamp(20px,4vw,48px); color: #66716b; font: 10px/1.6 monospace; }
+    footer { padding: 24px clamp(20px,4vw,48px); color: #66716b; font: 10px/1.6 "IBM Plex Mono",monospace; }
     @media(max-width:640px) { .frame { margin-inline: 16px; } main { padding-block: 48px; } }
   </style>
 </head>
