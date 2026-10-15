@@ -74,7 +74,7 @@ export function ProfileRecords({
         {visible.map((record) => (
           <a
             aria-disabled={loading || undefined}
-            className="grid min-h-[60px] flex-[1_0_190px] grid-cols-[minmax(0,1fr)_auto] items-center gap-[.5rem] px-4 py-[.8rem] transition-colors hover:text-brand"
+            className="flex min-h-[60px] flex-[1_0_auto] items-center gap-[.5rem] px-4 py-[.8rem] transition-colors hover:text-brand"
             href={loading ? undefined : `#profile-section-${record.id}`}
             key={record.id}
             tabIndex={loading ? -1 : undefined}
@@ -88,15 +88,6 @@ export function ProfileRecords({
             >
               {record.title}
             </strong>
-            <small
-              className={cn(
-                "font-mono text-[.62rem] text-ink-muted",
-                loading && loadingPlaceholder(true, "value"),
-              )}
-              data-placeholder={loading ? "value" : undefined}
-            >
-              {loading ? "00" : record.entryCount}
-            </small>
           </a>
         ))}
       </nav>

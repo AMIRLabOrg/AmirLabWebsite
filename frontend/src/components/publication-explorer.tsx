@@ -208,7 +208,7 @@ function PublicationExplorerInner({
       aria-label="Publication archive"
       contentClassName="grid gap-4 pt-6 pb-20"
     >
-      <div className="grid grid-cols-[minmax(240px,1.55fr)_minmax(300px,.85fr)] items-end gap-[.65rem] pb-[.85rem] max-[640px]:grid-cols-[minmax(0,1fr)_auto]">
+      <div className="grid grid-cols-[minmax(240px,1.55fr)_minmax(300px,.85fr)] items-end gap-[.65rem] pb-[.85rem] min-[641px]:max-[760px]:grid-cols-1 max-[640px]:grid-cols-[minmax(0,1fr)_auto]">
         <ToolbarSearchField
           id="publication-search"
           label="Search publications"
@@ -282,7 +282,7 @@ function PublicationExplorerInner({
         </Popover.Root>
       </div>
 
-      <div className="flex items-end justify-between gap-4 overflow-hidden max-[640px]:flex-col max-[640px]:items-stretch max-[640px]:gap-0">
+      <div className="flex items-end justify-between gap-4 max-[640px]:flex-col max-[640px]:items-stretch max-[640px]:gap-0">
         <TabsControl
           ariaLabel="Publication categories"
           className="min-w-0 overflow-x-auto max-[640px]:order-2 max-[640px]:w-full"

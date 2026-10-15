@@ -164,7 +164,7 @@ function Founder({
               <p
                 aria-hidden={loading || undefined}
                 className={cn(
-                  "mt-[.55rem] font-mono text-[.64rem] leading-[1.5] text-ink-muted",
+                  "mt-3 mb-2 font-sans text-[.82rem] font-semibold leading-[1.5] text-ink",
                   loadingPlaceholder(loading, "text", "long"),
                 )}
                 data-placeholder={loading ? "text" : undefined}

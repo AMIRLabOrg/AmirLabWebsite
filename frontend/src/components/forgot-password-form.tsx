@@ -2,7 +2,8 @@
 
 import { SyntheticEvent, useState } from "react";
 import { ApiRequestError, apiRequest } from "@/lib/client-api";
-import { ButtonControl, ButtonLink } from "@/components/ui/button-control";
+import Link from "next/link";
+import { ButtonControl } from "@/components/ui/button-control";
 import { InputControl } from "@/components/ui/form-controls";
 import { FormField, FormMessage } from "@/components/ui/form-field";
 
@@ -48,13 +49,12 @@ export function ForgotPasswordForm() {
         <p className="m-0 text-[.8rem] leading-[1.55] text-ink-muted">
           The newest reset link replaces any earlier one.
         </p>
-        <ButtonLink
-          className="justify-self-start"
+        <Link
+          className="justify-self-start text-[.8rem] font-medium text-brand focus-visible:outline-2 focus-visible:outline-brand"
           href="/login"
-          variant="secondary"
         >
           Return to login
-        </ButtonLink>
+        </Link>
       </div>
     );
   }
@@ -81,9 +81,12 @@ export function ForgotPasswordForm() {
         <ButtonControl disabled={sending} type="submit" variant="primary">
           Send reset link
         </ButtonControl>
-        <ButtonLink href="/login" variant="secondary">
+        <Link
+          className="text-[.8rem] font-medium text-brand focus-visible:outline-2 focus-visible:outline-brand"
+          href="/login"
+        >
           Cancel
-        </ButtonLink>
+        </Link>
       </div>
     </form>
   );

@@ -49,7 +49,7 @@ export function PersonProfileView({
         <PublicShell className="relative grid grid-cols-[minmax(280px,420px)_minmax(0,1fr)] items-start gap-[clamp(3rem,7vw,7rem)] pt-[clamp(2.3rem,4.5vw,4.2rem)] pb-[clamp(3rem,6vw,5rem)] max-[960px]:max-w-[760px] max-[960px]:grid-cols-1 max-[640px]:gap-8 max-[640px]:pt-8 max-[640px]:pb-12">
           <div className="relative z-[1] grid gap-4">
             <Link
-              className="inline-flex w-fit items-center gap-1.5 text-[.78rem] text-ink-muted hover:text-brand"
+              className="inline-flex w-fit items-center gap-1.5 text-[.78rem] text-brand"
               href="/people"
             >
               <ArrowLeft aria-hidden="true" size={16} /> All people

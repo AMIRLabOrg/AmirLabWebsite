@@ -28,3 +28,24 @@ it("moves an unranked person between Others and Alumni using membership status",
   expect(screen.getByRole("heading", { name: "Alumni" })).toBeTruthy();
   expect(screen.queryByRole("heading", { name: "Others" })).toBeNull();
 });
+
+it.each([
+  "Professor & Head | Department | University",
+  "Professor and department head",
+])("keeps the whole founder headline emphasized: %s", (headline) => {
+  const person = {
+    id: "founder-1",
+    slug: "founder",
+    fullName: "Lab Founder",
+    roleTitle: "Founder & Research Director",
+    headline,
+    isAlumni: false,
+    rank: null,
+    biography: null,
+    avatar: null,
+  } as Person;
+  render(<PeopleDirectory people={[person]} />);
+  const line = screen.getByText(headline);
+  expect(line.textContent).toBe(headline);
+  expect(line.classList.contains("font-semibold")).toBe(true);
+});

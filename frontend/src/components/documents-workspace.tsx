@@ -362,6 +362,7 @@ function IssueDocumentPanel({
         <div className="grid grid-cols-2 gap-4 max-[640px]:grid-cols-1">
           <FormField label="Document type">
             <SelectControl
+              ariaLabel="Document type"
               disabled={loading || saving}
               onValueChange={(value) => {
                 const nextKind = value as DocumentKind;
@@ -383,6 +384,7 @@ function IssueDocumentPanel({
           </FormField>
           <FormField label="Template">
             <SelectControl
+              ariaLabel="Template"
               disabled={loading || saving || !activeTemplates.length}
               onValueChange={setTemplateId}
               options={activeTemplates.map((template) => ({
@@ -395,6 +397,7 @@ function IssueDocumentPanel({
           </FormField>
           <FormField label="Recipient source">
             <SearchableSelect
+              ariaLabel="Recipient source"
               disabled={loading || saving}
               onValueChange={selectRecipient}
               options={[
@@ -785,6 +788,7 @@ function TemplatesPanel({
           </FormField>
           <FormField label="Document type">
             <SelectControl
+              ariaLabel="Document type"
               disabled={loading || saving || Boolean(selected)}
               onValueChange={(value) =>
                 setDraft({ ...draft, kind: value as DocumentKind })
@@ -1104,6 +1108,7 @@ function ApprovalPanel({
         </WorkspaceRecordPanelHeader>
         <FormField label="Approving person">
           <SearchableSelect
+            ariaLabel="Approving person"
             disabled={loading || saving}
             onValueChange={setPersonId}
             options={people.map((person) => ({

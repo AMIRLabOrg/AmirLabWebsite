@@ -20,7 +20,7 @@ export function PeoplePageView({
         ["founder", "advisor", "lead", "senior"].includes(group),
       ).length,
       singular: "Faculty",
-      plural: "Faculties",
+      plural: "Faculty",
     },
     {
       count: groups.filter((group) => group === "researcher").length,
@@ -29,8 +29,8 @@ export function PeoplePageView({
     },
     {
       count: groups.filter((group) => group === "assistant").length,
-      singular: "Assistant",
-      plural: "Assistants",
+      singular: "Research assistant",
+      plural: "Research assistants",
     },
     {
       count: groups.filter((group) => group === "intern").length,
@@ -53,14 +53,24 @@ export function PeoplePageView({
               data-placeholder="text"
             />
           ) : (
-            <span>
-              {counts
-                .map(
-                  ({ count, plural, singular }) =>
-                    `${count} ${count === 1 ? singular : plural}`,
-                )
-                .join(" · ")}
-            </span>
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-2 font-sans text-[.82rem] leading-relaxed">
+              {counts.map(({ count, plural, singular }, index) => (
+                <span
+                  className="inline-flex items-baseline gap-1.5"
+                  key={plural}
+                >
+                  {index > 0 ? (
+                    <span aria-hidden="true" className="mr-2 text-ink-faint">
+                      ·
+                    </span>
+                  ) : null}
+                  <strong className="font-semibold tabular-nums text-ink">
+                    {count}
+                  </strong>
+                  {count === 1 ? singular : plural}
+                </span>
+              ))}
+            </div>
           )
         }
         title="People behind the work"

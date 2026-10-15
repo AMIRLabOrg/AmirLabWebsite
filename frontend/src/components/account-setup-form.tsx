@@ -4,7 +4,8 @@ import { SyntheticEvent, useState } from "react";
 import { PASSWORD_MAX_LENGTH, PASSWORD_MIN_LENGTH } from "@/lib/auth";
 import { apiRequest } from "@/lib/client-api";
 import { PasswordField } from "@/components/ui/password-field";
-import { ButtonControl, ButtonLink } from "@/components/ui/button-control";
+import Link from "next/link";
+import { ButtonControl } from "@/components/ui/button-control";
 
 export function AccountSetupForm({ token }: { token?: string }) {
   const [error, setError] = useState<string>();
@@ -50,7 +51,12 @@ export function AccountSetupForm({ token }: { token?: string }) {
         >
           This account setup link is missing its token.
         </p>
-        <ButtonLink href="/login">Return to login</ButtonLink>
+        <Link
+          className="w-fit text-[.8rem] font-medium text-brand focus-visible:outline-2 focus-visible:outline-brand"
+          href="/login"
+        >
+          Return to login
+        </Link>
       </div>
     );
   }
