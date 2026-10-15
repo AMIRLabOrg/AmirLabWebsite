@@ -152,6 +152,7 @@ export function EmailChangePanel() {
         <div className="grid grid-cols-2 gap-[1.2rem] max-[640px]:grid-cols-1">
           <FormField htmlFor="self-current-email" label="Current email">
             <InputControl
+              placeholder={"name@example.com"}
               disabled
               id="self-current-email"
               loading={loading}
@@ -160,6 +161,7 @@ export function EmailChangePanel() {
           </FormField>
           <FormField htmlFor="self-new-email" label="New email">
             <InputControl
+              placeholder={"name@example.com"}
               id="self-new-email"
               loading={loading}
               onChange={(event) => setNewEmail(event.target.value)}
@@ -200,6 +202,7 @@ export function EmailChangePanel() {
           </p>
           <FormField htmlFor="self-email-otp" label="Verification code">
             <InputControl
+              placeholder={"Enter the code from your email"}
               autoComplete="one-time-code"
               id="self-email-otp"
               inputMode="numeric"

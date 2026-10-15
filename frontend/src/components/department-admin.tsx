@@ -378,6 +378,7 @@ export function DepartmentEditor({ id }: { id?: string }) {
           <div className="grid gap-[1.2rem]">
             <FormField htmlFor="department-name" label="Name">
               <InputControl
+                placeholder={"e.g. Artificial Intelligence"}
                 loading={loading}
                 disabled={loading}
                 id="department-name"
@@ -390,6 +391,7 @@ export function DepartmentEditor({ id }: { id?: string }) {
             </FormField>
             <FormField htmlFor="department-description" label="Description">
               <TextareaControl
+                placeholder={"Describe the purpose and scope"}
                 loading={loading}
                 disabled={loading}
                 id="department-description"

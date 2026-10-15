@@ -17,7 +17,7 @@ import {
   WorkspaceEmpty,
   WorkspaceHero,
   WorkspacePanel,
-  WorkspaceRuleBand,
+  WorkspaceSplit,
   WorkspaceSurface,
 } from "@/components/ui/workspace-surface";
 import { ApiRequestError, apiRequest } from "@/lib/client-api";
@@ -278,273 +278,263 @@ export function WeeklyReportReview() {
         successTitle="Bulk weekly report review saved"
       />
 
-      <WorkspaceRuleBand contentClassName="grid grid-cols-[minmax(0,1.22fr)_minmax(320px,.78fr)] !px-0 max-[900px]:grid-cols-1">
-        <div className="min-w-0 [&>section]:border-0">
-          <WorkspacePanel
-            description="Select a report to inspect its evidence and plan."
-            eyebrow="Queue"
-            title={
-              filters.find(({ value }) => value === filter)?.label ?? "Reports"
-            }
+      <WorkspaceSplit>
+        <WorkspacePanel
+          description="Select a report to inspect its evidence and plan."
+          eyebrow="Queue"
+          title={
+            filters.find(({ value }) => value === filter)?.label ?? "Reports"
+          }
+        >
+          <div
+            aria-busy={!reports}
+            className="grid"
+            data-loading={!reports || undefined}
           >
-            <div
-              aria-busy={!reports}
-              className="grid"
-              data-loading={!reports || undefined}
-            >
-              {(reports
-                ? visible
-                : Array.from({ length: 3 }, () => undefined)
-              ).map((report, index) => (
-                <div
-                  className="relative grid grid-cols-[auto_minmax(0,1fr)] items-stretch border-b border-line last:border-b-0"
-                  key={report?.id ?? `weekly-review-loading-${index}`}
-                >
-                  {report ? (
-                    <ReviewIssueStamp
-                      className="right-2 top-2"
-                      issue={reviewIssues.forItem(report.id)[0]}
-                    />
-                  ) : null}
-                  <div className="grid place-items-center px-4">
-                    {report ? (
-                      <CheckboxControl
-                        ariaLabel={`Select ${report.author.person?.fullName ?? report.author.email ?? "weekly report"}`}
-                        checked={bulk.isSelected(report.id)}
-                        className="gap-0"
-                        disabled={blockedIds.has(report.id)}
-                        id={`weekly-review-select-${report.id}`}
-                        onCheckedChange={(checked) =>
-                          bulk.toggle(report.id, checked)
-                        }
-                      />
-                    ) : (
-                      <span
-                        className={loadingPlaceholder(true, "control")}
-                        data-placeholder="control"
-                      />
-                    )}
-                  </div>
-                  <ButtonControl
-                    aria-pressed={Boolean(report && selectedId === report.id)}
-                    className="min-h-[74px] w-full justify-between rounded-none border-0 px-5 py-4 pr-10 text-left hover:bg-surface-subtle aria-pressed:bg-surface-subtle aria-pressed:text-ink"
-                    loading={!report}
-                    onClick={
-                      report
-                        ? () => {
-                            select(report.id);
-                            setNote(report.reviewNote ?? "");
-                          }
-                        : undefined
-                    }
-                    variant="secondary"
-                  >
-                    <span className="grid gap-1">
-                      <strong
-                        className={loadingPlaceholder(!report, "text", "long")}
-                        data-placeholder={!report ? "text" : undefined}
-                        data-placeholder-width="long"
-                      >
-                        {report?.author.person?.fullName ??
-                          report?.author.email ??
-                          "Researcher name"}
-                      </strong>
-                      <small
-                        className={cn(
-                          "text-[.7rem] text-ink-muted",
-                          loadingPlaceholder(!report, "label", "medium"),
-                        )}
-                        data-placeholder={!report ? "label" : undefined}
-                        data-placeholder-width="medium"
-                      >
-                        {report
-                          ? reportWeek(report.weekStart)
-                          : "Reporting week"}
-                      </small>
-                      {report && reviewIssues.forItem(report.id)[0] ? (
-                        <SemanticStatus
-                          loading={!report}
-                          tone={
-                            reviewIssues.forItem(report.id)[0].tone ?? "warning"
-                          }
-                        >
-                          {reviewIssues.forItem(report.id)[0].message}
-                        </SemanticStatus>
-                      ) : null}
-                    </span>
-                    <Badge
-                      loading={!report}
-                      tone={report ? statusTone(report.status) : "neutral"}
-                    >
-                      {report ? reportStatusLabel(report.status) : "Submitted"}
-                    </Badge>
-                  </ButtonControl>
-                </div>
-              ))}
-              {reports && visible.length === 0 ? (
-                <WorkspaceEmpty>
-                  No reports match this review state.
-                </WorkspaceEmpty>
-              ) : null}
-            </div>
-          </WorkspacePanel>
-        </div>
-
-        <div className="min-w-0 border-l border-line-strong [&>section]:border-0 max-[900px]:border-l-0 max-[900px]:border-t">
-          <WorkspacePanel
-            description="Review outcomes and blockers in the context of the projects covered."
-            eyebrow="Report detail"
-            title={
-              selected
-                ? (selected.author.person?.fullName ??
-                  selected.author.email ??
-                  "Weekly report")
-                : "Select a report"
-            }
-          >
-            {!reports || selected ? (
-              <div className="grid gap-0" data-loading={!reports || undefined}>
-                <ReportSection
-                  label="Projects"
-                  loading={!reports}
-                  value={
-                    selected
-                      ? selected.projects
-                          .map(
-                            ({ project }) =>
-                              project.researchItem.title ?? "Untitled project",
-                          )
-                          .join(" · ")
-                      : "Linked research projects"
-                  }
-                />
-                <ReportSection
-                  label="Evidence outputs"
-                  loading={!reports}
-                  value={
-                    selected
-                      ? selected.outputs.length
-                        ? selected.outputs
-                            .map(
-                              ({ output }) =>
-                                `${output.title ?? "Untitled output"} (${output.type === "PAPER" ? "paper" : "dataset"})`,
-                            )
-                            .join(" · ")
-                        : "No paper or dataset linked."
-                      : "Linked papers and datasets"
-                  }
-                />
-                <ReportSection
-                  label="Completed work and evidence"
-                  loading={!reports}
-                  value={
-                    selected?.accomplishments ??
-                    "Research outcomes and evidence from the reporting week."
-                  }
-                />
-                <ReportSection
-                  label="Blockers and decisions needed"
-                  loading={!reports}
-                  value={
-                    selected
-                      ? selected.blockers || "No blockers reported."
-                      : "Constraints and decisions that need supervisor attention."
-                  }
-                />
-                <ReportSection
-                  label="Plan for next week"
-                  loading={!reports}
-                  value={
-                    selected?.nextWeekPlan ??
-                    "Expected research outcomes for the next reporting week."
-                  }
-                />
-                {selected && reviewIssues.forItem(selected.id)[0] ? (
-                  <div className="border-t border-line px-6 py-4 max-[640px]:p-5">
-                    <SemanticStatus
-                      loading={!reports}
-                      tone={
-                        reviewIssues.forItem(selected.id)[0].tone ?? "warning"
-                      }
-                    >
-                      {reviewIssues.forItem(selected.id)[0].message}
-                    </SemanticStatus>
-                  </div>
-                ) : null}
-                {selected?.status === "SUBMITTED" ? (
-                  <div className="grid gap-4 border-t border-line px-6 py-5 max-[640px]:p-5">
-                    <FormField
-                      htmlFor="weekly-review-note"
-                      label="Supervisor note"
-                      labelClassName="text-[.78rem] font-semibold tracking-[.04em]"
-                    >
-                      <TextareaControl
-                        id="weekly-review-note"
-                        onChange={(event) => setNote(event.target.value)}
-                        placeholder="Acknowledge progress or explain a required change."
-                        value={note}
-                      />
-                    </FormField>
-                    <div className="flex flex-wrap justify-end gap-3 max-[640px]:grid max-[640px]:grid-cols-1">
-                      <ButtonControl
-                        disabled={
-                          working ||
-                          Boolean(selected && blockedIds.has(selected.id)) ||
-                          Boolean(
-                            selected &&
-                            reviewIssues.forItem(selected.id).length,
-                          )
-                        }
-                        title={
-                          selected && blockedIds.has(selected.id)
-                            ? selfReviewReason
-                            : undefined
-                        }
-                        onClick={() => void review("CHANGES_REQUESTED")}
-                        variant="secondary"
-                      >
-                        <RotateCcw aria-hidden="true" size={16} /> Request
-                        changes
-                      </ButtonControl>
-                      <ButtonControl
-                        disabled={
-                          working ||
-                          Boolean(selected && blockedIds.has(selected.id)) ||
-                          Boolean(
-                            selected &&
-                            reviewIssues.forItem(selected.id).length,
-                          )
-                        }
-                        title={
-                          selected && blockedIds.has(selected.id)
-                            ? selfReviewReason
-                            : undefined
-                        }
-                        onClick={() => void review("REVIEWED")}
-                        variant="primary"
-                      >
-                        <CheckCircle2 aria-hidden="true" size={16} /> Mark
-                        reviewed
-                      </ButtonControl>
-                    </div>
-                  </div>
-                ) : selected?.reviewNote ? (
-                  <ReportSection
-                    label="Supervisor note"
-                    value={selected.reviewNote}
+            {(reports
+              ? visible
+              : Array.from({ length: 3 }, () => undefined)
+            ).map((report, index) => (
+              <div
+                className="relative grid grid-cols-[auto_minmax(0,1fr)] items-stretch border-b border-line last:border-b-0"
+                key={report?.id ?? `weekly-review-loading-${index}`}
+              >
+                {report ? (
+                  <ReviewIssueStamp
+                    className="right-2 top-2"
+                    issue={reviewIssues.forItem(report.id)[0]}
                   />
                 ) : null}
+                <div className="grid place-items-center px-4">
+                  {report ? (
+                    <CheckboxControl
+                      ariaLabel={`Select ${report.author.person?.fullName ?? report.author.email ?? "weekly report"}`}
+                      checked={bulk.isSelected(report.id)}
+                      className="gap-0"
+                      disabled={blockedIds.has(report.id)}
+                      id={`weekly-review-select-${report.id}`}
+                      onCheckedChange={(checked) =>
+                        bulk.toggle(report.id, checked)
+                      }
+                    />
+                  ) : (
+                    <span
+                      className={loadingPlaceholder(true, "control")}
+                      data-placeholder="control"
+                    />
+                  )}
+                </div>
+                <ButtonControl
+                  aria-pressed={Boolean(report && selectedId === report.id)}
+                  className="min-h-[74px] w-full justify-between rounded-none border-0 px-5 py-4 pr-10 text-left hover:bg-surface-subtle aria-pressed:bg-surface-subtle aria-pressed:text-ink"
+                  loading={!report}
+                  onClick={
+                    report
+                      ? () => {
+                          select(report.id);
+                          setNote(report.reviewNote ?? "");
+                        }
+                      : undefined
+                  }
+                  variant="secondary"
+                >
+                  <span className="grid gap-1">
+                    <strong
+                      className={loadingPlaceholder(!report, "text", "long")}
+                      data-placeholder={!report ? "text" : undefined}
+                      data-placeholder-width="long"
+                    >
+                      {report?.author.person?.fullName ??
+                        report?.author.email ??
+                        "Researcher name"}
+                    </strong>
+                    <small
+                      className={cn(
+                        "text-[.7rem] text-ink-muted",
+                        loadingPlaceholder(!report, "label", "medium"),
+                      )}
+                      data-placeholder={!report ? "label" : undefined}
+                      data-placeholder-width="medium"
+                    >
+                      {report ? reportWeek(report.weekStart) : "Reporting week"}
+                    </small>
+                    {report && reviewIssues.forItem(report.id)[0] ? (
+                      <SemanticStatus
+                        loading={!report}
+                        tone={
+                          reviewIssues.forItem(report.id)[0].tone ?? "warning"
+                        }
+                      >
+                        {reviewIssues.forItem(report.id)[0].message}
+                      </SemanticStatus>
+                    ) : null}
+                  </span>
+                  <Badge
+                    loading={!report}
+                    tone={report ? statusTone(report.status) : "neutral"}
+                  >
+                    {report ? reportStatusLabel(report.status) : "Submitted"}
+                  </Badge>
+                </ButtonControl>
               </div>
-            ) : (
+            ))}
+            {reports && visible.length === 0 ? (
               <WorkspaceEmpty>
-                {missing
-                  ? "This weekly report is no longer available. Choose another report from the queue."
-                  : "Select a report from the queue."}
+                No reports match this review state.
               </WorkspaceEmpty>
-            )}
-          </WorkspacePanel>
-        </div>
-      </WorkspaceRuleBand>
+            ) : null}
+          </div>
+        </WorkspacePanel>
+        <WorkspacePanel
+          description="Review outcomes and blockers in the context of the projects covered."
+          eyebrow="Report detail"
+          title={
+            selected
+              ? (selected.author.person?.fullName ??
+                selected.author.email ??
+                "Weekly report")
+              : "Select a report"
+          }
+        >
+          {!reports || selected ? (
+            <div className="grid gap-0" data-loading={!reports || undefined}>
+              <ReportSection
+                label="Projects"
+                loading={!reports}
+                value={
+                  selected
+                    ? selected.projects
+                        .map(
+                          ({ project }) =>
+                            project.researchItem.title ?? "Untitled project",
+                        )
+                        .join(" · ")
+                    : "Linked research projects"
+                }
+              />
+              <ReportSection
+                label="Evidence outputs"
+                loading={!reports}
+                value={
+                  selected
+                    ? selected.outputs.length
+                      ? selected.outputs
+                          .map(
+                            ({ output }) =>
+                              `${output.title ?? "Untitled output"} (${output.type === "PAPER" ? "paper" : "dataset"})`,
+                          )
+                          .join(" · ")
+                      : "No paper or dataset linked."
+                    : "Linked papers and datasets"
+                }
+              />
+              <ReportSection
+                label="Completed work and evidence"
+                loading={!reports}
+                value={
+                  selected?.accomplishments ??
+                  "Research outcomes and evidence from the reporting week."
+                }
+              />
+              <ReportSection
+                label="Blockers and decisions needed"
+                loading={!reports}
+                value={
+                  selected
+                    ? selected.blockers || "No blockers reported."
+                    : "Constraints and decisions that need supervisor attention."
+                }
+              />
+              <ReportSection
+                label="Plan for next week"
+                loading={!reports}
+                value={
+                  selected?.nextWeekPlan ??
+                  "Expected research outcomes for the next reporting week."
+                }
+              />
+              {selected && reviewIssues.forItem(selected.id)[0] ? (
+                <div className="border-t border-line px-6 py-4 max-[640px]:p-5">
+                  <SemanticStatus
+                    loading={!reports}
+                    tone={
+                      reviewIssues.forItem(selected.id)[0].tone ?? "warning"
+                    }
+                  >
+                    {reviewIssues.forItem(selected.id)[0].message}
+                  </SemanticStatus>
+                </div>
+              ) : null}
+              {selected?.status === "SUBMITTED" ? (
+                <div className="grid gap-4 border-t border-line px-6 py-5 max-[640px]:p-5">
+                  <FormField
+                    htmlFor="weekly-review-note"
+                    label="Supervisor note"
+                    labelClassName="text-[.78rem] font-semibold tracking-[.04em]"
+                  >
+                    <TextareaControl
+                      id="weekly-review-note"
+                      onChange={(event) => setNote(event.target.value)}
+                      placeholder="Acknowledge progress or explain a required change."
+                      value={note}
+                    />
+                  </FormField>
+                  <div className="flex flex-wrap justify-end gap-3 max-[640px]:grid max-[640px]:grid-cols-1">
+                    <ButtonControl
+                      disabled={
+                        working ||
+                        Boolean(selected && blockedIds.has(selected.id)) ||
+                        Boolean(
+                          selected && reviewIssues.forItem(selected.id).length,
+                        )
+                      }
+                      title={
+                        selected && blockedIds.has(selected.id)
+                          ? selfReviewReason
+                          : undefined
+                      }
+                      onClick={() => void review("CHANGES_REQUESTED")}
+                      variant="secondary"
+                    >
+                      <RotateCcw aria-hidden="true" size={16} /> Request changes
+                    </ButtonControl>
+                    <ButtonControl
+                      disabled={
+                        working ||
+                        Boolean(selected && blockedIds.has(selected.id)) ||
+                        Boolean(
+                          selected && reviewIssues.forItem(selected.id).length,
+                        )
+                      }
+                      title={
+                        selected && blockedIds.has(selected.id)
+                          ? selfReviewReason
+                          : undefined
+                      }
+                      onClick={() => void review("REVIEWED")}
+                      variant="primary"
+                    >
+                      <CheckCircle2 aria-hidden="true" size={16} /> Mark
+                      reviewed
+                    </ButtonControl>
+                  </div>
+                </div>
+              ) : selected?.reviewNote ? (
+                <ReportSection
+                  label="Supervisor note"
+                  value={selected.reviewNote}
+                />
+              ) : null}
+            </div>
+          ) : (
+            <WorkspaceEmpty>
+              {missing
+                ? "This weekly report is no longer available. Choose another report from the queue."
+                : "Select a report from the queue."}
+            </WorkspaceEmpty>
+          )}
+        </WorkspacePanel>
+      </WorkspaceSplit>
     </WorkspaceSurface>
   );
 }

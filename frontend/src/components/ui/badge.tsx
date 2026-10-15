@@ -47,7 +47,9 @@ export function Badge({
       className={cn(
         "group/badge relative inline-flex min-h-6 w-fit items-center gap-[5px] whitespace-nowrap rounded-[var(--radius-small)] border px-2 py-0.5 font-mono text-[10px] font-medium tracking-[.035em]",
         toneClass[tone],
-        live && "animate-[badge-pulse_2s_infinite] motion-reduce:animate-none",
+        live &&
+          !loading &&
+          "animate-[badge-pulse_2s_infinite] motion-reduce:animate-none",
         loading && loadingPlaceholder(true, "label"),
         shortened &&
           "cursor-help focus-visible:outline-2 focus-visible:outline-brand focus-visible:outline-offset-2",
@@ -64,7 +66,11 @@ export function Badge({
       {dot ? (
         <span
           aria-hidden="true"
-          className={cn("h-1.5 w-1.5 rounded-full", dotClass[tone])}
+          className={cn(
+            "h-1.5 w-1.5 rounded-full",
+            dotClass[tone],
+            loading && "invisible",
+          )}
         />
       ) : null}
       {shortened ? (

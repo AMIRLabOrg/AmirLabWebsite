@@ -202,6 +202,7 @@ export function MailProviderSettings() {
           </FormField>
           <FormField htmlFor="mail-port" label="Port">
             <InputControl
+              placeholder={"e.g. 587"}
               id="mail-port"
               inputMode="numeric"
               value={port}
@@ -210,6 +211,7 @@ export function MailProviderSettings() {
           </FormField>
           <FormField htmlFor="mail-user" label="Username">
             <InputControl
+              placeholder={"e.g. mail@example.com"}
               id="mail-user"
               value={user}
               onChange={(event) => setUser(event.target.value)}

@@ -254,8 +254,7 @@ body:has([data-site="workspace"]),
   --control-text-size: 12px;
   --workspace-gutter: clamp(1rem, 1.8vw, 1.7rem);
   --frame-wide: var(--workspace-wide);
-  /* Quiet frame: no outer rail, bays run from the column edge to the rails. */
-  --frame-outer: 0px;
+  /* Workspace shares the public outer/inner rail geometry. */
 }
 
 /* Tablet: the content box still fills the page, but the bays get room. */
@@ -483,12 +482,54 @@ body:has([data-site="workspace"]),
   .frame-rail-section {
     position: relative;
     margin-inline: calc(var(--workspace-gutter) * -1);
-    border-top: 1px solid var(--frame-line);
     padding-inline: var(--workspace-gutter);
   }
 
-  .frame-rail-section:not(:has(~ .frame-rail-section)) {
-    border-bottom: 1px solid var(--frame-line);
+  .frame-rail-section:has(~ .frame-rail-section) > .frame-rule-end,
+  .frame-rail-section:has(~ form > .frame-rail-section) > .frame-rule-end,
+  .frame-surface > .frame-rail-section:first-child > .frame-rule-start {
+    display: none;
+  }
+  /* Panel content already spans the rails; nested bands must not bleed again. */
+  .frame-panel .frame-rail-section {
+    margin-inline: 0;
+  }
+  .frame-panel .frame-rail-section > .frame-rule-end {
+    display: none;
+  }
+  .frame-panel > nav[aria-label="Pagination"] {
+    padding-inline: var(--workspace-gutter);
+  }
+  .frame-split > .frame-rail-section {
+    margin-inline: 0;
+    align-self: stretch;
+  }
+  .frame-split > .frame-rail-section + .frame-rail-section {
+    border-left: 1px solid var(--line-strong);
+  }
+  .frame-split > .frame-rail-section > .frame-rule-start,
+  .frame-split > .frame-rail-section > .frame-rule-end {
+    display: none;
+  }
+  .frame-split-node {
+    display: none;
+  }
+  .frame-split > .frame-panel + .frame-panel > .frame-split-node {
+    display: block;
+  }
+  @media (max-width: 900px) {
+    .frame-split > .frame-panel > .frame-split-node {
+      display: none;
+    }
+    .frame-split > .frame-rail-section + .frame-rail-section {
+      border-left: 0;
+    }
+    .frame-split
+      > .frame-rail-section
+      + .frame-rail-section
+      > .frame-rule-start {
+      display: block;
+    }
   }
 }
 
@@ -618,4 +659,12 @@ body:has([data-site="workspace"]),
     opacity: 0;
     transform: translateY(8px);
   }
+}
+
+/* A parent may hide hints for a whole form; controls can opt out individually. */
+[data-show-placeholder="false"]::placeholder,
+[data-show-placeholder="false"] input::placeholder,
+[data-show-placeholder="false"] textarea::placeholder {
+  color: transparent;
+  opacity: 0;
 }

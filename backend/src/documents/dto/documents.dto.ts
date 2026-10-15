@@ -1,5 +1,8 @@
 import { Transform } from 'class-transformer';
 import {
+  ArrayMaxSize,
+  IsArray,
+  Matches,
   IsBoolean,
   IsEmail,
   IsEnum,
@@ -18,12 +21,16 @@ export class DocumentApprovalDto {
 
   @IsOptional()
   @IsBoolean()
-  @Transform(({ value }) => value === true || value === 'true')
+  @Transform(({ value }: { value: unknown }) =>
+    value === 'true' ? true : value === 'false' ? false : value,
+  )
   removeSignature?: boolean;
 
   @IsOptional()
   @IsBoolean()
-  @Transform(({ value }) => value === true || value === 'true')
+  @Transform(({ value }: { value: unknown }) =>
+    value === 'true' ? true : value === 'false' ? false : value,
+  )
   removeWatermark?: boolean;
 }
 
@@ -105,7 +112,10 @@ export class IssueDocumentDto {
   weeklyCommitment?: string;
 
   @IsOptional()
+  @IsArray()
+  @ArrayMaxSize(30)
   @IsString({ each: true })
+  @Matches(/\S/, { each: true })
   @MaxLength(500, { each: true })
   responsibilities?: string[];
 

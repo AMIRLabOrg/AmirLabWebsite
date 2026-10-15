@@ -38,11 +38,13 @@ export class CreatePositionDto {
   @IsArray()
   @ArrayMaxSize(30)
   @IsString({ each: true })
+  @MaxLength(500, { each: true })
   responsibilities?: string[];
 
   @IsArray()
   @ArrayMaxSize(30)
   @IsString({ each: true })
+  @MaxLength(500, { each: true })
   requirements!: string[];
 
   @IsOptional()
@@ -115,12 +117,14 @@ export class UpdatePositionDto {
   @IsArray()
   @ArrayMaxSize(30)
   @IsString({ each: true })
+  @MaxLength(500, { each: true })
   responsibilities?: string[];
 
   @IsOptional()
   @IsArray()
   @ArrayMaxSize(30)
   @IsString({ each: true })
+  @MaxLength(500, { each: true })
   requirements?: string[];
 
   @IsOptional()

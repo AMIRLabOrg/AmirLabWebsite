@@ -168,6 +168,7 @@ export function AccountForm({ accountId }: { accountId?: string }) {
         <div className="grid grid-cols-2 gap-[1.2rem] max-[700px]:grid-cols-1">
           <FormField htmlFor="account-name" label="Full name">
             <InputControl
+              placeholder={"e.g. Ayesha Rahman"}
               loading={loading}
               disabled={loading}
               id="account-name"
@@ -178,6 +179,7 @@ export function AccountForm({ accountId }: { accountId?: string }) {
           </FormField>
           <FormField htmlFor="account-email" label="Email">
             <InputControl
+              placeholder={"name@example.com"}
               loading={loading}
               disabled={loading || Boolean(accountId)}
               id="account-email"

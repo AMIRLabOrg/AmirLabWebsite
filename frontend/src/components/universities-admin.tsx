@@ -319,6 +319,7 @@ export function UniversityEditor({ id }: { id?: string }) {
               Name
             </label>
             <InputControl
+              placeholder={"e.g. University of Dhaka"}
               className={loadingPlaceholder(loading, "control")}
               data-placeholder={loading ? "control" : undefined}
               disabled={loading}

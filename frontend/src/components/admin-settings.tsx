@@ -355,6 +355,7 @@ export function AdminSettings() {
                   <label className="grid gap-2 py-[.7rem] text-[.8rem] font-semibold text-ink-muted">
                     Published papers
                     <InputControl
+                      placeholder={"e.g. 0"}
                       className={loadingPlaceholder(initialLoading, "control")}
                       data-placeholder={initialLoading ? "control" : undefined}
                       disabled={initialLoading}
@@ -373,6 +374,7 @@ export function AdminSettings() {
                   <label className="grid gap-2 py-[.7rem] text-[.8rem] font-semibold text-ink-muted">
                     OpenAlex citations
                     <InputControl
+                      placeholder={"e.g. 0"}
                       className={loadingPlaceholder(initialLoading, "control")}
                       data-placeholder={initialLoading ? "control" : undefined}
                       disabled={initialLoading}
@@ -395,6 +397,7 @@ export function AdminSettings() {
                   <label className="grid gap-2 py-[.7rem] text-[.8rem] font-semibold text-ink-muted">
                     Published papers
                     <InputControl
+                      placeholder={"e.g. 0"}
                       className={loadingPlaceholder(initialLoading, "control")}
                       data-placeholder={initialLoading ? "control" : undefined}
                       disabled={initialLoading}
@@ -413,6 +416,7 @@ export function AdminSettings() {
                   <label className="grid gap-2 py-[.7rem] text-[.8rem] font-semibold text-ink-muted">
                     OpenAlex citations
                     <InputControl
+                      placeholder={"e.g. 0"}
                       className={loadingPlaceholder(initialLoading, "control")}
                       data-placeholder={initialLoading ? "control" : undefined}
                       disabled={initialLoading}
@@ -482,6 +486,7 @@ export function AdminSettings() {
                     </small>
                   </span>
                   <InputControl
+                    placeholder={"e.g. 0"}
                     disabled={initialLoading}
                     max="30"
                     min="0"

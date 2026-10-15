@@ -559,6 +559,7 @@ export function ProfileEditor({ userId }: ProfileEditorProps) {
               <div className="grid gap-[1.2rem] grid-cols-2 max-[700px]:grid-cols-1">
                 <FormField htmlFor="profile-name" label="Full name">
                   <InputControl
+                    placeholder={"e.g. Ayesha Rahman"}
                     loading={editorLoading}
                     id="profile-name"
                     maxLength={120}
@@ -572,6 +573,7 @@ export function ProfileEditor({ userId }: ProfileEditorProps) {
                 {userId ? (
                   <FormField htmlFor="account-email" label="Email">
                     <InputControl
+                      placeholder={"name@example.com"}
                       loading={editorLoading}
                       id="account-email"
                       onChange={(event) => setEditEmail(event.target.value)}
@@ -588,6 +590,7 @@ export function ProfileEditor({ userId }: ProfileEditorProps) {
                     label="Headline"
                   >
                     <InputControl
+                      placeholder={"e.g. Machine learning researcher"}
                       loading={editorLoading}
                       id="profile-headline"
                       maxLength={300}
@@ -613,6 +616,7 @@ export function ProfileEditor({ userId }: ProfileEditorProps) {
                     }
                   >
                     <InputControl
+                      placeholder={"e.g. Research coordinator"}
                       loading={editorLoading}
                       id="profile-role-title"
                       maxLength={200}
@@ -633,6 +637,9 @@ export function ProfileEditor({ userId }: ProfileEditorProps) {
                     label="Biography"
                   >
                     <TextareaControl
+                      placeholder={
+                        "Describe your research background and interests"
+                      }
                       loading={editorLoading}
                       id="profile-biography"
                       maxLength={8000}
@@ -650,6 +657,7 @@ export function ProfileEditor({ userId }: ProfileEditorProps) {
                 {staffProfile || researchProfile ? (
                   <FormField htmlFor="profile-phone" label="Phone">
                     <InputControl
+                      placeholder={"+880 1XXXXXXXXX"}
                       loading={editorLoading}
                       id="profile-phone"
                       onChange={(event) =>
@@ -688,6 +696,7 @@ export function ProfileEditor({ userId }: ProfileEditorProps) {
                     label="Contact address"
                   >
                     <TextareaControl
+                      placeholder={"City, country and postal address"}
                       loading={editorLoading}
                       id="profile-address"
                       onChange={(event) =>
@@ -983,6 +992,7 @@ export function ProfileEditor({ userId }: ProfileEditorProps) {
                       {section.type === "OTHER" && (
                         <FormField label="Section title">
                           <InputControl
+                            placeholder={"e.g. Research experience"}
                             loading={editorLoading}
                             onChange={(event) => {
                               const sections = [...profile.sections];
@@ -1197,6 +1207,9 @@ export function ProfileEditor({ userId }: ProfileEditorProps) {
                                         </FormField>
                                         <FormField label="Content">
                                           <TextareaControl
+                                            placeholder={
+                                              "Describe your experience or contribution"
+                                            }
                                             loading={editorLoading}
                                             onChange={(event) => {
                                               const sections = [

@@ -39,12 +39,14 @@ export function ResearchSubmissionForm() {
   useEffect(() => {
     if (!staff) return;
     let active = true;
-    void apiRequest<Array<{
+    void apiRequest<
+      Array<{
         id: string;
         fullName: string;
         roleTitle: string | null;
         headline: string | null;
-      }>>("/research/submitters", { method: "GET" })
+      }>
+    >("/research/submitters", { method: "GET" })
       .then((result) => {
         if (active) setPeople(result);
       })
@@ -162,18 +164,21 @@ export function ResearchSubmissionForm() {
               placeholder={
                 loadingPeople
                   ? "Loading registered people…"
-                   : "Select registered person…"
+                  : "Select registered person…"
               }
               searchPlaceholder="Search by name or role…"
               value={submitterPersonId}
             />
             <p className="m-0 text-[.82rem] leading-[1.5] text-ink-muted">
-              Select the person this research belongs to. Your account is recorded in the activity history.
+              Select the person this research belongs to. Your account is
+              recorded in the activity history.
             </p>
           </FormField>
         ) : (
           <FormField label="Submitted by">
-            <p className="m-0 text-sm text-ink">{user?.person?.fullName ?? "Your registered profile"}</p>
+            <p className="m-0 text-sm text-ink">
+              {user?.person?.fullName ?? "Your registered profile"}
+            </p>
           </FormField>
         )}
         <FormField htmlFor="research-type" label="Type">
@@ -186,10 +191,16 @@ export function ResearchSubmissionForm() {
           />
         </FormField>
         <FormField htmlFor="research-title" label="Title">
-          <InputControl id="research-title" name="title" required />
+          <InputControl
+            placeholder={"Enter a descriptive title"}
+            id="research-title"
+            name="title"
+            required
+          />
         </FormField>
         <FormField htmlFor="canonical-url" label="Canonical URL">
           <InputControl
+            placeholder={"https://example.org/research"}
             id="canonical-url"
             name="canonicalUrl"
             required
@@ -200,13 +211,23 @@ export function ResearchSubmissionForm() {
           </p>
         </FormField>
         <FormField htmlFor="contributors" label="Authors">
-          <TextareaControl id="contributors" name="contributors" rows={3} />
+          <TextareaControl
+            placeholder={"One author per line"}
+            id="contributors"
+            name="contributors"
+            rows={3}
+          />
           <p className="m-0 text-[.82rem] leading-[1.5] text-ink-muted">
-            One author per line, in publication order. You can leave this empty for source discovery; authors are required before publication.
+            One author per line, in publication order. You can leave this empty
+            for source discovery; authors are required before publication.
           </p>
         </FormField>
         <FormField htmlFor="research-summary" label="Summary">
-          <TextareaControl id="research-summary" name="summary" />
+          <TextareaControl
+            placeholder={"Summarize the work, methods and findings"}
+            id="research-summary"
+            name="summary"
+          />
         </FormField>
         {error ? <FormMessage>{error}</FormMessage> : null}
         <div className="flex flex-wrap justify-end gap-[.65rem] max-[700px]:justify-start">

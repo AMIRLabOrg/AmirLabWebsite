@@ -2,14 +2,13 @@
 
 import { cn } from "@/lib/cn";
 import { loadingPlaceholder } from "@/lib/loading-style";
-import Link from "next/link";
 import {
   useEffect,
   useState,
   type SyntheticEvent,
   type ReactNode,
 } from "react";
-import { ArrowLeft, Plus, X } from "lucide-react";
+import { Plus, X } from "lucide-react";
 import { useNotifications } from "@/components/notification-provider";
 import { StatePanel } from "@/components/state-panel";
 import { InputControl, TextareaControl } from "@/components/ui/form-controls";
@@ -23,11 +22,14 @@ import type {
   HomeContent,
   SiteContentResponse,
 } from "@/lib/types";
-import { ButtonControl } from "@/components/ui/button-control";
+import { ButtonControl, ButtonLink } from "@/components/ui/button-control";
 import {
   WorkspaceHero,
   WorkspacePanel,
+  WorkspaceRuleBand,
 } from "@/components/ui/workspace-surface";
+
+import { WorkspaceBackLink } from "@/components/workspace-record";
 
 export type SiteContentPage = "about" | "home";
 type EditableContent = AboutContent | HomeContent;
@@ -109,13 +111,10 @@ export function SiteContentEditor({ page }: { page: SiteContentPage }) {
   }
 
   return (
-    <div className="grid w-full gap-4">
-      <Link
-        className="inline-flex items-center gap-[.4rem] justify-self-start text-[.74rem] text-ink-muted hover:text-brand"
-        href="/workspace/content"
-      >
-        <ArrowLeft aria-hidden="true" size={15} /> Site content
-      </Link>
+    <div className="grid w-full gap-0">
+      <WorkspaceBackLink href="/workspace/content">
+        Site content
+      </WorkspaceBackLink>
       {error && !updatedAt && !loading ? (
         <StatePanel
           frame="workspace"
@@ -134,7 +133,7 @@ export function SiteContentEditor({ page }: { page: SiteContentPage }) {
       {!(error && !updatedAt && !loading) ? (
         <form
           aria-busy={loading}
-          className="grid gap-4"
+          className="grid gap-0"
           data-loading={loading || undefined}
           onSubmit={submit}
         >
@@ -180,24 +179,24 @@ export function SiteContentEditor({ page }: { page: SiteContentPage }) {
               {error}
             </p>
           ) : null}
-          <footer className="sticky bottom-0 z-[5] flex items-center justify-end gap-3 border-t border-line bg-[color-mix(in_srgb,var(--canvas)_92%,transparent)] py-4 flex-wrap">
-            <Link
-              className="inline-flex min-h-[44px] items-center justify-center rounded-control border border-line bg-surface px-4 py-[.66rem] text-[.82rem] font-semibold hover:border-brand hover:text-brand"
+          <WorkspaceRuleBand contentClassName="flex flex-wrap items-center justify-end gap-3 py-4">
+            <ButtonLink
               href={page === "home" ? "/" : "/about"}
               rel="noreferrer"
               target="_blank"
             >
               Preview public page
-            </Link>
+            </ButtonLink>
             <ButtonControl
               disabled={loading || saving}
               loading={loading}
               busy={saving}
+              variant="primary"
               type="submit"
             >
               Publish content
             </ButtonControl>
-          </footer>
+          </WorkspaceRuleBand>
         </form>
       ) : null}
     </div>
@@ -214,7 +213,7 @@ function HomeFields({
   update: (key: string, value: unknown) => void;
 }) {
   return (
-    <div className="grid gap-4">
+    <>
       <EditorSection eyebrow="Hero" title="Opening statement">
         <TextField
           loading={loading}
@@ -307,7 +306,7 @@ function HomeFields({
           value={content.recruitmentBody}
         />
       </EditorSection>
-    </div>
+    </>
   );
 }
 
@@ -339,7 +338,7 @@ function AboutFields({
   }
 
   return (
-    <div className="grid gap-4">
+    <>
       <EditorSection eyebrow="Hero" title="About AmirLab">
         <TextField
           loading={loading}
@@ -405,6 +404,7 @@ function AboutFields({
                 {String(index + 1).padStart(2, "0")}
               </span>
               <InputControl
+                placeholder={"e.g. Computer vision"}
                 loading={loading}
                 aria-label={`Focus area ${index + 1}`}
                 maxLength={100}
@@ -474,6 +474,7 @@ function AboutFields({
                 {String(index + 1).padStart(2, "0")}
               </span>
               <InputControl
+                placeholder={"e.g. Established"}
                 loading={loading}
                 aria-label={`Fact ${index + 1} label`}
                 maxLength={60}
@@ -484,6 +485,7 @@ function AboutFields({
                 value={fact.label}
               />
               <InputControl
+                placeholder={"e.g. 2020"}
                 loading={loading}
                 aria-label={`Fact ${index + 1} value`}
                 className="max-[760px]:col-start-2 max-[760px]:row-start-2"
@@ -549,7 +551,7 @@ function AboutFields({
           value={content.closingBody}
         />
       </EditorSection>
-    </div>
+    </>
   );
 }
 
@@ -604,6 +606,7 @@ function TextField({
       </label>
       {area ? (
         <TextareaControl
+          placeholder={`Write the ${label.toLowerCase()}`}
           loading={loading}
           className="min-h-[130px]"
           id={id}
@@ -614,6 +617,7 @@ function TextField({
         />
       ) : (
         <InputControl
+          placeholder={`Enter the ${label.toLowerCase()}`}
           loading={loading}
           id={id}
           maxLength={maxLength}

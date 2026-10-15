@@ -67,6 +67,7 @@ export function ForgotPasswordForm() {
         labelClassName="font-mono text-[.62rem] font-semibold uppercase tracking-[.045em]"
       >
         <InputControl
+          placeholder={"name@example.com"}
           autoComplete="email"
           disabled={sending}
           id="forgot-password-email"

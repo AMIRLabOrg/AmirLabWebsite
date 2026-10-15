@@ -219,6 +219,7 @@ export function BackupSettings() {
     key: keyof BackupSettingsValue,
     label: string,
     options: {
+      placeholder?: string;
       secret?: boolean;
       multiline?: boolean;
       optional?: boolean;
@@ -252,9 +253,17 @@ export function BackupSettings() {
         description={options.description}
       >
         {options.multiline ? (
-          <TextareaControl {...props} spellCheck={false} autoComplete="off" />
+          <TextareaControl
+            placeholder={options.placeholder ?? `Enter ${label.toLowerCase()}`}
+            {...props}
+            spellCheck={false}
+            autoComplete="off"
+          />
         ) : (
-          <InputControl {...props} />
+          <InputControl
+            placeholder={options.placeholder ?? `Enter ${label.toLowerCase()}`}
+            {...props}
+          />
         )}
       </FormField>
     );
@@ -346,6 +355,7 @@ export function BackupSettings() {
                 {field("host", "Host")}
                 <FormField htmlFor="backup-port" label="Port">
                   <InputControl
+                    placeholder={"e.g. 587"}
                     id="backup-port"
                     type="number"
                     min={1}
@@ -414,6 +424,7 @@ export function BackupSettings() {
             )}
             <FormField htmlFor="backup-interval" label="Interval (minutes)">
               <InputControl
+                placeholder={"e.g. 60"}
                 id="backup-interval"
                 loading={!status}
                 disabled={disabled}
@@ -505,6 +516,7 @@ export function BackupSettings() {
               label="Type RESTORE to replace local data"
             >
               <InputControl
+                placeholder={"RESTORE"}
                 id="backup-confirmation"
                 value={confirmation}
                 disabled={disabled || dirty || !status?.canRestore}

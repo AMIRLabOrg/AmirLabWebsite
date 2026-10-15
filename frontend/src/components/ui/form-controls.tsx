@@ -10,9 +10,13 @@ export const InputControl = forwardRef<
   HTMLInputElement,
   ComponentPropsWithRef<"input"> & {
     loading?: boolean;
+    showPlaceholder?: boolean;
     "data-placeholder"?: string;
   }
->(function InputControl({ className, loading = false, ...props }, ref) {
+>(function InputControl(
+  { className, loading = false, showPlaceholder = true, ...props },
+  ref,
+) {
   return (
     <input
       ref={ref}
@@ -21,6 +25,7 @@ export const InputControl = forwardRef<
         loading && loadingPlaceholder(true, "control"),
         className,
       )}
+      data-show-placeholder={showPlaceholder}
       data-loading={loading || undefined}
       data-placeholder={loading ? "control" : props["data-placeholder"]}
       {...props}
@@ -32,9 +37,13 @@ export const TextareaControl = forwardRef<
   HTMLTextAreaElement,
   ComponentPropsWithRef<"textarea"> & {
     loading?: boolean;
+    showPlaceholder?: boolean;
     "data-placeholder"?: string;
   }
->(function TextareaControl({ className, loading = false, ...props }, ref) {
+>(function TextareaControl(
+  { className, loading = false, showPlaceholder = true, ...props },
+  ref,
+) {
   return (
     <textarea
       ref={ref}
@@ -44,6 +53,7 @@ export const TextareaControl = forwardRef<
         loading && loadingPlaceholder(true, "control"),
         className,
       )}
+      data-show-placeholder={showPlaceholder}
       data-loading={loading || undefined}
       data-placeholder={loading ? "control" : props["data-placeholder"]}
       {...props}
@@ -54,7 +64,10 @@ export const TextareaControl = forwardRef<
 export const FileInputControl = forwardRef<
   HTMLInputElement,
   Omit<ComponentPropsWithRef<"input">, "type"> & { loading?: boolean }
->(function FileInputControl({ className, loading = false, ...props }, ref) {
+>(function FileInputControl(
+  { className, loading = false, ...props },
+  ref,
+) {
   return (
     <InputControl
       ref={ref}

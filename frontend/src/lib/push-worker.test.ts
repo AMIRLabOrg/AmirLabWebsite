@@ -32,6 +32,23 @@ function worker() {
   });
   return { handlers, cache, fetch, openWindow };
 }
+it("precaches the offline page fonts", async () => {
+  const { handlers, cache } = worker();
+  let task: Promise<unknown> | undefined;
+  handlers.install?.({
+    waitUntil: (value: Promise<unknown>) => {
+      task = value;
+    },
+  });
+  await task;
+  expect(cache.addAll).toHaveBeenCalledWith(
+    expect.arrayContaining([
+      "/fonts/ibm-plex-sans-400.woff2",
+      "/fonts/ibm-plex-mono-400.woff2",
+      "/fonts/fraunces-400.woff2",
+    ]),
+  );
+});
 it("falls back offline for navigation without caching private responses", async () => {
   const { handlers, cache } = worker();
   let response: Promise<unknown> | undefined;

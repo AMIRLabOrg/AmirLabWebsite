@@ -212,17 +212,31 @@ export function ProjectCreationForm() {
         </WorkspaceRecordPanelHeader>
 
         <FormField htmlFor="project-title" label="Working title">
-          <InputControl id="project-title" name="title" required />
+          <InputControl
+            placeholder={"e.g. Early detection of breast cancer"}
+            id="project-title"
+            name="title"
+            required
+          />
         </FormField>
         <FormField
           description="State the concrete research outcome this project exists to achieve."
           htmlFor="project-objective"
           label="Primary objective"
         >
-          <TextareaControl id="project-objective" name="objective" required />
+          <TextareaControl
+            placeholder={"Describe the research outcome you aim to achieve"}
+            id="project-objective"
+            name="objective"
+            required
+          />
         </FormField>
         <FormField htmlFor="project-summary" label="Internal summary">
-          <TextareaControl id="project-summary" name="summary" />
+          <TextareaControl
+            placeholder={"Summarize the scope and approach for the team"}
+            id="project-summary"
+            name="summary"
+          />
         </FormField>
 
         {staff ? (

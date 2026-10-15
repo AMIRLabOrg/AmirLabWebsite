@@ -22,12 +22,12 @@ export function WorkspacePageShell({
       <section
         className={cn(
           workspaceShellClass,
-          "relative min-h-[calc(100svh-64px)] pt-7 pb-14 max-[820px]:min-h-0",
+          "relative min-h-[calc(100svh-64px)] pt-7 pb-14 has-[.workspace-back-link]:pt-0 max-[820px]:min-h-0",
           className,
         )}
       >
         {headVisible ? (
-          <div className="relative mb-5 flex items-center justify-between gap-4 border-b border-line-strong pb-5 max-[640px]:flex-col max-[640px]:items-start">
+          <div className="relative flex items-center justify-between gap-4 pb-5 max-[640px]:flex-col max-[640px]:items-start">
             {description ? (
               <p className="m-0 max-w-[640px] text-[.76rem] leading-[1.55] text-ink-muted">
                 {description}

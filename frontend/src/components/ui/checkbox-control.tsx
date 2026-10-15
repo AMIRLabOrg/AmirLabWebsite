@@ -37,15 +37,20 @@ export function CheckboxControl({
       className={cn(
         "flex items-start gap-[.7rem] whitespace-normal text-[.8rem] leading-[1.5] text-ink-muted",
         disabled || loading ? "cursor-not-allowed" : "cursor-pointer",
-        loading && loadingPlaceholder(true, "control"),
         className,
       )}
-      data-placeholder={loading ? "control" : undefined}
+      aria-busy={loading || undefined}
       htmlFor={id}
     >
       <Checkbox.Root
         aria-label={ariaLabel}
-        className="mt-px inline-flex h-5 w-5 shrink-0 cursor-pointer items-center justify-center rounded-[var(--radius-checkbox)] border border-line bg-surface p-0 text-on-accent transition-[background,border-color,transform] duration-150 data-[state=checked]:scale-105 data-[state=checked]:border-brand data-[state=checked]:bg-brand data-[state=indeterminate]:scale-105 data-[state=indeterminate]:border-brand data-[state=indeterminate]:bg-brand focus-visible:shadow-[var(--focus-ring)] disabled:cursor-not-allowed motion-reduce:transition-none"
+        className={cn(
+          "mt-px inline-flex h-5 w-5 shrink-0 cursor-pointer items-center justify-center rounded-[var(--radius-checkbox)] border border-line bg-surface p-0 text-on-accent transition-[background,border-color,transform] duration-150 data-[state=checked]:scale-105 data-[state=checked]:border-brand data-[state=checked]:bg-brand data-[state=indeterminate]:scale-105 data-[state=indeterminate]:border-brand data-[state=indeterminate]:bg-brand focus-visible:shadow-[var(--focus-ring)] disabled:cursor-not-allowed motion-reduce:transition-none",
+          loading && loadingPlaceholder(true, "text"),
+          loading &&
+            "bg-surface-subtle! text-transparent! data-[state=checked]:scale-100 data-[state=indeterminate]:scale-100",
+        )}
+        data-placeholder={loading ? "text" : undefined}
         checked={checked}
         defaultChecked={defaultChecked}
         disabled={disabled || loading}
@@ -57,7 +62,12 @@ export function CheckboxControl({
         required={required}
         value={value}
       >
-        <Checkbox.Indicator className="flex h-full w-full items-center justify-center">
+        <Checkbox.Indicator
+          className={cn(
+            "flex h-full w-full items-center justify-center",
+            loading && "invisible",
+          )}
+        >
           {checked === "indeterminate" ? (
             <Minus aria-hidden="true" className="block" size={14} />
           ) : (
@@ -65,7 +75,14 @@ export function CheckboxControl({
           )}
         </Checkbox.Indicator>
       </Checkbox.Root>
-      {children ? <span>{children}</span> : null}
+      {children ? (
+        <span
+          className={cn("min-w-0", loading && loadingPlaceholder(true, "text"))}
+          data-placeholder={loading ? "text" : undefined}
+        >
+          {children}
+        </span>
+      ) : null}
     </label>
   );
 }

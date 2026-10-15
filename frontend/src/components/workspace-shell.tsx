@@ -272,10 +272,10 @@ export function WorkspaceShell({ children }: { children: ReactNode }) {
           />
         </aside>
         <div className="relative grid min-w-0 grid-rows-[64px_minmax(0,1fr)] max-[820px]:min-h-svh max-[820px]:grid-rows-[55px_minmax(0,1fr)]">
-          <FrameRails tone="quiet" />
-          <header className="sticky top-0 z-30 min-h-[64px] bg-surface/95 backdrop-blur-[12px] max-[820px]:min-h-[55px]">
+          <FrameRails />
+          <header className="sticky top-0 z-40 min-h-[64px] bg-surface/95 backdrop-blur-[12px] max-[820px]:min-h-[55px]">
             <FrameBays pattern="grid" />
-            <FrameRails tone="quiet" />
+            <FrameRails />
             <FrameRule edge="bottom" nodeSurface="surface" scope="parent" />
             {/* Small screens: page title + menu button only. The button sits
                 7px from the header top, the bottom rule (pb-px), and the rail,
@@ -341,9 +341,10 @@ export function WorkspaceShell({ children }: { children: ReactNode }) {
               </div>
             </div>
           </header>
+          {/* Nodes must share the rail stacking context to mask intersections. */}
           <div
             className={cn(
-              "relative z-[1] min-w-0",
+              "relative min-w-0",
               pathname === "/workspace/chat"
                 ? "min-h-0 overflow-hidden p-0"
                 : "p-0",

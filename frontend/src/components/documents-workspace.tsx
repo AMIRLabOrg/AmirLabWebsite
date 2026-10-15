@@ -31,8 +31,16 @@ import { SelectControl } from "@/components/ui/select-control";
 import { API_URL } from "@/lib/api-url";
 import { apiRequest } from "@/lib/client-api";
 import { cn } from "@/lib/cn";
-import { WorkspaceHero } from "@/components/ui/workspace-surface";
-import { WorkspaceRecordPanelTitle } from "@/components/workspace-record";
+import {
+  WorkspaceHero,
+  WorkspaceRuleBand,
+  WorkspaceCollection,
+  WorkspaceRow,
+} from "@/components/ui/workspace-surface";
+import {
+  WorkspaceRecordPanelTitle,
+  WorkspaceRecordPanelHeader,
+} from "@/components/workspace-record";
 
 type DocumentKind = "OFFER" | "LETTER" | "CERTIFICATE";
 type WorkspaceView = "issue" | "templates" | "issued" | "approval";
@@ -176,7 +184,7 @@ export function DocumentsWorkspace() {
 
   return (
     <AdminOnly>
-      <div className="grid gap-6" data-loading={initialLoading || undefined}>
+      <div className="grid gap-0" data-loading={initialLoading || undefined}>
         <WorkspaceHero
           eyebrow="Official records"
           title="Documents"
@@ -348,8 +356,8 @@ function IssueDocumentPanel({
   }
 
   return (
-    <form className="grid gap-5" onSubmit={issue}>
-      <section className="grid gap-5 border border-line-strong bg-surface px-[var(--workspace-gutter)] py-5">
+    <form className="grid gap-0" onSubmit={issue}>
+      <WorkspaceRuleBand contentClassName="grid gap-5 py-6">
         <div className="grid grid-cols-2 gap-4 max-[640px]:grid-cols-1">
           <FormField label="Document type">
             <SelectControl
@@ -412,6 +420,7 @@ function IssueDocumentPanel({
         <div className="grid grid-cols-2 gap-4 max-[640px]:grid-cols-1">
           <FormField htmlFor="document-recipient-name" label="Recipient name">
             <InputControl
+              placeholder={"e.g. Ayesha Rahman"}
               disabled={loading || saving || recipientChoice !== "external"}
               id="document-recipient-name"
               onChange={(event) => setRecipientName(event.target.value)}
@@ -425,6 +434,7 @@ function IssueDocumentPanel({
             label="Recipient email"
           >
             <InputControl
+              placeholder={"name@example.com"}
               disabled={loading || saving}
               id="document-recipient-email"
               onChange={(event) => setRecipientEmail(event.target.value)}
@@ -433,7 +443,7 @@ function IssueDocumentPanel({
             />
           </FormField>
         </div>
-      </section>
+      </WorkspaceRuleBand>
 
       <KindFields
         disabled={loading || saving}
@@ -444,7 +454,7 @@ function IssueDocumentPanel({
         }
       />
       {error ? <FormMessage>{error}</FormMessage> : null}
-      <footer className="flex justify-end border-t border-line py-5">
+      <WorkspaceRuleBand contentClassName="flex justify-end py-5">
         <ButtonControl
           disabled={!templateId}
           busy={saving}
@@ -453,7 +463,7 @@ function IssueDocumentPanel({
         >
           <FilePlus2 aria-hidden="true" size={15} /> Issue document
         </ButtonControl>
-      </footer>
+      </WorkspaceRuleBand>
     </form>
   );
 }
@@ -471,21 +481,22 @@ function KindFields({
 }) {
   if (kind === "OFFER") {
     return (
-      <section className="grid gap-4 border border-line-strong bg-surface px-[var(--workspace-gutter)] py-5">
-        <header className="flex items-center gap-3 border-b border-line pb-4">
+      <WorkspaceRuleBand contentClassName="grid gap-4 py-6">
+        <WorkspaceRecordPanelHeader className="!flex items-center gap-3">
           <Send aria-hidden="true" className="text-brand" size={19} />
           <WorkspaceRecordPanelTitle>Offer details</WorkspaceRecordPanelTitle>
-        </header>
+        </WorkspaceRecordPanelHeader>
         <div className="grid grid-cols-2 gap-4 max-[640px]:grid-cols-1">
           {[
-            ["positionTitle", "Position title"],
-            ["startDate", "Start date"],
-            ["endDate", "End date"],
-            ["duration", "Duration"],
-            ["weeklyCommitment", "Weekly commitment"],
-          ].map(([key, label]) => (
+            ["positionTitle", "Position title", "e.g. Research assistant"],
+            ["startDate", "Start date", "e.g. 1 November 2026"],
+            ["endDate", "End date", "e.g. 30 April 2027"],
+            ["duration", "Duration", "e.g. 6 months"],
+            ["weeklyCommitment", "Weekly commitment", "e.g. 20 hours per week"],
+          ].map(([key, label, placeholder]) => (
             <FormField htmlFor={`offer-${key}`} key={key} label={label}>
               <InputControl
+                placeholder={placeholder}
                 disabled={disabled}
                 id={`offer-${key}`}
                 onChange={(event) => setField(key, event.target.value)}
@@ -501,6 +512,9 @@ function KindFields({
           label="Responsibilities"
         >
           <TextareaControl
+            placeholder={
+              "Prepare and validate research datasets\nRun experiments and document findings\nPresent progress at weekly team meetings"
+            }
             disabled={disabled}
             id="offer-responsibilities"
             onChange={(event) =>
@@ -511,18 +525,19 @@ function KindFields({
             value={fields.responsibilities ?? ""}
           />
         </FormField>
-      </section>
+      </WorkspaceRuleBand>
     );
   }
   if (kind === "LETTER") {
     return (
-      <section className="grid gap-4 border border-line-strong bg-surface px-[var(--workspace-gutter)] py-5">
-        <header className="flex items-center gap-3 border-b border-line pb-4">
+      <WorkspaceRuleBand contentClassName="grid gap-4 py-6">
+        <WorkspaceRecordPanelHeader className="!flex items-center gap-3">
           <Mail aria-hidden="true" className="text-brand" size={19} />
           <WorkspaceRecordPanelTitle>Letter details</WorkspaceRecordPanelTitle>
-        </header>
+        </WorkspaceRecordPanelHeader>
         <FormField htmlFor="letter-subject" label="Subject">
           <InputControl
+            placeholder={"e.g. Confirmation of research participation"}
             disabled={disabled}
             id="letter-subject"
             onChange={(event) => setField("letterSubject", event.target.value)}
@@ -532,6 +547,7 @@ function KindFields({
         </FormField>
         <FormField htmlFor="letter-details" label="Details">
           <TextareaControl
+            placeholder={"Write the letter details"}
             disabled={disabled}
             id="letter-details"
             onChange={(event) => setField("letterDetails", event.target.value)}
@@ -540,20 +556,21 @@ function KindFields({
             value={fields.letterDetails ?? ""}
           />
         </FormField>
-      </section>
+      </WorkspaceRuleBand>
     );
   }
   return (
-    <section className="grid gap-4 border border-line-strong bg-surface px-[var(--workspace-gutter)] py-5">
-      <header className="flex items-center gap-3 border-b border-line pb-4">
+    <WorkspaceRuleBand contentClassName="grid gap-4 py-6">
+      <WorkspaceRecordPanelHeader className="!flex items-center gap-3">
         <Award aria-hidden="true" className="text-brand" size={20} />
         <WorkspaceRecordPanelTitle>
           Certificate details
         </WorkspaceRecordPanelTitle>
-      </header>
+      </WorkspaceRecordPanelHeader>
       <div className="grid grid-cols-2 gap-4 max-[640px]:grid-cols-1">
         <FormField htmlFor="certificate-program" label="Program">
           <InputControl
+            placeholder={"e.g. Research internship"}
             disabled={disabled}
             id="certificate-program"
             onChange={(event) =>
@@ -576,6 +593,7 @@ function KindFields({
       </div>
       <FormField htmlFor="certificate-achievement" label="Achievement">
         <TextareaControl
+          placeholder={"Describe the achievement being recognized"}
           disabled={disabled}
           id="certificate-achievement"
           onChange={(event) =>
@@ -586,7 +604,7 @@ function KindFields({
           value={fields.certificateAchievement ?? ""}
         />
       </FormField>
-    </section>
+    </WorkspaceRuleBand>
   );
 }
 
@@ -712,7 +730,7 @@ function TemplatesPanel({
           ?.variables ?? []);
 
   return (
-    <div className="grid grid-cols-[290px_minmax(0,1fr)] border border-line-strong bg-surface max-[900px]:grid-cols-1">
+    <WorkspaceRuleBand contentClassName="grid grid-cols-[290px_minmax(0,1fr)] !px-0 max-[900px]:grid-cols-1">
       <aside className="grid content-start border-r border-line-strong p-4 max-[900px]:border-r-0 max-[900px]:border-b">
         <ButtonControl
           className="mb-2 justify-start"
@@ -754,6 +772,7 @@ function TemplatesPanel({
         <div className="grid grid-cols-2 gap-4 max-[640px]:grid-cols-1">
           <FormField htmlFor="template-name" label="Template name">
             <InputControl
+              placeholder={"e.g. Research internship offer"}
               disabled={loading || saving}
               id="template-name"
               onChange={(event) =>
@@ -775,6 +794,7 @@ function TemplatesPanel({
           </FormField>
           <FormField htmlFor="template-title" label="PDF title">
             <InputControl
+              placeholder={"e.g. Research appointment letter"}
               disabled={loading || saving}
               id="template-title"
               onChange={(event) =>
@@ -786,6 +806,7 @@ function TemplatesPanel({
           </FormField>
           <FormField htmlFor="template-email-subject" label="Email subject">
             <InputControl
+              placeholder={"e.g. Your research appointment"}
               disabled={loading || saving}
               id="template-email-subject"
               onChange={(event) =>
@@ -802,6 +823,7 @@ function TemplatesPanel({
           label="Document body"
         >
           <TextareaControl
+            placeholder={"Write the document text using supported placeholders"}
             className="font-mono text-[.78rem] leading-[1.6]"
             disabled={loading || saving}
             id="template-body"
@@ -863,7 +885,7 @@ function TemplatesPanel({
           </ButtonControl>
         </footer>
       </form>
-    </div>
+    </WorkspaceRuleBand>
   );
 }
 
@@ -920,10 +942,10 @@ function IssuedPanel({
   }
 
   return (
-    <div className="grid gap-3">
+    <WorkspaceCollection>
       {documents.map((document) => (
-        <article
-          className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-5 border border-line-strong bg-surface p-4 max-[720px]:grid-cols-1"
+        <WorkspaceRow
+          className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-5 py-5 max-[720px]:grid-cols-1"
           key={document.id}
         >
           <div className="min-w-0">
@@ -968,9 +990,9 @@ function IssuedPanel({
               </ButtonControl>
             ) : null}
           </div>
-        </article>
+        </WorkspaceRow>
       ))}
-    </div>
+    </WorkspaceCollection>
   );
 }
 
@@ -1060,9 +1082,9 @@ function ApprovalPanel({
   }
 
   return (
-    <form className="grid gap-5" onSubmit={save}>
-      <section className="grid gap-5 border border-line-strong bg-surface px-[var(--workspace-gutter)] py-5">
-        <header className="flex items-start gap-3 border-b border-line pb-4">
+    <form className="grid gap-0" onSubmit={save}>
+      <WorkspaceRuleBand contentClassName="grid gap-5 py-6">
+        <WorkspaceRecordPanelHeader className="!flex items-start gap-3">
           <UserCheck
             aria-hidden="true"
             className="mt-0.5 text-brand"
@@ -1078,7 +1100,7 @@ function ApprovalPanel({
               contact details.
             </p>
           </div>
-        </header>
+        </WorkspaceRecordPanelHeader>
         <FormField label="Approving person">
           <SearchableSelect
             disabled={loading || saving}
@@ -1114,9 +1136,9 @@ function ApprovalPanel({
             ))}
           </div>
         ) : null}
-      </section>
+      </WorkspaceRuleBand>
 
-      <section className="grid gap-4 border border-line-strong bg-surface px-[var(--workspace-gutter)] py-5">
+      <WorkspaceRuleBand contentClassName="grid gap-4 py-6">
         <div>
           <WorkspaceRecordPanelTitle>
             Approval signature
@@ -1175,9 +1197,9 @@ function ApprovalPanel({
             <Trash2 aria-hidden="true" size={14} /> Remove signature
           </ButtonControl>
         ) : null}
-      </section>
+      </WorkspaceRuleBand>
 
-      <section className="grid gap-4 border border-line-strong bg-surface px-[var(--workspace-gutter)] py-5">
+      <WorkspaceRuleBand contentClassName="grid gap-4 py-6">
         <div>
           <WorkspaceRecordPanelTitle>
             Document watermark
@@ -1237,9 +1259,9 @@ function ApprovalPanel({
             <Trash2 aria-hidden="true" size={14} /> Remove watermark
           </ButtonControl>
         ) : null}
-      </section>
+      </WorkspaceRuleBand>
       {error ? <FormMessage>{error}</FormMessage> : null}
-      <footer className="flex justify-end border-t border-line pt-5">
+      <WorkspaceRuleBand contentClassName="flex justify-end py-5">
         <ButtonControl
           disabled={!personId}
           busy={saving}
@@ -1248,7 +1270,7 @@ function ApprovalPanel({
         >
           <Save aria-hidden="true" size={15} /> Save approval settings
         </ButtonControl>
-      </footer>
+      </WorkspaceRuleBand>
     </form>
   );
 }

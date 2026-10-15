@@ -26,6 +26,7 @@ import {
   WorkspaceMetricStrip,
   WorkspacePanel,
   WorkspaceSplit,
+  WorkspaceRuleBand,
   WorkspaceSurface,
 } from "@/components/ui/workspace-surface";
 import { apiRequest } from "@/lib/client-api";
@@ -185,9 +186,9 @@ export function WorkspaceDashboard() {
         />
       ) : null}
 
-      <section
+      <WorkspaceRuleBand
         aria-label="Operational agenda"
-        className="grid min-h-[84px] grid-cols-[72px_minmax(0,1fr)_210px_auto] items-stretch border-y border-line-strong bg-surface max-[1050px]:grid-cols-[56px_minmax(0,1fr)_170px] max-[700px]:grid-cols-[48px_1fr]"
+        contentClassName="!px-0 grid min-h-[84px] grid-cols-[72px_minmax(0,1fr)_210px_auto] items-stretch max-[1050px]:grid-cols-[56px_minmax(0,1fr)_170px] max-[700px]:grid-cols-[48px_1fr]"
         data-loading={loadingOverview || undefined}
       >
         <div className="flex items-center justify-center border-r border-line font-mono text-[.64rem] tracking-[.11em] text-brand">
@@ -264,7 +265,7 @@ export function WorkspaceDashboard() {
             <ArrowRight aria-hidden="true" size={15} />
           </Link>
         )}
-      </section>
+      </WorkspaceRuleBand>
 
       {staff ? (
         <WorkspaceMetricStrip>
@@ -363,7 +364,7 @@ export function WorkspaceDashboard() {
                   return (
                     <Link
                       aria-disabled={loadingOverview || undefined}
-                      className="grid min-h-[74px] grid-cols-[88px_18px_minmax(0,1fr)_82px] items-stretch border-t border-line px-4 first:border-t-0 hover:bg-brand-faint max-[700px]:grid-cols-[70px_16px_minmax(0,1fr)] max-[700px]:px-[.7rem]"
+                      className="grid min-h-[74px] grid-cols-[88px_18px_minmax(0,1fr)_82px] items-stretch border-t border-line px-[var(--workspace-gutter)] first:border-t-0 hover:bg-brand-faint max-[700px]:grid-cols-[70px_16px_minmax(0,1fr)] max-[700px]:px-[.7rem]"
                       data-state={dueState}
                       href={
                         loadingOverview
@@ -515,11 +516,11 @@ export function WorkspaceDashboard() {
         </WorkspaceSplit>
       ) : null}
 
-      <section
+      <WorkspaceRuleBand
         aria-labelledby="quick-actions-title"
-        className="grid gap-[.65rem]"
+        contentClassName="!px-0"
       >
-        <div className="flex items-baseline justify-between gap-4">
+        <div className="flex items-baseline justify-between gap-4 px-[var(--workspace-gutter)] py-6">
           <span
             className="font-mono text-[.61rem] font-semibold tracking-[.1em] uppercase"
             id="quick-actions-title"
@@ -530,7 +531,7 @@ export function WorkspaceDashboard() {
             Shortcuts into the lab record
           </small>
         </div>
-        <div className="grid grid-cols-4 border-y border-line max-[1050px]:grid-cols-2 max-[700px]:grid-cols-1">
+        <div className="grid grid-cols-4 border-t border-line max-[1050px]:grid-cols-2 max-[700px]:grid-cols-1">
           {staff ? (
             <>
               {user.role === "ADMIN" ? (
@@ -589,7 +590,7 @@ export function WorkspaceDashboard() {
             </>
           )}
         </div>
-      </section>
+      </WorkspaceRuleBand>
 
       <WorkspaceSplit>
         <WorkspacePanel
@@ -622,7 +623,7 @@ export function WorkspaceDashboard() {
               ).map((project) => (
                 <Link
                   aria-disabled={loadingOverview || undefined}
-                  className="grid gap-[.55rem] border-t border-line px-4 py-[.9rem] first:border-t-0 hover:bg-brand-faint"
+                  className="grid gap-[.55rem] border-t border-line px-[var(--workspace-gutter)] py-[.9rem] first:border-t-0 hover:bg-brand-faint"
                   href={
                     loadingOverview ? "#" : `/workspace/projects/${project.id}`
                   }
@@ -753,7 +754,7 @@ export function WorkspaceDashboard() {
                   return (
                     <Link
                       aria-disabled={loadingOverview || undefined}
-                      className="grid min-h-[58px] grid-cols-[8px_minmax(0,1fr)_auto] items-center gap-[.7rem] border-t border-line px-4 py-[.65rem] first:border-t-0 hover:bg-brand-faint"
+                      className="grid min-h-[58px] grid-cols-[8px_minmax(0,1fr)_auto] items-center gap-[.7rem] border-t border-line px-[var(--workspace-gutter)] py-[.65rem] first:border-t-0 hover:bg-brand-faint"
                       href={
                         loadingOverview
                           ? "#"
@@ -929,7 +930,7 @@ function QueueLink({
 }) {
   return (
     <Link
-      className="grid grid-cols-[1fr_auto] items-center border-t border-line px-4 py-3 first:border-t-0 hover:bg-brand-faint"
+      className="grid grid-cols-[1fr_auto] items-center border-t border-line px-[var(--workspace-gutter)] py-3 first:border-t-0 hover:bg-brand-faint"
       href={href}
     >
       <span className="text-[.74rem]">{label}</span>

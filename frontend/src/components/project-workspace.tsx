@@ -1286,6 +1286,7 @@ function Timeline({
             <label className="grid min-w-0 gap-[.35rem] text-[.64rem] font-semibold">
               Milestone
               <InputControl
+                placeholder={"e.g. Complete data collection"}
                 value={item.title}
                 onChange={(event) => edit(index, "title", event.target.value)}
               />
@@ -1293,6 +1294,7 @@ function Timeline({
             <label className="grid min-w-0 gap-[.35rem] text-[.64rem] font-semibold">
               Weight
               <InputControl
+                placeholder={"1–100"}
                 min="1"
                 max="100"
                 type="number"
@@ -1305,6 +1307,7 @@ function Timeline({
             <label className="grid min-w-0 gap-[.35rem] text-[.64rem] font-semibold">
               Progress
               <InputControl
+                placeholder={"0–100"}
                 min="0"
                 max="100"
                 type="number"
@@ -1686,6 +1689,7 @@ function Outputs({
         <label className="grid gap-[.35rem] text-[.64rem] font-semibold">
           Resource label
           <InputControl
+            placeholder={"e.g. Project repository"}
             required
             value={label}
             onChange={(event) => setLabel(event.target.value)}
@@ -1694,6 +1698,7 @@ function Outputs({
         <label className="grid gap-[.35rem] text-[.64rem] font-semibold">
           URL
           <InputControl
+            placeholder={"https://example.org/resource"}
             type="url"
             required
             value={url}
@@ -1766,6 +1771,7 @@ function Settings({
         <label className="grid gap-[.35rem] text-[.64rem] font-semibold">
           Public title
           <InputControl
+            placeholder={"Enter the public project title"}
             value={title}
             onChange={(event) => setTitle(event.target.value)}
           />
@@ -1782,6 +1788,7 @@ function Settings({
         <label className="col-span-full grid gap-[.35rem] text-[.64rem] font-semibold max-[640px]:col-auto">
           Public summary
           <TextareaControl
+            placeholder={"Summarize the project for public visitors"}
             value={summary}
             onChange={(event) => setSummary(event.target.value)}
           />
@@ -1791,6 +1798,7 @@ function Settings({
             <label className="col-span-full grid gap-[.35rem] text-[.64rem] font-semibold max-[640px]:col-auto">
               Closing note
               <TextareaControl
+                placeholder={"Summarize the outcome and any remaining work"}
                 maxLength={2_000}
                 required
                 value={closingNote}
@@ -1813,6 +1821,7 @@ function Settings({
         <label className="col-span-full grid gap-[.35rem] text-[.64rem] font-semibold max-[640px]:col-auto">
           Main objective
           <TextareaControl
+            placeholder={"Describe the main research objective"}
             value={objective}
             onChange={(event) => setObjective(event.target.value)}
           />

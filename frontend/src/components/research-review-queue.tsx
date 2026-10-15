@@ -1725,6 +1725,7 @@ function ResearchRecordEditor({
             label="Title"
           >
             <InputControl
+              placeholder={"Enter a descriptive title"}
               defaultValue={item.title ?? ""}
               id="review-edit-title"
               name="title"
@@ -1737,6 +1738,7 @@ function ResearchRecordEditor({
             label="Canonical URL"
           >
             <InputControl
+              placeholder={"https://example.org/research"}
               defaultValue={item.canonicalUrl ?? ""}
               id="review-edit-url"
               name="canonicalUrl"
@@ -1750,6 +1752,7 @@ function ResearchRecordEditor({
             label="Authors"
           >
             <TextareaControl
+              placeholder={"One author per line"}
               defaultValue={item.contributors
                 .map(({ displayName }) => displayName)
                 .join("\n")}
@@ -1768,6 +1771,7 @@ function ResearchRecordEditor({
             label="Summary"
           >
             <TextareaControl
+              placeholder={"Summarize the work, methods and findings"}
               defaultValue={item.summary ?? ""}
               id="review-edit-summary"
               name="summary"
@@ -1778,6 +1782,7 @@ function ResearchRecordEditor({
             <>
               <FormField htmlFor="review-edit-doi" label="DOI">
                 <InputControl
+                  placeholder={"10.1234/example"}
                   defaultValue={item.paper?.doi ?? ""}
                   id="review-edit-doi"
                   name="doi"
@@ -1785,6 +1790,7 @@ function ResearchRecordEditor({
               </FormField>
               <FormField htmlFor="review-edit-year" label="Year">
                 <InputControl
+                  placeholder={"e.g. 2026"}
                   defaultValue={item.paper?.year?.toString() ?? ""}
                   id="review-edit-year"
                   max="2200"
@@ -1795,6 +1801,7 @@ function ResearchRecordEditor({
               </FormField>
               <FormField htmlFor="review-edit-venue" label="Venue">
                 <InputControl
+                  placeholder={"e.g. Nature Machine Intelligence"}
                   defaultValue={item.paper?.venue ?? ""}
                   id="review-edit-venue"
                   name="venue"
@@ -1805,6 +1812,7 @@ function ResearchRecordEditor({
                 label="Publication type"
               >
                 <InputControl
+                  placeholder={"e.g. Journal article"}
                   defaultValue={item.paper?.publicationType ?? ""}
                   id="review-edit-publication-type"
                   name="publicationType"
@@ -1816,6 +1824,7 @@ function ResearchRecordEditor({
                 label="Citation"
               >
                 <TextareaControl
+                  placeholder={"Enter the full bibliographic citation"}
                   defaultValue={item.paper?.citation ?? ""}
                   id="review-edit-citation"
                   name="citation"
@@ -1827,6 +1836,7 @@ function ResearchRecordEditor({
             <>
               <FormField htmlFor="review-edit-version" label="Version">
                 <InputControl
+                  placeholder={"e.g. 1.0"}
                   defaultValue={item.dataset?.version ?? ""}
                   id="review-edit-version"
                   name="version"
@@ -1834,6 +1844,7 @@ function ResearchRecordEditor({
               </FormField>
               <FormField htmlFor="review-edit-license" label="License">
                 <InputControl
+                  placeholder={"e.g. CC BY 4.0"}
                   defaultValue={item.dataset?.license ?? ""}
                   id="review-edit-license"
                   name="license"
@@ -1841,6 +1852,7 @@ function ResearchRecordEditor({
               </FormField>
               <FormField htmlFor="review-edit-modality" label="Modality">
                 <InputControl
+                  placeholder={"e.g. Images, text or audio"}
                   defaultValue={item.dataset?.modality ?? ""}
                   id="review-edit-modality"
                   name="modality"
@@ -1852,6 +1864,7 @@ function ResearchRecordEditor({
                 label="Access notes"
               >
                 <TextareaControl
+                  placeholder={"Describe how to access the resource"}
                   defaultValue={item.dataset?.accessNotes ?? ""}
                   id="review-edit-access"
                   name="accessNotes"

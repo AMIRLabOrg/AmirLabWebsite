@@ -2,7 +2,10 @@ import { cn } from "@/lib/cn";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import type { ComponentPropsWithoutRef, ReactNode } from "react";
-import { WorkspaceHero } from "@/components/ui/workspace-surface";
+import {
+  WorkspaceHero,
+  WorkspaceRuleBand,
+} from "@/components/ui/workspace-surface";
 
 interface WorkspaceRecordProps {
   actions?: ReactNode;
@@ -15,21 +18,34 @@ interface WorkspaceRecordProps {
   title: string;
 }
 
+export function WorkspaceBackLink({
+  children,
+  ...props
+}: ComponentPropsWithoutRef<typeof Link>) {
+  return (
+    <div className="workspace-back-link py-3">
+      <Link
+        {...props}
+        className="inline-flex min-h-10 items-center gap-2 rounded-control px-3 text-[.76rem] font-medium text-ink-muted hover:bg-surface-subtle hover:text-ink focus-visible:outline-2 focus-visible:outline-brand"
+      >
+        <ArrowLeft aria-hidden="true" size={15} /> {children}
+      </Link>
+    </div>
+  );
+}
+
 export function WorkspaceRecordForm({
   children,
   className,
   ...props
 }: ComponentPropsWithoutRef<"form">) {
   return (
-    <form className="relative border border-line-strong bg-surface" {...props}>
-      <div
-        className={cn(
-          "grid w-full gap-[1.35rem] px-[var(--workspace-gutter)] py-5",
-          className,
-        )}
+    <form className="relative" {...props}>
+      <WorkspaceRuleBand
+        contentClassName={cn("grid w-full gap-[1.35rem] py-6", className)}
       >
         {children}
-      </div>
+      </WorkspaceRuleBand>
     </form>
   );
 }
@@ -40,14 +56,13 @@ export function WorkspaceRecordPanel({
   ...props
 }: ComponentPropsWithoutRef<"section">) {
   return (
-    <section
-      className={cn("relative border border-line-strong bg-surface", className)}
+    <WorkspaceRuleBand
+      className={className}
+      contentClassName="grid w-full gap-[1.35rem] py-6"
       {...props}
     >
-      <div className="grid w-full gap-[1.35rem] px-[var(--workspace-gutter)] py-5">
-        {children}
-      </div>
-    </section>
+      {children}
+    </WorkspaceRuleBand>
   );
 }
 
@@ -58,7 +73,7 @@ export function WorkspaceRecordPanelHeader({
   return (
     <header
       className={cn(
-        "grid gap-[.35rem] border-b border-line pb-[1.15rem]",
+        "-mx-[var(--workspace-gutter)] grid gap-[.35rem] border-b border-line px-[var(--workspace-gutter)] pb-[1.15rem]",
         className,
       )}
       {...props}
@@ -93,15 +108,10 @@ export function WorkspaceRecord({
 }: WorkspaceRecordProps) {
   return (
     <div
-      className="grid w-full gap-6 pb-20"
+      className="grid w-full gap-0 pb-20"
       data-loading={loading || undefined}
     >
-      <Link
-        className="inline-flex w-fit items-center gap-[.35rem] text-[.72rem] font-medium text-ink-muted hover:text-brand"
-        href={backHref}
-      >
-        <ArrowLeft aria-hidden="true" size={15} /> {backLabel}
-      </Link>
+      <WorkspaceBackLink href={backHref}>{backLabel}</WorkspaceBackLink>
       <WorkspaceHero
         eyebrow={eyebrow}
         title={title}

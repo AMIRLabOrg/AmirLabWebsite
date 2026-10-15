@@ -1071,9 +1071,10 @@ rg -n "PublicSection|WorkspacePanel|StatePanel" frontend/src/components frontend
         </div>
         <div class="tip">
           <strong>Public vs workspace:</strong> public pages use dashed outer
-          rails and solid inner rails with patterned side bays. Workspace uses a
-          quiet dashed inner rail and continuous section bands. The components
-          share frame geometry, but keep the right page family.
+          rails and solid inner rails with patterned side bays. Workspace uses
+          the same solid inner and dashed outer rails, with continuous section
+          bands. The components share frame geometry, but keep the right page
+          family.
         </div>
       </section>
       <section id="builder" class="section">
@@ -1124,7 +1125,7 @@ rg -n "PublicSection|WorkspacePanel|StatePanel" frontend/src/components frontend
           <label
             >Rail tone<select id="tone">
               <option value="page">page (public)</option>
-              <option value="quiet">quiet (workspace)</option>
+              <option value="quiet">quiet (optional)</option>
             </select></label
           >
           <label
@@ -1234,7 +1235,8 @@ rg -n "PublicSection|WorkspacePanel|StatePanel" frontend/src/components frontend
           <code>PublicSection bay="plus" boundary="bottom"</code> for a common
           public section. Use <code>FrameRule</code> when a different stroke,
           edge, parent scope, or no-node rule is needed.
-          <code>FrameRails tone="quiet"</code> is for workspace shell rails.
+          <code>FrameRails</code> is shared by public and workspace shells.
+          <code>tone="quiet"</code> is an optional subdued treatment.
         </div>
       </section>
       <section id="recipes" class="section">
@@ -1306,8 +1308,8 @@ import { StatePanel } from "@/components/state-panel";
           <aside>
             <h3>Workspace page</h3>
             <p>
-              Use the shared header and full-width panels. Panel contents
-              inherit the component gutter.
+              Use the shared header and full-width panels. Panel contents own
+              their content gutter; the panel header already applies it.
             </p>
           </aside>
           <main>
@@ -1322,7 +1324,7 @@ import { WorkspaceHero, WorkspacePanel, WorkspaceSurface } from "@/components/ui
   &lt;WorkspaceHero eyebrow="Settings" title="Account &amp; devices"
     description="Manage signed-in devices and notifications." /&gt;
   &lt;WorkspacePanel title="Browser notifications"&gt;
-    &lt;div className="py-4"&gt;
+    &lt;div className="px-[var(--workspace-gutter)] py-4"&gt;
       ...controls and help text...
     &lt;/div&gt;
   &lt;/WorkspacePanel&gt;

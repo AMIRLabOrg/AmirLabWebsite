@@ -1,6 +1,7 @@
 import type { ComponentPropsWithoutRef, ReactNode } from "react";
 import { cn } from "@/lib/cn";
 import { loadingPlaceholder } from "@/lib/loading-style";
+import { FrameRule } from "@/components/ui/public-shell";
 
 /**
  * The workspace content box. Its edges are the workspace rails at every width
@@ -8,6 +9,34 @@ import { loadingPlaceholder } from "@/lib/loading-style";
  */
 export const workspaceShellClass =
   "mx-auto w-full max-w-[min(var(--workspace-wide),calc(100%_-_2*var(--frame-mobile-inner)))] px-[var(--workspace-gutter)]";
+
+function WorkspaceSection({
+  as: Component = "section",
+  className,
+  children,
+  ...props
+}: ComponentPropsWithoutRef<"section"> & {
+  as?: "section" | "header" | "div";
+}) {
+  return (
+    <Component
+      className={cn("frame-rail-section min-w-0", className)}
+      {...props}
+    >
+      <FrameRule
+        className="frame-rule-start [--frame-inner:0px]"
+        edge="top"
+        scope="parent"
+      />
+      {children}
+      <FrameRule
+        className="frame-rule-end [--frame-inner:0px]"
+        edge="bottom"
+        scope="parent"
+      />
+    </Component>
+  );
+}
 
 export function WorkspaceSurface({
   children,
@@ -19,7 +48,7 @@ export function WorkspaceSurface({
     <main
       className={cn(
         workspaceShellClass,
-        "relative grid content-start min-h-[calc(100svh-64px)] gap-[1.5rem] pt-[1.75rem] pb-12 max-[820px]:min-h-0 max-[640px]:gap-[.9rem] max-[640px]:pt-4 max-[640px]:pb-10",
+        "frame-surface relative grid content-start min-h-[calc(100svh-64px)] gap-0 pb-12 max-[820px]:min-h-0 max-[640px]:pb-10",
       )}
     >
       {children}
@@ -43,8 +72,9 @@ export function WorkspaceHero({
   title: ReactNode;
 }) {
   return (
-    <header
-      className="relative grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-end gap-5 border border-line-strong bg-surface px-[var(--workspace-gutter)] py-5 max-[640px]:grid-cols-1 max-[640px]:items-start"
+    <WorkspaceSection
+      as="header"
+      className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-end gap-5 py-8 max-[640px]:grid-cols-1 max-[640px]:items-start"
       data-loading={loading || undefined}
     >
       <div className="min-w-0">
@@ -84,26 +114,41 @@ export function WorkspaceHero({
           {action}
         </div>
       ) : null}
-    </header>
+    </WorkspaceSection>
   );
 }
 
 export function WorkspacePanel({
   action,
   children,
+  compact = false,
   description,
   eyebrow,
   title,
 }: {
   action?: ReactNode;
   children: ReactNode;
+  compact?: boolean;
   description?: ReactNode;
   eyebrow?: ReactNode;
   title: ReactNode;
 }) {
   return (
-    <section className="relative min-w-0 border border-line-strong bg-surface">
-      <header className="flex items-start justify-between gap-[1.2rem] border-b border-line px-[var(--workspace-gutter)] py-5 max-[640px]:flex-col">
+    <WorkspaceSection className="frame-panel !px-0">
+      <span
+        aria-hidden="true"
+        className="frame-node frame-split-node absolute left-[var(--frame-node-offset)] top-[var(--frame-node-offset)]"
+      />
+      <span
+        aria-hidden="true"
+        className="frame-node frame-split-node absolute left-[var(--frame-node-offset)] bottom-[var(--frame-node-offset)]"
+      />
+      <header
+        className={cn(
+          "flex items-start justify-between gap-[1.2rem] border-b border-line px-[var(--workspace-gutter)] max-[640px]:flex-col",
+          compact ? "py-3" : "py-6",
+        )}
+      >
         <div className="min-w-0 flex-1">
           {eyebrow ? (
             <p className="mb-[.42rem] font-mono text-[.61rem] font-semibold tracking-[.11em] text-brand uppercase">
@@ -122,15 +167,30 @@ export function WorkspacePanel({
         {action ? <div className="max-w-full shrink-0">{action}</div> : null}
       </header>
       {children}
-    </section>
+    </WorkspaceSection>
+  );
+}
+
+export function WorkspaceFacts({
+  className,
+  ...props
+}: ComponentPropsWithoutRef<"dl">) {
+  return (
+    <dl
+      className={cn(
+        "m-0 grid grid-cols-5 gap-x-5 gap-y-4 px-[var(--workspace-gutter)] py-4 max-[900px]:grid-cols-3 max-[640px]:grid-cols-2 [&>div]:min-w-0 [&_dt]:mb-1 [&_dt]:font-mono [&_dt]:text-[.59rem] [&_dt]:leading-relaxed [&_dt]:text-ink-muted [&_dd]:m-0 [&_dd]:text-[.8rem] [&_dd]:font-medium [&_dd]:leading-snug",
+        className,
+      )}
+      {...props}
+    />
   );
 }
 
 export function WorkspaceMetricStrip({ children }: { children: ReactNode }) {
   return (
-    <section className="relative grid grid-cols-4 border border-line-strong bg-surface max-[900px]:grid-cols-2">
+    <WorkspaceSection className="grid grid-cols-4 !px-0 max-[900px]:grid-cols-2">
       {children}
-    </section>
+    </WorkspaceSection>
   );
 }
 
@@ -158,7 +218,7 @@ export function WorkspaceMetric({
   return (
     <article
       className={cn(
-        "relative grid min-w-0 gap-1 border-l border-line px-4 pt-[.8rem] pb-[.9rem] first:border-l-0 before:absolute before:inset-x-0 before:top-0 before:h-0.5 before:content-[''] max-[900px]:nth-3:border-l-0 max-[900px]:nth-3:border-t max-[900px]:nth-4:border-t max-[640px]:px-[.8rem] max-[640px]:py-[.7rem]",
+        "relative grid min-w-0 gap-1 border-l border-line px-[var(--workspace-gutter)] pt-[.8rem] pb-[.9rem] first:border-l-0 before:absolute before:inset-x-0 before:top-0 before:h-0.5 before:content-[''] max-[900px]:nth-3:border-l-0 max-[900px]:nth-3:border-t max-[900px]:nth-4:border-t max-[640px]:px-[.8rem] max-[640px]:py-[.7rem]",
         toneTop,
       )}
       data-loading={loading || undefined}
@@ -185,23 +245,25 @@ export function WorkspaceMetric({
 
 export function WorkspaceSplit({ children }: { children: ReactNode }) {
   return (
-    <div className="grid grid-cols-[minmax(0,1.22fr)_minmax(320px,.78fr)] items-start gap-[1.15rem] max-[900px]:grid-cols-1">
+    <WorkspaceSection
+      as="div"
+      className="frame-split grid grid-cols-[minmax(0,1.22fr)_minmax(320px,.78fr)] !px-0 max-[900px]:grid-cols-1"
+    >
       {children}
-    </div>
+    </WorkspaceSection>
   );
 }
 
 export function WorkspaceEmpty({ children }: { children: ReactNode }) {
   return (
-    <div className="grid min-h-[110px] place-content-center justify-items-start p-4 text-[.74rem] leading-[1.5] text-ink-muted">
+    <div className="grid min-h-[110px] place-content-center justify-items-start px-[var(--workspace-gutter)] py-8 text-[.74rem] leading-[1.5] text-ink-muted">
       {children}
     </div>
   );
 }
 
 /**
- * An inset workspace panel aligned inside the persistent page rails. Internal
- * dividers belong to the child content; the panel owns the outer rectangle.
+ * A workspace band aligned to the page rails. Child content owns its gutter.
  */
 export function WorkspaceRuleBand({
   children,
@@ -212,19 +274,13 @@ export function WorkspaceRuleBand({
   contentClassName?: string;
 }) {
   return (
-    <section
-      className={cn(
-        "relative min-w-0 border border-line-strong bg-surface",
-        className,
-      )}
-      {...props}
-    >
+    <WorkspaceSection className={cn("!px-0", className)} {...props}>
       <div
         className={cn("min-w-0 px-[var(--workspace-gutter)]", contentClassName)}
       >
         {children}
       </div>
-    </section>
+    </WorkspaceSection>
   );
 }
 

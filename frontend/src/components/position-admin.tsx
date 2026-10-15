@@ -504,6 +504,7 @@ export function PositionAdminEditor({ id }: { id?: string }) {
           <div className="grid grid-cols-2 gap-[1.2rem] max-[700px]:grid-cols-1">
             <Field label="Title">
               <InputControl
+                placeholder={"Enter a descriptive title"}
                 loading={editorLoading}
                 required
                 maxLength={200}
@@ -699,6 +700,7 @@ export function PositionAdminEditor({ id }: { id?: string }) {
           <div className="grid grid-cols-2 gap-[1.2rem] max-[700px]:grid-cols-1">
             <Field full label="Overview">
               <TextareaControl
+                placeholder={"Describe the role and its research focus"}
                 loading={editorLoading}
                 required
                 maxLength={8000}
@@ -712,6 +714,9 @@ export function PositionAdminEditor({ id }: { id?: string }) {
             {showDescription ? (
               <Field full label="Additional context">
                 <TextareaControl
+                  placeholder={
+                    "Add any other information applicants should know"
+                  }
                   loading={editorLoading}
                   maxLength={20000}
                   rows={4}

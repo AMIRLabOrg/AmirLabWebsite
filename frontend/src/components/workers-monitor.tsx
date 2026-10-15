@@ -24,6 +24,7 @@ import { SelectControl } from "@/components/ui/select-control";
 import { SemanticStatus } from "@/components/ui/semantic-status";
 import {
   WorkspaceHero,
+  WorkspaceFacts,
   WorkspaceMetric,
   WorkspaceMetricStrip,
   WorkspacePanel,
@@ -344,10 +345,11 @@ export function WorkersMonitor() {
         </WorkspaceMetricStrip>
         {summary?.health ? (
           <WorkspacePanel
+            compact
             title="Queue health"
             description="Source data is stale after 48 hours without a successful sync."
           >
-            <dl className="grid grid-cols-2 gap-3 p-4 text-sm max-[600px]:grid-cols-1">
+            <WorkspaceFacts>
               <div>
                 <dt>Oldest pending</dt>
                 <dd>
@@ -381,7 +383,7 @@ export function WorkersMonitor() {
                     : "None"}
                 </dd>
               </div>
-            </dl>
+            </WorkspaceFacts>
           </WorkspacePanel>
         ) : null}
 
@@ -394,7 +396,7 @@ export function WorkersMonitor() {
             </ButtonLink>
           }
         >
-          <div className="grid gap-2 p-4">
+          <div className="grid gap-2 px-[var(--workspace-gutter)] py-4">
             <SemanticStatus tone={backup?.busy ? "info" : "neutral"}>
               {!backup
                 ? "Backup status unavailable."
@@ -433,7 +435,7 @@ export function WorkersMonitor() {
             </div>
           }
         >
-          <div className="border-b border-line p-4">
+          <div className="border-b border-line px-[var(--workspace-gutter)] py-4">
             <SegmentedControl
               ariaLabel="Filter by status"
               value={statusFilter}
@@ -661,7 +663,6 @@ export function WorkersMonitor() {
                   </tbody>
                 </DataTable>
               </DataTableCard>
-              <div className="px-4"></div>
             </DataTableShell>
           )}
         </WorkspacePanel>
