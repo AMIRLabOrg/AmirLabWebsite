@@ -487,7 +487,31 @@ body:has([data-site="workspace"]),
 
   .frame-rail-section:has(~ .frame-rail-section) > .frame-rule-end,
   .frame-rail-section:has(~ form > .frame-rail-section) > .frame-rule-end,
+  form:has(~ .frame-rail-section)
+    > .frame-rail-section:last-child
+    > .frame-rule-end,
   .frame-surface > .frame-rail-section:first-child > .frame-rule-start {
+    display: none;
+  }
+  /* Child panels belong to their local record, never the workspace viewport. */
+  .frame-rail-section
+    .frame-rail-section
+    > :is(.frame-rule-start, .frame-rule-end) {
+    left: 0 !important;
+    right: 0 !important;
+    --frame-inner: 0px;
+  }
+  .frame-rail-section
+    .frame-rail-section
+    > :is(.frame-rule-start, .frame-rule-end)
+    > .frame-stroke-dashed-x {
+    background: var(--line) !important;
+  }
+  .frame-rail-section .frame-rail-section {
+    margin-inline: 0;
+  }
+  .frame-rail-section .frame-rail-section > .frame-rule-end,
+  .frame-rail-section .frame-rail-section:first-child > .frame-rule-start {
     display: none;
   }
   /* Columns own their outside frame; embedded records use local dividers. */

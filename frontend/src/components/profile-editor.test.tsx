@@ -93,6 +93,51 @@ describe("ProfileEditor staff profiles", () => {
     cleanup();
   });
 
+  it.each([true, false])(
+    "lets an admin switch membership (initial alumni=%s)",
+    async (isAlumni) => {
+      Element.prototype.scrollIntoView = vi.fn();
+      auth.mockReturnValue({
+        ...auth(),
+        user: { ...auth().user!, role: "ADMIN" },
+      });
+      request.mockImplementation(async (path, options) => {
+        if (options?.method === "PATCH") return {};
+        if (options?.method === "POST")
+          return { outcome: "APPLIED", direct: true };
+        if (path.endsWith("/profile")) return profile("MEMBER");
+        return {
+          email: "member@example.org",
+          role: "MEMBER",
+          person: { fullName: "Staff Member", rank: null, isAlumni },
+        };
+      });
+      const { container } = render(<ProfileEditor userId="user-1" />);
+      const membership = await screen.findByLabelText("Membership status");
+      await waitFor(() =>
+        expect(membership.textContent).toContain(
+          isAlumni ? "Alumni" : "Active",
+        ),
+      );
+      fireEvent.keyDown(membership, { key: "ArrowDown" });
+      fireEvent.click(
+        await screen.findByRole("option", {
+          name: isAlumni ? "Active" : "Alumni",
+        }),
+      );
+      fireEvent.submit(container.querySelector("form")!);
+      await waitFor(() => {
+        const call = request.mock.calls.find(
+          ([, options]) => options?.method === "PATCH",
+        );
+        expect(JSON.parse(call?.[1]?.body as string)).toMatchObject({
+          isAlumni: !isAlumni,
+          rank: null,
+        });
+      });
+    },
+  );
+
   it("blocks saving when managed account metadata fails", async () => {
     auth.mockReturnValue({
       ...auth(),
@@ -196,6 +241,7 @@ describe("ProfileEditor staff profiles", () => {
       expect(screen.queryByText("Profile links")).toBeNull();
       expect(screen.queryByText("Profile sections")).toBeNull();
       expect(screen.queryByText("Research rank")).toBeNull();
+      expect(screen.queryByLabelText("Membership status")).toBeNull();
       expect(screen.queryByText("Live preview")).toBeNull();
       expect(screen.queryByText("Completeness")).toBeNull();
     },

@@ -2,6 +2,7 @@
 
 import {
   WorkspaceRecordPanel,
+  WorkspaceRecordPanelHeader,
   WorkspaceRecordPanelTitle,
 } from "@/components/workspace-record";
 
@@ -130,7 +131,7 @@ export function EmailChangePanel() {
 
   return (
     <WorkspaceRecordPanel>
-      <div className="flex items-end justify-between gap-8 border-b border-line pb-[.95rem]">
+      <WorkspaceRecordPanelHeader className="flex! items-end justify-between gap-8">
         <div>
           <p className="m-0 mb-2 font-mono text-[.61rem] font-semibold uppercase tracking-[.11em] text-brand">
             Security
@@ -139,7 +140,7 @@ export function EmailChangePanel() {
             Change login email
           </WorkspaceRecordPanelTitle>
         </div>
-      </div>
+      </WorkspaceRecordPanelHeader>
 
       <p className="m-0 max-w-[760px] text-[.82rem] leading-[1.6] text-ink-muted">
         The new address must be verified before it becomes the login email. The
@@ -193,7 +194,7 @@ export function EmailChangePanel() {
 
       {status?.pending ? (
         <form
-          className="grid gap-[1rem] border-t border-line pt-[1.2rem]"
+          className="-mx-[var(--workspace-gutter)] grid gap-[1rem] border-t border-line px-[var(--workspace-gutter)] pt-[1.2rem]"
           onSubmit={verifyChange}
         >
           <p className="m-0 text-[.82rem] leading-[1.6] text-ink-muted">

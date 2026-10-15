@@ -26,7 +26,7 @@ export function WorkspaceBackLink({
     <div className="workspace-back-link py-3">
       <Link
         {...props}
-        className="inline-flex min-h-10 items-center gap-2 rounded-control px-3 text-[.76rem] font-medium text-ink-muted hover:bg-surface-subtle hover:text-ink focus-visible:outline-2 focus-visible:outline-brand"
+        className="inline-flex min-h-10 items-center gap-2 text-[.76rem] font-medium text-brand focus-visible:outline-2 focus-visible:outline-brand"
       >
         <ArrowLeft aria-hidden="true" size={15} /> {children}
       </Link>

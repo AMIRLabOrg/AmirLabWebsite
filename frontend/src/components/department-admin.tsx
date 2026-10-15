@@ -14,6 +14,7 @@ import {
   WorkspaceRecord,
   WorkspaceRecordForm,
   WorkspaceRecordPanel,
+  WorkspaceRecordRow,
   WorkspaceRecordPanelHeader,
   WorkspaceRecordPanelTitle,
 } from "@/components/workspace-record";
@@ -437,7 +438,7 @@ export function DepartmentEditor({ id }: { id?: string }) {
                 Link registered people to the department and set their role.
               </p>
             </WorkspaceRecordPanelHeader>
-            <div className="grid border-t border-line">
+            <div className="grid">
               {(loading && !department.people.length
                 ? Array.from({ length: 2 }, () => undefined)
                 : department.people
@@ -448,8 +449,8 @@ export function DepartmentEditor({ id }: { id?: string }) {
                   ? memberIssues.forItem(person.id)[0]
                   : undefined;
                 return (
-                  <article
-                    className="relative flex items-center justify-between gap-4 border-b border-line px-1 py-[.9rem] pr-10"
+                  <WorkspaceRecordRow
+                    className="relative flex! items-center justify-between gap-4 py-[.9rem] pr-10"
                     key={person?.id ?? `member-loading-${index}`}
                   >
                     {person ? <ReviewIssueStamp issue={issue} /> : null}
@@ -493,7 +494,7 @@ export function DepartmentEditor({ id }: { id?: string }) {
                     >
                       <Trash2 size={15} />
                     </IconButton>
-                  </article>
+                  </WorkspaceRecordRow>
                 );
               })}
             </div>

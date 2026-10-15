@@ -316,7 +316,7 @@ export function FrameRule({
     <div
       aria-hidden="true"
       className={cn(
-        "pointer-events-none absolute z-30 h-0",
+        "pointer-events-none absolute h-0",
         edge === "top" ? "top-0" : "bottom-0",
         scope === "viewport"
           ? "right-[calc((100%_-_100cqw)/2)] left-[calc((100%_-_100cqw)/2)]"
@@ -328,7 +328,7 @@ export function FrameRule({
       <span
         className={cn(
           strokeClass[stroke],
-          "absolute inset-x-0 h-px",
+          "absolute inset-x-0 z-20 h-px",
           edge === "top" ? "top-0" : "bottom-0",
         )}
       />

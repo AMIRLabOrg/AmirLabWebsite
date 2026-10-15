@@ -24,7 +24,7 @@ const GROUPS: Array<{ key: PeopleGroup; title: string }> = [
   { key: "researcher", title: "Researchers" },
   { key: "assistant", title: "Research Assistants" },
   { key: "intern", title: "Research Interns" },
-  { key: "other", title: "Members" },
+  { key: "other", title: "Others" },
 ];
 
 function personRole(person: Person): string {

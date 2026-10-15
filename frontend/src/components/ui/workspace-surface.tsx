@@ -23,17 +23,9 @@ function WorkspaceSection({
       className={cn("frame-rail-section min-w-0", className)}
       {...props}
     >
-      <FrameRule
-        className="frame-rule-start [--frame-inner:0px]"
-        edge="top"
-        scope="parent"
-      />
+      <FrameRule className="frame-rule-start" edge="top" stroke="dashed" />
       {children}
-      <FrameRule
-        className="frame-rule-end [--frame-inner:0px]"
-        edge="bottom"
-        scope="parent"
-      />
+      <FrameRule className="frame-rule-end" edge="bottom" stroke="dashed" />
     </Component>
   );
 }

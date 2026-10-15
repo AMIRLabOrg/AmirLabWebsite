@@ -144,6 +144,7 @@ export function ProfileEditor({ userId }: ProfileEditorProps) {
   const [accountError, setAccountError] = useState<string>();
   const [editRole, setEditRole] = useState("MEMBER");
   const [editRank, setEditRank] = useState("NONE");
+  const [editIsAlumni, setEditIsAlumni] = useState(false);
   const [editEmail, setEditEmail] = useState("");
   const signedInUserId = user?.id;
   const accountRole = userId ? editRole : (user?.role ?? "MEMBER");
@@ -248,7 +249,11 @@ export function ProfileEditor({ userId }: ProfileEditorProps) {
     void apiRequest<{
       email: string | null;
       role: string;
-      person: { fullName: string; rank: string | null } | null;
+      person: {
+        fullName: string;
+        rank: string | null;
+        isAlumni: boolean;
+      } | null;
     }>(`/users/${userId}`, { method: "GET" })
       .then((account) => {
         if (!active) return;
@@ -257,6 +262,7 @@ export function ProfileEditor({ userId }: ProfileEditorProps) {
         setEditRole(account.role);
         setEditEmail(account.email ?? "");
         setEditRank(account.person?.rank ?? "NONE");
+        setEditIsAlumni(account.person?.isAlumni ?? false);
       })
       .catch((error: unknown) => {
         if (active)
@@ -315,6 +321,7 @@ export function ProfileEditor({ userId }: ProfileEditorProps) {
             fullName: profile.fullName,
             rank: editRank === "NONE" ? null : editRank,
             role: editRole,
+            isAlumni: editIsAlumni,
           }),
           headers: { "content-type": "application/json" },
           method: "PATCH",
@@ -571,6 +578,23 @@ export function ProfileEditor({ userId }: ProfileEditorProps) {
                             value: item,
                           }))}
                           value={editRole}
+                        />
+                      </FormField>
+                      <FormField
+                        htmlFor="account-membership"
+                        label="Membership status"
+                      >
+                        <SelectControl
+                          loading={editorLoading}
+                          id="account-membership"
+                          onValueChange={(value) =>
+                            setEditIsAlumni(value === "ALUMNI")
+                          }
+                          options={[
+                            { label: "Active", value: "ACTIVE" },
+                            { label: "Alumni", value: "ALUMNI" },
+                          ]}
+                          value={editIsAlumni ? "ALUMNI" : "ACTIVE"}
                         />
                       </FormField>
                       <FormField htmlFor="account-rank" label="Research rank">
@@ -871,8 +895,10 @@ export function ProfileEditor({ userId }: ProfileEditorProps) {
             </div>
           </div>
         </WorkspaceRecordPanel>
+      </WorkspaceRecordColumns>
 
-        {researchProfile ? (
+      {researchProfile ? (
+        <>
           <WorkspaceRecordPanel>
             <WorkspaceRecordPanelHeader className="grid gap-3 pb-[1.2rem]">
               <div>
@@ -1059,9 +1085,7 @@ export function ProfileEditor({ userId }: ProfileEditorProps) {
                 ))}
             </div>
           </WorkspaceRecordPanel>
-        ) : null}
 
-        {researchProfile ? (
           <WorkspaceRecordPanel>
             <WorkspaceRecordPanelHeader className="flex! items-end justify-between gap-4 max-[700px]:flex-col max-[700px]:items-start">
               <div>
@@ -1390,8 +1414,8 @@ export function ProfileEditor({ userId }: ProfileEditorProps) {
               ))}
             </div>
           </WorkspaceRecordPanel>
-        ) : null}
-      </WorkspaceRecordColumns>
+        </>
+      ) : null}
 
       {message ? (
         <p className="m-0 flex items-center gap-[.45rem] text-[.82rem] leading-[1.5] text-ink-muted">

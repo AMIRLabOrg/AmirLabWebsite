@@ -277,7 +277,7 @@ export function WorkspaceShell({ children }: { children: ReactNode }) {
             variant="grid"
           />
         </aside>
-        <div className="relative grid min-w-0 grid-rows-[64px_minmax(0,1fr)] max-[820px]:min-h-svh max-[820px]:grid-rows-[55px_minmax(0,1fr)]">
+        <div className="@container/workspace relative grid min-w-0 grid-rows-[64px_minmax(0,1fr)] max-[820px]:min-h-svh max-[820px]:grid-rows-[55px_minmax(0,1fr)]">
           <FrameRails />
           <header className="sticky top-0 z-40 min-h-[64px] bg-surface/95 backdrop-blur-[12px] max-[820px]:min-h-[55px]">
             <FrameBays pattern="grid" />

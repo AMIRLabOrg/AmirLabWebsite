@@ -332,7 +332,7 @@ export function ApplicationReviewDetail({
         </section>
         <aside className="min-w-0 border-l border-line py-5 pl-5 @max-[640px]:border-t @max-[640px]:border-l-0 @max-[640px]:pl-0">
           <h2 className="mb-5 font-sans text-[1.3rem]">Original file</h2>
-          <div className="flex flex-col items-center border-y border-line-strong bg-canvas px-4 py-8 text-center">
+          <div className="flex flex-col items-center border-t border-line py-8 text-center">
             <FileText
               aria-hidden="true"
               className="mb-[.6rem] text-brand"
@@ -356,7 +356,7 @@ export function ApplicationReviewDetail({
               Open original
             </ButtonAnchor>
           </div>
-          <div className="mt-4 grid gap-2 border-y border-line-strong bg-canvas p-4">
+          <div className="mt-4 grid gap-2 border-t border-line py-4">
             <span className="font-mono text-[.64rem] uppercase tracking-[.06em] text-ink-muted">
               ATS assessment
             </span>

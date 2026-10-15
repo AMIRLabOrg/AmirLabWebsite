@@ -31,7 +31,7 @@ interface EditableAccount {
   id: string;
   email: string | null;
   role: string;
-  person: { fullName: string; rank: string | null } | null;
+  person: { fullName: string; rank: string | null; isAlumni: boolean } | null;
 }
 
 function readable(value: string): string {
@@ -45,6 +45,7 @@ export function AccountForm({ accountId }: { accountId?: string }) {
   const [email, setEmail] = useState("");
   const [role, setRole] = useState("MEMBER");
   const [rank, setRank] = useState("RESEARCH_INTERN");
+  const [isAlumni, setIsAlumni] = useState(false);
   const [loading, setLoading] = useState(Boolean(accountId));
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string>();
@@ -60,6 +61,7 @@ export function AccountForm({ accountId }: { accountId?: string }) {
         setEmail(account.email ?? "");
         setRole(account.role);
         setRank(account.person?.rank ?? "NONE");
+        setIsAlumni(account.person?.isAlumni ?? false);
         setLoadError(undefined);
       })
       .catch((caught: unknown) => {
@@ -90,6 +92,7 @@ export function AccountForm({ accountId }: { accountId?: string }) {
           fullName,
           rank: rank === "NONE" ? null : rank,
           role,
+          isAlumni,
         }),
         headers: { "content-type": "application/json" },
         method: accountId ? "PATCH" : "POST",
@@ -202,6 +205,18 @@ export function AccountForm({ accountId }: { accountId?: string }) {
                 value: item,
               }))}
               value={role}
+            />
+          </FormField>
+          <FormField htmlFor="account-membership" label="Membership status">
+            <SelectControl
+              disabled={loading}
+              id="account-membership"
+              onValueChange={(value) => setIsAlumni(value === "ALUMNI")}
+              options={[
+                { label: "Active", value: "ACTIVE" },
+                { label: "Alumni", value: "ALUMNI" },
+              ]}
+              value={isAlumni ? "ALUMNI" : "ACTIVE"}
             />
           </FormField>
           <FormField

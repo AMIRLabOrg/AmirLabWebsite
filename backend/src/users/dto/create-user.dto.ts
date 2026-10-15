@@ -1,4 +1,5 @@
 import {
+  IsBoolean,
   IsEmail,
   IsEnum,
   IsOptional,
@@ -24,6 +25,10 @@ export class CreateUserDto {
   @IsEnum(AcademicRank)
   // Permission role and academic rank are independent; staff may also publish.
   rank?: AcademicRank | null;
+
+  @IsOptional()
+  @IsBoolean()
+  isAlumni?: boolean;
 }
 
 export class UpdateUserDto {
@@ -41,4 +46,8 @@ export class UpdateUserDto {
   @IsOptional()
   @IsEnum(AcademicRank)
   rank?: AcademicRank | null;
+
+  @IsOptional()
+  @IsBoolean()
+  isAlumni?: boolean;
 }

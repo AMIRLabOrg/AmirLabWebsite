@@ -41,7 +41,9 @@ export function StatePanel({
         "relative flex flex-col items-center bg-transparent text-center",
         frame === "workspace"
           ? "px-6 py-10"
-          : "border-y border-line-strong px-8 py-16",
+          : frame
+            ? "border-y border-line-strong px-8 py-16"
+            : "px-8 py-16",
       )}
       role={variant === "error" ? "alert" : "status"}
     >

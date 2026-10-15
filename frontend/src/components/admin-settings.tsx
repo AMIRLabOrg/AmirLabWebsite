@@ -16,6 +16,7 @@ import { ButtonControl } from "@/components/ui/button-control";
 import {
   WorkspaceHero,
   WorkspacePanel,
+  WorkspaceRuleBand,
 } from "@/components/ui/workspace-surface";
 
 type VerificationMode = "AUTOMATIC" | "MANUAL";
@@ -283,7 +284,7 @@ export function AdminSettings() {
                     const manual = displayedVerification[key] === "MANUAL";
                     return (
                       <article
-                        className="grid min-h-[76px] grid-cols-[minmax(240px,1fr)_minmax(130px,.45fr)_226px] items-center gap-4 border-b border-line px-4 py-[.95rem] last:border-b-0 max-[900px]:grid-cols-1 max-[900px]:items-start"
+                        className="grid min-h-[76px] grid-cols-[minmax(240px,1fr)_minmax(130px,.45fr)_226px] items-center gap-4 border-b border-line px-[var(--workspace-gutter)] py-[.95rem] last:border-b-0 max-[900px]:grid-cols-1 max-[900px]:items-start"
                         key={key}
                       >
                         <div>
@@ -335,7 +336,7 @@ export function AdminSettings() {
               title="Research rank thresholds"
               description="Control when publication activity can lift a public profile above its appointed account rank."
             >
-              <div className="grid gap-4 p-4">
+              <div className="grid gap-4 px-[var(--workspace-gutter)] py-4">
                 <div className="grid grid-cols-[auto_minmax(0,1fr)] items-start gap-[.8rem] rounded-panel bg-brand-faint p-4">
                   <ShieldCheck className="text-brand" size={22} />
                   <div>
@@ -349,7 +350,7 @@ export function AdminSettings() {
                 </div>
 
                 <div className="grid grid-cols-2 gap-x-4 max-[640px]:grid-cols-1">
-                  <strong className="col-span-2 border-t border-line pb-[.2rem] pt-4 text-[.9rem] max-[640px]:col-span-1">
+                  <strong className="col-span-2 -mx-[var(--workspace-gutter)] border-t border-line px-[var(--workspace-gutter)] pb-[.2rem] pt-4 text-[.9rem] max-[640px]:col-span-1">
                     Senior researcher
                   </strong>
                   <label className="grid gap-2 py-[.7rem] text-[.8rem] font-semibold text-ink-muted">
@@ -391,7 +392,7 @@ export function AdminSettings() {
                     />
                   </label>
 
-                  <strong className="col-span-2 border-t border-line pb-[.2rem] pt-4 text-[.9rem] max-[640px]:col-span-1">
+                  <strong className="col-span-2 -mx-[var(--workspace-gutter)] border-t border-line px-[var(--workspace-gutter)] pb-[.2rem] pt-4 text-[.9rem] max-[640px]:col-span-1">
                     Lead researcher
                   </strong>
                   <label className="grid gap-2 py-[.7rem] text-[.8rem] font-semibold text-ink-muted">
@@ -448,7 +449,7 @@ export function AdminSettings() {
                   >
                 ).map((key) => (
                   <article
-                    className="grid min-h-[76px] grid-cols-[minmax(240px,1fr)_180px] items-center gap-4 border-b border-line px-4 py-[.95rem] last:border-b-0 max-[700px]:grid-cols-1"
+                    className="grid min-h-[76px] grid-cols-[minmax(240px,1fr)_180px] items-center gap-4 border-b border-line px-[var(--workspace-gutter)] py-[.95rem] last:border-b-0 max-[700px]:grid-cols-1"
                     key={key}
                   >
                     <div>
@@ -478,7 +479,7 @@ export function AdminSettings() {
                     />
                   </article>
                 ))}
-                <label className="grid grid-cols-[minmax(240px,1fr)_160px] items-center gap-4 border-t border-line px-4 py-[.95rem] text-[.8rem] font-semibold text-ink-muted max-[700px]:grid-cols-1">
+                <label className="grid grid-cols-[minmax(240px,1fr)_160px] items-center gap-4 px-[var(--workspace-gutter)] py-[.95rem] text-[.8rem] font-semibold text-ink-muted max-[700px]:grid-cols-1">
                   <span>
                     Reminder lead time
                     <small className="mt-1 block font-normal leading-[1.5]">
@@ -507,7 +508,7 @@ export function AdminSettings() {
             <OpenAlexApiSettings />
             <MailProviderSettings />
 
-            <footer className="flex flex-wrap items-center justify-end gap-4 border-t border-line py-5">
+            <WorkspaceRuleBand contentClassName="flex flex-wrap items-center justify-end gap-4 py-5">
               <p className="m-0 mr-auto text-[.72rem] leading-[1.5] text-ink-muted">
                 OpenAlex author profiles sync papers, datasets, and citation
                 totals daily.
@@ -525,7 +526,7 @@ export function AdminSettings() {
                 <Save size={15} />
                 Save policy
               </ButtonControl>
-            </footer>
+            </WorkspaceRuleBand>
           </>
         )}
       </div>

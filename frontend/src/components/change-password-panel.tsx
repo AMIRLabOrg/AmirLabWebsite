@@ -2,6 +2,7 @@
 
 import {
   WorkspaceRecordPanel,
+  WorkspaceRecordPanelHeader,
   WorkspaceRecordPanelTitle,
 } from "@/components/workspace-record";
 
@@ -56,9 +57,9 @@ export function ChangePasswordPanel() {
   }
 
   return (
-    <form className="mt-[1.35rem] w-full" onSubmit={submit}>
+    <form className="w-full" onSubmit={submit}>
       <WorkspaceRecordPanel>
-        <div className="mb-0 flex items-end justify-between gap-8 border-b border-line pb-[.95rem]">
+        <WorkspaceRecordPanelHeader className="flex! items-end justify-between gap-8">
           <div>
             <p className="m-0 mb-2 font-mono text-[.61rem] font-semibold uppercase tracking-[.11em] text-brand">
               Security
@@ -67,7 +68,7 @@ export function ChangePasswordPanel() {
               Change password
             </WorkspaceRecordPanelTitle>
           </div>
-        </div>
+        </WorkspaceRecordPanelHeader>
 
         {error ? (
           <p className="m-0 flex items-center gap-[.45rem] text-[.82rem] leading-[1.5] text-ink-muted rounded-panel bg-danger-soft p-[.8rem] text-danger">

@@ -187,4 +187,52 @@ describe('UsersService profile publication', () => {
 
     expect(createArgs).toMatchObject({ data: { isPublished: true } });
   });
+  it.each([true, false, undefined])(
+    'saves alumni status independently of rank (%s)',
+    async (isAlumni) => {
+      const personUpdate = jest.fn();
+      const transaction = {
+        $queryRaw: jest.fn(),
+        user: {
+          findUnique: jest
+            .fn()
+            .mockResolvedValue({ role: 'MEMBER', isDeleted: false }),
+          update: jest.fn().mockResolvedValue({ id: 'account-id' }),
+        },
+        person: { update: personUpdate },
+        auditRecord: { create: jest.fn() },
+      };
+      const service = await resolveService(UsersService, [
+        { provide: AuthService, useValue: {} },
+        {
+          provide: PrismaService,
+          useValue: {
+            user: {
+              findUnique: jest.fn().mockResolvedValue({
+                id: 'account-id',
+                email: 'lab@example.org',
+                person: { id: 'person-id' },
+              }),
+            },
+            $transaction: (run: (tx: typeof transaction) => Promise<unknown>) =>
+              run(transaction),
+          },
+        },
+      ]);
+      await service.update(
+        'account-id',
+        {
+          email: 'lab@example.org',
+          fullName: 'Lab Member',
+          role: PlatformRole.MEMBER,
+          isAlumni,
+        },
+        'admin-id',
+      );
+      expect(personUpdate).toHaveBeenCalledWith({
+        where: { id: 'person-id' },
+        data: { fullName: 'Lab Member', appointedRank: undefined, isAlumni },
+      });
+    },
+  );
 });

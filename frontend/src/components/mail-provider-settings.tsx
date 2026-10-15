@@ -286,7 +286,7 @@ export function MailProviderSettings() {
           {message}
         </p>
       ) : null}
-      <div className="flex flex-wrap items-end justify-between gap-4 border-t border-line pt-4">
+      <div className="-mx-[var(--workspace-gutter)] flex flex-wrap items-end justify-between gap-4 border-t border-line px-[var(--workspace-gutter)] pt-4">
         {saved?.configured ? (
           <div className="flex min-w-0 flex-wrap items-end gap-3 max-[640px]:w-full">
             <FormField
@@ -322,7 +322,7 @@ export function MailProviderSettings() {
           Verify and save
         </ButtonControl>
       </div>
-      <div className="grid gap-2 border-t border-line pt-4">
+      <div className="-mx-[var(--workspace-gutter)] grid gap-2 border-t border-line px-[var(--workspace-gutter)] pt-4">
         <strong className="text-sm font-semibold">Email usage</strong>
         {!usage?.configured ? (
           <p className="m-0 text-xs text-ink-muted">

@@ -161,7 +161,7 @@ export function OpenAlexApiSettings() {
       </div>
       <section
         aria-label="OpenAlex daily allowance"
-        className="grid gap-2 border-t border-line pt-4"
+        className="-mx-[var(--workspace-gutter)] grid gap-2 border-t border-line px-[var(--workspace-gutter)] pt-4"
       >
         <div className="flex items-center justify-between gap-3">
           <strong className="text-sm font-semibold">Daily API allowance</strong>

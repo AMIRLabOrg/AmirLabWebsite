@@ -38,6 +38,7 @@ import {
   WorkspaceRow,
 } from "@/components/ui/workspace-surface";
 import {
+  WorkspaceRecordRow,
   WorkspaceRecordPanelTitle,
   WorkspaceRecordPanelHeader,
 } from "@/components/workspace-record";
@@ -731,9 +732,9 @@ function TemplatesPanel({
 
   return (
     <WorkspaceRuleBand contentClassName="grid grid-cols-[290px_minmax(0,1fr)] !px-0 max-[900px]:grid-cols-1">
-      <aside className="grid content-start border-r border-line-strong p-4 max-[900px]:border-r-0 max-[900px]:border-b">
+      <aside className="grid content-start border-r border-line py-4 max-[900px]:border-r-0 max-[900px]:border-b">
         <ButtonControl
-          className="mb-2 justify-start"
+          className="mx-[var(--workspace-gutter)] mb-2 justify-start"
           onClick={newTemplate}
           variant="dashed"
         >
@@ -742,7 +743,7 @@ function TemplatesPanel({
         {templates.map((template) => (
           <button
             className={cn(
-              "grid cursor-pointer gap-1 border-b border-line-strong p-4 text-left transition-colors first-of-type:border-t focus-visible:z-10 focus-visible:shadow-[var(--focus-ring)]",
+              "grid cursor-pointer gap-1 border-b border-line px-[var(--workspace-gutter)] py-4 text-left transition-colors first-of-type:border-t last:border-b-0 focus-visible:z-10 focus-visible:shadow-[var(--focus-ring)]",
               selectedId === template.id
                 ? "border-brand bg-brand-faint"
                 : "border-line bg-transparent hover:border-brand hover:bg-brand-faint",
@@ -836,7 +837,7 @@ function TemplatesPanel({
             value={draft.bodyMarkdown}
           />
         </FormField>
-        <div className="flex flex-wrap gap-2 border-y border-line-strong bg-canvas p-4">
+        <WorkspaceRecordRow className="flex! flex-wrap gap-2 border-t border-line">
           {variables.map((variable) => (
             <ButtonControl
               compact
@@ -848,7 +849,7 @@ function TemplatesPanel({
               {variable.token}
             </ButtonControl>
           ))}
-        </div>
+        </WorkspaceRecordRow>
         <CheckboxControl
           checked={draft.isActive}
           disabled={loading || saving}
@@ -860,7 +861,7 @@ function TemplatesPanel({
           Active for new documents
         </CheckboxControl>
         {error ? <FormMessage>{error}</FormMessage> : null}
-        <footer className="flex flex-wrap justify-end gap-3 border-t border-line pt-5">
+        <footer className="-mx-[var(--workspace-gutter)] flex flex-wrap justify-end gap-3 border-t border-line px-[var(--workspace-gutter)] pt-5">
           {selected ? (
             <ButtonControl
               disabled={saving || defaultSaving}
@@ -1120,7 +1121,7 @@ function ApprovalPanel({
           />
         </FormField>
         {display ? (
-          <div className="grid grid-cols-2 gap-x-6 gap-y-4 border-y border-line-strong bg-canvas p-4 text-[.78rem] max-[640px]:grid-cols-1">
+          <WorkspaceRecordRow className="grid-cols-2 gap-x-6 gap-y-4 border-t border-line text-[.78rem] max-[640px]:grid-cols-1">
             {[
               ["Name", display.name],
               ["Role", display.title],
@@ -1134,7 +1135,7 @@ function ApprovalPanel({
                 <p className="mt-1">{value}</p>
               </div>
             ))}
-          </div>
+          </WorkspaceRecordRow>
         ) : null}
       </WorkspaceRuleBand>
 

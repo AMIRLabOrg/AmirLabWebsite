@@ -48,6 +48,7 @@ export class UsersService {
           fullName,
           isPublished: true,
           appointedRank: dto.rank ?? null,
+          isAlumni: dto.isAlumni,
           slug: buildPersonSlug(fullName, account.id),
           userId: account.id,
         },
@@ -107,6 +108,7 @@ export class UsersService {
           earnedRank: true,
           slug: true,
           isPublished: true,
+          isAlumni: true,
         },
       },
     } satisfies Prisma.UserSelect;
@@ -146,6 +148,7 @@ export class UsersService {
             earnedRank: true,
             slug: true,
             isPublished: true,
+            isAlumni: true,
           },
         },
       },
@@ -185,7 +188,7 @@ export class UsersService {
       if (user.person) {
         await transaction.person.update({
           where: { id: user.person.id },
-          data: { appointedRank: dto.rank, fullName },
+          data: { appointedRank: dto.rank, fullName, isAlumni: dto.isAlumni },
         });
       } else {
         await transaction.person.create({
@@ -193,6 +196,7 @@ export class UsersService {
             fullName,
             isPublished: true,
             appointedRank: dto.rank,
+            isAlumni: dto.isAlumni,
             slug: buildPersonSlug(fullName, id),
             userId: id,
           },
@@ -213,6 +217,7 @@ export class UsersService {
           details: {
             fullName: { from: user.person?.fullName, to: fullName },
             rank: { from: user.person?.appointedRank, to: dto.rank },
+            isAlumni: { from: user.person?.isAlumni, to: dto.isAlumni },
             role: { from: user.role, to: dto.role },
             email: { from: user.email, to: email },
           },
