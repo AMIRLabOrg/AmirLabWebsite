@@ -66,3 +66,5 @@ repository.
 - The Volunteer Internship Program and the image-only Achievement page are preserved as reviewed `SiteSetting` content (`site.training-programs` and `site.achievement`).
 - The older Founder Message page contains role/publication counts that conflict with the newer founder profile. It is retained in source provenance but is **not** allowed to overwrite the newer person record.
 - The three home-page academic partners are seeded as published `University` records with matching logos: King Abdulaziz University, King Saud University, and The University of Aizu.
+
+Use `ADMIN_EMAIL=admin@amirlab.org` for the administrator login. Changing this seed setting does not rename an existing account; update that account email separately without rebuilding or reseeding the database.
