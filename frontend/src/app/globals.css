@@ -490,6 +490,26 @@ body:has([data-site="workspace"]),
   .frame-surface > .frame-rail-section:first-child > .frame-rule-start {
     display: none;
   }
+  /* Columns own their outside frame; embedded records use local dividers. */
+  .frame-columns .frame-rail-section {
+    margin-inline: 0;
+  }
+  .frame-columns .frame-rule-start,
+  .frame-columns .frame-rule-end {
+    display: none;
+  }
+  .frame-column > .frame-rail-section:not(:last-child) {
+    border-bottom: 1px solid var(--line);
+  }
+  .frame-column + .frame-column {
+    border-left: 1px solid var(--line);
+  }
+  @media (max-width: 980px) {
+    .frame-column + .frame-column {
+      border-left: 0;
+      border-top: 1px solid var(--line);
+    }
+  }
   /* Panel content already spans the rails; nested bands must not bleed again. */
   .frame-panel .frame-rail-section {
     margin-inline: 0;
@@ -667,4 +687,14 @@ body:has([data-site="workspace"]),
 [data-show-placeholder="false"] textarea::placeholder {
   color: transparent;
   opacity: 0;
+}
+
+/* Starts at first paint, independent of hydration and viewport observers. */
+@keyframes counter-roll {
+  from {
+    transform: translateY(0);
+  }
+  to {
+    transform: translateY(var(--counter-offset));
+  }
 }

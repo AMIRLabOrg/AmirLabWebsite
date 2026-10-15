@@ -34,6 +34,31 @@ export function WorkspaceBackLink({
   );
 }
 
+export function WorkspaceRecordColumns({
+  children,
+  aside,
+}: {
+  children: ReactNode;
+  aside?: ReactNode;
+}) {
+  return (
+    <WorkspaceRuleBand
+      contentClassName={cn(
+        "frame-columns grid !px-0",
+        Boolean(aside) &&
+          "grid-cols-[minmax(0,1fr)_320px] max-[980px]:grid-cols-1",
+      )}
+    >
+      <div className="frame-column grid min-w-0 content-start">{children}</div>
+      {aside ? (
+        <aside className="frame-column grid min-w-0 content-start">
+          {aside}
+        </aside>
+      ) : null}
+    </WorkspaceRuleBand>
+  );
+}
+
 export function WorkspaceRecordForm({
   children,
   className,
@@ -63,6 +88,76 @@ export function WorkspaceRecordPanel({
     >
       {children}
     </WorkspaceRuleBand>
+  );
+}
+
+export function WorkspaceRecordRow({
+  className,
+  ...props
+}: ComponentPropsWithoutRef<"article">) {
+  return (
+    <article
+      className={cn(
+        "-mx-[var(--workspace-gutter)] grid gap-4 border-b border-line px-[var(--workspace-gutter)] py-4 last:border-b-0",
+        className,
+      )}
+      {...props}
+    />
+  );
+}
+
+export function WorkspaceRecordRowHeading({
+  level,
+  number,
+  title,
+  children,
+}: {
+  level: "section" | "subsection" | "entry";
+  number: string;
+  title?: string;
+  children?: ReactNode;
+}) {
+  const Heading =
+    level === "section" ? "h3" : level === "subsection" ? "h4" : "h5";
+  return (
+    <header
+      className={cn(
+        "flex min-w-0 flex-wrap items-center justify-between gap-4",
+        level === "section" &&
+          "-mx-[var(--workspace-gutter)] border-b border-line-strong px-[var(--workspace-gutter)] pb-5 pt-2",
+      )}
+    >
+      <div className="min-w-0">
+        {title ? (
+          <p
+            className={cn(
+              "m-0 font-mono text-[.6rem] uppercase tracking-[.08em]",
+              level === "entry" ? "text-ink-faint" : "text-brand",
+            )}
+          >
+            {level} {number}
+          </p>
+        ) : null}
+        <Heading
+          className={cn(
+            "m-0 break-words font-sans",
+            title && "mt-1",
+            level === "section"
+              ? "text-[1.2rem] font-medium leading-[1.2]"
+              : level === "subsection"
+                ? "text-[.95rem] font-medium"
+                : "text-[.76rem] font-normal text-ink-muted",
+          )}
+        >
+          {title || (
+            <>
+              <span className="capitalize">{level}</span> {number}
+            </>
+          )}
+        </Heading>
+      </div>
+      {children}
+    </header>
   );
 }
 

@@ -4,7 +4,7 @@ import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, expect, test, vi } from "vitest";
 import { ButtonControl } from "@/components/ui/button-control";
 import { InputControl } from "@/components/ui/form-controls";
-import { WorkspaceContent } from "./workspace-content";
+import { WorkspaceAuthCheck, WorkspaceContent } from "./workspace-content";
 
 const auth = vi.hoisted(() => ({
   loading: true,
@@ -37,6 +37,8 @@ test("withholds protected controls and effects until authentication", () => {
   );
   expect(screen.queryByRole("button", { name: "Private action" })).toBeNull();
   expect(effect).not.toHaveBeenCalled();
+  expect(view.container.querySelector("[data-placeholder]")).toBeNull();
+  expect(view.container.querySelector("input, textarea, article")).toBeNull();
   expect(screen.getByRole("status").textContent).toContain(
     "Checking workspace access",
   );
@@ -87,4 +89,17 @@ test("clears private state when the session ends or the account changes", () => 
     </WorkspaceContent>,
   );
   expect((screen.getByRole("textbox") as HTMLInputElement).value).toBe("");
+});
+
+test("shows a dedicated authentication status without imitating page content", () => {
+  const { container } = render(<WorkspaceAuthCheck />);
+  expect(screen.getByRole("status").textContent).toContain(
+    "Checking your session",
+  );
+  expect(
+    screen.getByRole("heading", { name: "Checking your session" }),
+  ).toBeTruthy();
+  expect(
+    container.querySelector("[data-placeholder], input, textarea"),
+  ).toBeNull();
 });

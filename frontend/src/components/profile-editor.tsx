@@ -19,9 +19,14 @@ import { ConfirmDialog } from "@/components/confirm-dialog";
 import { useNotifications } from "@/components/notification-provider";
 import { StatePanel } from "@/components/state-panel";
 import {
+  WorkspaceRecordColumns,
+  WorkspaceRecordRow,
+  WorkspaceRecordRowHeading,
+  WorkspaceRecordPanelHeader,
   WorkspaceRecordPanel,
   WorkspaceRecordPanelTitle,
 } from "@/components/workspace-record";
+import { WorkspaceRuleBand } from "@/components/ui/workspace-surface";
 import { ASSET_URL } from "@/lib/api-url";
 import { apiRequest } from "@/lib/client-api";
 import type {
@@ -423,11 +428,11 @@ export function ProfileEditor({ userId }: ProfileEditorProps) {
   return (
     <form
       aria-busy={editorLoading}
-      className="grid w-full grid-cols-1 items-start gap-[1.35rem]"
+      className="grid w-full grid-cols-1 items-start gap-0"
       data-loading={editorLoading || undefined}
       onSubmit={submit}
     >
-      <header className="sticky top-[64px] z-10 col-span-full flex items-center justify-between gap-4 border border-line-strong bg-[color-mix(in_srgb,var(--surface)_94%,transparent)] px-[var(--workspace-gutter)] py-[.7rem] backdrop-blur-[12px] max-[820px]:top-[55px] max-[640px]:flex-col max-[640px]:items-stretch max-[640px]:px-4">
+      <WorkspaceRuleBand contentClassName="flex items-center justify-between gap-4 py-3 max-[640px]:flex-col max-[640px]:items-stretch">
         <p className="m-0 flex items-center gap-[.55rem] text-[.76rem] text-ink-muted">
           <span className="h-[7px] w-[7px] rounded-full bg-brand" />
           {userId || user?.role === "ADMIN"
@@ -446,13 +451,13 @@ export function ProfileEditor({ userId }: ProfileEditorProps) {
             ? "Save and publish"
             : "Submit for review"}
         </ButtonControl>
-      </header>
+      </WorkspaceRuleBand>
       {accountError ? (
         <p role="alert" className="text-danger">
           {accountError}
         </p>
       ) : null}
-      <section className="relative col-span-full flex items-center gap-[1.6rem] border border-line-strong bg-surface px-[var(--workspace-gutter)] py-[1.6rem] max-[640px]:flex-col max-[640px]:items-start max-[640px]:px-4">
+      <WorkspaceRuleBand contentClassName="flex items-center gap-[1.6rem] py-6 max-[640px]:flex-col max-[640px]:items-start">
         <div
           className={cn(
             "relative flex h-28 w-28 flex-[0_0_112px] items-center justify-center rounded-full border border-dashed border-[color-mix(in_srgb,var(--brand)_36%,transparent)]",
@@ -534,420 +539,587 @@ export function ProfileEditor({ userId }: ProfileEditorProps) {
             </ButtonControl>
           ) : null}
         </div>
-      </section>
-      <div
-        className={cn(
-          "grid min-w-0 items-start gap-[1.35rem]",
-          showAside
-            ? "grid-cols-[minmax(0,1fr)_320px] max-[980px]:grid-cols-1"
-            : "grid-cols-1",
-        )}
+      </WorkspaceRuleBand>
+      <WorkspaceRecordColumns
+        aside={
+          showAside ? (
+            <>
+              {managingAccount ? (
+                <WorkspaceRecordPanel>
+                  <WorkspaceRecordPanelHeader className="flex! items-end justify-between gap-4 max-[700px]:flex-col max-[700px]:items-start">
+                    <div>
+                      <p className="m-0 mb-[.35rem] font-mono text-[.62rem] font-semibold uppercase tracking-[.1em] text-brand">
+                        Access
+                      </p>
+                      <WorkspaceRecordPanelTitle>
+                        {researchProfile ? "Role and rank" : "Permission role"}
+                      </WorkspaceRecordPanelTitle>
+                    </div>
+                  </WorkspaceRecordPanelHeader>
+                  <div className="grid gap-0">
+                    <div className="flex flex-col gap-[.85rem]">
+                      <FormField htmlFor="account-role" label="Permission role">
+                        <SelectControl
+                          loading={editorLoading}
+                          id="account-role"
+                          onValueChange={(value) => {
+                            setEditRole(value);
+                            if (value === "ADMIN") setEditRank("NONE");
+                          }}
+                          options={ROLES.map((item) => ({
+                            label: readable(item),
+                            value: item,
+                          }))}
+                          value={editRole}
+                        />
+                      </FormField>
+                      <FormField htmlFor="account-rank" label="Research rank">
+                        <SelectControl
+                          loading={editorLoading}
+                          id="account-rank"
+                          onValueChange={setEditRank}
+                          options={[
+                            { label: "No research rank", value: "NONE" },
+                            ...RANKS.map((item) => ({
+                              label: readable(item),
+                              value: item,
+                            })),
+                          ]}
+                          value={editRank}
+                        />
+                      </FormField>
+                    </div>
+                  </div>
+                </WorkspaceRecordPanel>
+              ) : null}
+              {researchProfile ? (
+                <>
+                  <WorkspaceRecordPanel>
+                    <p className="m-0 mb-[.35rem] font-mono text-[.62rem] font-semibold uppercase tracking-[.1em] text-brand">
+                      Live preview
+                    </p>
+                    <div className="flex items-center gap-3">
+                      <ProfileAvatar
+                        avatarId={visibleAvatarId}
+                        className="h-12 w-12"
+                        loading={editorLoading}
+                        name={profile.fullName}
+                        size="lg"
+                        src={avatarPreview}
+                      />
+                      <div>
+                        <strong
+                          className={cn(
+                            "block font-sans text-[1.05rem] font-semibold",
+                            loadingPlaceholder(editorLoading, "text", "long"),
+                          )}
+                          data-placeholder={editorLoading ? "text" : undefined}
+                          data-placeholder-width="long"
+                        >
+                          {profile.fullName ||
+                            (editorLoading ? "Loading name" : "Name not set")}
+                        </strong>
+                        <small
+                          className={cn(
+                            "mt-[.15rem] block text-[.68rem] text-ink-faint",
+                            loadingPlaceholder(
+                              editorLoading,
+                              "label",
+                              "medium",
+                            ),
+                          )}
+                          data-placeholder={editorLoading ? "label" : undefined}
+                          data-placeholder-width="medium"
+                        >
+                          {profile.headline ||
+                            profile.roleTitle ||
+                            (editorLoading
+                              ? "Loading headline"
+                              : "Headline not set")}
+                        </small>
+                      </div>
+                    </div>
+                    <p
+                      className={cn(
+                        "m-0 line-clamp-4 text-[.76rem] leading-[1.55] text-ink-muted",
+                        loadingPlaceholder(editorLoading, "text", "full"),
+                      )}
+                      data-placeholder={editorLoading ? "text" : undefined}
+                      data-placeholder-width="full"
+                    >
+                      {profile.biography ||
+                        (editorLoading
+                          ? "Loading biography"
+                          : "Add a short biography so visitors understand your work and role in the lab.")}
+                    </p>
+                  </WorkspaceRecordPanel>
+                  <WorkspaceRecordPanel>
+                    <div className="flex items-baseline justify-between">
+                      <p className="m-0 mb-[.35rem] font-mono text-[.62rem] font-semibold uppercase tracking-[.1em] text-brand">
+                        Completeness
+                      </p>
+                      <strong
+                        className={cn(
+                          "font-mono text-[1.35rem] font-medium text-brand",
+                          loadingPlaceholder(editorLoading, "value"),
+                        )}
+                        data-placeholder={editorLoading ? "value" : undefined}
+                      >
+                        {completion}%
+                      </strong>
+                    </div>
+                    <div className="flex gap-1">
+                      {completionItems.map(({ complete, label }) => (
+                        <span
+                          className={`h-[14px] flex-1 rounded-[2px] ${complete ? "bg-brand" : "bg-surface-subtle"}`}
+                          key={label}
+                        />
+                      ))}
+                    </div>
+                    <ul className="m-0 grid list-none gap-[.65rem] p-0">
+                      {completionItems.map(({ complete, label }) => (
+                        <li
+                          className={`flex items-center gap-[.55rem] text-[.72rem] ${complete ? "text-ink" : "text-ink-muted"}`}
+                          key={label}
+                        >
+                          {complete ? (
+                            <Check
+                              aria-hidden="true"
+                              className="flex h-4 w-4 items-center justify-center rounded-full bg-brand-soft p-[2px] text-brand"
+                              size={11}
+                            />
+                          ) : (
+                            <span className="h-4 w-4 rounded-full border border-dashed border-line" />
+                          )}
+                          {label}
+                        </li>
+                      ))}
+                    </ul>
+                  </WorkspaceRecordPanel>
+                </>
+              ) : null}
+            </>
+          ) : undefined
+        }
       >
-        <div className="grid min-w-0 gap-[1.2rem]">
-          <WorkspaceRecordPanel>
-            <div className="flex items-end justify-between gap-4 border-b border-line pb-[1.15rem] max-[700px]:flex-col max-[700px]:items-start">
-              <div>
-                <p className="m-0 mb-[.35rem] font-mono text-[.62rem] font-semibold uppercase tracking-[.1em] text-brand">
-                  Identity
-                </p>
-                <WorkspaceRecordPanelTitle>
-                  {staffProfile ? "Staff information" : "Public information"}
-                </WorkspaceRecordPanelTitle>
-              </div>
+        <WorkspaceRecordPanel>
+          <WorkspaceRecordPanelHeader className="flex! items-end justify-between gap-4 max-[700px]:flex-col max-[700px]:items-start">
+            <div>
+              <p className="m-0 mb-[.35rem] font-mono text-[.62rem] font-semibold uppercase tracking-[.1em] text-brand">
+                Identity
+              </p>
+              <WorkspaceRecordPanelTitle>
+                {staffProfile ? "Staff information" : "Public information"}
+              </WorkspaceRecordPanelTitle>
             </div>
-            <div className="grid gap-[1.2rem]">
-              <div className="grid gap-[1.2rem] grid-cols-2 max-[700px]:grid-cols-1">
-                <FormField htmlFor="profile-name" label="Full name">
+          </WorkspaceRecordPanelHeader>
+          <div className="grid gap-[1.2rem]">
+            <div className="grid gap-[1.2rem] grid-cols-2 max-[700px]:grid-cols-1">
+              <FormField htmlFor="profile-name" label="Full name">
+                <InputControl
+                  placeholder={"e.g. Ayesha Rahman"}
+                  loading={editorLoading}
+                  id="profile-name"
+                  maxLength={120}
+                  onChange={(event) =>
+                    setProfile({ ...profile, fullName: event.target.value })
+                  }
+                  required
+                  value={profile.fullName}
+                />
+              </FormField>
+              {userId ? (
+                <FormField htmlFor="account-email" label="Email">
                   <InputControl
-                    placeholder={"e.g. Ayesha Rahman"}
+                    placeholder={"name@example.com"}
                     loading={editorLoading}
-                    id="profile-name"
-                    maxLength={120}
-                    onChange={(event) =>
-                      setProfile({ ...profile, fullName: event.target.value })
-                    }
+                    id="account-email"
+                    onChange={(event) => setEditEmail(event.target.value)}
                     required
-                    value={profile.fullName}
+                    type="email"
+                    value={editEmail}
                   />
                 </FormField>
-                {userId ? (
-                  <FormField htmlFor="account-email" label="Email">
-                    <InputControl
-                      placeholder={"name@example.com"}
-                      loading={editorLoading}
-                      id="account-email"
-                      onChange={(event) => setEditEmail(event.target.value)}
-                      required
-                      type="email"
-                      value={editEmail}
-                    />
-                  </FormField>
-                ) : null}
-                {researchProfile ? (
-                  <FormField
-                    className="col-span-full"
-                    htmlFor="profile-headline"
-                    label="Headline"
-                  >
-                    <InputControl
-                      placeholder={"e.g. Machine learning researcher"}
-                      loading={editorLoading}
-                      id="profile-headline"
-                      maxLength={300}
-                      onChange={(event) =>
-                        setProfile({
-                          ...profile,
-                          headline: event.target.value || null,
-                        })
-                      }
-                      value={profile.headline ?? ""}
-                    />
-                  </FormField>
-                ) : null}
-                {staffProfile || (userId && researchProfile) ? (
-                  <FormField
-                    className={
-                      staffProfile && !userId ? undefined : "col-span-full"
-                    }
-                    htmlFor="profile-role-title"
-                    label={staffProfile ? "Staff title" : "Public role title"}
-                    description={
-                      staffProfile ? "Optional staff title." : undefined
-                    }
-                  >
-                    <InputControl
-                      placeholder={"e.g. Research coordinator"}
-                      loading={editorLoading}
-                      id="profile-role-title"
-                      maxLength={200}
-                      onChange={(event) =>
-                        setProfile({
-                          ...profile,
-                          roleTitle: event.target.value || null,
-                        })
-                      }
-                      value={profile.roleTitle ?? ""}
-                    />
-                  </FormField>
-                ) : null}
-                {researchProfile ? (
-                  <FormField
-                    className="col-span-full"
-                    htmlFor="profile-biography"
-                    label="Biography"
-                  >
-                    <TextareaControl
-                      placeholder={
-                        "Describe your research background and interests"
-                      }
-                      loading={editorLoading}
-                      id="profile-biography"
-                      maxLength={8000}
-                      onChange={(event) =>
-                        setProfile({
-                          ...profile,
-                          biography: event.target.value || null,
-                        })
-                      }
-                      rows={7}
-                      value={profile.biography ?? ""}
-                    />
-                  </FormField>
-                ) : null}
-                {staffProfile || researchProfile ? (
-                  <FormField htmlFor="profile-phone" label="Phone">
-                    <InputControl
-                      placeholder={"+880 1XXXXXXXXX"}
-                      loading={editorLoading}
-                      id="profile-phone"
-                      onChange={(event) =>
-                        setProfile({
-                          ...profile,
-                          phone: event.target.value || null,
-                        })
-                      }
-                      value={profile.phone ?? ""}
-                    />
-                  </FormField>
-                ) : null}
-                {researchProfile ? (
-                  <FormField htmlFor="profile-expertise" label="Expertise">
-                    <InputControl
-                      loading={editorLoading}
-                      id="profile-expertise"
-                      onChange={(event) =>
-                        setProfile({
-                          ...profile,
-                          expertise: event.target.value
-                            .split(",")
-                            .map((item) => item.trim())
-                            .filter(Boolean),
-                        })
-                      }
-                      placeholder="Computer vision, NLP, healthcare AI"
-                      value={profile.expertise.join(", ")}
-                    />
-                  </FormField>
-                ) : null}
-                {staffProfile || researchProfile ? (
-                  <FormField
-                    className={staffProfile ? undefined : "col-span-full"}
-                    htmlFor="profile-address"
-                    label="Contact address"
-                  >
-                    <TextareaControl
-                      placeholder={"City, country and postal address"}
-                      loading={editorLoading}
-                      id="profile-address"
-                      onChange={(event) =>
-                        setProfile({
-                          ...profile,
-                          contactAddress: event.target.value || null,
-                        })
-                      }
-                      rows={3}
-                      value={profile.contactAddress ?? ""}
-                    />
-                  </FormField>
-                ) : null}
-              </div>
-            </div>
-          </WorkspaceRecordPanel>
-
-          {researchProfile ? (
-            <WorkspaceRecordPanel>
-              <div className="grid gap-3 border-b border-line pb-[1.2rem]">
-                <div>
-                  <p className="m-0 mb-[.35rem] font-mono text-[.62rem] font-semibold uppercase tracking-[.1em] text-brand">
-                    Research sync
-                  </p>
-                  <WorkspaceRecordPanelTitle>
-                    OpenAlex
-                  </WorkspaceRecordPanelTitle>
-                  <p className="m-0 mt-2 text-sm text-ink-muted">
-                    Enter your OpenAlex author ID to sync papers and datasets
-                    daily. Changing or removing it deactivates this
-                    profile&apos;s previous listings. Shared source records
-                    remain in the catalogue.
-                  </p>
-                  {effectiveOpenAlexId ? (
-                    <p className="m-0 mt-2 text-xs text-ink-muted">
-                      Effective ID: {effectiveOpenAlexId}
-                      {record?.profile.openAlexProfile?.syncedAt
-                        ? ` · Last synced ${new Date(record.profile.openAlexProfile.syncedAt).toLocaleString()}`
-                        : " · Not synced yet"}
-                    </p>
-                  ) : null}
-                </div>
-                {!openAlexConnected ? (
-                  <ButtonControl
-                    className="w-fit whitespace-nowrap"
+              ) : null}
+              {researchProfile ? (
+                <FormField
+                  className="col-span-full"
+                  htmlFor="profile-headline"
+                  label="Headline"
+                >
+                  <InputControl
+                    placeholder={"e.g. Machine learning researcher"}
                     loading={editorLoading}
-                    variant="add-empty"
-                    onClick={() =>
+                    id="profile-headline"
+                    maxLength={300}
+                    onChange={(event) =>
                       setProfile({
                         ...profile,
-                        openAlexAuthorId: "",
+                        headline: event.target.value || null,
                       })
                     }
-                    type="button"
-                  >
-                    <Plus aria-hidden="true" size={16} /> Connect OpenAlex
-                    profile
-                  </ButtonControl>
-                ) : (
-                  <FormField
-                    className="gap-1"
-                    message={
-                      openAlexIdInvalid
-                        ? openAlexId
-                          ? "Enter a valid OpenAlex ID (for example, A5106152722)."
-                          : "Enter an OpenAlex author ID."
-                        : ""
+                    value={profile.headline ?? ""}
+                  />
+                </FormField>
+              ) : null}
+              {staffProfile || (userId && researchProfile) ? (
+                <FormField
+                  className={
+                    staffProfile && !userId ? undefined : "col-span-full"
+                  }
+                  htmlFor="profile-role-title"
+                  label={staffProfile ? "Staff title" : "Public role title"}
+                  description={
+                    staffProfile ? "Optional staff title." : undefined
+                  }
+                >
+                  <InputControl
+                    placeholder={"e.g. Research coordinator"}
+                    loading={editorLoading}
+                    id="profile-role-title"
+                    maxLength={200}
+                    onChange={(event) =>
+                      setProfile({
+                        ...profile,
+                        roleTitle: event.target.value || null,
+                      })
                     }
-                  >
-                    <div className="grid grid-cols-[minmax(0,1fr)_42px] gap-[.7rem]">
-                      <InputControl
-                        loading={editorLoading}
-                        aria-label="OpenAlex author ID"
-                        aria-invalid={openAlexIdInvalid || undefined}
-                        onChange={(event) => {
-                          setProfile({
-                            ...profile,
-                            openAlexAuthorId: event.target.value,
-                          });
-                        }}
-                        placeholder="A5106152722"
-                        required
-                        type="text"
-                        value={openAlexId}
-                      />
-                      <ButtonControl
-                        aria-label="Remove OpenAlex profile"
-                        className="min-h-[42px] w-[42px] justify-self-end rounded-control p-0 text-ink-muted"
-                        loading={editorLoading}
-                        onClick={() =>
-                          setProfile({
-                            ...profile,
-                            openAlexAuthorId: null,
-                          })
-                        }
-                        type="button"
-                      >
-                        <X aria-hidden="true" size={17} />
-                      </ButtonControl>
-                    </div>
-                  </FormField>
-                )}
-              </div>
-              <div className="flex items-end justify-between gap-4 border-b border-line pb-[1.15rem] max-[700px]:flex-col max-[700px]:items-start">
-                <div>
-                  <p className="m-0 mb-[.35rem] font-mono text-[.62rem] font-semibold uppercase tracking-[.1em] text-brand">
-                    Elsewhere
+                    value={profile.roleTitle ?? ""}
+                  />
+                </FormField>
+              ) : null}
+              {researchProfile ? (
+                <FormField
+                  className="col-span-full"
+                  htmlFor="profile-biography"
+                  label="Biography"
+                >
+                  <TextareaControl
+                    placeholder={
+                      "Describe your research background and interests"
+                    }
+                    loading={editorLoading}
+                    id="profile-biography"
+                    maxLength={8000}
+                    onChange={(event) =>
+                      setProfile({
+                        ...profile,
+                        biography: event.target.value || null,
+                      })
+                    }
+                    rows={7}
+                    value={profile.biography ?? ""}
+                  />
+                </FormField>
+              ) : null}
+              {staffProfile || researchProfile ? (
+                <FormField htmlFor="profile-phone" label="Phone">
+                  <InputControl
+                    placeholder={"+880 1XXXXXXXXX"}
+                    loading={editorLoading}
+                    id="profile-phone"
+                    onChange={(event) =>
+                      setProfile({
+                        ...profile,
+                        phone: event.target.value || null,
+                      })
+                    }
+                    value={profile.phone ?? ""}
+                  />
+                </FormField>
+              ) : null}
+              {researchProfile ? (
+                <FormField htmlFor="profile-expertise" label="Expertise">
+                  <InputControl
+                    loading={editorLoading}
+                    id="profile-expertise"
+                    onChange={(event) =>
+                      setProfile({
+                        ...profile,
+                        expertise: event.target.value
+                          .split(",")
+                          .map((item) => item.trim())
+                          .filter(Boolean),
+                      })
+                    }
+                    placeholder="Computer vision, NLP, healthcare AI"
+                    value={profile.expertise.join(", ")}
+                  />
+                </FormField>
+              ) : null}
+              {staffProfile || researchProfile ? (
+                <FormField
+                  className={staffProfile ? undefined : "col-span-full"}
+                  htmlFor="profile-address"
+                  label="Contact address"
+                >
+                  <TextareaControl
+                    placeholder={"City, country and postal address"}
+                    loading={editorLoading}
+                    id="profile-address"
+                    onChange={(event) =>
+                      setProfile({
+                        ...profile,
+                        contactAddress: event.target.value || null,
+                      })
+                    }
+                    rows={3}
+                    value={profile.contactAddress ?? ""}
+                  />
+                </FormField>
+              ) : null}
+            </div>
+          </div>
+        </WorkspaceRecordPanel>
+
+        {researchProfile ? (
+          <WorkspaceRecordPanel>
+            <WorkspaceRecordPanelHeader className="grid gap-3 pb-[1.2rem]">
+              <div>
+                <p className="m-0 mb-[.35rem] font-mono text-[.62rem] font-semibold uppercase tracking-[.1em] text-brand">
+                  Research sync
+                </p>
+                <WorkspaceRecordPanelTitle>OpenAlex</WorkspaceRecordPanelTitle>
+                <p className="m-0 mt-2 text-sm text-ink-muted">
+                  Enter your OpenAlex author ID to sync papers and datasets
+                  daily. Changing or removing it deactivates this profile&apos;s
+                  previous listings. Shared source records remain in the
+                  catalogue.
+                </p>
+                {effectiveOpenAlexId ? (
+                  <p className="m-0 mt-2 text-xs text-ink-muted">
+                    Effective ID: {effectiveOpenAlexId}
+                    {record?.profile.openAlexProfile?.syncedAt
+                      ? ` · Last synced ${new Date(record.profile.openAlexProfile.syncedAt).toLocaleString()}`
+                      : " · Not synced yet"}
                   </p>
-                  <WorkspaceRecordPanelTitle>
-                    Profile links
-                  </WorkspaceRecordPanelTitle>
-                </div>
+                ) : null}
+              </div>
+              {!openAlexConnected ? (
                 <ButtonControl
-                  className="shrink-0 whitespace-nowrap"
+                  className="w-fit whitespace-nowrap"
                   loading={editorLoading}
                   variant="add-empty"
                   onClick={() =>
                     setProfile({
                       ...profile,
-                      links: [
-                        ...profile.links,
-                        { type: "WEBSITE", label: "Website", url: "" },
-                      ],
+                      openAlexAuthorId: "",
                     })
                   }
                   type="button"
                 >
-                  <Plus aria-hidden="true" size={16} /> Add link
+                  <Plus aria-hidden="true" size={16} /> Connect OpenAlex profile
                 </ButtonControl>
-              </div>
-              <div className="grid gap-0">
-                {profile.links
-                  .map((link, index) => ({ link, index }))
-                  .map(({ link, index }, displayIndex) => (
-                    <div
-                      className={`grid items-center gap-[.7rem] border-b border-line py-[.7rem] ${link.type !== "OTHER" ? "grid-cols-[170px_minmax(0,1fr)_42px]" : "grid-cols-[170px_180px_minmax(0,1fr)_42px]"} max-[760px]:grid-cols-1`}
-                      key={index}
+              ) : (
+                <FormField
+                  className="gap-1"
+                  message={
+                    openAlexIdInvalid
+                      ? openAlexId
+                        ? "Enter a valid OpenAlex ID (for example, A5106152722)."
+                        : "Enter an OpenAlex author ID."
+                      : ""
+                  }
+                >
+                  <div className="grid grid-cols-[minmax(0,1fr)_42px] gap-[.7rem]">
+                    <InputControl
+                      loading={editorLoading}
+                      aria-label="OpenAlex author ID"
+                      aria-invalid={openAlexIdInvalid || undefined}
+                      onChange={(event) => {
+                        setProfile({
+                          ...profile,
+                          openAlexAuthorId: event.target.value,
+                        });
+                      }}
+                      placeholder="A5106152722"
+                      required
+                      type="text"
+                      value={openAlexId}
+                    />
+                    <ButtonControl
+                      aria-label="Remove OpenAlex profile"
+                      className="min-h-[42px] w-[42px] justify-self-end rounded-control p-0 text-ink-muted"
+                      loading={editorLoading}
+                      onClick={() =>
+                        setProfile({
+                          ...profile,
+                          openAlexAuthorId: null,
+                        })
+                      }
+                      type="button"
                     >
-                      <SelectControl
+                      <X aria-hidden="true" size={17} />
+                    </ButtonControl>
+                  </div>
+                </FormField>
+              )}
+            </WorkspaceRecordPanelHeader>
+            <WorkspaceRecordPanelHeader className="flex! items-end justify-between gap-4 max-[700px]:flex-col max-[700px]:items-start">
+              <div>
+                <p className="m-0 mb-[.35rem] font-mono text-[.62rem] font-semibold uppercase tracking-[.1em] text-brand">
+                  Elsewhere
+                </p>
+                <WorkspaceRecordPanelTitle>
+                  Profile links
+                </WorkspaceRecordPanelTitle>
+              </div>
+              <ButtonControl
+                className="shrink-0 whitespace-nowrap"
+                loading={editorLoading}
+                variant="add-empty"
+                onClick={() =>
+                  setProfile({
+                    ...profile,
+                    links: [
+                      ...profile.links,
+                      { type: "WEBSITE", label: "Website", url: "" },
+                    ],
+                  })
+                }
+                type="button"
+              >
+                <Plus aria-hidden="true" size={16} /> Add link
+              </ButtonControl>
+            </WorkspaceRecordPanelHeader>
+            <div className="grid gap-0">
+              {profile.links
+                .map((link, index) => ({ link, index }))
+                .map(({ link, index }, displayIndex) => (
+                  <WorkspaceRecordRow
+                    className={`grid items-center gap-[.7rem] ${link.type !== "OTHER" ? "grid-cols-[170px_minmax(0,1fr)_42px]" : "grid-cols-[170px_180px_minmax(0,1fr)_42px]"} max-[760px]:grid-cols-1`}
+                    key={index}
+                  >
+                    <SelectControl
+                      loading={editorLoading}
+                      ariaLabel={`Link ${displayIndex + 1} type`}
+                      onValueChange={(value) => {
+                        const links = [...profile.links];
+                        links[index] = {
+                          ...link,
+                          type: value,
+                          label:
+                            value === "OTHER" ? "" : value.replaceAll("_", " "),
+                        };
+                        setProfile({ ...profile, links });
+                      }}
+                      options={LINK_TYPES.map((type) => ({
+                        label: type.replaceAll("_", " "),
+                        value: type,
+                      }))}
+                      value={link.type}
+                    />
+                    {link.type === "OTHER" && (
+                      <InputControl
                         loading={editorLoading}
-                        ariaLabel={`Link ${displayIndex + 1} type`}
-                        onValueChange={(value) => {
+                        aria-label={`Link ${displayIndex + 1} label`}
+                        onChange={(event) => {
                           const links = [...profile.links];
                           links[index] = {
                             ...link,
-                            type: value,
-                            label:
-                              value === "OTHER"
-                                ? ""
-                                : value.replaceAll("_", " "),
+                            label: event.target.value,
                           };
                           setProfile({ ...profile, links });
                         }}
-                        options={LINK_TYPES.map((type) => ({
-                          label: type.replaceAll("_", " "),
-                          value: type,
-                        }))}
-                        value={link.type}
-                      />
-                      {link.type === "OTHER" && (
-                        <InputControl
-                          loading={editorLoading}
-                          aria-label={`Link ${displayIndex + 1} label`}
-                          onChange={(event) => {
-                            const links = [...profile.links];
-                            links[index] = {
-                              ...link,
-                              label: event.target.value,
-                            };
-                            setProfile({ ...profile, links });
-                          }}
-                          placeholder="Label"
-                          required
-                          value={link.label}
-                        />
-                      )}
-                      <InputControl
-                        loading={editorLoading}
-                        aria-label={`Link ${displayIndex + 1} URL`}
-                        onChange={(event) => {
-                          const links = [...profile.links];
-                          links[index] = { ...link, url: event.target.value };
-                          setProfile({ ...profile, links });
-                        }}
-                        placeholder="https://"
+                        placeholder="Label"
                         required
-                        type="url"
-                        value={link.url}
+                        value={link.label}
                       />
+                    )}
+                    <InputControl
+                      loading={editorLoading}
+                      aria-label={`Link ${displayIndex + 1} URL`}
+                      onChange={(event) => {
+                        const links = [...profile.links];
+                        links[index] = { ...link, url: event.target.value };
+                        setProfile({ ...profile, links });
+                      }}
+                      placeholder="https://"
+                      required
+                      type="url"
+                      value={link.url}
+                    />
+                    <ButtonControl
+                      aria-label={`Remove link ${displayIndex + 1}`}
+                      className="min-h-[42px] rounded-control p-0 text-ink-muted"
+                      loading={editorLoading}
+                      onClick={() =>
+                        setProfile({
+                          ...profile,
+                          links: profile.links.filter(
+                            (_, itemIndex) => itemIndex !== index,
+                          ),
+                        })
+                      }
+                      type="button"
+                    >
+                      <X aria-hidden="true" size={17} />
+                    </ButtonControl>
+                  </WorkspaceRecordRow>
+                ))}
+            </div>
+          </WorkspaceRecordPanel>
+        ) : null}
+
+        {researchProfile ? (
+          <WorkspaceRecordPanel>
+            <WorkspaceRecordPanelHeader className="flex! items-end justify-between gap-4 max-[700px]:flex-col max-[700px]:items-start">
+              <div>
+                <p className="m-0 mb-[.35rem] font-mono text-[.62rem] font-semibold uppercase tracking-[.1em] text-brand">
+                  Record
+                </p>
+                <WorkspaceRecordPanelTitle>
+                  Profile sections
+                </WorkspaceRecordPanelTitle>
+              </div>
+              <ButtonControl
+                loading={editorLoading}
+                variant="add-empty"
+                onClick={() =>
+                  setProfile({
+                    ...profile,
+                    sections: [
+                      ...profile.sections,
+                      {
+                        type: "OTHER",
+                        title: "",
+                        subsections: [emptySubsection()],
+                      },
+                    ],
+                  })
+                }
+                type="button"
+              >
+                <Plus aria-hidden="true" size={16} /> Add section
+              </ButtonControl>
+            </WorkspaceRecordPanelHeader>
+            <div className="grid gap-0">
+              {profile.sections.map((section, index) => (
+                <WorkspaceRecordRow key={index}>
+                  <WorkspaceRecordRowHeading
+                    level="section"
+                    number={String(index + 1).padStart(2, "0")}
+                    title={section.title || readable(section.type)}
+                  >
+                    <div className="flex shrink-0 items-center justify-end gap-2 max-[640px]:w-full">
                       <ButtonControl
-                        aria-label={`Remove link ${displayIndex + 1}`}
-                        className="min-h-[42px] rounded-control p-0 text-ink-muted"
                         loading={editorLoading}
-                        onClick={() =>
-                          setProfile({
-                            ...profile,
-                            links: profile.links.filter(
-                              (_, itemIndex) => itemIndex !== index,
-                            ),
-                          })
-                        }
+                        variant="add-empty"
+                        onClick={() => {
+                          const sections = [...profile.sections];
+                          sections[index] = {
+                            ...section,
+                            subsections: [
+                              ...section.subsections,
+                              emptySubsection(),
+                            ],
+                          };
+                          setProfile({ ...profile, sections });
+                        }}
                         type="button"
                       >
-                        <X aria-hidden="true" size={17} />
+                        <Plus aria-hidden="true" size={15} /> Add subsection
                       </ButtonControl>
-                    </div>
-                  ))}
-              </div>
-            </WorkspaceRecordPanel>
-          ) : null}
-
-          {researchProfile ? (
-            <WorkspaceRecordPanel>
-              <div className="flex items-end justify-between gap-4 border-b border-line pb-[1.15rem] max-[700px]:flex-col max-[700px]:items-start">
-                <div>
-                  <p className="m-0 mb-[.35rem] font-mono text-[.62rem] font-semibold uppercase tracking-[.1em] text-brand">
-                    Record
-                  </p>
-                  <WorkspaceRecordPanelTitle>
-                    Profile sections
-                  </WorkspaceRecordPanelTitle>
-                </div>
-                <ButtonControl
-                  loading={editorLoading}
-                  variant="add-empty"
-                  onClick={() =>
-                    setProfile({
-                      ...profile,
-                      sections: [
-                        ...profile.sections,
-                        {
-                          type: "OTHER",
-                          title: "",
-                          subsections: [emptySubsection()],
-                        },
-                      ],
-                    })
-                  }
-                  type="button"
-                >
-                  <Plus aria-hidden="true" size={16} /> Add section
-                </ButtonControl>
-              </div>
-              <div className="grid gap-[.8rem]">
-                {profile.sections.map((section, index) => (
-                  <article
-                    className="grid gap-4 border-y border-line-strong bg-transparent p-4"
-                    key={index}
-                  >
-                    <div className="flex items-center justify-between">
-                      <span>{String(index + 1).padStart(2, "0")}</span>
                       <ButtonControl
                         aria-label={`Remove section ${index + 1}`}
                         className="min-h-[42px] rounded-control p-0 text-ink-muted"
@@ -965,82 +1137,84 @@ export function ProfileEditor({ userId }: ProfileEditorProps) {
                         <Trash2 aria-hidden="true" size={17} />
                       </ButtonControl>
                     </div>
-                    <div className="grid gap-[1.2rem] grid-cols-2 max-[640px]:grid-cols-1">
-                      <FormField label="Section type">
-                        <SelectControl
+                  </WorkspaceRecordRowHeading>
+                  <div className="grid gap-[1.2rem] grid-cols-2 max-[640px]:grid-cols-1">
+                    <FormField label="Section type">
+                      <SelectControl
+                        loading={editorLoading}
+                        ariaLabel={`Section ${index + 1} type`}
+                        onValueChange={(value) => {
+                          const sections = [...profile.sections];
+                          sections[index] = {
+                            ...section,
+                            type: value,
+                            title:
+                              value === "OTHER"
+                                ? ""
+                                : value.replaceAll("_", " "),
+                          };
+                          setProfile({ ...profile, sections });
+                        }}
+                        options={SECTION_TYPES.map((type) => ({
+                          label: type.replaceAll("_", " "),
+                          value: type,
+                        }))}
+                        value={section.type}
+                      />
+                    </FormField>
+                    {section.type === "OTHER" && (
+                      <FormField label="Section title">
+                        <InputControl
+                          placeholder={"e.g. Research experience"}
                           loading={editorLoading}
-                          ariaLabel={`Section ${index + 1} type`}
-                          onValueChange={(value) => {
+                          onChange={(event) => {
                             const sections = [...profile.sections];
                             sections[index] = {
                               ...section,
-                              type: value,
-                              title:
-                                value === "OTHER"
-                                  ? ""
-                                  : value.replaceAll("_", " "),
+                              title: event.target.value,
                             };
                             setProfile({ ...profile, sections });
                           }}
-                          options={SECTION_TYPES.map((type) => ({
-                            label: type.replaceAll("_", " "),
-                            value: type,
-                          }))}
-                          value={section.type}
+                          required
+                          value={section.title}
                         />
                       </FormField>
-                      {section.type === "OTHER" && (
-                        <FormField label="Section title">
-                          <InputControl
-                            placeholder={"e.g. Research experience"}
-                            loading={editorLoading}
-                            onChange={(event) => {
-                              const sections = [...profile.sections];
-                              sections[index] = {
-                                ...section,
-                                title: event.target.value,
-                              };
-                              setProfile({ ...profile, sections });
-                            }}
-                            required
-                            value={section.title}
-                          />
-                        </FormField>
-                      )}
-                      <div className="col-span-full grid content-start gap-[.8rem]">
-                        <div className="flex items-end justify-between gap-4 border-b border-line pb-[1.15rem] max-[700px]:flex-col max-[700px]:items-start">
-                          <div>
-                            <label>Subsections</label>
-                          </div>
-                          <ButtonControl
-                            loading={editorLoading}
-                            variant="add-empty"
-                            onClick={() => {
-                              const sections = [...profile.sections];
-                              sections[index] = {
-                                ...section,
-                                subsections: [
-                                  ...section.subsections,
-                                  emptySubsection(),
-                                ],
-                              };
-                              setProfile({ ...profile, sections });
-                            }}
-                            type="button"
-                          >
-                            <Plus aria-hidden="true" size={15} /> Add subsection
-                          </ButtonControl>
-                        </div>
-                        {section.subsections.map(
-                          (subsection, subsectionIndex) => (
-                            <article
-                              className="grid gap-4 border-y border-line-strong bg-transparent p-4"
-                              key={subsectionIndex}
+                    )}
+                    <div className="col-span-full -mx-[var(--workspace-gutter)] grid content-start gap-0 border-t border-line px-[var(--workspace-gutter)]">
+                      {section.subsections.map(
+                        (subsection, subsectionIndex) => (
+                          <WorkspaceRecordRow key={subsectionIndex}>
+                            <WorkspaceRecordRowHeading
+                              level="subsection"
+                              number={`${index + 1}.${subsectionIndex + 1}`}
                             >
-                              <div className="flex items-center justify-between">
-                                <span>
-                                  {String(subsectionIndex + 1).padStart(2, "0")}
-                                </span>
+                              <div className="flex shrink-0 items-center justify-end gap-2 max-[640px]:w-full">
+                                <ButtonControl
+                                  loading={editorLoading}
+                                  variant="add-empty"
+                                  onClick={() => {
+                                    const sections = [...profile.sections];
+                                    const subsections = [
+                                      ...section.subsections,
+                                    ];
+                                    subsections[subsectionIndex] = {
+                                      ...subsection,
+                                      entries: [
+                                        ...subsection.entries,
+                                        { ...EMPTY_ENTRY },
+                                      ],
+                                    };
+                                    sections[index] = {
+                                      ...section,
+                                      subsections,
+                                    };
+                                    setProfile({ ...profile, sections });
+                                  }}
+                                  type="button"
+                                >
+                                  <Plus aria-hidden="true" size={14} /> Add
+                                  entry
+                                </ButtonControl>
                                 <ButtonControl
                                   aria-label={`Remove subsection ${subsectionIndex + 1}`}
                                   className="min-h-[42px] rounded-control p-0 text-ink-muted"
@@ -1062,355 +1236,162 @@ export function ProfileEditor({ userId }: ProfileEditorProps) {
                                   <Trash2 aria-hidden="true" size={16} />
                                 </ButtonControl>
                               </div>
-                              <div className="grid gap-[1.2rem]">
-                                <FormField label="Subsection heading">
-                                  <InputControl
-                                    loading={editorLoading}
-                                    onChange={(event) => {
-                                      const sections = [...profile.sections];
-                                      const subsections = [
-                                        ...section.subsections,
-                                      ];
-                                      subsections[subsectionIndex] = {
-                                        ...subsection,
-                                        heading: event.target.value || null,
-                                      };
-                                      sections[index] = {
-                                        ...section,
-                                        subsections,
-                                      };
-                                      setProfile({ ...profile, sections });
-                                    }}
-                                    placeholder="Optional heading"
-                                    value={subsection.heading ?? ""}
-                                  />
-                                </FormField>
-                                <div className="grid gap-3">
-                                  <div className="flex items-center justify-between gap-4 border-b border-line pb-2">
-                                    <span className="text-[.78rem] font-semibold">
-                                      Entries
-                                    </span>
-                                    <ButtonControl
-                                      loading={editorLoading}
-                                      variant="add-empty"
-                                      onClick={() => {
-                                        const sections = [...profile.sections];
-                                        const subsections = [
-                                          ...section.subsections,
-                                        ];
-                                        subsections[subsectionIndex] = {
-                                          ...subsection,
-                                          entries: [
-                                            ...subsection.entries,
-                                            { ...EMPTY_ENTRY },
-                                          ],
-                                        };
-                                        sections[index] = {
-                                          ...section,
-                                          subsections,
-                                        };
-                                        setProfile({ ...profile, sections });
-                                      }}
-                                      type="button"
+                            </WorkspaceRecordRowHeading>
+                            <div className="grid gap-[1.2rem]">
+                              <FormField label="Subsection heading (optional)">
+                                <InputControl
+                                  loading={editorLoading}
+                                  onChange={(event) => {
+                                    const sections = [...profile.sections];
+                                    const subsections = [
+                                      ...section.subsections,
+                                    ];
+                                    subsections[subsectionIndex] = {
+                                      ...subsection,
+                                      heading: event.target.value || null,
+                                    };
+                                    sections[index] = {
+                                      ...section,
+                                      subsections,
+                                    };
+                                    setProfile({ ...profile, sections });
+                                  }}
+                                  placeholder="Optional heading"
+                                  value={subsection.heading ?? ""}
+                                />
+                              </FormField>
+                              <div className="-mx-[var(--workspace-gutter)] grid gap-0 border-t border-line px-[var(--workspace-gutter)]">
+                                {subsection.entries.map((entry, entryIndex) => (
+                                  <WorkspaceRecordRow
+                                    className="gap-3"
+                                    key={entryIndex}
+                                  >
+                                    <WorkspaceRecordRowHeading
+                                      level="entry"
+                                      number={`${index + 1}.${subsectionIndex + 1}.${entryIndex + 1}`}
                                     >
-                                      <Plus aria-hidden="true" size={14} /> Add
-                                      entry
-                                    </ButtonControl>
-                                  </div>
-                                  {subsection.entries.map(
-                                    (entry, entryIndex) => (
-                                      <article
-                                        className="grid gap-3 border-b border-line pb-4 last:border-b-0 last:pb-0"
-                                        key={entryIndex}
+                                      <ButtonControl
+                                        aria-label={`Remove entry ${entryIndex + 1}`}
+                                        className="min-h-[36px] rounded-control p-0 text-ink-muted"
+                                        disabled={
+                                          subsection.entries.length === 1
+                                        }
+                                        loading={editorLoading}
+                                        onClick={() => {
+                                          const sections = [
+                                            ...profile.sections,
+                                          ];
+                                          const subsections = [
+                                            ...section.subsections,
+                                          ];
+                                          subsections[subsectionIndex] = {
+                                            ...subsection,
+                                            entries: subsection.entries.filter(
+                                              (_, itemIndex) =>
+                                                itemIndex !== entryIndex,
+                                            ),
+                                          };
+                                          sections[index] = {
+                                            ...section,
+                                            subsections,
+                                          };
+                                          setProfile({
+                                            ...profile,
+                                            sections,
+                                          });
+                                        }}
+                                        type="button"
                                       >
-                                        <div className="flex items-center justify-between gap-4">
-                                          <span className="font-mono text-[.66rem] text-ink-muted">
-                                            ENTRY{" "}
-                                            {String(entryIndex + 1).padStart(
-                                              2,
-                                              "0",
-                                            )}
-                                          </span>
-                                          <ButtonControl
-                                            aria-label={`Remove entry ${entryIndex + 1}`}
-                                            className="min-h-[36px] rounded-control p-0 text-ink-muted"
-                                            disabled={
-                                              subsection.entries.length === 1
-                                            }
-                                            loading={editorLoading}
-                                            onClick={() => {
-                                              const sections = [
-                                                ...profile.sections,
-                                              ];
-                                              const subsections = [
-                                                ...section.subsections,
-                                              ];
-                                              subsections[subsectionIndex] = {
-                                                ...subsection,
-                                                entries:
-                                                  subsection.entries.filter(
-                                                    (_, itemIndex) =>
-                                                      itemIndex !== entryIndex,
-                                                  ),
-                                              };
-                                              sections[index] = {
-                                                ...section,
-                                                subsections,
-                                              };
-                                              setProfile({
-                                                ...profile,
-                                                sections,
-                                              });
-                                            }}
-                                            type="button"
-                                          >
-                                            <Trash2
-                                              aria-hidden="true"
-                                              size={15}
-                                            />
-                                          </ButtonControl>
-                                        </div>
-                                        <FormField label="Label">
-                                          <InputControl
-                                            loading={editorLoading}
-                                            onChange={(event) => {
-                                              const sections = [
-                                                ...profile.sections,
-                                              ];
-                                              const subsections = [
-                                                ...section.subsections,
-                                              ];
-                                              const entries = [
-                                                ...subsection.entries,
-                                              ];
-                                              entries[entryIndex] = {
-                                                ...entry,
-                                                label:
-                                                  event.target.value || null,
-                                              };
-                                              subsections[subsectionIndex] = {
-                                                ...subsection,
-                                                entries,
-                                              };
-                                              sections[index] = {
-                                                ...section,
-                                                subsections,
-                                              };
-                                              setProfile({
-                                                ...profile,
-                                                sections,
-                                              });
-                                            }}
-                                            placeholder="Optional label"
-                                            value={entry.label ?? ""}
-                                          />
-                                        </FormField>
-                                        <FormField label="Content">
-                                          <TextareaControl
-                                            placeholder={
-                                              "Describe your experience or contribution"
-                                            }
-                                            loading={editorLoading}
-                                            onChange={(event) => {
-                                              const sections = [
-                                                ...profile.sections,
-                                              ];
-                                              const subsections = [
-                                                ...section.subsections,
-                                              ];
-                                              const entries = [
-                                                ...subsection.entries,
-                                              ];
-                                              entries[entryIndex] = {
-                                                ...entry,
-                                                content: event.target.value,
-                                              };
-                                              subsections[subsectionIndex] = {
-                                                ...subsection,
-                                                entries,
-                                              };
-                                              sections[index] = {
-                                                ...section,
-                                                subsections,
-                                              };
-                                              setProfile({
-                                                ...profile,
-                                                sections,
-                                              });
-                                            }}
-                                            required
-                                            rows={4}
-                                            value={entry.content}
-                                          />
-                                        </FormField>
-                                      </article>
-                                    ),
-                                  )}
-                                </div>
+                                        <Trash2 aria-hidden="true" size={15} />
+                                      </ButtonControl>
+                                    </WorkspaceRecordRowHeading>
+                                    <FormField label="Entry label (optional)">
+                                      <InputControl
+                                        loading={editorLoading}
+                                        onChange={(event) => {
+                                          const sections = [
+                                            ...profile.sections,
+                                          ];
+                                          const subsections = [
+                                            ...section.subsections,
+                                          ];
+                                          const entries = [
+                                            ...subsection.entries,
+                                          ];
+                                          entries[entryIndex] = {
+                                            ...entry,
+                                            label: event.target.value || null,
+                                          };
+                                          subsections[subsectionIndex] = {
+                                            ...subsection,
+                                            entries,
+                                          };
+                                          sections[index] = {
+                                            ...section,
+                                            subsections,
+                                          };
+                                          setProfile({
+                                            ...profile,
+                                            sections,
+                                          });
+                                        }}
+                                        placeholder="Optional label"
+                                        value={entry.label ?? ""}
+                                      />
+                                    </FormField>
+                                    <FormField label="Content">
+                                      <TextareaControl
+                                        placeholder={
+                                          "Describe your experience or contribution"
+                                        }
+                                        loading={editorLoading}
+                                        onChange={(event) => {
+                                          const sections = [
+                                            ...profile.sections,
+                                          ];
+                                          const subsections = [
+                                            ...section.subsections,
+                                          ];
+                                          const entries = [
+                                            ...subsection.entries,
+                                          ];
+                                          entries[entryIndex] = {
+                                            ...entry,
+                                            content: event.target.value,
+                                          };
+                                          subsections[subsectionIndex] = {
+                                            ...subsection,
+                                            entries,
+                                          };
+                                          sections[index] = {
+                                            ...section,
+                                            subsections,
+                                          };
+                                          setProfile({
+                                            ...profile,
+                                            sections,
+                                          });
+                                        }}
+                                        required
+                                        rows={4}
+                                        value={entry.content}
+                                      />
+                                    </FormField>
+                                  </WorkspaceRecordRow>
+                                ))}
                               </div>
-                            </article>
-                          ),
-                        )}
-                      </div>
-                    </div>
-                  </article>
-                ))}
-              </div>
-            </WorkspaceRecordPanel>
-          ) : null}
-        </div>
-        {showAside ? (
-          <aside className="sticky top-[152px] grid min-w-0 gap-4 max-[980px]:static max-[980px]:grid-cols-2 max-[640px]:grid-cols-1">
-            {managingAccount ? (
-              <WorkspaceRecordPanel>
-                <div className="flex items-end justify-between gap-4 border-b border-line pb-[1.15rem] max-[700px]:flex-col max-[700px]:items-start">
-                  <div>
-                    <WorkspaceRecordPanelTitle>
-                      {researchProfile ? "Role and rank" : "Permission role"}
-                    </WorkspaceRecordPanelTitle>
-                  </div>
-                </div>
-                <div className="grid gap-[.8rem]">
-                  <div className="flex flex-col gap-[.85rem]">
-                    <FormField htmlFor="account-role" label="Permission role">
-                      <SelectControl
-                        loading={editorLoading}
-                        id="account-role"
-                        onValueChange={(value) => {
-                          setEditRole(value);
-                          if (value === "ADMIN") setEditRank("NONE");
-                        }}
-                        options={ROLES.map((item) => ({
-                          label: readable(item),
-                          value: item,
-                        }))}
-                        value={editRole}
-                      />
-                    </FormField>
-                    <FormField htmlFor="account-rank" label="Research rank">
-                      <SelectControl
-                        loading={editorLoading}
-                        id="account-rank"
-                        onValueChange={setEditRank}
-                        options={[
-                          { label: "No research rank", value: "NONE" },
-                          ...RANKS.map((item) => ({
-                            label: readable(item),
-                            value: item,
-                          })),
-                        ]}
-                        value={editRank}
-                      />
-                    </FormField>
-                  </div>
-                </div>
-              </WorkspaceRecordPanel>
-            ) : null}
-            {researchProfile ? (
-              <>
-                <WorkspaceRecordPanel>
-                  <p className="m-0 mb-[.35rem] font-mono text-[.62rem] font-semibold uppercase tracking-[.1em] text-brand">
-                    Live preview
-                  </p>
-                  <div className="flex items-center gap-3">
-                    <ProfileAvatar
-                      avatarId={visibleAvatarId}
-                      className="h-12 w-12"
-                      loading={editorLoading}
-                      name={profile.fullName}
-                      size="lg"
-                      src={avatarPreview}
-                    />
-                    <div>
-                      <strong
-                        className={cn(
-                          "block font-sans text-[1.05rem] font-semibold",
-                          loadingPlaceholder(editorLoading, "text", "long"),
-                        )}
-                        data-placeholder={editorLoading ? "text" : undefined}
-                        data-placeholder-width="long"
-                      >
-                        {profile.fullName ||
-                          (editorLoading ? "Loading name" : "Name not set")}
-                      </strong>
-                      <small
-                        className={cn(
-                          "mt-[.15rem] block text-[.68rem] text-ink-faint",
-                          loadingPlaceholder(editorLoading, "label", "medium"),
-                        )}
-                        data-placeholder={editorLoading ? "label" : undefined}
-                        data-placeholder-width="medium"
-                      >
-                        {profile.headline ||
-                          profile.roleTitle ||
-                          (editorLoading
-                            ? "Loading headline"
-                            : "Headline not set")}
-                      </small>
-                    </div>
-                  </div>
-                  <p
-                    className={cn(
-                      "m-0 line-clamp-4 text-[.76rem] leading-[1.55] text-ink-muted",
-                      loadingPlaceholder(editorLoading, "text", "full"),
-                    )}
-                    data-placeholder={editorLoading ? "text" : undefined}
-                    data-placeholder-width="full"
-                  >
-                    {profile.biography ||
-                      (editorLoading
-                        ? "Loading biography"
-                        : "Add a short biography so visitors understand your work and role in the lab.")}
-                  </p>
-                </WorkspaceRecordPanel>
-                <WorkspaceRecordPanel>
-                  <div className="flex items-baseline justify-between">
-                    <p className="m-0 mb-[.35rem] font-mono text-[.62rem] font-semibold uppercase tracking-[.1em] text-brand">
-                      Completeness
-                    </p>
-                    <strong
-                      className={cn(
-                        "font-mono text-[1.35rem] font-medium text-brand",
-                        loadingPlaceholder(editorLoading, "value"),
+                            </div>
+                          </WorkspaceRecordRow>
+                        ),
                       )}
-                      data-placeholder={editorLoading ? "value" : undefined}
-                    >
-                      {completion}%
-                    </strong>
+                    </div>
                   </div>
-                  <div className="flex gap-1">
-                    {completionItems.map(({ complete, label }) => (
-                      <span
-                        className={`h-[14px] flex-1 rounded-[2px] ${complete ? "bg-brand" : "bg-surface-subtle"}`}
-                        key={label}
-                      />
-                    ))}
-                  </div>
-                  <ul className="m-0 grid list-none gap-[.65rem] p-0">
-                    {completionItems.map(({ complete, label }) => (
-                      <li
-                        className={`flex items-center gap-[.55rem] text-[.72rem] ${complete ? "text-ink" : "text-ink-muted"}`}
-                        key={label}
-                      >
-                        {complete ? (
-                          <Check
-                            aria-hidden="true"
-                            className="flex h-4 w-4 items-center justify-center rounded-full bg-brand-soft p-[2px] text-brand"
-                            size={11}
-                          />
-                        ) : (
-                          <span className="h-4 w-4 rounded-full border border-dashed border-line" />
-                        )}
-                        {label}
-                      </li>
-                    ))}
-                  </ul>
-                </WorkspaceRecordPanel>
-              </>
-            ) : null}
-          </aside>
+                </WorkspaceRecordRow>
+              ))}
+            </div>
+          </WorkspaceRecordPanel>
         ) : null}
-      </div>
+      </WorkspaceRecordColumns>
 
       {message ? (
         <p className="m-0 flex items-center gap-[.45rem] text-[.82rem] leading-[1.5] text-ink-muted">

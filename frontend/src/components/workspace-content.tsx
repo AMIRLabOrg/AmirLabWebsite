@@ -1,56 +1,45 @@
 "use client";
 
 import { Fragment, type ReactNode } from "react";
+import { BrandLockup } from "@/components/brand-mark";
+import { LoaderCircle } from "lucide-react";
 import { useAuth } from "@/components/auth-provider";
-import {
-  WorkspacePanel,
-  workspaceShellClass,
-} from "@/components/ui/workspace-surface";
-import { cn } from "@/lib/cn";
-import { loadingPlaceholder } from "@/lib/loading-style";
+export function WorkspaceAuthCheck() {
+  return (
+    <div
+      className="fixed inset-0 z-[100] grid min-h-svh place-items-center bg-canvas px-6"
+      data-site="workspace"
+      role="status"
+      aria-live="polite"
+      aria-busy="true"
+    >
+      <div className="relative text-center">
+        <div className="absolute bottom-full left-1/2 mb-8 -translate-x-1/2">
+          <BrandLockup />
+        </div>
+        <div className="relative">
+          <LoaderCircle
+            aria-hidden="true"
+            size={22}
+            className="absolute top-1/2 right-full mr-3 -translate-y-1/2 animate-spin text-brand motion-reduce:animate-none"
+          />
+          <h1 className="m-0 font-serif text-[clamp(1.3rem,4vw,1.8rem)] font-medium leading-tight text-ink">
+            Checking your session
+          </h1>
+          <p className="absolute top-full left-1/2 mt-3 w-[min(22rem,calc(100vw-3rem))] -translate-x-1/2 text-[.8rem] leading-relaxed text-ink-muted">
+            Please wait while we verify your workspace access.
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export function WorkspaceLoading() {
   return (
-    <section
-      className={cn(workspaceShellClass, "grid gap-6 py-7")}
-      role="status"
-      aria-label="Checking workspace access"
-      aria-busy="true"
-    >
-      <span className="sr-only">Checking workspace access</span>
-      <div aria-hidden="true" className="grid gap-6">
-        {[0, 1].map((index) => (
-          <WorkspacePanel
-            key={index}
-            title={
-              <span
-                className={loadingPlaceholder(true, "text", "short")}
-                data-placeholder="text"
-              >
-                Workspace
-              </span>
-            }
-          >
-            <div className="grid grid-cols-2 gap-5 p-6 max-[640px]:grid-cols-1">
-              {[0, 1, 2, 3].map((field) => (
-                <div className="grid gap-2" key={field}>
-                  <span
-                    className={loadingPlaceholder(true, "label")}
-                    data-placeholder="label"
-                  >
-                    Field
-                  </span>
-                  <div
-                    className={loadingPlaceholder(true, "control")}
-                    data-placeholder="control"
-                  />
-                </div>
-              ))}
-            </div>
-          </WorkspacePanel>
-        ))}
-      </div>
-    </section>
+    <span className="sr-only" role="status" aria-busy="true">
+      Checking workspace access
+    </span>
   );
 }
 

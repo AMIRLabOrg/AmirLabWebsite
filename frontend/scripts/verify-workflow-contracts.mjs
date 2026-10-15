@@ -35,7 +35,7 @@ const workspaceShell = await source(
 );
 expect(
   "workspace layout has a meaningful suspense fallback",
-  workspaceLayout.includes("fallback={<WorkspaceLoading />}") &&
+  workspaceLayout.includes("fallback={<WorkspaceAuthCheck />}") &&
     !workspaceLayout.includes("instant = false"),
 );
 expect(

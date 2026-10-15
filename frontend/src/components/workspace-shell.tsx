@@ -13,7 +13,10 @@ import {
   PanelLeftOpen,
 } from "lucide-react";
 import { useAuth } from "@/components/auth-provider";
-import { WorkspaceLoading } from "@/components/workspace-content";
+import {
+  WorkspaceAuthCheck,
+  WorkspaceLoading,
+} from "@/components/workspace-content";
 import { ConfirmDialog } from "@/components/confirm-dialog";
 import {
   AccountIdentity,
@@ -87,7 +90,10 @@ export function WorkspaceShell({ children }: { children: ReactNode }) {
 
   return (
     <div data-site="workspace" data-loading={loading || !user || undefined}>
+      {checkingAccess ? <WorkspaceAuthCheck /> : null}
       <div
+        inert={checkingAccess || undefined}
+        aria-hidden={checkingAccess || undefined}
         className={cn(
           "grid min-h-screen w-full items-stretch bg-canvas transition-[grid-template-columns] duration-300 ease-in-out max-[820px]:block",
           sidebarOpen
