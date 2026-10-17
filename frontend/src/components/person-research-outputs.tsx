@@ -50,11 +50,11 @@ export function PersonResearchOutputs({
     <section
       aria-busy={loading || undefined}
       aria-labelledby="verified-research-title"
-      className="relative bg-canvas py-[clamp(3.5rem,7vw,6rem)]"
+      className="relative bg-canvas py-[clamp(2rem,4vw,3rem)]"
       data-loading={loading || undefined}
     >
       {borderBottom ? <FrameRule edge="bottom" /> : null}
-      <PublicShell className="grid gap-12">
+      <PublicShell className="grid gap-8">
         <div className="max-w-[620px]">
           <Eyebrow
             aria-hidden={loading || undefined}

@@ -46,7 +46,7 @@ export function PersonProfileView({
         {hasResearchOutputs || hasProfileRecords ? (
           <FrameRule edge="bottom" />
         ) : null}
-        <PublicShell className="relative grid grid-cols-[minmax(280px,420px)_minmax(0,1fr)] items-start gap-[clamp(3rem,7vw,7rem)] pt-[clamp(2.3rem,4.5vw,4.2rem)] pb-[clamp(3rem,6vw,5rem)] max-[960px]:max-w-[760px] max-[960px]:grid-cols-1 max-[640px]:gap-8 max-[640px]:pt-8 max-[640px]:pb-12">
+        <PublicShell className="relative grid grid-cols-[300px_minmax(0,1fr)] items-start gap-x-12 gap-y-8 py-8 max-[960px]:max-w-[760px] max-[960px]:grid-cols-1 max-[640px]:py-6">
           <div className="relative z-[1] grid gap-4">
             <Link
               className="inline-flex w-fit items-center gap-1.5 text-[.78rem] text-brand"
@@ -64,7 +64,7 @@ export function PersonProfileView({
           <div className="relative z-[1] min-w-0">
             <div
               aria-hidden={loading || undefined}
-              className="mb-6 flex flex-wrap gap-2"
+              className="mb-4 flex flex-wrap gap-2"
             >
               {visibleRoles.map((role, index) =>
                 loading ? (
@@ -112,7 +112,7 @@ export function PersonProfileView({
             person?.email ||
             person?.phone ||
             person?.links?.length ? (
-              <div className="relative mt-7 flex max-w-[760px] flex-wrap gap-x-6 gap-y-3 border-y border-line-strong py-3">
+              <div className="relative mt-5 flex max-w-[760px] flex-wrap gap-x-6 gap-y-3 border-y border-line-strong py-3">
                 {loading ? (
                   <>
                     <span

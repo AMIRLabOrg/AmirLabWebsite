@@ -10,8 +10,7 @@ const variantClass = {
   directory: "aspect-square",
   department: "aspect-[6/7]",
   founder: "aspect-[4/4.6] max-h-[360px] max-[720px]:max-h-[210px]",
-  profile:
-    "aspect-[4/5] w-full max-[640px]:mx-auto max-[640px]:w-[min(78vw,300px)]",
+  profile: "aspect-[4/5] w-full max-w-[300px] max-[960px]:mx-auto",
 } as const;
 
 export function PersonPortrait({
@@ -54,7 +53,7 @@ export function PersonPortrait({
           className="object-cover object-top"
           sizes={
             variant === "profile"
-              ? "(max-width: 760px) 100vw, 420px"
+              ? "300px"
               : variant === "founder"
                 ? "(max-width: 760px) 100vw, 390px"
                 : "(max-width: 640px) 44vw, (max-width: 1100px) 30vw, 220px"
