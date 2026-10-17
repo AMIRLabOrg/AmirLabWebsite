@@ -201,7 +201,8 @@ async function main() {
         directory,
         snapshot.id,
         uploads,
-        '--replace-local-data',
+        '--replace-data',
+        '--services-stopped',
       ],
       { env: { ...process.env, DATABASE_URL: databaseUrl }, timeout: 300_000 },
     );
@@ -240,6 +241,40 @@ async function main() {
       enabled: false,
       intervalMinutes: 1,
     });
+    config.set('nodeEnv', 'production');
+    const productionSnapshot = await restoredBackup.capture();
+    assert.equal((await restoredBackup.status()).canBackup, true);
+    assert.equal((await restoredBackup.status()).canRestore, false);
+    await assert.rejects(
+      restoredBackup.restore(productionSnapshot.id),
+      /Stop all API instances and workers/,
+    );
+    await writeFile(join(uploads, 'verification.png'), 'changed after backup');
+    await execute(
+      process.execPath,
+      [
+        resolve('node_modules/tsx/dist/cli.mjs'),
+        resolve('scripts/restore-local-backup.ts'),
+        directory,
+        productionSnapshot.id,
+        uploads,
+        '--replace-data',
+        '--services-stopped',
+      ],
+      {
+        env: {
+          ...process.env,
+          NODE_ENV: 'production',
+          DATABASE_URL: databaseUrl,
+        },
+        timeout: 300_000,
+      },
+    );
+    assert.deepEqual(await readFile(join(uploads, 'verification.png')), bytes);
+    assert.deepEqual(
+      await prisma.user.findMany({ orderBy: { id: 'asc' } }),
+      baseline.users,
+    );
     const report = {
       target: {
         host: target.hostname,
@@ -272,6 +307,9 @@ async function main() {
         'settings restored exactly',
         'upload bytes restored exactly',
         'extra uploads removed',
+        'production capture enabled',
+        'production live restore refused',
+        'production offline CLI restores database and uploads',
       ],
       users: baseline.users.length,
       assets: baseline.assets.length,

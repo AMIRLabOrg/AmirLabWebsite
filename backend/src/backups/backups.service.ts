@@ -66,7 +66,7 @@ export class BackupsService implements OnModuleInit, OnModuleDestroy {
     try {
       await readFile(pending);
       throw new Error(
-        `Interrupted local restore detected. Stop the API and recover using backup:restore:local; recovery details are in ${pending}.`,
+        `Interrupted local restore detected. Stop the API and recover using backup:restore; recovery details are in ${pending}.`,
       );
     } catch (error) {
       if (
@@ -94,16 +94,14 @@ export class BackupsService implements OnModuleInit, OnModuleDestroy {
     if (this.timer) clearInterval(this.timer);
   }
 
-  private localTarget() {
+  private sourceTarget() {
     const url = new URL(this.config.get('databaseUrl', { infer: true }));
     if (
-      this.config.get('nodeEnv', { infer: true }) === 'production' ||
-      !['127.0.0.1', 'localhost', '[::1]'].includes(url.hostname) ||
       !['postgres:', 'postgresql:'].includes(url.protocol) ||
       this.config.get('storageProvider', { infer: true }) !== 'local'
     )
       throw new BadRequestException(
-        'Backup and restore currently support local PostgreSQL and local uploads in development or test only.',
+        'Backup and restore require PostgreSQL and local uploads. S3 upload sources are not supported.',
       );
     return url;
   }
@@ -181,7 +179,7 @@ export class BackupsService implements OnModuleInit, OnModuleDestroy {
   }
 
   async configure(input: BackupSettingsDto) {
-    this.localTarget();
+    this.sourceTarget();
     if (this.busy)
       throw new ConflictException('A backup or restore is running.');
     this.busy = true;
@@ -249,7 +247,7 @@ export class BackupsService implements OnModuleInit, OnModuleDestroy {
     const settings = await this.settings();
     let supported = true;
     try {
-      this.localTarget();
+      this.sourceTarget();
     } catch {
       supported = false;
     }
@@ -300,17 +298,20 @@ export class BackupsService implements OnModuleInit, OnModuleDestroy {
       canBackup: supported && !!settings && !unavailable && !this.busy,
       canRestore:
         supported &&
+        this.config.get('nodeEnv', { infer: true }) !== 'production' &&
         !!settings &&
         backups.some((backup) => backup.verified !== false) &&
         !this.busy,
       busy: this.busy,
+      restoreRequiresOffline:
+        this.config.get('nodeEnv', { infer: true }) === 'production',
       backups,
       lastBackup:
         backups.find(
           (backup) => backup.verified !== false && backup.purpose !== 'safety',
         ) ?? null,
       reason: !supported
-        ? 'LOCAL_TEST_ONLY'
+        ? 'UNSUPPORTED_SOURCE'
         : unavailable
           ? 'STORAGE_UNAVAILABLE'
           : !settings
@@ -331,7 +332,7 @@ export class BackupsService implements OnModuleInit, OnModuleDestroy {
   }
 
   private async configured() {
-    this.localTarget();
+    this.sourceTarget();
     const settings = await this.settings();
     if (!settings)
       throw new BadRequestException('Configure backup storage first.');
@@ -339,11 +340,38 @@ export class BackupsService implements OnModuleInit, OnModuleDestroy {
   }
 
   private async pg(command: 'pg_dump' | 'pg_restore', args: string[]) {
-    const url = this.localTarget();
+    const url = this.sourceTarget();
+    const connectionOptions: Record<string, string> = {};
+    const ssl = url.searchParams.get('ssl');
+    if (
+      (ssl !== null && ssl !== '0') ||
+      ['sslrootcert', 'sslcert', 'sslkey'].some((key) =>
+        url.searchParams.has(key),
+      ) ||
+      url.searchParams.get('sslnegotiation') === 'direct'
+    )
+      connectionOptions.PGSSLMODE = 'verify-full';
+    else if (ssl === '0') connectionOptions.PGSSLMODE = 'disable';
+    for (const [parameter, variable] of [
+      ['sslmode', 'PGSSLMODE'],
+      ['sslnegotiation', 'PGSSLNEGOTIATION'],
+      ['sslrootcert', 'PGSSLROOTCERT'],
+      ['sslcert', 'PGSSLCERT'],
+      ['sslkey', 'PGSSLKEY'],
+      ['sslcrl', 'PGSSLCRL'],
+      ['sslcrldir', 'PGSSLCRLDIR'],
+      ['channel_binding', 'PGCHANNELBINDING'],
+      ['connect_timeout', 'PGCONNECT_TIMEOUT'],
+      ['options', 'PGOPTIONS'],
+    ]) {
+      const value = url.searchParams.get(parameter);
+      if (value !== null) connectionOptions[variable] = value;
+    }
     await execute(command, args, {
       timeout: 300_000,
       env: {
         ...process.env,
+        ...connectionOptions,
         PGHOST: url.hostname.replace(/^\[|\]$/g, ''),
         PGPORT: url.port || '5432',
         PGDATABASE: decodeURIComponent(url.pathname.slice(1)),
@@ -352,7 +380,7 @@ export class BackupsService implements OnModuleInit, OnModuleDestroy {
       },
     }).catch(() => {
       throw new BadRequestException(
-        'PostgreSQL backup operation failed. Check local database access, client tools, and server logs.',
+        'PostgreSQL backup operation failed. Check database access, TLS settings, compatible pg_dump/pg_restore tools, and server logs.',
       );
     });
   }
@@ -383,7 +411,7 @@ export class BackupsService implements OnModuleInit, OnModuleDestroy {
     const files = await this.hashes(folder);
     if (
       snapshot.database !==
-        decodeURIComponent(this.localTarget().pathname.slice(1)) ||
+        decodeURIComponent(this.sourceTarget().pathname.slice(1)) ||
       Object.keys(files).length !== Object.keys(snapshot.files).length ||
       Object.entries(files).some(
         ([file, hash]) => snapshot.files[file] !== hash,
@@ -420,7 +448,7 @@ export class BackupsService implements OnModuleInit, OnModuleDestroy {
         purpose,
         id,
         createdAt: new Date().toISOString(),
-        database: decodeURIComponent(this.localTarget().pathname.slice(1)),
+        database: decodeURIComponent(this.sourceTarget().pathname.slice(1)),
         files,
       };
       await writeFile(join(folder, 'manifest.json'), JSON.stringify(snapshot), {
@@ -447,8 +475,20 @@ export class BackupsService implements OnModuleInit, OnModuleDestroy {
     }
   }
 
-  async restore(id: string, directory?: string, remote?: BackupSettingsDto) {
-    this.localTarget();
+  async restore(
+    id: string,
+    directory?: string,
+    remote?: BackupSettingsDto,
+    servicesStopped = false,
+  ) {
+    this.sourceTarget();
+    if (
+      this.config.get('nodeEnv', { infer: true }) === 'production' &&
+      !servicesStopped
+    )
+      throw new BadRequestException(
+        'Stop all API instances and workers, then use backup:restore with --services-stopped for production recovery.',
+      );
     // An explicit directory lets the recovery CLI work when the settings table is gone.
     const settings: StoredSettings = remote
       ? validateSettings(remote)

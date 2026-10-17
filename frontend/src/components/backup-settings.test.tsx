@@ -48,6 +48,33 @@ const status = {
   ],
   lastBackup: null,
 };
+it("enables production backups and explains offline recovery", async () => {
+  vi.mocked(apiRequest).mockResolvedValue({
+    ...status,
+    canRestore: false,
+    restoreRequiresOffline: true,
+  });
+  render(<BackupSettings />);
+  await screen.findByText(/Stop all API instances and workers/);
+  expect(
+    (
+      screen.getByRole("button", {
+        name: "Save backup settings",
+      }) as HTMLButtonElement
+    ).disabled,
+  ).toBe(false);
+  expect(
+    (screen.getByRole("button", { name: "Create backup" }) as HTMLButtonElement)
+      .disabled,
+  ).toBe(false);
+  expect(
+    (
+      screen.getByRole("button", {
+        name: "Restore backup",
+      }) as HTMLButtonElement
+    ).disabled,
+  ).toBe(true);
+});
 it("saves schedule settings and manually triggers a backup", async () => {
   vi.mocked(apiRequest).mockResolvedValue(status);
   render(<BackupSettings />);

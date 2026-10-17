@@ -33,10 +33,10 @@
     "verify:recovery-research": "node scripts/verify-recovery-and-research-sync.mjs",
     "lint:fix": "eslint \"{src,test,scripts}/**/*.ts\" --fix",
     "typecheck": "prisma generate && tsc --noEmit -p tsconfig.json",
-    "verify:production": "pnpm run typecheck && pnpm run lint && pnpm run verify:safety && pnpm run test --runInBand && pnpm run verify:api-boundary && pnpm run verify:recovery-research && pnpm run build",
+    "verify:production": "pnpm run typecheck && pnpm run lint && pnpm run verify:safety && pnpm run test --runInBand && node --test test/backup-recovery-cli.test.mjs && pnpm run verify:api-boundary && pnpm run verify:recovery-research && pnpm run build",
     "verify:safety": "tsx scripts/verify-production-safety.ts",
     "test:migrations": "node --test test/research-system-accounts.migration.test.mjs",
-    "backup:restore:local": "tsx scripts/restore-local-backup.ts",
+    "backup:restore": "tsx scripts/restore-local-backup.ts",
     "research:reset:local": "tsx scripts/reset-local-papers.ts",
     "test:openalex:local": "tsx test/openalex-local.integration.ts"
   },

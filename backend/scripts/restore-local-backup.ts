@@ -24,31 +24,35 @@ async function main() {
       );
     remote = JSON.parse(await readFile(directory, 'utf8')) as BackupSettingsDto;
   }
-  if (!directory || !id || !uploads || confirmation !== '--replace-local-data')
+  if (!directory || !id || !uploads || confirmation !== '--replace-data')
     throw new Error(
-      'Usage: DATABASE_URL=<local-url> pnpm backup:restore:local <backup-directory> <backup-id> <upload-directory> --replace-local-data',
+      'Usage: DATABASE_URL=<target-url> pnpm backup:restore <backup-directory> <backup-id> <upload-directory> --replace-data --services-stopped',
     );
-  if (process.env.NODE_ENV === 'production')
-    throw new Error('Local recovery is unavailable in production.');
+  if (!args.includes('--services-stopped'))
+    throw new Error(
+      'Stop all API instances and workers, then acknowledge with --services-stopped.',
+    );
   if (!process.env.DATABASE_URL)
     throw new Error(
       'Set DATABASE_URL explicitly; this command never loads .env.',
     );
-  const config = new ConfigService<Environment, true>(
-    validateEnvironment({
+  const config = new ConfigService<Environment, true>({
+    ...validateEnvironment({
       ...process.env,
       NODE_ENV: 'test',
       STORAGE_PROVIDER: 'local',
       UPLOAD_ROOT: resolve(uploads),
       FRONTEND_ORIGINS: 'http://localhost:3000',
     }),
-  );
+    nodeEnv: process.env.NODE_ENV === 'production' ? 'production' : 'test',
+  });
   const prisma = new PrismaService(config);
   try {
     const result = await new BackupsService(config, prisma).restore(
       id,
       remoteMode ? undefined : resolve(directory),
       remote,
+      true,
     );
     console.log(JSON.stringify(result));
   } finally {
@@ -56,8 +60,6 @@ async function main() {
   }
 }
 void main().catch((error: unknown) => {
-  console.error(
-    error instanceof Error ? error.message : 'Local restore failed.',
-  );
+  console.error(error instanceof Error ? error.message : 'Restore failed.');
   process.exitCode = 1;
 });

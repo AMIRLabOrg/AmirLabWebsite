@@ -43,6 +43,7 @@ interface BackupStatus {
   settings: BackupSettingsValue | null;
   canBackup: boolean;
   canRestore: boolean;
+  restoreRequiresOffline?: boolean;
   busy: boolean;
   backups: {
     id: string;
@@ -185,7 +186,7 @@ export function BackupSettings() {
   }
   const provider = settings.provider ?? "local";
   const disabled = busy || !!status?.busy;
-  const blocked = disabled || status?.reason === "LOCAL_TEST_ONLY";
+  const blocked = disabled || status?.reason === "UNSUPPORTED_SOURCE";
   function changeProvider(next: Provider) {
     setDraft({
       provider: next,
@@ -274,11 +275,11 @@ export function BackupSettings() {
         <WorkspaceHero
           eyebrow="Administration"
           title="Backup & restore"
-          description="Test recovery of local PostgreSQL and uploaded files together."
+          description="Back up PostgreSQL and uploaded files together."
         />
         <WorkspacePanel
           title="Backup storage & schedule"
-          description="Local development and testing only. Settings take effect without redeploying."
+          description="Settings take effect without redeploying. Backups require local upload storage."
         >
           <form
             className="grid gap-4 px-[var(--workspace-gutter)] py-5"
@@ -291,8 +292,8 @@ export function BackupSettings() {
               {message ??
                 (!status
                   ? "Checking backup configuration…"
-                  : status.reason === "LOCAL_TEST_ONLY"
-                    ? "Unavailable: use local PostgreSQL and local uploads outside production."
+                  : status.reason === "UNSUPPORTED_SOURCE"
+                    ? "Unavailable: backups require PostgreSQL and local uploads. S3 upload sources are not supported."
                     : status.reason === "STORAGE_UNAVAILABLE"
                       ? "Storage unavailable. Check connection fields, credentials and permissions, then save again."
                       : status.configured
@@ -451,8 +452,8 @@ export function BackupSettings() {
               Enable scheduled backups
             </CheckboxControl>
             <p className="text-xs text-ink-muted">
-              The local API must be running. The schedule is checked every
-              minute. An enabled schedule with no backup runs on the next check.
+              The API must be running. The schedule is checked every minute. An
+              enabled schedule with no backup runs on the next check.
             </p>
             <ButtonControl
               className="justify-self-end"
@@ -460,7 +461,7 @@ export function BackupSettings() {
               variant="primary"
               loading={!status}
               busy={busy}
-              disabled={disabled || status?.reason === "LOCAL_TEST_ONLY"}
+              disabled={blocked}
             >
               Save backup settings
             </ButtonControl>
@@ -468,7 +469,7 @@ export function BackupSettings() {
         </WorkspacePanel>
         <WorkspacePanel
           title="Create a backup"
-          description="Includes a PostgreSQL archive and local uploads, with SHA-256 integrity checks."
+          description="Includes a PostgreSQL archive and local uploads, with SHA-256 integrity checks. Pause database and upload writes for a coordinated recovery point."
         >
           <div className="grid gap-3 px-[var(--workspace-gutter)] py-5">
             <p className="text-xs text-ink-muted">
@@ -491,14 +492,26 @@ export function BackupSettings() {
         </WorkspacePanel>
         <WorkspacePanel
           title="Restore a backup"
-          description="Replaces local database records and uploaded files. Stop other writes before restoring. A safety backup is created first."
+          description="Replaces database records and uploaded files. Stop other writes before restoring. A safety backup is created first."
         >
           <div className="grid gap-4 px-[var(--workspace-gutter)] py-5">
+            {status?.restoreRequiresOffline && (
+              <p className="text-sm text-ink-muted">
+                Production recovery runs offline. Stop all API instances and
+                workers, then run the backend backup:restore command with
+                --replace-data and --services-stopped. See the README for
+                recovery instructions.
+              </p>
+            )}
             <FormField htmlFor="backup-selection" label="Backup">
               <SelectControl
                 id="backup-selection"
                 value={selected}
-                disabled={disabled || dirty || !status?.canRestore}
+                disabled={
+                  disabled ||
+                  dirty ||
+                  (!status?.canRestore && !status?.restoreRequiresOffline)
+                }
                 onValueChange={setSelected}
                 placeholder="Select a backup"
                 options={

@@ -32,11 +32,13 @@ describe('Local backup settings and archive validation', () => {
   };
   async function service(
     databaseUrl = 'postgresql://user@127.0.0.1:5433/test',
+    nodeEnv = 'test',
+    storageProvider = 'local',
   ) {
     const values: Record<string, unknown> = {
       databaseUrl,
-      nodeEnv: 'test',
-      storageProvider: 'local',
+      nodeEnv,
+      storageProvider,
       uploadRoot: join(root, 'uploads'),
       encryptionKey: 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=',
     };
@@ -77,17 +79,120 @@ describe('Local backup settings and archive validation', () => {
     expect((await backup.status()).settings?.enabled).toBe(false);
   });
 
-  it('refuses a remote database even when backups were configured', async () => {
-    const backup = await service('postgresql://user@vps.example.com:5432/live');
+  it('enables production settings and scheduling with a remote PostgreSQL source', async () => {
+    const backup = await service(
+      'postgresql://user@database.internal:5432/live?sslmode=require',
+      'production',
+    );
+    await backup.configure({
+      directory: join(root, 'backups'),
+      enabled: true,
+      intervalMinutes: 60,
+    });
+    expect(await backup.status()).toMatchObject({
+      canBackup: true,
+      canRestore: false,
+      restoreRequiresOffline: true,
+      reason: null,
+      settings: { enabled: true },
+    });
+    const capture = jest.spyOn(backup, 'capture').mockResolvedValue({
+      id: 'aaaaaaaa-aaaa-4aaa-aaaa-aaaaaaaaaaaa',
+      createdAt: '',
+      verified: true,
+    });
+    await backup.runScheduled();
+    expect(capture).toHaveBeenCalledWith('scheduled');
+    await expect(
+      backup.restore('aaaaaaaa-aaaa-4aaa-aaaa-aaaaaaaaaaaa'),
+    ).rejects.toThrow('Stop all API instances and workers');
+  });
+
+  it.each([
+    ['https://database.internal/live', 'local'],
+    ['postgresql://user@database.internal/live', 's3'],
+  ])('refuses unsupported backup sources (%s, %s)', async (url, provider) => {
+    const backup = await service(url, 'production', provider);
+    expect(await backup.status()).toMatchObject({
+      canBackup: false,
+      reason: 'UNSUPPORTED_SOURCE',
+    });
     await expect(
       backup.configure({
         directory: join(root, 'backups'),
         enabled: false,
         intervalMinutes: 60,
       }),
-    ).rejects.toThrow('local PostgreSQL');
-    await expect(backup.capture()).rejects.toThrow('local PostgreSQL');
+    ).rejects.toThrow('PostgreSQL and local uploads');
   });
+
+  it.each([
+    ['sslmode=verify-full', 'verify-full'],
+    ['ssl=true', 'verify-full'],
+    ['ssl=1', 'verify-full'],
+    ['ssl=false', 'verify-full'],
+    ['ssl=0', 'verify-full'],
+    ['', 'verify-full'],
+    ['sslmode=disable', 'disable'],
+    ['ssl=false&sslmode=verify-full', 'verify-full'],
+  ])(
+    'passes TLS settings (%s) without exposing passwords in arguments',
+    async (query, mode) => {
+      const backup = await service(
+        `postgresql://user:p%40ss@database.internal:5432/live?${query}&sslrootcert=%2Fprivate%2Fca.pem&sslnegotiation=direct`,
+        'production',
+      );
+      const bin = join(root, 'bin');
+      await mkdir(bin);
+      await writeFile(
+        join(bin, 'pg_dump'),
+        `#!/usr/bin/env node
+const fs = require('node:fs');
+const assert = require('node:assert/strict');
+assert.equal(process.env.PGSSLMODE, '${mode}');
+assert.equal(process.env.PGSSLNEGOTIATION, 'direct');
+assert.equal(process.env.PGSSLROOTCERT, '/private/ca.pem');
+assert.equal(process.env.PGHOST, 'database.internal');
+assert.equal(process.env.PGDATABASE, 'live');
+assert.equal(process.env.PGPASSWORD, 'p@ss');
+assert(!process.argv.join(' ').includes('p@ss'));
+fs.writeFileSync(process.argv[process.argv.indexOf('--file') + 1], 'test archive');
+`,
+        { mode: 0o700 },
+      );
+      await writeFile(join(bin, 'pg_restore'), '#!/bin/sh\nexit 0\n', {
+        mode: 0o700,
+      });
+      const oldPath = process.env.PATH;
+      process.env.PATH = `${bin}:${oldPath}`;
+      try {
+        await backup.configure({
+          directory: join(root, 'backups'),
+          enabled: false,
+          intervalMinutes: 60,
+        });
+        const snapshot = await backup.capture();
+        expect(
+          await readFile(
+            join(root, 'backups', snapshot.id, 'database.dump'),
+            'utf8',
+          ),
+        ).toBe('test archive');
+        expect(await backup.status()).toMatchObject({
+          canBackup: true,
+          canRestore: false,
+        });
+        await expect(backup.restore(snapshot.id)).rejects.toThrow(
+          'Stop all API instances and workers',
+        );
+        await expect(
+          backup.restore(snapshot.id, join(root, 'backups'), undefined, true),
+        ).resolves.toMatchObject({ restored: true });
+      } finally {
+        process.env.PATH = oldPath;
+      }
+    },
+  );
 
   it('refuses backup storage inside uploads', async () => {
     const backup = await service();

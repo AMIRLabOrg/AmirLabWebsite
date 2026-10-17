@@ -78,39 +78,56 @@ After changing the Prisma schema, run `pnpm run db:push` to apply it, or
 `pnpm run db:generate` if you only need to refresh the generated client.
 
 
-## Local backup and recovery testing
+## Backup and recovery
 
 The admin **Settings → Backup & restore** panel saves a local backup directory,
 interval in minutes, and schedule toggle without a redeploy. It also creates
 manual backups and restores a selected backup after typing `RESTORE`. The API
 must be running for scheduled backups; it checks the schedule every minute.
 
-This implementation deliberately supports **loopback PostgreSQL, local uploads,
-and development/test environments only**. Remote databases and production are
-refused. Destinations support local directories, S3-compatible storage and SFTP;
-remote delivery and restore still need a live test with actual credentials.
+Backups support **local or remote PostgreSQL with local uploads**, including
+production. S3-hosted upload sources are not yet supported; selecting S3 as a
+backup destination does not change that. Destinations support local directories,
+S3-compatible storage and SFTP; remote delivery and restore still need a live
+test with actual credentials. Use a direct PostgreSQL connection with the required
+dump/restore permissions; transaction-pooler endpoints may not support these tools.
+TLS mode, CA/client certificates, certificate revocation lists, channel binding,
+connection timeout and server options are forwarded from DATABASE_URL to the tools.
 
 Archives contain a PostgreSQL custom-format dump, uploads, and SHA-256 file
 checksums. The list checks archive integrity before offering restore; an
 integrity check does not prove recovery. Backups are kept until you remove them
-manually. Stop other database/upload writes during a local recovery test.
-`pg_dump`, `pg_restore`, and PostgreSQL must be installed and compatible.
+manually. Database dumping and file copying are separate operations: pause
+database/upload writes when a coordinated database-and-files recovery point is
+required. The schedule does not pause application writes. Run scheduling on one
+API instance; the existing operation lock is per process.
+`pg_dump` and `pg_restore` must be installed and compatible with your server.
+The API Docker image includes PostgreSQL 18 clients and OpenSSH SFTP; set the
+`POSTGRES_MAJOR` build argument if another client version is required. A VPS
+installation running outside Docker must install these tools separately.
 
 Safety snapshots are labeled separately and excluded from the default regular backup selection.
-A restore replaces local data and creates a safety backup first. If the process
+A restore replaces database records and uploads and creates a safety backup first.
+Production restore is disabled in the live API and panel. Stop **all API instances,
+background workers and other database/upload writers**, then run the recovery
+command below from the deployed backend directory with access to the upload
+volume. The required `--services-stopped` flag acknowledges this operator action;
+it does not stop processes for you. After recovery, clear persistent public caches
+and restart the services. Preserve the encryption key outside the database and
+backup archive so saved remote credentials remain usable. If the process
 is interrupted, the API refuses to start while `<upload-directory>.restore-pending.json`
 exists. That file names the safety backup and backup directory. Complete recovery
 with the command below before restarting; do not simply delete the marker.
 
 If the database is cleared, its accounts and settings disappear too. Recover
-without signing in using an explicit local URL, backup directory, backup ID,
+without signing in using an explicit target URL, backup directory, backup ID,
 and upload directory. This command **never loads `.env`**:
 
 ```bash
 DATABASE_URL=postgresql://USER:PASSWORD@127.0.0.1:5433/DATABASE \
-  pnpm --dir backend backup:restore:local \
+  pnpm --dir backend backup:restore \
   /absolute/backup/directory BACKUP_UUID /absolute/upload/directory \
-  --replace-local-data
+  --replace-data --services-stopped
 ```
 
 The archive must name the same database as the target URL. To run the destructive
@@ -213,7 +230,7 @@ Engineering and repository rules are in [`RULES.md`](RULES.md).
 
 ### Backup destination presets
 
-The admin backup panel offers **Same server / local directory**, **S3-compatible storage**, and **SFTP server**. Changing a preset changes its fields and disables the schedule until you save it. Settings are stored in the database and take effect without a redeploy. Sources remain restricted to local PostgreSQL and local uploads in development/test; selecting a remote destination does not enable production database backup.
+The admin backup panel offers **Same server / local directory**, **S3-compatible storage**, and **SFTP server**. Changing a preset changes its fields and disables the schedule until you save it. Settings are stored in the database and take effect without a redeploy. Sources support local or remote PostgreSQL and local uploads, including production. S3-hosted upload sources remain unsupported. Production restoration uses the offline recovery command rather than the running API.
 
 For S3, supply bucket, region, access key ID and secret access key. Leave the endpoint empty for AWS, or supply an HTTPS endpoint and the path-style setting required by your S3-compatible service. A prefix is optional. The account needs bucket listing and object read/write permissions for that prefix. For SFTP, supply host, port, username, an absolute remote directory and a **verified SSH public host key** from the server administrator. Authentication accepts a dedicated unencrypted private key or a password. OpenSSH `sftp` must be installed. Host-key verification remains strict; plain FTP is unsupported. See the [OpenSSH SFTP manual](https://man.openbsd.org/sftp.1) for transport requirements.
 
@@ -225,11 +242,11 @@ When local database settings/authentication tables are missing, remote recovery 
 
 ```sh
 DATABASE_URL='postgresql://user:password@127.0.0.1:5433/local_test' \
-  pnpm --dir backend backup:restore:local --storage-config /private/storage.json \
-  <backup-id> /absolute/uploads --replace-local-data
+  pnpm --dir backend backup:restore --storage-config /private/storage.json \
+  <backup-id> /absolute/uploads --replace-data --services-stopped
 ```
 
-The JSON uses the admin settings names, plus credentials. For example an S3 file contains `provider`, `bucket`, `region`, optional `endpoint`, `prefix`, `forcePathStyle`, `accessKeyId`, `secretAccessKey`, `enabled: false`, and `intervalMinutes: 60`. An SFTP file contains `provider`, `host`, `port`, `username`, `remoteDirectory`, `hostKey`, `authentication`, the matching `privateKey` or `password`, and the same schedule fields. Never commit this file. Stop the API and other writers before recovery. The old local-directory command still works, and the CLI never loads `.env` or permits production/remote database targets.
+The JSON uses the admin settings names, plus credentials. For example an S3 file contains `provider`, `bucket`, `region`, optional `endpoint`, `prefix`, `forcePathStyle`, `accessKeyId`, `secretAccessKey`, `enabled: false`, and `intervalMinutes: 60`. An SFTP file contains `provider`, `host`, `port`, `username`, `remoteDirectory`, `hostKey`, `authentication`, the matching `privateKey` or `password`, and the same schedule fields. Never commit this file. Stop the API and other writers before recovery. The local-directory form uses the same command. The CLI never loads `.env`; production and remote database recovery require an explicit DATABASE_URL and acknowledgement that all services are stopped.
 
 Provider contract tests cover streaming, pagination, publication order, path validation, SSH command quoting and credential cleanup. Live S3 and SFTP delivery/restore require actual credentials and an endpoint and must be verified before relying on them.
 
