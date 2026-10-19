@@ -3,6 +3,7 @@ import { cacheLife, cacheTag } from "next/cache";
 import { connection } from "next/server";
 import { API_URL } from "./api-url";
 import { getPublicCacheConfig } from "./cache-config.mjs";
+import { revisionTags } from "../../cache-handlers/revision.mjs";
 
 export class PublicApiError extends Error {
   constructor(
@@ -32,6 +33,18 @@ async function cachedJson(url: string, tag: string, ttlSeconds: number) {
   cacheTag(tag);
   cacheLife({ revalidate: ttlSeconds, expire: Math.max(ttlSeconds + 1, 300) });
   try {
+    let tags: string[] = [];
+    try {
+      tags = await revisionTags(
+        new URL(url).pathname.slice(
+          new URL(API_URL).pathname.replace(/\/$/, "").length,
+        ),
+      );
+    } catch {
+      // Unknown freshness permits a live read, never a reusable cache fill.
+      cacheLife({ stale: 0, revalidate: 0, expire: 0 });
+    }
+    cacheTag(...tags);
     return await readJson(url);
   } catch (error) {
     // Throwing during a cache fill can fail Next's prerender before the caller

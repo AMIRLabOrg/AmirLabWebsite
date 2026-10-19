@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 import { getPublicCacheConfig } from "@/lib/cache-config.mjs";
+import { ResearchStats } from "@/components/research-stats";
 import {
   HomePageView,
   HomeOpportunitiesLink,
@@ -31,10 +32,9 @@ export default function Home() {
 }
 
 async function HomeContent() {
-  const [content, research, stats, universities] = await Promise.all([
+  const [content, research, universities] = await Promise.all([
     getHomeContent(),
-    getResearch("PAPER"),
-    getPublicStats(),
+    getResearch("PAPER", 3),
     getUniversities(),
   ]);
   return (
@@ -46,10 +46,25 @@ async function HomeContent() {
         </Suspense>
       }
       research={research}
-      stats={stats}
+      statistics={
+        <Suspense
+          fallback={
+            <ResearchStats
+              boundary={universities.length ? "none" : "bottom"}
+              loading
+            />
+          }
+        >
+          <LiveStats boundary={universities.length ? "none" : "bottom"} />
+        </Suspense>
+      }
       universities={universities}
     />
   );
+}
+
+async function LiveStats({ boundary }: { boundary: "none" | "bottom" }) {
+  return <ResearchStats boundary={boundary} stats={await getPublicStats()} />;
 }
 
 async function LiveOpportunities() {

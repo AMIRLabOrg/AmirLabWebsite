@@ -1,4 +1,4 @@
-import { nativeCache, refreshRevision } from "./revision.mjs";
+import { nativeCache, refreshRevision, tagsCurrent } from "./revision.mjs";
 
 const handler = {
   ...nativeCache,
@@ -14,7 +14,8 @@ const handler = {
   },
   async get(key, softTags) {
     if (!(await refreshRevision())) return undefined;
-    return nativeCache.get(key, softTags);
+    const entry = await nativeCache.get(key, softTags);
+    return entry && tagsCurrent(entry.tags) ? entry : undefined;
   },
 };
 

@@ -16,6 +16,7 @@ afterEach(() => {
 });
 
 async function service(configured = true) {
+  const values = new Map<string, string>();
   const config = {
     get: jest.fn((key: string) =>
       configured
@@ -40,8 +41,27 @@ async function service(configured = true) {
       upsert: jest.fn().mockResolvedValue({}),
     },
     siteSetting: {
-      upsert: jest.fn().mockResolvedValue({}),
+      upsert: jest.fn(
+        (input: {
+          where: { key: string };
+          create: { value: string };
+          update: { value?: string };
+        }) => {
+          values.set(
+            input.where.key,
+            input.update.value ??
+              values.get(input.where.key) ??
+              input.create.value,
+          );
+          return Promise.resolve({});
+        },
+      ),
       findUnique: jest.fn().mockResolvedValue(null),
+      findMany: jest
+        .fn()
+        .mockImplementation(() =>
+          Promise.resolve([...values].map(([key, value]) => ({ key, value }))),
+        ),
     },
     $transaction: jest.fn((run: (transaction: unknown) => Promise<unknown>) =>
       run({
@@ -51,9 +71,8 @@ async function service(configured = true) {
           upsert: (...args: unknown[]) => prisma.job.upsert(...args),
         },
         siteSetting: {
-          // Jest mocks expose variadic calls as any.
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-          upsert: (...args: unknown[]) => prisma.siteSetting.upsert(...args),
+          upsert: (input: Parameters<typeof prisma.siteSetting.upsert>[0]) =>
+            prisma.siteSetting.upsert(input),
         },
       }),
     ),
@@ -76,7 +95,10 @@ it('delivers immediately to the existing first frontend origin, without queueing
     expect.objectContaining({
       method: 'POST',
       redirect: 'error',
-      headers: { authorization: `Bearer ${secret}` },
+      headers: {
+        authorization: `Bearer ${secret}`,
+        'content-type': 'application/json',
+      },
     }),
   );
   expect(jobs.enqueue).not.toHaveBeenCalled();
@@ -133,14 +155,47 @@ it('records a shared revision even when webhook delivery is not configured', asy
   await cache.invalidate();
   expect(global.fetch).not.toHaveBeenCalled();
   expect(jobs.enqueue).not.toHaveBeenCalled();
-  expect(prisma.siteSetting.upsert).toHaveBeenCalledTimes(1);
+  expect(prisma.siteSetting.upsert).toHaveBeenCalledWith(
+    expect.objectContaining({
+      where: { key: 'cache.public.revision.content' },
+    }),
+  );
 });
 
 it('reads a shared revision without exposing other settings', async () => {
   const { cache, prisma } = await service(false);
-  expect(await cache.revision()).toEqual({ revision: 'initial' });
-  prisma.siteSetting.findUnique.mockResolvedValue({ value: 'revision-two' });
-  expect(await cache.revision()).toEqual({ revision: 'revision-two' });
+  expect(await cache.revision()).toMatchObject({
+    revision: 'initial',
+    scopes: { content: 'initial', people: 'initial' },
+  });
+  prisma.siteSetting.findMany.mockResolvedValue([
+    { key: 'cache.public.revision', value: 'revision-two' },
+  ]);
+  expect(await cache.revision()).toMatchObject({
+    revision: 'revision-two',
+    scopes: { content: 'revision-two' },
+  });
+});
+
+it('retains unrelated revisions across multiple writes and queues their scopes', async () => {
+  const { cache, prisma } = await service(false);
+  await cache.invalidate(['people']);
+  const first = await cache.revision();
+  await cache.invalidate(['research']);
+  const second = await cache.revision();
+  expect(second.scopes.people).toBe(first.scopes.people);
+  expect(second.scopes.about).toBe('initial');
+  expect(second.scopes.content).toBe('initial');
+  expect(second.scopes.research).not.toBe(first.scopes.research);
+  expect(prisma.job.upsert).toHaveBeenLastCalledWith(
+    expect.objectContaining({
+      // Jest's asymmetric matchers return any.
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+      create: expect.objectContaining({
+        payload: { revision: second.revision, scopes: ['research'] },
+      }),
+    }),
+  );
 });
 
 function context(
@@ -158,19 +213,11 @@ function context(
 it.each(['review', 'bulkReview'])(
   'advances the shared revision after project %s approval',
   async (handler) => {
-    const { cache, prisma } = await service(false);
+    const { cache } = await service(false);
     const interceptor = await resolveService(PublicCacheInterceptor, [
       { provide: PublicCacheService, useValue: cache },
     ]);
-    prisma.siteSetting.upsert.mockImplementation(
-      (input: { update: { value: string } }) => {
-        prisma.siteSetting.findUnique.mockResolvedValue({
-          value: input.update.value,
-        });
-        return Promise.resolve({});
-      },
-    );
-    expect(await cache.revision()).toEqual({ revision: 'initial' });
+    expect(await cache.revision()).toMatchObject({ revision: 'initial' });
     const result = await lastValueFrom(
       interceptor.intercept(
         context('ProjectChangeReviewsController', 'POST', handler),
@@ -255,6 +302,26 @@ it('validates an optional revalidation secret and the existing frontend origin',
       FRONTEND_ORIGINS: 'https://user:password@example.test',
     }),
   ).toThrow('FRONTEND_ORIGINS');
+});
+
+it('scopes profile, editorial and position invalidation without expiring unrelated content', async () => {
+  const cache = { invalidate: jest.fn().mockResolvedValue(undefined) };
+  const interceptor = await resolveService(PublicCacheInterceptor, [
+    { provide: PublicCacheService, useValue: cache },
+  ]);
+  for (const [controller, handler, scopes] of [
+    ['ProfilesController', 'review', ['people']],
+    ['SiteContentController', 'updateAbout', ['about']],
+    ['ResearchController', 'updatePosition', ['positions']],
+    ['ProjectChangeReviewsController', 'bulkReview', ['research']],
+  ] as const) {
+    await lastValueFrom(
+      interceptor.intercept(context(controller, 'POST', handler), {
+        handle: () => of('saved'),
+      }),
+    );
+    expect(cache.invalidate).toHaveBeenLastCalledWith(scopes);
+  }
 });
 
 it('worker notifies settled listeners after a partially failed background handler', async () => {

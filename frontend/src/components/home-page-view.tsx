@@ -40,6 +40,7 @@ export function HomePageView({
   universities = [],
   loading = false,
   opportunities,
+  statistics,
 }: {
   content?: HomeContent;
   research?: ResearchItem[];
@@ -48,6 +49,7 @@ export function HomePageView({
   universities?: University[];
   loading?: boolean;
   opportunities?: ReactNode;
+  statistics?: ReactNode;
 }) {
   const researchRows: Array<ResearchItem | undefined> = loading
     ? Array.from({ length: 3 }, () => undefined)
@@ -87,7 +89,9 @@ export function HomePageView({
             Academic partners
           </p>
           <UniversitiesMarquee loading={loading} universities={universities} />
-          <ResearchStats boundary="none" loading={loading} stats={stats} />
+          {statistics ?? (
+            <ResearchStats boundary="none" loading={loading} stats={stats} />
+          )}
           <UniversitiesMarquee
             direction="right"
             loading={loading}
@@ -95,7 +99,7 @@ export function HomePageView({
           />
         </section>
       ) : (
-        <ResearchStats stats={stats} />
+        (statistics ?? <ResearchStats loading={loading} stats={stats} />)
       )}
 
       <section

@@ -2,7 +2,11 @@
 // These delegates are tied to the installed Next 16.3 API and integration-tested.
 import { get as httpGet } from "node:http";
 import { get as httpsGet } from "node:https";
-import { getPublicCacheConfig } from "../src/lib/cache-config.mjs";
+import {
+  getPublicCacheConfig,
+  PUBLIC_CACHE_SCOPES,
+  publicCacheScopes,
+} from "../src/lib/cache-config.mjs";
 import defaultHandler from "next/dist/server/lib/cache-handlers/default.js";
 
 export const nativeCache = defaultHandler.createDefaultCacheHandler(
@@ -12,11 +16,7 @@ let revision;
 let pending;
 
 export function refreshRevision() {
-  if (
-    process.env.NEXT_PHASE === "phase-production-build" ||
-    !getPublicCacheConfig().enabled
-  )
-    return Promise.resolve(true);
+  if (!getPublicCacheConfig().enabled) return Promise.resolve(true);
   if (pending) return pending;
   pending = (async () => {
     const api = process.env.API_URL?.replace(/\/+$/, "");
@@ -61,15 +61,32 @@ export function refreshRevision() {
     if (typeof value?.revision !== "string" || value.revision.length > 100) {
       throw new Error("Invalid public cache revision response");
     }
-    if (revision !== value.revision) {
-      const { namespace } = getPublicCacheConfig();
-      // Also expire build-time entries on the first request after a restart.
-      // The native handler and filesystem handler share Next's tag manifest.
-      await nativeCache.updateTags([`${namespace}:content`, "_N_T_/layout"], {
-        expire: 0,
-      });
-      revision = value.revision;
+    const scopes = value.scopes ?? { content: value.revision };
+    for (const scope of PUBLIC_CACHE_SCOPES) {
+      if (
+        scopes[scope] !== undefined &&
+        (typeof scopes[scope] !== "string" || scopes[scope].length > 100)
+      ) {
+        throw new Error("Invalid scoped public cache revision");
+      }
     }
+    if (typeof scopes.content !== "string")
+      throw new Error("Missing public cache content revision");
+    const { namespace } = getPublicCacheConfig();
+    // A cold instance validates persisted generation tags instead of expiring
+    // every layout merely because it has no in-memory revision yet.
+    const changed = revision
+      ? PUBLIC_CACHE_SCOPES.filter(
+          (scope) =>
+            (revision[scope] ?? "initial") !== (scopes[scope] ?? "initial"),
+        )
+      : [];
+    if (changed.length)
+      await nativeCache.updateTags(
+        changed.map((scope) => `${namespace}:${scope}`),
+        { expire: 0 },
+      );
+    revision = scopes;
     return true;
   })()
     .catch((error) => {
@@ -85,4 +102,28 @@ export function refreshRevision() {
       pending = undefined;
     });
   return pending;
+}
+
+export async function revisionTags(path) {
+  if (!(await refreshRevision()))
+    throw new Error("Public cache freshness unavailable");
+  const { namespace } = getPublicCacheConfig();
+  const scopes = [...new Set(["content", ...publicCacheScopes(path)])];
+  return scopes.flatMap((scope) => [
+    `${namespace}:${scope}`,
+    `${namespace}:revision:${scope}:${revision?.[scope] ?? "initial"}`,
+  ]);
+}
+
+export function tagsCurrent(tags) {
+  const { namespace } = getPublicCacheConfig();
+  return PUBLIC_CACHE_SCOPES.every((scope) => {
+    if (!tags.includes(`${namespace}:${scope}`)) return true;
+    const prefix = `${namespace}:revision:${scope}:`;
+    const current = `${prefix}${revision?.[scope] ?? "initial"}`;
+    return (
+      tags.includes(current) &&
+      tags.every((tag) => !tag.startsWith(prefix) || tag === current)
+    );
+  });
 }

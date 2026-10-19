@@ -184,11 +184,20 @@ export class ResearchService {
     };
   }
 
-  research(type?: ResearchItemType) {
+  research(type?: ResearchItemType, limit?: number) {
+    if (
+      limit !== undefined &&
+      (!Number.isInteger(limit) || limit < 1 || limit > 100)
+    ) {
+      throw new BadRequestException(
+        'Research limit must be an integer from 1 to 100',
+      );
+    }
     return this.prisma.researchItem.findMany({
       where: publicResearchWhere(type),
       include: RESEARCH_INCLUDE,
       orderBy: [{ publishedAt: 'desc' }, { title: 'asc' }],
+      ...(limit !== undefined ? { take: limit } : {}),
     });
   }
 

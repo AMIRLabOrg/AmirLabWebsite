@@ -25,3 +25,34 @@ export function getPublicCacheConfig() {
     namespace,
   };
 }
+export const PUBLIC_CACHE_SCOPES = [
+  "content",
+  "home",
+  "about",
+  "people",
+  "research",
+  "departments",
+  "universities",
+  "positions",
+];
+
+export function publicCacheScopes(path) {
+  const resource = path.split("?")[0].split("/")[1];
+  switch (resource) {
+    case "people":
+      return ["people", "research", "departments", "universities"];
+    case "research":
+    case "publications":
+      return ["research", "people", "departments"];
+    case "departments":
+      return ["departments", "people", "research", "positions"];
+    case "universities":
+      return ["universities"];
+    case "stats":
+      return ["people", "research", "positions"];
+    case "site-content":
+      return [path.split("/")[2]];
+    default:
+      return ["content"];
+  }
+}

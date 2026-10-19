@@ -5,6 +5,7 @@ import {
   Get,
   Param,
   ParseUUIDPipe,
+  ParseIntPipe,
   Patch,
   Post,
   Query,
@@ -48,8 +49,11 @@ export class ResearchController {
 
   @Public()
   @Get('research')
-  research(@Query('type') type?: ResearchItemType) {
-    return this.researchService.research(type);
+  research(
+    @Query('type') type?: ResearchItemType,
+    @Query('limit', new ParseIntPipe({ optional: true })) limit?: number,
+  ) {
+    return this.researchService.research(type, limit);
   }
 
   @Public()

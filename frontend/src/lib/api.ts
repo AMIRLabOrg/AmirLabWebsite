@@ -46,9 +46,16 @@ export function getPositions(): Promise<Position[]> {
   return getCollection<Position>("/positions", true);
 }
 
-export function getResearch(type?: ResearchItemType): Promise<ResearchItem[]> {
-  const query = type ? `?type=${type}` : "";
-  return getCollection<ResearchItem>(`/research${query}`);
+export function getResearch(
+  type?: ResearchItemType,
+  limit?: number,
+): Promise<ResearchItem[]> {
+  const query = new URLSearchParams();
+  if (type) query.set("type", type);
+  if (limit !== undefined) query.set("limit", String(limit));
+  return getCollection<ResearchItem>(
+    `/research${query.size ? `?${query}` : ""}`,
+  );
 }
 
 export async function getPublications(): Promise<
@@ -102,6 +109,8 @@ export async function getResearchItem(
 }
 
 export async function getPublicStats(): Promise<PublicStats> {
+  // The minute-long data cache must not shorten the homepage's static shell.
+  await connection();
   try {
     return await publicJson<PublicStats>("/stats", false, 60);
   } catch (error) {

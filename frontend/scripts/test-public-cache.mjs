@@ -13,6 +13,7 @@ const tags = [];
 let status = 200;
 let fail = false;
 let connections = 0;
+let revisionUnavailable = false;
 function load(path, imports) {
   const exports = {};
   const code = ts.transpileModule(
@@ -39,6 +40,7 @@ function load(path, imports) {
     AbortSignal,
     Buffer,
     Response,
+    URL,
   });
   return exports;
 }
@@ -49,11 +51,17 @@ const cache = load("../src/lib/public-cache.ts", {
   "./api-url": { API_URL: "https://api.example.test/api" },
   "next/cache": {
     cacheLife: (policy) => policies.push(policy),
-    cacheTag: (tag) => tags.push(tag),
+    cacheTag: (...values) => tags.push(...values),
   },
   "next/server": {
     connection: async () => {
       connections++;
+    },
+  },
+  "../../cache-handlers/revision.mjs": {
+    revisionTags: async () => {
+      if (revisionUnavailable) throw new Error("revision unavailable");
+      return [];
     },
   },
 });
@@ -78,6 +86,14 @@ assert.equal(connections, 1, "enabled public reads must allow prerendering");
 assert.equal(tags.at(-1), "vps-test-v1:content");
 await cache.publicJson("/stats", false, 60);
 assert.equal(policies.at(-1).revalidate, 60);
+revisionUnavailable = true;
+assert.equal((await cache.publicJson("/people")).value, "published");
+assert.equal(
+  policies.at(-1).expire,
+  0,
+  "unverified freshness must allow live content without retaining it",
+);
+revisionUnavailable = false;
 const beforeLive = policies.length;
 const beforeLiveConnections = connections;
 await cache.publicJson("/positions", true);
@@ -143,9 +159,39 @@ assert.equal(expired[0][0], "vps-test-v1:content");
 assert.equal(expired[0][1].expire, 0);
 assert.equal(paths[0]?.[0], "/");
 assert.equal(paths[0]?.[1], "layout");
+const scoped = await route.POST(
+  new Request("https://site.example.test/api/revalidate", {
+    method: "POST",
+    headers: {
+      authorization: `Bearer ${env.PUBLIC_CACHE_REVALIDATION_SECRET}`,
+    },
+    body: JSON.stringify({ scopes: ["people"] }),
+  }),
+);
+assert.equal(scoped.status, 200);
+assert.equal(expired.at(-1)[0], "vps-test-v1:people");
+assert.equal(
+  paths.length,
+  1,
+  "scoped invalidation must not expire the entire layout",
+);
+assert.equal(
+  (
+    await route.POST(
+      new Request("https://site.example.test/api/revalidate", {
+        method: "POST",
+        headers: {
+          authorization: `Bearer ${env.PUBLIC_CACHE_REVALIDATION_SECRET}`,
+        },
+        body: JSON.stringify({ scopes: ["invalid"] }),
+      }),
+    )
+  ).status,
+  400,
+);
 env.PUBLIC_CACHE_ENABLED = "false";
 await route.POST(request(env.PUBLIC_CACHE_REVALIDATION_SECRET));
-assert.equal(expired.length, 1);
+assert.equal(expired.length, 2);
 assert.equal(paths.length, 1);
 // Next retains expire:0 entries in development. Our transient failures must
 // remain misses there too, so the very next successful read can recover.

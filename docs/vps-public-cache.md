@@ -1,6 +1,6 @@
 # Public Cache Components
 
-AMIRLab uses Next.js 16.3.3 native Cache Components for public data and prerendered
+AMIRLab uses Next.js 16.3.8 native Cache Components for public data and prerendered
 public output. The separate Nest API and PostgreSQL remain authoritative. All
 existing skeletons, styles, animations, schema, auth and editor UX are preserved.
 
@@ -38,7 +38,10 @@ call `connection()`, so Next can include their results in prerendered output.
 The root no longer forces all HTML to be request-rendered.
 
 Home/about, the initial publication archive, published people/research, departments and universities use the
-configured TTL. Stats use at most 60 seconds. Positions remain live because
+configured TTL. Stats use at most 60 seconds behind a request-bound Suspense section, so they do
+not shorten the static homepage shell lifetime. The homepage research query is
+bounded to its three displayed papers; archive queries remain unbounded.
+Positions remain live because
 opening/closing depends on the current time. Their home opportunities link has
 its existing loading UI in a separate Suspense boundary. The opportunities page also prerenders its introduction separately from the live listings/application section. Disabled and live reads
 remain request-bound. Publication search/filter changes still fetch in the browser with the existing loading UI; the initial archive and its Suspense fallback receive cached server results. The footer year is cached on the server so its clock read cannot postpone the whole public shell. Sessions, permissions and private workspace data do not
@@ -53,27 +56,38 @@ an outage snapshot.
 
 ## Refresh freshness across deployments
 
-Every existing public-write invalidation path now updates an internal
-`cache.public.revision` entry in the existing `SiteSetting` table, even when no
-webhook secret is configured. No schema migration is needed. The public no-store
-`GET /api/public-cache/revision` endpoint exposes only this opaque revision.
-Both backends must run this code and use the same database for this guarantee.
+Public writes update scoped revisions in the existing `SiteSetting` table and
+queue durable webhook delivery in the same transaction. Scopes are `home`,
+`about`, `people`, `research`, `departments`, `universities` and `positions`;
+`content` remains the full-reset scope. No schema migration is required.
+The legacy `cache.public.revision` value remains available for old frontends.
+`GET /api/public-cache/revision` returns it alongside the scoped generations.
+Deploy the backend before the frontend, and update all backend replicas before
+relying on scoped invalidation. Mixed old/new backend writers require a full
+cache reset after the rollout because old writers cannot advance scoped keys.
 
-The frontend has small adapters for Next's native query and filesystem output
-handlers. Before reusing public entries, they read the shared revision. When it
-changes, they immediately expire the public content tag in Next's native tag
-manifest. On first use after restart, they also expire old build/runtime output.
-Thus a missed webhook or a restart cannot silently resurrect previously cached
-published content when the revision check succeeds. The expensive public data
-queries are reused when the revision is unchanged; the small database-backed
-freshness request still has a cost. Concurrent checks may share an in-flight
-request, but there is no timed revision cache.
+The frontend tags cached public queries and their generated shells with both
+resource dependencies and the revisions observed before fetching content.
+People depend on research, department and university data; research depends on
+people and departments; departments depend on people, research and positions.
+The webhook expires only its supplied scopes. Empty legacy webhook requests
+still expire all public content. Background research jobs expire research and
+people; failures that may have partially committed still invalidate their scopes.
+
+Before reusing public entries, the handlers check the authoritative revisions.
+A changed generation rejects affected stored JSON/HTML, including after a missed
+webhook or a process restart. An unchanged generation no longer expires the
+entire layout merely because the instance has just started. Generation tags are
+also read during build, so changed build seeds can be rejected on first use.
+Revision requests remain bounded and no-store; overlapping checks share only
+an in-flight request. Unknown freshness bypasses cached data and uses uncached
+content reads with the existing finite loading/error behavior.
 
 The adapters reuse the installed Next native memory/file storage, serialization
 and eviction; no second content cache is introduced. They import installed
 `next/dist` handler implementations, so upgrading Next requires rerunning the
 real integration test. Handlers remain configured in the build so Next carries them into its
-server output. Revision checks skip Next's build phase and run when serving. Query memory keeps Next's normal 50 MB bound.
+server output. Revision checks also identify build-time generations. Query memory keeps Next's normal 50 MB bound.
 
 Public routes set `CDN-Cache-Control: no-store`: an independent HTML CDN must not
 bypass the freshness check. Next's server output cache remains enabled. A custom
@@ -198,3 +212,21 @@ guard during page collection. No local development URL or production guard was
 changed to bypass that check. Turbopack also encounters a worker port-permission
 error in this environment. Hosted deployment and browser/editor verification
 remain separate from these fixture results.
+
+## ISR write reduction verification (2026-10-19)
+
+Run `node frontend/scripts/test-homepage-cache.mjs` from the repository root.
+It builds an isolated copy of the real homepage with a synthetic 1,200-paper API
+and compares the previous unbounded/minute-statistics data flow against the
+repair with identical UI. The fixture verifies the generated revalidation
+interval, cached HTML plus metadata size, bounded API query, and generation
+checks against actual filesystem cache entries. It uses Next's TypeScript API
+and worker threads inside the fixture so it can build without spawning child
+processes or opening localhost ports; application deployment settings are unchanged.
+
+The first measured build changed the shell interval from 60 to 3,600 seconds
+and HTML plus metadata from 1,200,803 to 126,873 bytes (89.4% smaller). These
+are synthetic fixture results, not measured Vercel usage savings. The existing
+`test-native-public-cache.mjs` HTTP/streaming/restart fixture requires localhost
+listening permission. Hosted verification still needs before/after ISR writes,
+entry sizes, editor-save freshness and loading/outage browser checks.

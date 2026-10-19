@@ -67,6 +67,38 @@ function submission(overrides: Partial<SubmitResearchDto> = {}) {
   } satisfies SubmitResearchDto;
 }
 
+it('bounds homepage papers in the published query without changing archive reads', async () => {
+  const findMany = jest
+    .fn<Promise<unknown[]>, [object]>()
+    .mockResolvedValue([]);
+  const service = createResearchService({
+    discovery: {},
+    notifications: {},
+    settings: {},
+    prisma: { researchItem: { findMany } },
+  });
+  await service.research(ResearchItemType.PAPER, 3);
+  expect(findMany).toHaveBeenLastCalledWith(
+    expect.objectContaining({
+      take: 3,
+      // Jest's asymmetric matchers return any.
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+      where: expect.objectContaining({
+        type: ResearchItemType.PAPER,
+        reviewStatus: ReviewStatus.PUBLISHED,
+      }),
+      orderBy: [{ publishedAt: 'desc' }, { title: 'asc' }],
+    }),
+  );
+  await service.research(ResearchItemType.PAPER);
+  expect(findMany.mock.calls.at(-1)?.[0]).not.toHaveProperty('take');
+  for (const limit of [0, -1, 101, 1.5, NaN]) {
+    expect(() => service.research(ResearchItemType.PAPER, limit)).toThrow(
+      'limit',
+    );
+  }
+});
+
 function user(overrides: Partial<AuthenticatedUser> = {}): AuthenticatedUser {
   return {
     email: 'admin@example.org',

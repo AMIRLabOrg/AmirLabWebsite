@@ -8,6 +8,17 @@ import { JobsService } from '../jobs/jobs.service';
 import { Prisma } from '../../generated/prisma/client';
 
 const REVISION_KEY = 'cache.public.revision';
+export const PUBLIC_CACHE_SCOPES = [
+  'content',
+  'home',
+  'about',
+  'people',
+  'research',
+  'departments',
+  'universities',
+  'positions',
+] as const;
+export type PublicCacheScope = (typeof PUBLIC_CACHE_SCOPES)[number];
 
 export const PUBLIC_CACHE_JOB = 'REVALIDATE_PUBLIC_CACHE';
 @Injectable()
@@ -40,7 +51,11 @@ export class PublicCacheService implements OnModuleInit {
     const url = new URL('/api/revalidate', frontend).toString();
     const response = await fetch(url, {
       method: 'POST',
-      headers: { authorization: `Bearer ${secret}` },
+      headers: {
+        authorization: `Bearer ${secret}`,
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify(payload),
       signal: withJobSignal(AbortSignal.timeout(3000)),
       redirect: 'error',
     });
@@ -48,26 +63,45 @@ export class PublicCacheService implements OnModuleInit {
       throw new Error(`Public cache revalidation returned ${response.status}`);
   }
 
-  async revision(): Promise<{ revision: string }> {
-    const record = await this.prisma.siteSetting.findUnique({
-      where: { key: REVISION_KEY },
-      select: { value: true },
+  async revision() {
+    const records = await this.prisma.siteSetting.findMany({
+      where: {
+        key: {
+          in: [
+            REVISION_KEY,
+            ...PUBLIC_CACHE_SCOPES.map((scope) => `${REVISION_KEY}.${scope}`),
+          ],
+        },
+      },
+      select: { key: true, value: true },
     });
-    if (!record) return { revision: 'initial' };
-    if (typeof record.value !== 'string') {
-      throw new Error('Invalid public cache revision');
+    const values = new Map<string, string>();
+    for (const record of records) {
+      if (typeof record.value !== 'string')
+        throw new Error('Invalid public cache revision');
+      values.set(record.key, record.value);
     }
-    return { revision: record.value };
+    const revision = values.get(REVISION_KEY) ?? 'initial';
+    const scopes = Object.fromEntries(
+      PUBLIC_CACHE_SCOPES.map((scope) => [
+        scope,
+        values.get(`${REVISION_KEY}.${scope}`) ??
+          (scope === 'content' ? revision : 'initial'),
+      ]),
+    );
+    return { revision, scopes };
   }
 
-  async invalidate(): Promise<void> {
+  async invalidate(
+    scopes: readonly PublicCacheScope[] = ['content'],
+  ): Promise<void> {
     const changeKey = randomUUID();
     const revision = randomUUID();
     await this.prisma.$transaction((transaction) =>
-      this.writeInvalidation(transaction, changeKey, revision),
+      this.writeInvalidation(transaction, changeKey, revision, scopes),
     );
     try {
-      await this.deliver({ revision });
+      await this.deliver({ revision, scopes: [...scopes] });
       await this.prisma.job.deleteMany({
         where: {
           status: 'PENDING',
@@ -84,26 +118,42 @@ export class PublicCacheService implements OnModuleInit {
   async invalidateInTransaction(
     transaction: Prisma.TransactionClient,
     changeKey: string,
+    scopes: readonly PublicCacheScope[] = ['research', 'people'],
   ): Promise<void> {
-    await this.writeInvalidation(transaction, changeKey, randomUUID());
+    await this.writeInvalidation(transaction, changeKey, randomUUID(), scopes);
   }
 
   private async writeInvalidation(
     transaction: Prisma.TransactionClient,
     changeKey: string,
     revision: string,
+    scopes: readonly PublicCacheScope[],
   ): Promise<void> {
+    // Keep a stable full-cache generation alongside the legacy revision.
+    await transaction.siteSetting.upsert({
+      where: { key: `${REVISION_KEY}.content` },
+      create: { key: `${REVISION_KEY}.content`, value: 'initial' },
+      update: {},
+    });
     await transaction.siteSetting.upsert({
       where: { key: REVISION_KEY },
       create: { key: REVISION_KEY, value: revision },
       update: { value: revision },
     });
+    for (const scope of [...new Set(scopes)].sort()) {
+      const key = `${REVISION_KEY}.${scope}`;
+      await transaction.siteSetting.upsert({
+        where: { key },
+        create: { key, value: revision },
+        update: { value: revision },
+      });
+    }
     const uniqueKey = `public-cache:${changeKey}`;
     await transaction.job.upsert({
       where: { uniqueKey },
       update: {},
       create: {
-        payload: { revision },
+        payload: { revision, scopes: [...scopes] },
         type: PUBLIC_CACHE_JOB,
         uniqueKey,
       },
