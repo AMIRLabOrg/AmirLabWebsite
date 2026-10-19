@@ -127,6 +127,10 @@ export interface AmirSeedData {
   departments: SeedDepartment[];
   universities: SeedUniversity[];
   people: SeedPerson[];
+  foundingMembers: {
+    personSourceId: string;
+    role: 'FOUNDER' | 'CO_FOUNDER';
+  }[];
   papers: SeedPaper[];
   datasets: unknown[];
   projects: SeedProject[];
@@ -147,9 +151,9 @@ export async function readSeedData(): Promise<AmirSeedData> {
 }
 
 export function validateSeedData(data: AmirSeedData): void {
-  if (data.schemaVersion !== 4) {
+  if (data.schemaVersion !== 5) {
     throw new Error(
-      `Unsupported seed schema version ${String(data.schemaVersion)}; expected 4`,
+      `Unsupported seed schema version ${String(data.schemaVersion)}; expected 5`,
     );
   }
   if (!data.source?.site || !data.source?.capturedAt) {
@@ -180,6 +184,28 @@ export function validateSeedData(data: AmirSeedData): void {
   unique(data.positions, (item) => item.slug, 'position slug');
 
   const people = new Set(data.people.map((person) => person.sourceId));
+  if (!Array.isArray(data.foundingMembers)) {
+    throw new Error('Seed foundingMembers must be an array');
+  }
+  unique(
+    data.foundingMembers,
+    (member) => member.personSourceId,
+    'founding member',
+  );
+  if (
+    data.foundingMembers.filter((member) => member.role === 'FOUNDER').length >
+    1
+  ) {
+    throw new Error('Seed can have only one founder');
+  }
+  for (const member of data.foundingMembers) {
+    if (!people.has(member.personSourceId)) {
+      throw new Error(`Unknown founding member ${member.personSourceId}`);
+    }
+    if (member.role !== 'FOUNDER' && member.role !== 'CO_FOUNDER') {
+      throw new Error(`Invalid founding-member role ${String(member.role)}`);
+    }
+  }
   for (const person of data.people) {
     ensureUrl(person.sourceUrl, `person ${person.slug} sourceUrl`);
     if (

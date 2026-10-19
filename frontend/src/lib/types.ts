@@ -147,6 +147,8 @@ export interface Person {
   roleTitle: string | null;
   expertise: string[];
   isAlumni: boolean;
+  isFounder?: boolean;
+  isCofounder?: boolean;
   avatar: { id: string; width: number | null; height: number | null } | null;
   links?: Array<{
     id: string;

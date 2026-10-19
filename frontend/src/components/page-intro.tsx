@@ -17,6 +17,7 @@ export function PageIntro({
   scene,
   title,
   loading = false,
+  metaLoading = loading,
 }: {
   actions?: ReactNode;
   children: ReactNode;
@@ -25,6 +26,7 @@ export function PageIntro({
   scene: SceneVariant;
   title: string;
   loading?: boolean;
+  metaLoading?: boolean;
 }) {
   return (
     <PublicSection
@@ -69,10 +71,11 @@ export function PageIntro({
         </p>
         {meta ? (
           <div
-            aria-hidden={loading || undefined}
+            aria-hidden={metaLoading || undefined}
+            aria-busy={metaLoading || undefined}
             className="mt-[1.35rem] flex flex-wrap gap-x-[1.2rem] gap-y-2 font-mono text-[.6rem] text-ink-muted"
           >
-            {loading ? (
+            {metaLoading ? (
               <>
                 <span className={loadingPlaceholder(true, "text", "short")} />
                 <span className={loadingPlaceholder(true, "text", "medium")} />

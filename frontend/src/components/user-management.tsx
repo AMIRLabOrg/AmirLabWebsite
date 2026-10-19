@@ -1,5 +1,6 @@
 "use client";
 
+import { PersonPortrait } from "@/components/person-portrait";
 import { cn } from "@/lib/cn";
 import { loadingPlaceholder } from "@/lib/loading-style";
 import Link from "next/link";
@@ -61,6 +62,7 @@ interface Account {
   person: {
     id: string;
     fullName: string;
+    avatar?: { id: string } | null;
     rank: string | null;
     slug: string;
     isPublished: boolean;
@@ -298,6 +300,12 @@ export function UserManagement() {
             : "Member accounts"}
         </p>
         <div className="flex flex-wrap justify-end gap-2">
+          <ButtonLink
+            href="/workspace/users/founding-members"
+            variant="secondary"
+          >
+            Founding members
+          </ButtonLink>
           <ButtonLink href="/workspace/users/new" variant="primary">
             <Plus aria-hidden="true" size={16} /> New account
           </ButtonLink>
@@ -434,31 +442,38 @@ export function UserManagement() {
                 key={account?.id ?? `account-loading-${index}`}
               >
                 {account ? <ReviewIssueStamp issue={issue} /> : null}
-                <div className="grid min-w-0 gap-[.18rem]">
-                  <strong
-                    className={cn(
-                      "truncate text-[.82rem] font-medium leading-[1.35]",
-                      loadingPlaceholder(initialLoading, "text", "long"),
-                    )}
-                    data-placeholder="text"
-                    data-placeholder-width="long"
-                  >
-                    {account?.person?.fullName ??
-                      (initialLoading
-                        ? "Loading account"
-                        : "Account without profile")}
-                  </strong>
-                  <span
-                    className={cn(
-                      "hidden truncate font-mono text-[.56rem] text-ink-faint max-[700px]:block",
-                      loadingPlaceholder(initialLoading, "label", "medium"),
-                    )}
-                    data-placeholder={initialLoading ? "label" : undefined}
-                  >
-                    {account?.person?.rank
-                      ? readable(account.person.rank)
-                      : "No research rank"}
-                  </span>
+                <div className="flex min-w-0 items-center gap-2.5">
+                  <PersonPortrait
+                    person={account?.person ?? { fullName: "Account" }}
+                    variant="small"
+                    loading={initialLoading}
+                  />
+                  <div className="grid min-w-0 gap-[.18rem]">
+                    <strong
+                      className={cn(
+                        "truncate text-[.82rem] font-medium leading-[1.35]",
+                        loadingPlaceholder(initialLoading, "text", "long"),
+                      )}
+                      data-placeholder="text"
+                      data-placeholder-width="long"
+                    >
+                      {account?.person?.fullName ??
+                        (initialLoading
+                          ? "Loading account"
+                          : "Account without profile")}
+                    </strong>
+                    <span
+                      className={cn(
+                        "hidden truncate font-mono text-[.56rem] text-ink-faint max-[700px]:block",
+                        loadingPlaceholder(initialLoading, "label", "medium"),
+                      )}
+                      data-placeholder={initialLoading ? "label" : undefined}
+                    >
+                      {account?.person?.rank
+                        ? readable(account.person.rank)
+                        : "No research rank"}
+                    </span>
+                  </div>
                 </div>
 
                 <div className="min-w-0 max-[700px]:col-start-1 max-[700px]:row-start-2">

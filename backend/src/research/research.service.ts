@@ -20,6 +20,7 @@ import {
 } from '../../generated/prisma/client';
 import type { AuthenticatedUser } from '../auth/auth.types';
 import { PrismaService } from '../database/prisma.service';
+import { readFoundingMembers } from '../users/founding-members';
 import { NotificationsService } from '../notifications/notifications.service';
 import { reviewConflict } from '../common/review-problem';
 import type { CreatePositionDto, UpdatePositionDto } from './dto/position.dto';
@@ -114,23 +115,28 @@ export class ResearchService {
   ) {}
 
   async people() {
-    const people = await this.prisma.person.findMany({
-      where: {
-        isPublished: true,
-        OR: [{ userId: null }, { user: { is: { isDeleted: false } } }],
-      },
-      include: {
-        avatar: true,
-        departments: { include: { department: true } },
-        metrics: true,
-        openAlexProfile: { select: { citationCount: true, syncedAt: true } },
-        user: { select: { email: true } },
-      },
-      orderBy: { fullName: 'asc' },
-    });
+    const [founding, people] = await Promise.all([
+      readFoundingMembers(this.prisma),
+      this.prisma.person.findMany({
+        where: {
+          isPublished: true,
+          OR: [{ userId: null }, { user: { is: { isDeleted: false } } }],
+        },
+        include: {
+          avatar: true,
+          departments: { include: { department: true } },
+          metrics: true,
+          openAlexProfile: { select: { citationCount: true, syncedAt: true } },
+          user: { select: { email: true } },
+        },
+        orderBy: { fullName: 'asc' },
+      }),
+    ]);
     return people
       .map(({ user, ...profile }) => ({
         ...publicPerson(profile),
+        isFounder: profile.id === founding.founderId,
+        isCofounder: founding.cofounderIds.includes(profile.id),
         email: user?.email ?? null,
       }))
       .sort(comparePeople);
@@ -726,7 +732,12 @@ export class ResearchService {
   submitters() {
     return this.prisma.person.findMany({
       where: { user: { is: availableResearchOwner() } },
-      select: { id: true, fullName: true, slug: true },
+      select: {
+        id: true,
+        fullName: true,
+        slug: true,
+        avatar: { select: { id: true } },
+      },
       orderBy: { fullName: 'asc' },
     });
   }

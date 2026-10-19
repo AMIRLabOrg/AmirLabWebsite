@@ -480,6 +480,7 @@ export class DocumentsService implements OnModuleInit {
       orderBy: { fullName: 'asc' },
       select: {
         fullName: true,
+        avatar: { select: { id: true } },
         id: true,
         phone: true,
         roleTitle: true,

@@ -41,6 +41,8 @@ export function HomePageView({
   loading = false,
   opportunities,
   statistics,
+  partners,
+  latestResearch,
 }: {
   content?: HomeContent;
   research?: ResearchItem[];
@@ -50,10 +52,9 @@ export function HomePageView({
   loading?: boolean;
   opportunities?: ReactNode;
   statistics?: ReactNode;
+  partners?: ReactNode;
+  latestResearch?: ReactNode;
 }) {
-  const researchRows: Array<ResearchItem | undefined> = loading
-    ? Array.from({ length: 3 }, () => undefined)
-    : research.slice(0, 3);
   return (
     <div>
       <PageIntro
@@ -76,73 +77,25 @@ export function HomePageView({
         {content.heroIntroduction}
       </PageIntro>
 
-      {loading || universities.length > 0 ? (
-        <section aria-label="Academic partners" className="relative pb-10">
-          <FrameBays pattern="dot" />
-          <FrameRule edge="bottom" />
-          <p
-            className={cn(
-              publicShellClass,
-              "mb-0 pt-10 pb-4 font-mono text-[.58rem] font-medium tracking-[.1em] text-ink-faint uppercase",
-            )}
-          >
-            Academic partners
-          </p>
-          <UniversitiesMarquee loading={loading} universities={universities} />
-          {statistics ?? (
-            <ResearchStats boundary="none" loading={loading} stats={stats} />
-          )}
-          <UniversitiesMarquee
-            direction="right"
-            loading={loading}
-            universities={universities}
-          />
-        </section>
-      ) : (
-        (statistics ?? <ResearchStats loading={loading} stats={stats} />)
-      )}
-
-      <section
-        className={cn(publicShellClass, "py-[clamp(3.25rem,6vw,5.5rem)]")}
-        data-loading={loading || undefined}
-      >
-        <CollectionHeading
-          eyebrow={content.latestEyebrow}
-          title={content.latestTitle}
-          action={
-            <Link
-              className="text-[.76rem] font-semibold text-brand underline decoration-[color-mix(in_srgb,var(--brand)_35%,transparent)] underline-offset-[3px]"
-              href="/papers"
-              prefetch={false}
-            >
-              View all{" "}
-              <ArrowRight aria-hidden="true" className="inline" size={16} />
-            </Link>
+      {partners ?? (
+        <HomePartners
+          loading={loading}
+          universities={universities}
+          statistics={
+            statistics ?? (
+              <ResearchStats
+                boundary={loading || universities.length ? "none" : "bottom"}
+                loading={loading}
+                stats={stats}
+              />
+            )
           }
         />
-        {researchRows.length ? (
-          <div className="grid gap-0">
-            {researchRows.map((item, index) =>
-              !item || item.type === "PAPER" ? (
-                <PaperCard
-                  frame
-                  item={item}
-                  key={item?.id ?? `loading-paper-${index}`}
-                  loading={loading}
-                />
-              ) : (
-                <ResearchCard item={item} key={item.id} loading={false} />
-              ),
-            )}
-          </div>
-        ) : (
-          <StatePanel
-            frame
-            body="Published work will appear here when available."
-            title="No publications yet"
-          />
-        )}
-      </section>
+      )}
+
+      {latestResearch ?? (
+        <HomeResearch content={content} loading={loading} research={research} />
+      )}
 
       <section className="relative">
         <FrameBays pattern="diagonal" />
@@ -193,5 +146,96 @@ export function HomeOpportunitiesLink({
           : "Explore opportunities"}
       <ArrowRight aria-hidden="true" size={18} />
     </ButtonLink>
+  );
+}
+
+export function HomePartners({
+  universities = [],
+  loading = false,
+  statistics,
+}: {
+  universities?: University[];
+  loading?: boolean;
+  statistics?: ReactNode;
+}) {
+  return loading || universities.length > 0 ? (
+    <section aria-label="Academic partners" className="relative pb-10">
+      <FrameBays pattern="dot" />
+      <FrameRule edge="bottom" />
+      <p
+        className={cn(
+          publicShellClass,
+          "mb-0 pt-10 pb-4 font-mono text-[.58rem] font-medium tracking-[.1em] text-ink-faint uppercase",
+        )}
+      >
+        Academic partners
+      </p>
+      <UniversitiesMarquee loading={loading} universities={universities} />
+      {statistics ?? <ResearchStats boundary="none" loading={loading} />}
+      <UniversitiesMarquee
+        direction="right"
+        loading={loading}
+        universities={universities}
+      />
+    </section>
+  ) : (
+    (statistics ?? <ResearchStats loading={loading} />)
+  );
+}
+
+export function HomeResearch({
+  content,
+  research = [],
+  loading = false,
+}: {
+  content: HomeContent;
+  research?: ResearchItem[];
+  loading?: boolean;
+}) {
+  const researchRows: Array<ResearchItem | undefined> = loading
+    ? Array.from({ length: 3 }, () => undefined)
+    : research.slice(0, 3);
+  return (
+    <section
+      className={cn(publicShellClass, "py-[clamp(3.25rem,6vw,5.5rem)]")}
+      data-loading={loading || undefined}
+    >
+      <CollectionHeading
+        eyebrow={content.latestEyebrow}
+        title={content.latestTitle}
+        action={
+          <Link
+            className="text-[.76rem] font-semibold text-brand underline decoration-[color-mix(in_srgb,var(--brand)_35%,transparent)] underline-offset-[3px]"
+            href="/papers"
+            prefetch={false}
+          >
+            View all{" "}
+            <ArrowRight aria-hidden="true" className="inline" size={16} />
+          </Link>
+        }
+      />
+      {researchRows.length ? (
+        <div className="grid gap-0">
+          {researchRows.map((item, index) =>
+            !item || item.type === "PAPER" ? (
+              <PaperCard
+                frame
+                item={item}
+                key={item?.id ?? `loading-paper-${index}`}
+                loading={loading}
+              />
+            ) : (
+              <ResearchCard item={item} key={item.id} loading={false} />
+            ),
+          )}
+        </div>
+      ) : (
+        <StatePanel
+          frame
+          body="Published work will appear here when available."
+          title="No publications yet"
+        />
+      )}
+    </section>
   );
 }

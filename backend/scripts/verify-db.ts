@@ -19,6 +19,22 @@ async function main() {
   const seed = await readSeedData();
   const prisma = createCliPrisma();
   try {
+    const foundingMembers = await prisma.foundingMember.findMany({
+      include: { person: { select: { legacySourceId: true } } },
+    });
+    if (
+      foundingMembers.length !== seed.foundingMembers.length ||
+      seed.foundingMembers.some(
+        (expected) =>
+          !foundingMembers.some(
+            (actual) =>
+              actual.person.legacySourceId === expected.personSourceId &&
+              actual.role === expected.role,
+          ),
+      )
+    ) {
+      throw new Error('Founding members do not match the canonical seed');
+    }
     const expectedProjects = seed.projects.filter((item) => item.title).length;
     const expectedMemberships = seed.departments.reduce(
       (sum, item) => sum + item.memberships.length,

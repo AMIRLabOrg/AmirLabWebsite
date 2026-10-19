@@ -87,7 +87,13 @@ export class ResearchProgramsService {
         where: {
           user: { is: { status: { in: AVAILABLE_ACCOUNT_STATUSES } } },
         },
-        select: { id: true, fullName: true, headline: true, roleTitle: true },
+        select: {
+          id: true,
+          fullName: true,
+          headline: true,
+          roleTitle: true,
+          avatar: { select: { id: true } },
+        },
         orderBy: { fullName: 'asc' },
       }),
       this.prisma.researchItem.findMany({

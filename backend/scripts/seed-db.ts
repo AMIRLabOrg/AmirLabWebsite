@@ -26,6 +26,7 @@ import {
   required,
   seedDocuments,
   seedSiteSettings,
+  seedFoundingMembers,
   stableSlug,
 } from './seed-writers';
 import {
@@ -269,6 +270,8 @@ async function seedDatabase() {
       personIdBySource.set(person.sourceId, createdPerson.id);
       created(`person ${person.slug}`);
     }
+
+    await seedFoundingMembers(prisma, data, personIdBySource);
 
     const documentSettings = await prisma.documentSettings.findUnique({
       where: { id: 'documents' },

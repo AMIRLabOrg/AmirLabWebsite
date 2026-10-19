@@ -30,6 +30,7 @@ export function ResearchSubmissionForm() {
     Array<{
       id: string;
       fullName: string;
+      avatar?: { id: string } | null;
       roleTitle: string | null;
       headline: string | null;
     }>
@@ -43,6 +44,7 @@ export function ResearchSubmissionForm() {
       Array<{
         id: string;
         fullName: string;
+        avatar?: { id: string } | null;
         roleTitle: string | null;
         headline: string | null;
       }>
@@ -159,6 +161,7 @@ export function ResearchSubmissionForm() {
               options={availablePeople.map((person) => ({
                 description: person.roleTitle ?? person.headline ?? undefined,
                 label: person.fullName,
+                avatar: person.avatar ?? null,
                 value: person.id,
               }))}
               placeholder={

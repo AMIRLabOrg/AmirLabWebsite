@@ -165,6 +165,7 @@ export class ProjectsService {
           fullName: true,
           headline: true,
           roleTitle: true,
+          avatar: { select: { id: true } },
           departments: {
             select: { departmentId: true, isPrimary: true },
           },

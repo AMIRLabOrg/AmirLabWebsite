@@ -27,6 +27,7 @@ async function main() {
 
   console.log('[seed] Valid canonical AMIR Lab dataset.');
   console.log(`[seed] Source captured: ${data.source.capturedAt}`);
+  console.log(`[seed] Founding members: ${data.foundingMembers.length}`);
   console.log(`[seed] People: ${data.people.length}`);
   console.log(`[seed] Departments: ${data.departments.length}`);
   console.log(`[seed] Academic partners: ${data.universities.length}`);

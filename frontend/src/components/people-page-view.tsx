@@ -13,11 +13,13 @@ export function PeoplePageView({
   loading?: boolean;
 }) {
   const list = people ?? [];
-  const groups = list.map(peopleGroup);
+  const groups = list.map((person) =>
+    peopleGroup({ ...person, isFounder: false, isCofounder: false }),
+  );
   const counts = [
     {
       count: groups.filter((group) =>
-        ["founder", "advisor", "lead", "senior"].includes(group),
+        ["advisor", "lead", "senior"].includes(group),
       ).length,
       singular: "Faculty",
       plural: "Faculty",
@@ -43,7 +45,7 @@ export function PeoplePageView({
     <>
       <PageIntro
         scene="people"
-        loading={loading}
+        metaLoading={loading}
         eyebrow="People"
         meta={
           loading ? (

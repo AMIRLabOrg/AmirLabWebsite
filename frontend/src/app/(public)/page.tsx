@@ -3,6 +3,8 @@ import { getPublicCacheConfig } from "@/lib/cache-config.mjs";
 import { ResearchStats } from "@/components/research-stats";
 import {
   HomePageView,
+  HomeResearch,
+  HomePartners,
   HomeOpportunitiesLink,
 } from "@/components/home-page-view";
 import {
@@ -32,11 +34,7 @@ export default function Home() {
 }
 
 async function HomeContent() {
-  const [content, research, universities] = await Promise.all([
-    getHomeContent(),
-    getResearch("PAPER", 3),
-    getUniversities(),
-  ]);
+  const content = await getHomeContent();
   return (
     <HomePageView
       content={content}
@@ -45,20 +43,23 @@ async function HomeContent() {
           <LiveOpportunities />
         </Suspense>
       }
-      research={research}
-      statistics={
+      latestResearch={
+        <Suspense fallback={<HomeResearch content={content} loading />}>
+          <LatestResearch content={content} />
+        </Suspense>
+      }
+      partners={
         <Suspense
           fallback={
-            <ResearchStats
-              boundary={universities.length ? "none" : "bottom"}
+            <HomePartners
               loading
+              statistics={<ResearchStats loading boundary="none" />}
             />
           }
         >
-          <LiveStats boundary={universities.length ? "none" : "bottom"} />
+          <AcademicPartners />
         </Suspense>
       }
-      universities={universities}
     />
   );
 }
@@ -70,4 +71,29 @@ async function LiveStats({ boundary }: { boundary: "none" | "bottom" }) {
 async function LiveOpportunities() {
   const positions = await getPositions();
   return <HomeOpportunitiesLink positions={positions} />;
+}
+
+async function LatestResearch({
+  content,
+}: {
+  content: import("@/lib/types").HomeContent;
+}) {
+  return (
+    <HomeResearch content={content} research={await getResearch("PAPER", 3)} />
+  );
+}
+
+async function AcademicPartners() {
+  const universities = await getUniversities();
+  const boundary = universities.length ? "none" : "bottom";
+  return (
+    <HomePartners
+      universities={universities}
+      statistics={
+        <Suspense fallback={<ResearchStats boundary={boundary} loading />}>
+          <LiveStats boundary={boundary} />
+        </Suspense>
+      }
+    />
+  );
 }

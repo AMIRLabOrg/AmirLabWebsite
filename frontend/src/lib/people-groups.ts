@@ -2,6 +2,7 @@ import type { Person } from "./types";
 
 export type PeopleGroup =
   | "founder"
+  | "cofounder"
   | "advisor"
   | "lead"
   | "senior"
@@ -13,8 +14,8 @@ export type PeopleGroup =
 
 export function peopleGroup(person: Person): PeopleGroup {
   const role = person.roleTitle?.toLowerCase() ?? "";
-  if (role.includes("founder") || role.includes("research director"))
-    return "founder";
+  if (person.isFounder) return "founder";
+  if (person.isCofounder) return "cofounder";
   if (person.isAlumni) return "alumni";
   if (person.rank === "ADVISOR" || role.includes("advisor")) return "advisor";
   if (person.rank === "LEAD_RESEARCHER") return "lead";

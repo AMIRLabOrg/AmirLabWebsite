@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   ConflictException,
   Injectable,
   NotFoundException,
@@ -7,6 +8,7 @@ import {
   AccountStatus,
   PlatformRole,
   Prisma,
+  FoundingMemberRole,
 } from '../../generated/prisma/client';
 import { AuthService } from '../auth/auth.service';
 import { PrismaService } from '../database/prisma.service';
@@ -19,6 +21,8 @@ import {
 import { buildPersonSlug } from './person-slug';
 import { lockAdministratorChange } from './admin-change-lock';
 import { effectiveRank } from '../settings/settings.service';
+import { readFoundingMembers } from './founding-members';
+import type { FoundingMembersDto } from './dto/founding-members.dto';
 
 @Injectable()
 export class UsersService {
@@ -26,6 +30,80 @@ export class UsersService {
     private readonly auth: AuthService,
     private readonly prisma: PrismaService,
   ) {}
+
+  async foundingMembers() {
+    const [selection, people] = await Promise.all([
+      readFoundingMembers(this.prisma),
+      this.prisma.person.findMany({
+        where: {
+          OR: [{ userId: null }, { user: { is: { isDeleted: false } } }],
+        },
+        select: {
+          id: true,
+          fullName: true,
+          isPublished: true,
+          avatar: { select: { id: true } },
+        },
+        orderBy: { fullName: 'asc' },
+      }),
+    ]);
+    const ids = new Set(people.map((person) => person.id));
+    return {
+      founderId:
+        selection.founderId && ids.has(selection.founderId)
+          ? selection.founderId
+          : null,
+      cofounderIds: selection.cofounderIds.filter((id) => ids.has(id)),
+      people,
+    };
+  }
+
+  async setFoundingMembers(dto: FoundingMembersDto, actorId: string) {
+    if (dto.founderId && dto.cofounderIds.includes(dto.founderId)) {
+      throw new BadRequestException('The founder cannot also be a co-founder');
+    }
+    const ids = [
+      ...(dto.founderId ? [dto.founderId] : []),
+      ...dto.cofounderIds,
+    ];
+    return this.prisma.$transaction(async (transaction) => {
+      await transaction.$queryRaw`SELECT pg_advisory_xact_lock(hashtextextended('founding-members', 0))::text`;
+      const count = await transaction.person.count({
+        where: {
+          id: { in: ids },
+          OR: [{ userId: null }, { user: { is: { isDeleted: false } } }],
+        },
+      });
+      if (count !== ids.length)
+        throw new BadRequestException('Choose existing, non-deleted people');
+      const selection = {
+        founderId: dto.founderId,
+        cofounderIds: dto.cofounderIds,
+      };
+      await transaction.foundingMember.deleteMany({});
+      const members = [
+        ...(dto.founderId
+          ? [{ personId: dto.founderId, role: FoundingMemberRole.FOUNDER }]
+          : []),
+        ...dto.cofounderIds.map((personId) => ({
+          personId,
+          role: FoundingMemberRole.CO_FOUNDER,
+        })),
+      ];
+      if (members.length)
+        await transaction.foundingMember.createMany({ data: members });
+      await transaction.auditRecord.create({
+        data: {
+          actorId,
+          action: 'people.founding-members.updated',
+          entityType: 'FoundingMember',
+          entityId: 'founding-members',
+          details: selection,
+        },
+      });
+      return selection;
+    });
+  }
 
   async create(dto: CreateUserDto) {
     const email = dto.email.trim().toLowerCase();
@@ -104,6 +182,7 @@ export class UsersService {
         select: {
           id: true,
           fullName: true,
+          avatar: { select: { id: true } },
           appointedRank: true,
           earnedRank: true,
           slug: true,

@@ -42,6 +42,7 @@ export function PeopleDirectory({
 }) {
   const grouped = Map.groupBy(people, peopleGroup);
   const founder = grouped.get("founder")?.[0];
+  const cofounders = grouped.get("cofounder") ?? [];
   const visibleGroups = GROUPS.flatMap((group) => {
     const members = grouped.get(group.key) ?? [];
     return members.length ? [{ ...group, members }] : [];
@@ -73,16 +74,23 @@ export function PeopleDirectory({
           />
         </PublicSection>
       ) : null}
-      {founder || loading ? (
-        <Founder loading={loading} person={founder} />
-      ) : null}
+      {founder ? <Founder person={founder} /> : null}
+      {cofounders.map((person, index) => (
+        <Founder
+          key={person.id}
+          person={person}
+          cofounder
+          showHeading={index === 0}
+          title={cofounders.length === 1 ? "Co-Founder" : "Co-Founders"}
+        />
+      ))}
 
       {groups.map(({ key, title, members }, index) => (
         <PeopleSection
           key={key}
           loading={loading}
           members={members}
-          showRule={index > 0 || Boolean(founder || loading)}
+          showRule={index > 0 || Boolean(founder || cofounders.length)}
           title={title}
         />
       ))}
@@ -97,9 +105,15 @@ export function PeopleDirectory({
 function Founder({
   person,
   loading = false,
+  cofounder = false,
+  showHeading = true,
+  title = "Founder",
 }: {
   person?: Person;
   loading?: boolean;
+  cofounder?: boolean;
+  showHeading?: boolean;
+  title?: string;
 }) {
   const href = person ? `/people/${person.slug}` : "/people";
   return (
@@ -110,15 +124,22 @@ function Founder({
           "pt-[1.2rem] pb-[2.6rem] max-[720px]:pt-[1rem] max-[480px]:pb-[1.8rem]",
         )}
       >
-        <PeopleHeading title="Founder & Research Director" />
-        <article className="grid grid-cols-[minmax(180px,240px)_minmax(0,1fr)] items-center gap-[clamp(1.8rem,4vw,4rem)] max-[720px]:grid-cols-[120px_minmax(0,1fr)] max-[480px]:grid-cols-[96px_minmax(0,1fr)] max-[480px]:items-center max-[480px]:gap-4">
+        {showHeading ? <PeopleHeading title={title} /> : null}
+        <article
+          className={cn(
+            "grid items-center gap-[clamp(1.8rem,4vw,4rem)] max-[480px]:items-center max-[480px]:gap-4",
+            cofounder
+              ? "grid-cols-[160px_minmax(0,1fr)] max-[720px]:grid-cols-[96px_minmax(0,1fr)] max-[480px]:grid-cols-[80px_minmax(0,1fr)]"
+              : "grid-cols-[minmax(180px,240px)_minmax(0,1fr)] max-[720px]:grid-cols-[120px_minmax(0,1fr)] max-[480px]:grid-cols-[96px_minmax(0,1fr)]",
+          )}
+        >
           {loading ? (
             <div aria-hidden="true" className="min-w-0">
               <PersonPortrait
                 loading
                 person={person}
-                priority
-                variant="founder"
+                priority={!cofounder}
+                variant={cofounder ? "cofounder" : "founder"}
               />
             </div>
           ) : (
@@ -126,8 +147,8 @@ function Founder({
               <PersonPortrait
                 loading={loading}
                 person={person}
-                priority
-                variant="founder"
+                priority={!cofounder}
+                variant={cofounder ? "cofounder" : "founder"}
               />
             </Link>
           )}
@@ -136,6 +157,8 @@ function Founder({
               className={cn(
                 "mb-0 mt-[.15rem] font-sans text-[clamp(2rem,3.8vw,3.6rem)] font-medium leading-[.98] tracking-[-.045em] max-[720px]:text-[clamp(1.65rem,8vw,2.4rem)] max-[480px]:text-[clamp(1.35rem,6.5vw,1.7rem)]",
                 loadingPlaceholder(loading, "text", "long"),
+                cofounder &&
+                  "text-[clamp(1.7rem,3vw,2.5rem)] max-[720px]:text-[1.65rem] max-[480px]:text-[1.35rem]",
               )}
               data-placeholder={loading ? "text" : undefined}
             >

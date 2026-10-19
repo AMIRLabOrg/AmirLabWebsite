@@ -101,6 +101,7 @@ type SourceStatus = NonNullable<ReviewResearch["sourceSnapshot"]>["status"];
 interface LinkablePerson {
   id: string;
   fullName: string;
+  avatar?: { id: string } | null;
   slug: string;
 }
 
@@ -1348,6 +1349,7 @@ export function ResearchReviewQueue() {
                                 );
                                 return {
                                   label: person.fullName,
+                                  avatar: person.avatar ?? null,
                                   value: person.id,
                                   ...(match
                                     ? {
@@ -1697,8 +1699,9 @@ function ResearchRecordEditor({
             <SearchableSelect
               ariaLabel="Submitted by"
               disabled={saving}
-              options={submitters.map(({ id, fullName }) => ({
+              options={submitters.map(({ id, fullName, avatar }) => ({
                 label: fullName,
+                avatar: avatar ?? null,
                 value: id,
               }))}
               onValueChange={setOwnerId}

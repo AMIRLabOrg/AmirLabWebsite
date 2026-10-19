@@ -38,6 +38,7 @@ it.each([
     slug: "founder",
     fullName: "Lab Founder",
     roleTitle: "Founder & Research Director",
+    isFounder: true,
     headline,
     isAlumni: false,
     rank: null,
@@ -48,4 +49,43 @@ it.each([
   const line = screen.getByText(headline);
   expect(line.textContent).toBe(headline);
   expect(line.classList.contains("font-semibold")).toBe(true);
+});
+
+it("keeps founding designations independent of rank and title, without duplicate people", () => {
+  const person = {
+    id: "founder",
+    slug: "founder",
+    fullName: "Original Founder",
+    roleTitle: "Advisor",
+    rank: "ADVISOR",
+    isFounder: true,
+    avatar: null,
+  } as Person;
+  const cofounder = {
+    ...person,
+    id: "cofounder",
+    slug: "cofounder",
+    fullName: "Lab Co-founder",
+    isFounder: false,
+    isCofounder: true,
+  };
+  const director = {
+    ...person,
+    id: "director",
+    slug: "director",
+    fullName: "Current Director",
+    isFounder: false,
+    roleTitle: "Research Director",
+  };
+  render(<PeopleDirectory people={[person, cofounder, director]} />);
+  expect(screen.getByRole("heading", { name: "Founder" })).toBeTruthy();
+  expect(screen.getByRole("heading", { name: "Co-Founder" })).toBeTruthy();
+  expect(screen.getAllByText("Original Founder")).toHaveLength(1);
+  expect(screen.getAllByText("Lab Co-founder")).toHaveLength(1);
+  expect(screen.getByRole("heading", { name: "Advisors" })).toBeTruthy();
+});
+
+it("does not claim a founder or co-founder section while people are loading", () => {
+  render(<PeopleDirectory loading />);
+  expect(screen.queryByRole("heading", { name: /founder/i })).toBeNull();
 });

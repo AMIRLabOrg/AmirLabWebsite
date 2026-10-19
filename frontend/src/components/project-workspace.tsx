@@ -115,7 +115,12 @@ interface WorkspaceProject {
     role: string;
     access: string;
     status: string;
-    person: { id: string; fullName: string; slug: string };
+    person: {
+      id: string;
+      fullName: string;
+      slug: string;
+      avatar?: { id: string } | null;
+    };
   }>;
   invitations: Array<{
     id: string;
@@ -135,6 +140,7 @@ interface WorkspaceProject {
 interface LinkablePerson {
   id: string;
   fullName: string;
+  avatar?: { id: string } | null;
   slug: string;
 }
 
@@ -1038,6 +1044,7 @@ function Tasks({
   );
   const ownerOptions = members.map(({ person }) => ({
     label: person.fullName,
+    avatar: person.avatar ?? null,
     value: person.id,
   }));
   function createTask(event: SyntheticEvent<HTMLFormElement, SubmitEvent>) {
@@ -1471,7 +1478,11 @@ function People({
   const memberIds = new Set(project.memberships.map((item) => item.person.id));
   const options = people
     .filter((person) => !memberIds.has(person.id))
-    .map((person) => ({ label: person.fullName, value: person.id }));
+    .map((person) => ({
+      label: person.fullName,
+      value: person.id,
+      avatar: person.avatar ?? null,
+    }));
   return (
     <WorkspaceRecordPanel>
       <WorkspaceRecordPanelHeader className="flex! items-end justify-between gap-4 @max-[520px]:flex-col @max-[520px]:items-start">

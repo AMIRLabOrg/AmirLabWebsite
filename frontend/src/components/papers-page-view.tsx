@@ -1,20 +1,15 @@
 import { PageIntro } from "@/components/page-intro";
 import { PublicationExplorer } from "@/components/publication-explorer";
-import type { ResearchItem, PublicationResponse } from "@/lib/types";
+import type { PublicationResponse } from "@/lib/types";
 
 export function PapersPageView({
-  papers,
   publications,
   loading = false,
 }: {
-  papers?: ResearchItem[];
   publications?: PublicationResponse;
   loading?: boolean;
 }) {
-  const list = papers ?? [];
-  const years = list
-    .map((item) => item.paper?.year)
-    .filter((value): value is number => typeof value === "number");
+  const years = publications?.facets.years.map(({ value }) => value) ?? [];
   const coverage = years.length
     ? `${Math.min(...years)}-${Math.max(...years)}`
     : "Archive";
@@ -23,11 +18,11 @@ export function PapersPageView({
     <div>
       <PageIntro
         scene="paper"
-        loading={loading}
+        metaLoading={loading}
         eyebrow="Publications"
         meta={
           <>
-            <span>{list.length} publications</span>
+            <span>{publications?.total ?? 0} publications</span>
             <span>{coverage} coverage</span>
             <span>Journal · Conference · Book chapter</span>
             <span>DOI and source links</span>

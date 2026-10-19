@@ -487,6 +487,7 @@ function ProgramEditor({
             options={(options?.people ?? []).map((person) => ({
               description: person.roleTitle ?? person.headline ?? undefined,
               label: person.fullName,
+              avatar: person.avatar ?? null,
               value: person.id,
             }))}
             placeholder="Select registered lead…"

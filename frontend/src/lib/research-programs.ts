@@ -58,6 +58,7 @@ export interface ResearchProgramOptions {
   people: Array<{
     id: string;
     fullName: string;
+    avatar?: { id: string } | null;
     headline: string | null;
     roleTitle: string | null;
   }>;

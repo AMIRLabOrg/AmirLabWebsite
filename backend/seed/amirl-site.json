@@ -1,5 +1,11 @@
 {
-  "schemaVersion": 4,
+  "schemaVersion": 5,
+  "foundingMembers": [
+    {
+      "personSourceId": "peopleDetailsView/Dr-Mohammad-Firoz-Mridha",
+      "role": "FOUNDER"
+    }
+  ],
   "source": {
     "site": "https://amirl.org/",
     "capturedAt": "2026-08-14",

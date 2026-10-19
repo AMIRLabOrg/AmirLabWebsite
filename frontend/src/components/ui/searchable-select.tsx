@@ -6,11 +6,13 @@ import { useEffect, useId, useMemo, useState } from "react";
 import { cn } from "@/lib/cn";
 import { loadingPlaceholder } from "@/lib/loading-style";
 import { formControlClass, InputControl } from "./form-controls";
+import { PersonPortrait } from "@/components/person-portrait";
 
 export interface SearchableSelectOption {
   label: string;
   value: string;
   description?: string;
+  avatar?: { id: string } | null;
 }
 
 export function SearchableSelect({
@@ -100,15 +102,23 @@ export function SearchableSelect({
         disabled={disabled || placeholderLoading}
         type="button"
       >
-        <span
-          className={cn(
-            "min-w-0 overflow-hidden text-ellipsis whitespace-nowrap",
-            placeholderLoading && loadingPlaceholder(true, "text", "medium"),
-          )}
-          data-placeholder={placeholderLoading ? "text" : undefined}
-          data-placeholder-width="medium"
-        >
-          {selected?.label ?? placeholder}
+        <span className="flex min-w-0 items-center gap-2">
+          {selected && selected.avatar !== undefined ? (
+            <PersonPortrait
+              person={{ fullName: selected.label, avatar: selected.avatar }}
+              variant="small"
+            />
+          ) : null}
+          <span
+            className={cn(
+              "min-w-0 overflow-hidden text-ellipsis whitespace-nowrap",
+              placeholderLoading && loadingPlaceholder(true, "text", "medium"),
+            )}
+            data-placeholder={placeholderLoading ? "text" : undefined}
+            data-placeholder-width="medium"
+          >
+            {selected?.label ?? placeholder}
+          </span>
         </span>
         <ChevronDown aria-hidden="true" size={15} />
       </Popover.Trigger>
@@ -191,13 +201,24 @@ export function SearchableSelect({
                   role="option"
                   type="button"
                 >
-                  <span className="grid min-w-0 gap-[.15rem] [overflow-wrap:anywhere]">
-                    {option.label}
-                    {option.description ? (
-                      <small className="text-[.7rem] font-normal text-ink-muted">
-                        {option.description}
-                      </small>
+                  <span className="flex min-w-0 items-center gap-2">
+                    {option.avatar !== undefined ? (
+                      <PersonPortrait
+                        person={{
+                          fullName: option.label,
+                          avatar: option.avatar,
+                        }}
+                        variant="small"
+                      />
                     ) : null}
+                    <span className="grid min-w-0 gap-[.15rem] [overflow-wrap:anywhere]">
+                      {option.label}
+                      {option.description ? (
+                        <small className="text-[.7rem] font-normal text-ink-muted">
+                          {option.description}
+                        </small>
+                      ) : null}
+                    </span>
                   </span>
                   {option.value === value ? (
                     <Check aria-hidden="true" size={14} />

@@ -28,6 +28,7 @@ import {
   required,
   seedDocuments,
   seedSiteSettings,
+  seedFoundingMembers,
   signatureStorageRoot,
   stableSlug,
   watermarkStorageRoot,
@@ -205,6 +206,8 @@ export async function rebuildDatabase() {
 
       personIdBySource.set(person.sourceId, created.id);
     }
+
+    await seedFoundingMembers(prisma, data, personIdBySource);
 
     const defaultApprover = data.people.find((person) =>
       person.roleTitle?.toLowerCase().includes('director'),

@@ -23,6 +23,7 @@ import { apiRequest } from "@/lib/client-api";
 interface ProjectPerson {
   id: string;
   fullName: string;
+  avatar?: { id: string } | null;
   headline: string | null;
   roleTitle: string | null;
   departments: Array<{ departmentId: string; isPrimary: boolean }>;
@@ -249,6 +250,7 @@ export function ProjectCreationForm() {
               options={options.people.map((person) => ({
                 description: person.roleTitle ?? person.headline ?? undefined,
                 label: person.fullName,
+                avatar: person.avatar ?? null,
                 value: person.id,
               }))}
               placeholder={
@@ -326,6 +328,7 @@ export function ProjectCreationForm() {
               options={availablePeople.map((person) => ({
                 description: person.roleTitle ?? person.headline ?? undefined,
                 label: person.fullName,
+                avatar: person.avatar ?? null,
                 value: person.id,
               }))}
               placeholder={

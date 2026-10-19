@@ -8,6 +8,7 @@ import {
   Patch,
   Post,
   Query,
+  Put,
 } from '@nestjs/common';
 import { PlatformRole } from '../../generated/prisma/client';
 import { CurrentUser, RequireRole } from '../auth/auth.decorators';
@@ -15,6 +16,7 @@ import type { AuthenticatedUser } from '../auth/auth.types';
 import { CreateUserDto, UpdateUserDto } from './dto/create-user.dto';
 import { UserQueryDto } from './dto/user-query.dto';
 import { UsersService } from './users.service';
+import { FoundingMembersDto } from './dto/founding-members.dto';
 
 @Controller('users')
 @RequireRole(PlatformRole.ADMIN)
@@ -29,6 +31,19 @@ export class UsersController {
   @Get()
   list(@Query() query: UserQueryDto) {
     return this.users.list(query);
+  }
+
+  @Get('founding-members')
+  foundingMembers() {
+    return this.users.foundingMembers();
+  }
+
+  @Put('founding-members')
+  setFoundingMembers(
+    @Body() body: FoundingMembersDto,
+    @CurrentUser() actor: AuthenticatedUser,
+  ) {
+    return this.users.setFoundingMembers(body, actor.id);
   }
 
   @Get(':id')

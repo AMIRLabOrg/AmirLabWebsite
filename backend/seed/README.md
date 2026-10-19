@@ -2,7 +2,7 @@
 
 `amirl-site.json` is the only public-content rebuild input for the backend.
 
-It is intentionally **schema-shaped**, not a dump of the live HTML. AMIRL's current site represents many person fields as prose/tabs/tables, while this backend stores explicit `Person`, `PersonLink`, `PersonProfileSection`, `Department`, `ResearchItem`, `Paper`, `Project`, `Position`, and `SiteSetting` records.
+It is intentionally **schema-shaped**, not a dump of the live HTML. AMIRL's current site represents many person fields as prose/tabs/tables, while this backend stores explicit `Person`, `FoundingMember`, `PersonLink`, `PersonProfileSection`, `Department`, `ResearchItem`, `Paper`, `Project`, `Position`, and `SiteSetting` records.
 
 ## Provenance
 
@@ -68,3 +68,10 @@ repository.
 - The three home-page academic partners are seeded as published `University` records with matching logos: King Abdulaziz University, King Saud University, and The University of Aizu.
 
 Use `ADMIN_EMAIL=admin@amirlab.org` for the administrator login. Changing this seed setting does not rename an existing account; update that account email separately without rebuilding or reseeding the database.
+
+Founding designations are explicit in the schema-version-5 `foundingMembers` array,
+using `personSourceId` and `FOUNDER` or `CO_FOUNDER`. The seed selects Prof. Dr.
+Mohammad Firoz Mridha as the sole founder and has no co-founders. Both import
+commands write the separate `FoundingMember` table without changing ranks or
+job titles. Incremental seeding preserves existing designations and skips a
+seed founder when another founder is already selected.

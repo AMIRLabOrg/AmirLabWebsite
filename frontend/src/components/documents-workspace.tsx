@@ -73,6 +73,7 @@ interface IssuedDocument {
 }
 
 interface Recipient {
+  avatar?: { id: string } | null;
   id: string;
   fullName: string;
   email: string | null;
@@ -413,6 +414,7 @@ function IssueDocumentPanel({
                     recipient.user?.email ??
                     undefined,
                   label: recipient.fullName,
+                  avatar: recipient.avatar ?? null,
                   value: recipient.id,
                 })),
               ]}
@@ -1118,6 +1120,7 @@ function ApprovalPanel({
                 person.user?.email ??
                 undefined,
               label: person.fullName,
+              avatar: person.avatar ?? null,
               value: person.id,
             }))}
             placeholder="Choose a person"

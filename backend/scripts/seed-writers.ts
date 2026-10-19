@@ -176,6 +176,24 @@ async function upsertAsset(
   return asset.id;
 }
 
+export async function seedFoundingMembers(
+  prisma: PrismaClient,
+  data: AmirSeedData,
+  personIdBySource: Map<string, string>,
+) {
+  return prisma.foundingMember.createMany({
+    data: data.foundingMembers.map((member) => ({
+      personId: required(
+        personIdBySource.get(member.personSourceId),
+        `Missing founding member ${member.personSourceId}`,
+      ),
+      role: member.role,
+    })),
+    // Preserve existing designations, including a different selected founder.
+    skipDuplicates: true,
+  });
+}
+
 export async function seedSiteSettings(
   prisma: PrismaClient,
   data: AmirSeedData,

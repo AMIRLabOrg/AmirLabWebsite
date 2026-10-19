@@ -507,6 +507,7 @@ export function DepartmentEditor({ id }: { id?: string }) {
                   onValueChange={setPersonId}
                   options={people.map((person) => ({
                     label: person.fullName,
+                    avatar: person.avatar ?? null,
                     value: person.id,
                   }))}
                   placeholder="Select registered person…"

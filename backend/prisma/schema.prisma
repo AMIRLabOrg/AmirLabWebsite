@@ -1,7 +1,8 @@
 generator client {
-  provider     = "prisma-client"
-  output       = "../generated/prisma"
-  moduleFormat = "cjs"
+  provider        = "prisma-client"
+  output          = "../generated/prisma"
+  moduleFormat    = "cjs"
+  previewFeatures = ["partialIndexes"]
 }
 
 datasource db {
@@ -29,6 +30,11 @@ enum AcademicRank {
   LEAD_RESEARCHER
   DEPARTMENT_HEAD
   ADVISOR
+}
+
+enum FoundingMemberRole {
+  FOUNDER
+  CO_FOUNDER
 }
 
 enum ResearchItemType {
@@ -377,6 +383,15 @@ model Person {
   ledResearchPrograms ResearchProgram[]      @relation("ResearchProgramLead")
   issuedDocuments     IssuedDocument[]
   documentApproval    DocumentSettings?      @relation("DocumentApprover")
+  foundingMembership  FoundingMember?
+}
+
+model FoundingMember {
+  personId String             @id @db.Uuid
+  role     FoundingMemberRole
+  person   Person             @relation(fields: [personId], references: [id], onDelete: Cascade)
+
+  @@unique([role], map: "FoundingMember_single_founder", where: { role: "FOUNDER" })
 }
 
 model PersonMetric {
